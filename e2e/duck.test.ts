@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { seedRoster, shot } from './helpers.ts';
+import { emptyServer, seedRoster, shot } from './helpers.ts';
 
 const names = ['Alex', 'Bo', 'Cleo', 'Dani'];
 const crew = (n: number) => Array.from({ length: n }, (_, i) => `Spieler ${i + 1}`);
@@ -262,5 +262,39 @@ test('Scenario: Duck copy reads neutral', async ({ page }) => {
 	for (const text of texts) {
 		expect(text).not.toContain('!');
 		expect(text).not.toMatch(/\p{Extended_Pictographic}/u);
+	}
+});
+
+test('Scenario: Duck demo by tapping highlighted controls', async ({ page }, info) => {
+	const server = await emptyServer(info, 'duck-demo');
+	try {
+		// a fresh database holds the seeded words, the demo must not need any of them; Kit's CSRF check wants
+		// the Origin on a DELETE to another host
+		const api = `${server.origin}/api/content/duck_words`;
+		for (const { id } of await (await page.request.get(api)).json())
+			expect((await page.request.delete(`${api}/${id}`, { headers: { origin: server.origin } })).ok()).toBe(true);
+		expect(await (await page.request.get(api)).json()).toEqual([]);
+		await page.goto(`${server.origin}/spiele/duck`);
+		await page.getByRole('link', { name: 'Demo', exact: true }).click();
+		await expect(page).toHaveURL(/\/spiele\/duck\/demo\?from=/);
+
+		const progress = page.getByText(/^Demo · Schritt \d+\/\d+$/);
+		const total = Number((await progress.textContent())!.split('/').at(-1));
+		expect(total).toBeGreaterThanOrEqual(5);
+		for (let n = 1; n <= total; n++) {
+			await expect(progress).toHaveText(`Demo · Schritt ${n}/${total}`);
+			const expected = page.locator('[data-demo="expected"]');
+			await expect(expected).toHaveCount(1);
+			if (n === 3) await shot(page, info, 'duck-demo-scoring');
+			await expected.click();
+		}
+		await expect(page.getByText('Demo beendet', { exact: true })).toBeVisible();
+		await expect(page.locator('[data-demo="expected"]')).toHaveCount(0);
+		const rows = page.getByRole('list', { name: 'Punktestand' }).getByRole('listitem');
+		await expect(rows.locator('.who')).toHaveText(['Alex', 'Cleo', 'Bo', 'Dani']);
+		await expect(rows.locator('.pts')).toHaveText(['5', '3', '0', '0']);
+		await expect(page.getByText('Als Nächstes bekommt Dani Chuck the Duck.', { exact: true })).toBeVisible();
+	} finally {
+		server.close();
 	}
 });
