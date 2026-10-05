@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { tick } from 'svelte';
 	import { invalidateAll } from '$app/navigation';
-	import type { ContentItem, ContentType, ImportReport } from '#lib/content/types.ts';
+	import { isSingle, type ContentItem, type ContentType, type ImportReport } from '#lib/content/types.ts';
 	import { games } from '#lib/games/registry.ts';
 	import Button from '#lib/ui/Button.svelte';
 	import Modal from '#lib/ui/Modal.svelte';
@@ -42,6 +42,7 @@
 	const def = $derived(games.find((g) => g.def.slug === params.slug)!.def);
 	const base = $derived(`/spiele/${def.slug}`);
 	const side = $derived(sides[def.contentType]);
+	const single = $derived(isSingle(def.contentType));
 	const api = $derived(`/api/content/${def.contentType}`);
 	const items = $derived(data.items);
 
@@ -60,7 +61,7 @@
 	let bulkLines = $state<string[]>([]);
 	let report = $state<ImportReport | null>(null);
 
-	const pair = (item: { a: string; b: string }) => `${item.a} | ${item.b}`;
+	const name = (item: { a: string; b: string }) => (single ? item.a : `${item.a} | ${item.b}`);
 
 	async function send(url: string, method: string, body?: unknown): Promise<string> {
 		const res = await fetch(url, {
@@ -121,8 +122,9 @@
 	}
 
 	// Two inputs and no native submit button: implicit form submission wouldn't fire on Enter.
+	// A single input does submit implicitly, so handling Enter there too would post twice.
 	function enter(e: KeyboardEvent) {
-		if (e.key === 'Enter') add(e);
+		if (e.key === 'Enter' && !single) add(e);
 	}
 
 	function cancel(e: KeyboardEvent) {
@@ -152,10 +154,12 @@
 						<span class="label">{side.a}</span>
 						<input id="new-a" bind:value={a} onkeydown={enter} autocomplete="off" aria-describedby={message ? 'new-error' : undefined} />
 					</label>
-					<label class="field">
-						<span class="label">{side.b}</span>
-						<input bind:value={b} onkeydown={enter} autocomplete="off" enterkeyhint="done" aria-describedby={message ? 'new-error' : undefined} />
-					</label>
+					{#if !single}
+						<label class="field">
+							<span class="label">{side.b}</span>
+							<input bind:value={b} onkeydown={enter} autocomplete="off" enterkeyhint="done" aria-describedby={message ? 'new-error' : undefined} />
+						</label>
+					{/if}
 				</div>
 				{#if message}
 					<p id="new-error" class="error" role="alert">{message}</p>
@@ -165,7 +169,7 @@
 
 			<section class="panel stack bulk">
 				<label class="label" for="bulk">Mehrere auf einmal</label>
-				<p class="muted small">Eine Zeile pro Eintrag, Seiten getrennt mit „|“.</p>
+				<p class="muted small">{single ? 'Eine Zeile pro Eintrag.' : 'Eine Zeile pro Eintrag, Seiten getrennt mit „|“.'}</p>
 				<textarea id="bulk" bind:value={bulk} rows="5" placeholder={side.hint} spellcheck="false"></textarea>
 				<Button variant="secondary" disabled={!bulk.trim()} onclick={importBulk}>Importieren</Button>
 				<div role="status">
@@ -204,15 +208,17 @@
 					{#each items as item (item.id)}
 						<li class="row">
 							{#if editing === item.id}
-								<form class="edit" aria-label="{pair(item)} bearbeiten" onsubmit={save}>
+								<form class="edit" aria-label="{name(item)} bearbeiten" onsubmit={save}>
 									<label class="field">
 										<span class="label">{side.a}</span>
 										<input id="edit-{item.id}-a" bind:value={draftA} onkeydown={cancel} autocomplete="off" />
 									</label>
-									<label class="field">
-										<span class="label">{side.b}</span>
-										<input bind:value={draftB} onkeydown={cancel} autocomplete="off" />
-									</label>
+									{#if !single}
+										<label class="field">
+											<span class="label">{side.b}</span>
+											<input bind:value={draftB} onkeydown={cancel} autocomplete="off" />
+										</label>
+									{/if}
 									{#if editMessage}
 										<p class="error" role="alert">{editMessage}</p>
 									{/if}
@@ -228,13 +234,13 @@
 							{:else}
 								<span class="text">
 									<span class="a">{item.a}</span>
-									<span class="b">{item.b}</span>
+									{#if !single}<span class="b">{item.b}</span>{/if}
 								</span>
 								<span class="tools">
-									<button class="icon" type="button" aria-label="{pair(item)} bearbeiten" onclick={() => edit(item)}>
+									<button class="icon" type="button" aria-label="{name(item)} bearbeiten" onclick={() => edit(item)}>
 										<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"></path><path d="M13.5 6.5l4 4"></path></svg>
 									</button>
-									<button class="icon danger" type="button" aria-label="{pair(item)} löschen" onclick={() => (deleting = item)}>
+									<button class="icon danger" type="button" aria-label="{name(item)} löschen" onclick={() => (deleting = item)}>
 										<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 7h14M10 7V4.5h4V7M7 7l1 13h8l1-13"></path></svg>
 									</button>
 								</span>
@@ -256,7 +262,7 @@
 	{#if deleting}
 		<p class="doomed">
 			<span class="a">{deleting.a}</span>
-			<span class="b">{deleting.b}</span>
+			{#if !single}<span class="b">{deleting.b}</span>{/if}
 		</p>
 		<p class="muted">Das lässt sich nicht rückgängig machen.</p>
 	{/if}

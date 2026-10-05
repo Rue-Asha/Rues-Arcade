@@ -1,5 +1,5 @@
 import { expect, test, type Locator, type TestInfo } from '@playwright/test';
-import { shot } from './helpers.ts';
+import { emptyServer, shot } from './helpers.ts';
 
 // phone and desktop share one database and run in parallel; giving each project its own game keeps
 // the scenario's literal entries from colliding as duplicates.
@@ -95,4 +95,64 @@ test('a rejected entry shows the server message', async ({ page }, info) => {
 	await add.getByLabel(g.b).fill('y');
 	await add.getByRole('button', { name: 'Hinzufügen' }).click();
 	await expect(add.getByRole('alert')).toContainText('Höchstens 200 Zeichen');
+});
+
+// phone and desktop would collide on the shared DB with the scenario's literal words, so each gets its own server
+test('Scenario: Add, edit and delete a single entry', async ({ page }, info) => {
+	const server = await emptyServer(info, 'inhalte-codes');
+	try {
+		await page.goto(`${server.origin}/spiele/codes/inhalte`);
+		const add = page.getByRole('form', { name: 'Neuer Eintrag' });
+		await expect(add.getByRole('textbox')).toHaveCount(1);
+
+		await add.getByLabel('Wort').fill('Laterne');
+		await add.getByRole('button', { name: 'Hinzufügen' }).click();
+		const entries = page.getByRole('list', { name: 'Einträge' }).getByRole('listitem');
+		await expect(entry(entries, 'Laterne')).toHaveText(['Laterne']);
+		await expect(add.getByLabel('Wort')).toHaveValue('');
+		await shot(page, info, 'inhalte-codes');
+
+		await page.getByRole('button', { name: 'Laterne bearbeiten' }).click();
+		const edit = page.getByRole('form', { name: 'Laterne bearbeiten' });
+		await expect(edit.getByRole('textbox')).toHaveCount(1);
+		await edit.getByLabel('Wort').fill('Leuchtturm-Laterne');
+		await edit.getByRole('button', { name: 'Speichern' }).click();
+		await expect(entry(entries, 'Leuchtturm-Laterne')).toHaveText(['Leuchtturm-Laterne']);
+		await expect(entry(entries, 'Laterne')).toHaveCount(0);
+
+		await page.reload();
+		await expect(entry(entries, 'Leuchtturm-Laterne')).toHaveCount(1);
+
+		await page.getByRole('button', { name: 'Leuchtturm-Laterne löschen' }).click();
+		const dialog = page.getByRole('dialog');
+		await expect(dialog).toContainText('Leuchtturm-Laterne');
+		await dialog.getByRole('button', { name: 'Löschen' }).click();
+		await expect(dialog).toBeHidden();
+		await expect(entry(entries, 'Leuchtturm-Laterne')).toHaveCount(0);
+
+		await page.reload();
+		await expect(page.getByRole('list', { name: 'Einträge' }).getByText('Laterne')).toHaveCount(0);
+	} finally {
+		server.close();
+	}
+});
+
+test('Scenario: Bulk import of single entries on the Inhalte page', async ({ page }, info) => {
+	const server = await emptyServer(info, 'inhalte-duck');
+	try {
+		await page.goto(`${server.origin}/spiele/duck/inhalte`);
+		await expect(page.getByText('Eine Zeile pro Eintrag.', { exact: true })).toBeVisible();
+		const words = ['Pinsel', 'Kiste', 'Kerze'];
+		await page.getByLabel('Mehrere auf einmal').fill(words.join('\n'));
+		await page.getByRole('button', { name: 'Importieren' }).click();
+
+		const report = page.getByRole('status');
+		await expect(report).toContainText('3 importiert');
+		await expect(report).toContainText('0 doppelt');
+		const entries = page.getByRole('list', { name: 'Einträge' }).getByRole('listitem');
+		for (const word of words) await expect(entry(entries, word)).toHaveText([word]);
+		await expect(page.getByLabel('Mehrere auf einmal')).toHaveValue('');
+	} finally {
+		server.close();
+	}
 });
