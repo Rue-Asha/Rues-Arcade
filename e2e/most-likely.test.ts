@@ -1,5 +1,5 @@
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
-import { emptyServer, seedRoster, shot } from './helpers.ts';
+import { decoAudit, emptyServer, seedRoster, shot } from './helpers.ts';
 
 const crew = (n: number) => Array.from({ length: n }, (_, i) => `Spieler ${i + 1}`);
 const names = ['Alex', 'Bo', 'Cleo'];
@@ -215,4 +215,36 @@ test('Scenario: Most Likely demo by tapping highlighted controls', async ({ page
 	} finally {
 		server.close();
 	}
+});
+
+test('Scenario: Most Likely art on tile and start screen', async ({ page }) => {
+	const art = async (scope: ReturnType<Page['locator']>) => {
+		const deco = scope.locator('[data-deco][data-motif="most-likely"]');
+		await expect(deco).toHaveCount(1);
+		await expect(deco).toHaveAttribute('aria-hidden', 'true');
+		const colours = await deco.evaluate((root) => {
+			const pink = getComputedStyle(root).getPropertyValue('--most-likely').trim();
+			const probe = document.createElement('i');
+			probe.style.color = pink;
+			root.append(probe);
+			const want = getComputedStyle(probe).color;
+			probe.remove();
+			const shapes = [...root.querySelectorAll('circle, path, rect, ellipse, polygon, line')].filter(
+				(el) => !el.closest('defs, pattern')
+			);
+			const pinkShapes = shapes.filter((el) => {
+				const css = getComputedStyle(el);
+				return css.fill === want || css.stroke === want;
+			});
+			return { shapes: shapes.length, pink: pinkShapes.length };
+		});
+		expect(colours.shapes).toBeGreaterThanOrEqual(1);
+		expect(colours.pink).toBeGreaterThanOrEqual(3);
+	};
+
+	await page.goto('/');
+	await art(page.getByRole('link', { name: /Most Likely To/ }));
+	await page.goto('/spiele/most-likely');
+	await art(page.locator('header').filter({ has: page.getByRole('heading', { level: 1 }) }));
+	expect(await decoAudit(page)).toEqual([]);
 });

@@ -94,7 +94,7 @@
 			<div class="reveal" use:pulse>
 				<p class="label" data-testid="reveal-prompt">{s.prompt.a}</p>
 				<p class="reveal-word" data-testid="holders">{holders}</p>
-				<p class="gain">+1 Titel{s.chosen.length > 1 ? ' für alle' : ''}</p>
+				<p class="gain">{s.chosen.length > 1 ? 'Je +1 Titel' : '+1 Titel'}</p>
 			</div>
 			<div class="row">
 				<Button variant="primary" action="next" onclick={next}>{last ? 'Zum Endstand' : 'Nächste Runde'}</Button>
