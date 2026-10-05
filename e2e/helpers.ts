@@ -61,3 +61,27 @@ export async function emptyServer(info: TestInfo, name: string, cwd = process.en
 		}
 	};
 }
+
+export function ambient(page: Page) {
+	return page.evaluate(
+		() =>
+			document
+				.getAnimations()
+				.filter((a) => a.playState === 'running' && a.effect?.getTiming().iterations === Infinity).length
+	);
+}
+
+// pointer-events is inherited, so a child that sets it back would take taps through the decoration
+export function decoAudit(page: Page) {
+	return page.evaluate(() =>
+		[...document.querySelectorAll<HTMLElement>('[data-deco]')].flatMap((root) => {
+			const name = root.dataset.motif ?? 'deco';
+			const found: string[] = [];
+			if (root.getAttribute('aria-hidden') !== 'true') found.push(`${name}: not aria-hidden`);
+			for (const el of [root, ...root.querySelectorAll('*')])
+				if (getComputedStyle(el).pointerEvents !== 'none')
+					found.push(`${name}: ${el.tagName.toLowerCase()} takes pointer events`);
+			return found;
+		})
+	);
+}
