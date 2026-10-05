@@ -57,6 +57,8 @@ test('Scenario: Close by button or Esc', async ({ page }) => {
 
 	await page.getByRole('button', { name: 'Erklärung' }).click();
 	await expect(page.locator('iframe')).toBeVisible();
+	await page.frameLocator('iframe').getByRole('heading', { name: 'So spielt man die Fixture' }).click();
+	await expect.poll(() => page.evaluate(() => document.activeElement?.tagName)).toBe('IFRAME');
 	await page.getByRole('button', { name: 'Erklärung schließen' }).click();
 	await expect(page).toHaveURL(/\/spiele\/imposter$/);
 	await expect(page.getByRole('heading', { name: 'Imposter' })).toBeVisible();
