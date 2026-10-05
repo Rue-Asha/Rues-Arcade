@@ -211,6 +211,25 @@ describe('wavelength koop', () => {
 		expect(scores).toEqual([4, 0, 2]);
 		expect(s.teams).toHaveLength(1);
 		expect(s.teams[0].score).toBe(6);
+		expect(Object.keys(s).sort()).toEqual(
+			[
+				'dial',
+				'lastScore',
+				'mode',
+				'phase',
+				'pool',
+				'rng',
+				'roundIndex',
+				'rounds',
+				'spectrum',
+				'target',
+				'teamIndex',
+				'teams',
+				'turn',
+				'used'
+			].sort()
+		);
+		expect(Object.keys(s.teams[0]).sort()).toEqual(['name', 'players', 'score']);
 		expect(s.teams[0].players.map((p) => Object.keys(p).sort())).toEqual([
 			['id', 'name'],
 			['id', 'name'],
