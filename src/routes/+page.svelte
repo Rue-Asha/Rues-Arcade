@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { comingSoon, games } from '#lib/games/registry.ts';
+	import Banner from '#lib/deco/Banner.svelte';
 	import { roster } from '#lib/roster.svelte.ts';
 	import Button from '#lib/ui/Button.svelte';
 	import GameTile from '#lib/ui/GameTile.svelte';
@@ -18,10 +19,12 @@
 </svelte:head>
 
 <div class="stack rise">
-	<header class="hero">
-		<h1 class="sr-only">Rue's Arcade</h1>
-		<p class="title">Was spielen wir heute?</p>
-		<p class="muted">Partyspiele für ein Handy und einen Tisch voller Leute.</p>
+	<header>
+		<Banner place="home">
+			<h1 class="sr-only">Rue's Arcade</h1>
+			<p class="title">Was spielen wir heute?</p>
+			<p class="muted lead">Partyspiele für ein Handy und einen Tisch voller Leute.</p>
+		</Banner>
 	</header>
 
 	<div class="home">
@@ -65,13 +68,6 @@
 </div>
 
 <style>
-	.hero {
-		display: flex;
-		flex-direction: column;
-		gap: 10px;
-		padding-block: 8px 4px;
-	}
-
 	.title {
 		font-weight: 800;
 		font-size: clamp(32px, 6vw, 46px);
@@ -79,7 +75,7 @@
 		letter-spacing: -0.03em;
 	}
 
-	.hero .muted {
+	.lead {
 		font-size: 17px;
 	}
 
