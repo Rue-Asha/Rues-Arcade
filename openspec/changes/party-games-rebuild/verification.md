@@ -1,50 +1,51 @@
-verified-at: bd1d6eb
+verified-at: b38779a
 
-# Verification — party-games-rebuild (round 6)
+# Verification — party-games-rebuild (round 7)
 
-Round 6 after the Gate 2 reopen (S18–S21: decoration, start-screen layout, Wavelength Koop, neutral copy).
+Round 7: re-check after the test-only fix b38779a (strengthened "Scenario: Koop keeps one shared score" in
+`src/lib/games/wavelength/engine.test.ts`). Round 6 covered the Gate 2 reopen (S18–S21: decoration, start-screen
+layout, Wavelength Koop, neutral copy).
 
 ## Layer 1 — `npm run proof:full` (green, exit 0)
 
 ```
 COMPLETED 428 FILES 0 ERRORS 0 WARNINGS 0 FILES_WITH_PROBLEMS   (svelte-check --fail-on-warnings)
-✓ built in 389ms                                                (vite build)
+✓ built in 344ms                                                (vite build)
  Test Files  17 passed (17)
       Tests  109 passed (109)                                   (vitest)
-  ✓  121 [phone] › e2e/demo.test.ts:193:1 › Scenario: Demo steppable with reduced motion (1.2s)
-  ✓  123 [desktop] › e2e/wavelength.test.ts:300:1 › Scenario: Koop session resumes after reload (4.4s)
-  ✓  126 [desktop] › e2e/wavelength.test.ts:328:1 › Scenario: Turn verdicts read neutral (306ms)
-  ✓  124 [desktop] › e2e/demo.test.ts:201:1 › Scenario: Demo works with an empty database (15.5s)
-  ✓  109 [phone] › e2e/look.test.ts:216:1 › Scenario: Text contrast meets 4.5:1 (29.4s)
-  ✓  125 [phone] › e2e/demo.test.ts:201:1 › Scenario: Demo works with an empty database (16.9s)
-  ✓  122 [desktop] › e2e/look.test.ts:216:1 › Scenario: Text contrast meets 4.5:1 (29.5s)
-  ✓  127 [phone] › e2e/look.test.ts:286:1 › Scenario: Press Start 2P stays limited to logo and scores (20.9s)
-  ✓  128 [desktop] › e2e/look.test.ts:286:1 › Scenario: Press Start 2P stays limited to logo and scores (21.8s)
-  ✓  129 [phone] › e2e/look.test.ts:315:1 › Scenario: Decoration loads no external assets (29.1s)
-  ✓  130 [desktop] › e2e/look.test.ts:315:1 › Scenario: Decoration loads no external assets (29.6s)
-  ✓  131 [phone] › e2e/look.test.ts:330:1 › Scenario: New copy has no exclamation marks (21.8s)
-  ✓  132 [desktop] › e2e/look.test.ts:330:1 › Scenario: New copy has no exclamation marks (22.8s)
+ ✓ src/lib/games/wavelength/engine.test.ts > wavelength koop > Scenario: Koop keeps one shared score 3ms
+  ✓  124 [desktop] › e2e/demo.test.ts:201:1 › Scenario: Demo works with an empty database (15.4s)
+  ✓  123 [phone] › e2e/demo.test.ts:201:1 › Scenario: Demo works with an empty database (16.9s)
+  ✓  110 [phone] › e2e/look.test.ts:216:1 › Scenario: Text contrast meets 4.5:1 (29.7s)
+  ✓  116 [desktop] › e2e/look.test.ts:216:1 › Scenario: Text contrast meets 4.5:1 (29.9s)
+  ✓  127 [phone] › e2e/look.test.ts:286:1 › Scenario: Press Start 2P stays limited to logo and scores (21.2s)
+  ✓  128 [desktop] › e2e/look.test.ts:286:1 › Scenario: Press Start 2P stays limited to logo and scores (20.8s)
+  ✓  129 [phone] › e2e/look.test.ts:315:1 › Scenario: Decoration loads no external assets (29.6s)
+  ✓  130 [desktop] › e2e/look.test.ts:315:1 › Scenario: Decoration loads no external assets (29.0s)
+  ✓  131 [phone] › e2e/look.test.ts:330:1 › Scenario: New copy has no exclamation marks (21.4s)
+  ✓  132 [desktop] › e2e/look.test.ts:330:1 › Scenario: New copy has no exclamation marks (21.8s)
   -  134 [desktop] › e2e/look.test.ts:345:1 › Scenario: No horizontal scroll on phone
-  ✓  133 [phone] › e2e/look.test.ts:345:1 › Scenario: No horizontal scroll on phone (30.7s)
+  ✓  133 [phone] › e2e/look.test.ts:345:1 › Scenario: No horizontal scroll on phone (31.1s)
   -  136 [phone] › e2e/look.test.ts:350:1 › Scenario: Desktop uses the width
-  ✓  137 [phone] › e2e/look.test.ts:468:2 › reduced motion › Scenario: Reduced motion makes transitions instant (243ms)
-  ✓  138 [phone] › e2e/look.test.ts:480:1 › Scenario: Motion never blocks input (253ms)
-  ✓  135 [desktop] › e2e/look.test.ts:350:1 › Scenario: Desktop uses the width (30.6s)
-  ✓  139 [desktop] › e2e/look.test.ts:468:2 › reduced motion › Scenario: Reduced motion makes transitions instant (206ms)
-  ✓  140 [desktop] › e2e/look.test.ts:480:1 › Scenario: Motion never blocks input (270ms)
+  ✓  137 [phone] › e2e/look.test.ts:468:2 › reduced motion › Scenario: Reduced motion makes transitions instant (230ms)
+  ✓  138 [phone] › e2e/look.test.ts:480:1 › Scenario: Motion never blocks input (250ms)
+  ✓  135 [desktop] › e2e/look.test.ts:350:1 › Scenario: Desktop uses the width (31.6s)
+  ✓  139 [desktop] › e2e/look.test.ts:468:2 › reduced motion › Scenario: Reduced motion makes transitions instant (240ms)
+  ✓  140 [desktop] › e2e/look.test.ts:480:1 › Scenario: Motion never blocks input (273ms)
 
   2 skipped
-  138 passed (3.0m)
+  138 passed (2.9m)
 ```
 
 The 2 Playwright skips are by design: `Scenario: No horizontal scroll on phone` skips on `desktop`,
 `Scenario: Desktop uses the width` skips on `phone` (`test.skip(info.project.name !== …)` in `e2e/look.test.ts`).
-Run on Node v26.8.1; `engines.node` is `>=22.18`. Since round 5: vitest 87 → 109, Playwright 100 → 138 passed.
+Run on Node v26.8.1; `engines.node` is `>=22.18`. Counts unchanged since round 6 (vitest 109, Playwright 138 passed);
+b38779a added assertions inside an existing test, not a new test.
 
 ## Layer 2 — spec coverage
 
-Collected from the 12 delta specs at bd1d6eb: 117 scenarios (83 in round 5, 34 added for S18–S21). Each unit/e2e name
-was matched against the green Layer 1 output; e2e rows passed in both projects (`phone`, `desktop`) unless noted.
+Collected from the 12 delta specs (unchanged since bd1d6eb): 117 scenarios (83 in round 5, 34 added for S18–S21). Each unit/e2e name
+was re-matched against this round's green Layer 1 output; e2e rows passed in both projects (`phone`, `desktop`) unless noted.
 
 | Scenario | proof | Evidence |
 |---|---|---|
@@ -195,8 +196,9 @@ Pending-ship (not a gap): "CI is green on the change's PR" — after task 21.1 (
 
 ## Screenshots
 
-`openspec/changes/party-games-rebuild/shots/` — refreshed from this run's `test-results/shots/`: 106 PNGs
-(74 changed, 14 byte-identical to round 5, 18 new).
+`openspec/changes/party-games-rebuild/shots/` — 106 PNGs, refreshed in round 6 (74 changed, 14 byte-identical to round 5, 18 new).
+Round 7 left them as they are: this run wrote the same 106 filenames to `test-results/shots/`; 53 differ byte-wise from the
+committed set, which is render noise (the only commit since round 6 is a unit-test change, no UI code).
 
 New (Koop):
 - `shots/{phone,desktop}-look-lobby-wavelength-koop.png`
