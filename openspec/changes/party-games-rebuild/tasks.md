@@ -56,28 +56,28 @@ clauses. UI work cites the Mobbin refs from scope.md and follows `design/look-A1
 
 > unit: depends=3,4 · scope=S4,S5,S6,S10 · files=src/lib/storage.ts, src/lib/roster.svelte.ts, src/lib/roster.test.ts, src/lib/session.ts, src/lib/session.test.ts, src/lib/games/registry.ts, src/lib/games/registry.test.ts, src/routes/+page.svelte, src/routes/spieler/+page.svelte, src/routes/spiele/[slug]/+page.svelte, src/routes/spiele/[slug]/+page.server.ts, src/routes/spiele/[slug]/lobby/+page.svelte, src/routes/spiele/[slug]/spielen/+page.svelte, src/routes/spiele/[slug]/spielen/+page.server.ts, e2e/helpers.ts, e2e/home.test.ts, e2e/roster.test.ts, e2e/start.test.ts
 
-- [ ] 6.1 `storage.ts` with memory fallback; roster store (Scenario: Rename and remove a player · Empty or whitespace name rejected · Duplicate name rejected · Storage unavailable works for the session)
-- [ ] 6.2 Session store (Scenario: Old or corrupt saved state discarded · Two tabs last write wins · Roster edit mid-game keeps the session snapshot)
-- [ ] 6.3 Home: registry tiles + locked "Bald verfügbar" tiles (Scenario: Tiles for registered games · Player range derived from engine limits · Bald tiles have no actions)
-- [ ] 6.4 Spieler screen: add, rename, remove, reorder, empty-state prompt (Scenario: Roster survives reload · First run shows empty roster prompt)
-- [ ] 6.5 Start screen (rules summary, Demo, Erklärung, Inhalte links, start gated on players and `minContent`), lobby (player pick above max, then the game's `Setup`), play route (header with Demo + "Spiel beenden", session save on every dispatch, restore on load, discarded-state notice); `e2e/helpers.ts` seeds roster and content (Scenario: Below minimum disables start · Above maximum asks who plays · Empty pool blocks start)
+- [x] 6.1 `storage.ts` with memory fallback; roster store (Scenario: Rename and remove a player · Empty or whitespace name rejected · Duplicate name rejected · Storage unavailable works for the session)
+- [x] 6.2 Session store (Scenario: Old or corrupt saved state discarded · Two tabs last write wins · Roster edit mid-game keeps the session snapshot)
+- [x] 6.3 Home: registry tiles + locked "Bald verfügbar" tiles (Scenario: Tiles for registered games · Player range derived from engine limits · Bald tiles have no actions)
+- [x] 6.4 Spieler screen: add, rename, remove, reorder, empty-state prompt (Scenario: Roster survives reload · First run shows empty roster prompt)
+- [x] 6.5 Start screen (rules summary, Demo, Erklärung, Inhalte links, start gated on players and `minContent`), lobby (player pick above max, then the game's `Setup`), play route (header with Demo + "Spiel beenden", session save on every dispatch, restore on load, discarded-state notice); `e2e/helpers.ts` seeds roster and content (Scenario: Below minimum disables start · Above maximum asks who plays · Empty pool blocks start)
 
 ## 7. Importer
 
 > unit: depends=3 · scope=S9 · files=scripts/import.mjs, scripts/import.test.ts, scripts/fixtures/old-schema.sql, README.md
 
-- [ ] 7.1 `npm run import -- <old-db> --into <new.db>`: open source read-only, migrate target, copy `imposter_prompts` → `imposter_pairs` and `wavelength_prompts` → `wavelength_spectra` with `INSERT OR IGNORE`, print counts per table (Scenario: Import prints counts · Re-running the import adds no duplicates · Name placeholders preserved)
-- [ ] 7.2 Errors: missing table named, other imported, exit 1; source missing or not SQLite → clear error, exit 1, no target created (Scenario: Missing table is named, the other still imported · Source missing or not SQLite)
-- [ ] 7.3 README "Content import": run against `00_Archive/Party-Games-content-backup-2026-10-05/dev.db`, copy the result to the host data dir
+- [x] 7.1 `npm run import -- <old-db> --into <new.db>`: open source read-only, migrate target, copy `imposter_prompts` → `imposter_pairs` and `wavelength_prompts` → `wavelength_spectra` with `INSERT OR IGNORE`, print counts per table (Scenario: Import prints counts · Re-running the import adds no duplicates · Name placeholders preserved)
+- [x] 7.2 Errors: missing table named, other imported, exit 1; source missing or not SQLite → clear error, exit 1, no target created (Scenario: Missing table is named, the other still imported · Source missing or not SQLite)
+- [x] 7.3 README "Content import": run against `00_Archive/Party-Games-content-backup-2026-10-05/dev.db`, copy the result to the host data dir
 
 ## 8. Release pipeline
 
 > unit: depends=3 · scope=S1b · files=scripts/package.mjs, scripts/package.test.ts, .github/workflows/ci.yml, .github/workflows/release.yml, .github/dependabot.yml, playwright.config.ts, CLAUDE.md
 
-- [ ] 8.1 `scripts/package.mjs` modelled on Life-Manager: `dist/rues-arcade-<version>.tgz` (build, migrations, production package.json, lockfile) + `.sha256` (Scenario: Package produces a verifiable tarball)
-- [ ] 8.2 `playwright.config.ts`: when `E2E_APP_DIR` is set, serve `node $E2E_APP_DIR/build` instead of `node build`
-- [ ] 8.3 `ci.yml` and `release.yml` copied from Life-Manager with its SHA pins, service name `rues-arcade`, security-baseline `@aab9824cdb27d4d86203a5d7b4785d95f8549cbc # v1.0.0`; `dependabot.yml` for github-actions + npm weekly (Scenario: CI is green on the change's PR · Tag does not match the version — proven at Ship / on GitHub)
-- [ ] 8.4 `CLAUDE.md` `## Harness`: add `package` line (Scenario: Harness declared with merge policy)
+- [x] 8.1 `scripts/package.mjs` modelled on Life-Manager: `dist/rues-arcade-<version>.tgz` (build, migrations, production package.json, lockfile) + `.sha256` (Scenario: Package produces a verifiable tarball)
+- [x] 8.2 `playwright.config.ts`: when `E2E_APP_DIR` is set, serve `node $E2E_APP_DIR/build` instead of `node build`
+- [x] 8.3 `ci.yml` and `release.yml` copied from Life-Manager with its SHA pins, service name `rues-arcade`, security-baseline `@aab9824cdb27d4d86203a5d7b4785d95f8549cbc # v1.0.0`; `dependabot.yml` for github-actions + npm weekly (Scenario: CI is green on the change's PR · Tag does not match the version — proven at Ship / on GitHub)
+- [x] 8.4 `CLAUDE.md` `## Harness`: add `package` line (Scenario: Harness declared with merge policy)
 
 ## 9. Imposter UI
 
