@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { decoAudit, seedRoster } from './helpers.ts';
+import { ambient, decoAudit, seedRoster } from './helpers.ts';
 
 const PITCH = {
 	Imposter: 'Alle bekommen dieselbe Frage, bis auf eine Person.',
@@ -162,4 +162,55 @@ test('Scenario: Decoration is hidden and never takes pointer events', async ({ p
 		problems.push(...missed.map((m) => `${path}: ${m}`));
 	}
 	expect(problems).toEqual([]);
+});
+
+// infinite animations on decoration, with the properties their keyframes touch
+const decoMotion = (page: Page) =>
+	page.evaluate(() =>
+		document
+			.getAnimations()
+			.filter((a) => {
+				const target = (a.effect as KeyframeEffect | null)?.target;
+				return a.effect?.getTiming().iterations === Infinity && target?.closest('[data-deco]');
+			})
+			.map((a) => ({
+				running: a.playState === 'running',
+				props: [
+					...new Set(
+						(a.effect as KeyframeEffect)
+							.getKeyframes()
+							.flatMap((k) => Object.keys(k))
+							.filter((k) => !['offset', 'computedOffset', 'easing', 'composite'].includes(k))
+					)
+				]
+			}))
+	);
+
+test('Scenario: Ambient motion runs during play', async ({ page }) => {
+	await seedRoster(page, crew);
+	await seedPlay(page);
+
+	for (const path of ['/', '/spiele/wavelength/spielen']) {
+		await open(page, path);
+		const motion = await decoMotion(page);
+		expect(motion.filter((m) => m.running).length, path).toBeGreaterThan(0);
+		expect(await ambient(page), path).toBeGreaterThan(0);
+		for (const m of motion) expect(m.props.every((p) => p === 'transform' || p === 'opacity'), `${path}: ${m.props}`).toBe(true);
+	}
+});
+
+test.describe('reduced motion', () => {
+	test.use({ reducedMotion: 'reduce' });
+
+	test('Scenario: Reduced motion turns ambient motion off', async ({ page }) => {
+		await seedRoster(page, crew);
+		await seedPlay(page);
+
+		for (const path of ['/', '/spiele/wavelength', '/spiele/wavelength/spielen']) {
+			await open(page, path);
+			expect(await page.locator('[data-deco]').count(), path).toBeGreaterThan(0);
+			expect(await decoMotion(page), path).toEqual([]);
+			expect(await ambient(page), path).toBe(0);
+		}
+	});
 });
