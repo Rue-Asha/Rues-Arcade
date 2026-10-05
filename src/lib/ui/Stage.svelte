@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
+	import { rise } from '#lib/motion.ts';
 
 	interface Props {
 		key: unknown;
@@ -10,5 +11,7 @@
 </script>
 
 {#key key}
-	{@render children()}
+	<div class="stage" in:rise>
+		{@render children()}
+	</div>
 {/key}
