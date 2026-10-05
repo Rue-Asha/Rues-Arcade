@@ -240,15 +240,20 @@ test('Scenario: Codes copy reads neutral', async ({ page }) => {
 	expect(texts.filter((t) => /!|\p{Extended_Pictographic}/u.test(t))).toEqual([]);
 });
 
+// the fresh database is seeded, so the empty pool is made by deleting every word
+async function emptyPool(page: Page, origin: string) {
+	const api = `${origin}/api/content/codes_words`;
+	const list: { id: number }[] = await (await page.request.get(api)).json();
+	expect(list.length).toBeGreaterThan(0);
+	// this server listens on 127.0.0.1, not the configured baseURL, so Kit's CSRF check needs the origin spelled out
+	for (const { id } of list)
+		expect((await page.request.delete(`${api}/${id}`, { headers: { origin } })).status()).toBe(204);
+}
+
 test('Scenario: Empty Codes pool blocks start', async ({ page }, info) => {
 	const server = await emptyServer(info, 'codes');
 	try {
-		const api = `${server.origin}/api/content/codes_words`;
-		const list: { id: number }[] = await (await page.request.get(api)).json();
-		expect(list.length).toBeGreaterThan(0);
-		// this server listens on 127.0.0.1, not the configured baseURL, so Kit's CSRF check needs the origin spelled out
-		for (const { id } of list)
-			expect((await page.request.delete(`${api}/${id}`, { headers: { origin: server.origin } })).status()).toBe(204);
+		await emptyPool(page, server.origin);
 		await page.goto(`${server.origin}/`);
 		await seedRoster(page, ['Alex', 'Bo', 'Cleo', 'Dani']);
 		await page.goto(`${server.origin}/spiele/codes`);
@@ -256,6 +261,30 @@ test('Scenario: Empty Codes pool blocks start', async ({ page }, info) => {
 		await expect(page.getByRole('button', { name: "Los geht's" })).toBeDisabled();
 		await expect(page.getByText('Für Codes gibt es noch keine Inhalte.')).toBeVisible();
 		await expect(page.getByRole('link', { name: 'Inhalte hinzufügen' })).toHaveAttribute('href', '/spiele/codes/inhalte');
+	} finally {
+		server.close();
+	}
+});
+
+test('Scenario: Codes demo by tapping highlighted controls', async ({ page }, info) => {
+	const server = await emptyServer(info, 'codes-demo');
+	try {
+		await emptyPool(page, server.origin);
+		await page.goto(`${server.origin}/spiele/codes`);
+		await page.getByRole('link', { name: 'Demo', exact: true }).click();
+		await expect(page).toHaveURL(/\/spiele\/codes\/demo\?from=/);
+
+		await expect(page.getByText('[Demo]', { exact: true })).toBeVisible();
+		await expect(page.getByText('Leuchtturm', { exact: true })).toBeVisible();
+		const total = 4;
+		for (let n = 1; n <= total; n++) {
+			await expect(page.getByText(/^Demo · Schritt \d+\/\d+$/)).toHaveText(`Demo · Schritt ${n}/${total}`);
+			const expected = page.locator('[data-demo="expected"]');
+			await expect(expected).toHaveCount(1);
+			await expected.click();
+		}
+		await expect(page.getByText('Demo beendet', { exact: true })).toBeVisible();
+		await expect(page.getByRole('heading', { name: 'Team 1', exact: true })).toBeVisible();
 	} finally {
 		server.close();
 	}
