@@ -1,11 +1,15 @@
 import { defineConfig } from '@playwright/test';
+import { resolve } from 'node:path';
 
 const port = Number(process.env.PORT ?? 4173);
-const db = `.e2e/${port}.db`;
+// E2E_APP_DIR points at an unpacked release tarball; the database stays in the repo's .e2e/.
+const db = resolve(`.e2e/${port}.db`);
 
 export default defineConfig({
 	testDir: 'e2e',
-	use: { baseURL: `http://localhost:${port}` },
+	// adapter-node assumes https unless a proxy says otherwise, and an https self-origin fails Kit's
+	// CSRF check for form posts and DELETEs over plain http. This plays the proxy's part.
+	use: { baseURL: `http://localhost:${port}`, extraHTTPHeaders: { 'x-forwarded-proto': 'http' } },
 	projects: [
 		{
 			name: 'phone',
@@ -17,9 +21,10 @@ export default defineConfig({
 		}
 	],
 	webServer: {
-		command: `mkdir -p .e2e && rm -f ${db} && node build`,
+		command: `mkdir -p '${resolve('.e2e')}' && rm -f '${db}'* && node build`,
+		cwd: process.env.E2E_APP_DIR,
 		port,
 		reuseExistingServer: false,
-		env: { PORT: String(port), DATABASE_PATH: db }
+		env: { PORT: String(port), PROTOCOL_HEADER: 'x-forwarded-proto', DATABASE_PATH: db }
 	}
 });
