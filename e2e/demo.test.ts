@@ -97,8 +97,32 @@ test('Scenario: Hidden information shown with Demo tag', async ({ page }) => {
 
 test('Scenario: Demo leaves real data untouched', async ({ page }) => {
 	await seedRoster(page, ['Mira', 'Noah', 'Olli']);
+	// a real state: the start page discards one that doesn't fit the game
 	await page.evaluate(() =>
-		localStorage.setItem('arcade:session:imposter', JSON.stringify({ v: 1, state: { keep: 'me' } }))
+		localStorage.setItem(
+			'arcade:session:imposter',
+			JSON.stringify({
+				v: 1,
+				state: {
+					rng: { state: 1 },
+					players: [
+						{ id: 'p1', name: 'Mira' },
+						{ id: 'p2', name: 'Noah' },
+						{ id: 'p3', name: 'Olli' }
+					],
+					pool: [{ id: 1, a: 'Crew?', b: 'Imposter?' }],
+					used: [1],
+					round: 1,
+					pairId: 1,
+					crew: 'Crew?',
+					imposter: 'Imposter?',
+					imposterIndex: 0,
+					phase: 'handover',
+					revealIndex: 0,
+					shown: false
+				}
+			})
+		)
 	);
 	const before = await snapshot(page);
 	await openDemo(page, 'imposter');

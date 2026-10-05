@@ -29,7 +29,7 @@ SHALL clear it.
 - **proof:** e2e
 
 #### Scenario: Old or corrupt saved state discarded
-- **WHEN** the stored session has an older version or is not valid JSON
+- **WHEN** the stored session has an older version, is not valid JSON, or lacks the shape of the game's state
 - **THEN** it is discarded, a notice is shown, and the app does not crash
 - **proof:** unit
 

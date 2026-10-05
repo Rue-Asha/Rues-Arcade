@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { games } from '#lib/games/registry.ts';
-	import { clearSession, loadSession, saveSession } from '#lib/session.ts';
+	import { games, loadGameSession } from '#lib/games/registry.ts';
+	import { clearSession, saveSession } from '#lib/session.ts';
 	import Button from '#lib/ui/Button.svelte';
 	import Modal from '#lib/ui/Modal.svelte';
 	import Stage from '#lib/ui/Stage.svelte';
@@ -20,7 +20,7 @@
 	let ending = $state(false);
 
 	onMount(() => {
-		const session = loadSession(def.slug, def.stateVersion);
+		const session = loadGameSession(entry);
 		if (session === null) goto(base, { replace: true });
 		else if ('discarded' in session) discarded = true;
 		else game = session.state;

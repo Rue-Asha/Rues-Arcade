@@ -86,6 +86,22 @@ test('discarded session shows a notice', async ({ page }) => {
 	await expect(page.evaluate(() => localStorage.getItem('arcade:session:imposter'))).resolves.toBeNull();
 });
 
+test('a session without the game state shape is discarded, not resumed', async ({ page }) => {
+	const errors: Error[] = [];
+	page.on('pageerror', (e) => errors.push(e));
+	await page.goto('/');
+	await page.evaluate(() => localStorage.setItem('arcade:session:imposter', '{"v":1,"state":{}}'));
+	await page.goto('/spiele/imposter');
+	await expect(page.getByRole('alert')).toContainText('verworfen');
+	await expect(page.getByRole('button', { name: 'Weiterspielen' })).toHaveCount(0);
+
+	await page.evaluate(() => localStorage.setItem('arcade:session:imposter', '{"v":1,"state":{}}'));
+	await page.goto('/spiele/imposter/spielen');
+	await expect(page.getByRole('alert')).toContainText('verworfen');
+	await expect(page.evaluate(() => localStorage.getItem('arcade:session:imposter'))).resolves.toBeNull();
+	expect(errors).toEqual([]);
+});
+
 test('a saved session is shown, resumed and ended', async ({ page }) => {
 	await page.goto('/');
 	await page.evaluate(() =>

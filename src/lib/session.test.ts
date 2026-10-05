@@ -47,6 +47,24 @@ describe('session', () => {
 			expect(session.loadSession('imposter', 1)).toEqual({ discarded: true });
 			expect(storage.getItem('arcade:session:imposter')).toBeNull();
 		}
+
+		const valid = imposter.init({
+			players: [
+				{ id: 'a', name: 'Alex' },
+				{ id: 'b', name: 'Bo' },
+				{ id: 'c', name: 'Cleo' }
+			],
+			config: {},
+			content: [{ id: 1, a: 'Crew?', b: 'Imposter?' }],
+			seed: 7
+		});
+		for (const state of [{}, { ...valid, players: undefined }, { ...valid, revealIndex: '0' }]) {
+			session.saveSession('imposter', 1, state);
+			expect(session.loadSession('imposter', 1, valid)).toEqual({ discarded: true });
+			expect(storage.getItem('arcade:session:imposter')).toBeNull();
+		}
+		session.saveSession('imposter', 1, valid);
+		expect(session.loadSession('imposter', 1, valid)).toEqual({ state: valid });
 	});
 
 	it('Scenario: Two tabs last write wins', async () => {

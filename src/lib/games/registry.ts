@@ -1,5 +1,7 @@
 import type { Component } from 'svelte';
+import { start } from '#lib/demo/runner.ts';
 import type { DemoScript, GameDef, Player } from '#lib/engine/types.ts';
+import { loadSession } from '#lib/session.ts';
 import { entry as imposter } from './imposter/index.ts';
 import { entry as wavelength } from './wavelength/index.ts';
 
@@ -21,6 +23,11 @@ export interface GameEntry {
 }
 
 export const games: GameEntry[] = [imposter, wavelength];
+
+// the demo's opening state is a known-good shape to check a saved session against
+export function loadGameSession(entry: GameEntry) {
+	return loadSession<object>(entry.def.slug, entry.def.stateVersion, start(entry.def, entry.demo).state);
+}
 
 export const comingSoon: string[] = ['Duck', 'Family Feud', 'Codes', 'Most Likely To', 'Charade'];
 

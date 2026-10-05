@@ -1,9 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { games, playerRange } from '#lib/games/registry.ts';
+	import { games, loadGameSession, playerRange } from '#lib/games/registry.ts';
 	import { roster } from '#lib/roster.svelte.ts';
-	import { loadSession } from '#lib/session.ts';
 	import Button from '#lib/ui/Button.svelte';
 	import type { PageProps } from './$types';
 
@@ -31,7 +30,7 @@
 	let discarded = $state(false);
 
 	onMount(() => {
-		const session = loadSession(def.slug, def.stateVersion);
+		const session = loadGameSession(entry);
 		saved = session !== null && 'state' in session;
 		discarded = session !== null && 'discarded' in session;
 		ready = true;
