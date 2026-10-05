@@ -103,7 +103,39 @@ Game (registry: slug, name, colour, player limits, phases)
   remembered on the device.
   - edges: no sound before the first user interaction (autoplay policy); WebAudio unavailable → silent, no error.
 
+### Added at Gate 2 (2026-10-05, Rue)
+
+- **S18** Decoration "Spielbrett" (mock: `design/deco-1-spielbrett.html`, PNGs `design/deco-1-{phone,desktop}.png`):
+  flat geometric inline-SVG illustrations built from each game's own shapes, colour only as lines and small fills
+  on tint backgrounds. Home: banner (board-grid pattern, Wavelength dial with bands, tilted Imposter mask card,
+  dashed lock pieces) and tile art (Imposter: row of masks, the odd one lifts; Wavelength: dial with rings;
+  "Bald" tiles: dashed corner). Start screens: per-game banner (Wavelength: large dial with "Kalt"/"Heiß";
+  Imposter: mask row). Lobby: banner (teams/players motif). Play screens: faint rings/arcs behind the game
+  content that never compete with it. Ambient motion runs permanently, play included (needle sweep ~7s,
+  mask lift); prefers-reduced-motion turns it off.
+  - edges: decoration is aria-hidden and never takes pointer events; existing contrast and no-h-scroll rules
+    hold with decoration present; desktop 1280 uses the width; a game without its own art gets a neutral
+    fallback; Press Start 2P stays limited to logo and scores (no new uses); no external assets.
+- **S19** Start screen layout: per-game banner carries title, badge and player count; the start panel comes
+  first on phone and sits in the right column on desktop; "So geht's" follows; at the bottom a box
+  "Mehr zu <Spiel>" with three cards Erklärung, Demo, Inhalte, each with a one-line description. The start
+  button reads "Los geht's" (was "Spiel starten"). Play header (Demo, Spiel beenden) unchanged.
+  - edges: the three cards keep their current targets and `?from=` behaviour; Inhalte card shows the real
+    content count; same layout for both games.
+- **S20** Copy: each home tile gets a one-line pitch; all new copy (banners, pitches, card descriptions,
+  co-op rating) is neutral and grown-up — plain description, no exclamation marks, no puns, no
+  "Spieleabend"-style slogans.
+- **S21** Wavelength co-op for 2–3 players: with 2–3 chosen players the game runs as one team; each round every
+  player is psychic once, in order, the others set the dial together; turn scoring unchanged (4/3/2/0); 1–5
+  rounds (default 3); one shared score. Game over shows total, average points per turn and a neutral rating
+  tier from that average. 4+ players: teams as in S12. "Nochmal spielen" keeps the same players and mode.
+  - edges: 1 player → start disabled with the reason; lobby shows which mode applies before start; player
+    range shown on tile/start becomes 2+; a saved team session from before still resumes; the Wavelength
+    demo stays the team demo (S15); co-op tie handling n/a.
+
 ## Non-goals
+- Co-op for 4+ players, or a co-op demo script.
+- Decoration variants 2 (Automat) and 3 (Nachtlicht) — mocked, not chosen.
 - Duck, Family Feud, Codes, Most Likely To — Rue wants to touch up their rules first; each its own later change (Split off).
 - Charade — new game, later change.
 - Multi-device rooms / phones joining — single device by decision.
@@ -128,6 +160,9 @@ Game (registry: slug, name, colour, player limits, phases)
 - R3 Explanation HTML that pulls CDN assets fails offline or under the sandbox → accepted; README asks for self-contained files.
 - R4 Demo determinism → resolved by design: seeded RNG + scripted actions; a test runs each script to the end.
 - R5 iOS WebAudio needs a user gesture → resolved in S17 edges.
+
+- R6 Decoration and permanent ambient motion on low-end phones → accepted; transform/opacity only, reduced-motion off switch (as R2).
+- R7 S19 changes start-screen markup and copy → existing e2e locators and look shots must be updated, not weakened.
 
 ## Decisions
 - Separate new repo, display name "Rue's Arcade", slug `Rues-Arcade` (dir `/home/Rue/Repos/Rues-Arcade`, GitHub
@@ -174,12 +209,15 @@ Game (registry: slug, name, colour, player limits, phases)
 - Slide viewer: Cash App https://mobbin.com/screens/ab53c620-435b-48af-8570-eb2c8890c02d · Bumble arrows+dots https://mobbin.com/screens/56d5faa0-b9cd-438e-a73c-361996fa6dd3
 - Backup of the only content copies: `00_Archive/Party-Games-content-backup-2026-10-05/` (seeds/*.sql, dev.db, static/sounds/).
 
+- Gate 2 reopen (2026-10-05, Rue): decoration variant 1 Spielbrett; ambient motion permanent; start button "Los geht's"; pitch line on tiles; copy neutral/grown-up; Wavelength co-op 2–3 rounds-based with rating; action box on start screens only.
+
 ## Done when
 - On phone and desktop, Rue can set up a roster, play a full game of Imposter and of Wavelength with the
   imported content, reload mid-game and continue.
 - Each game's Demo plays one full round on the same example, end to end, by tapping the highlighted controls.
 - Erklärung shows the empty state, and shows an HTML file once one is committed.
 - `npm run proof:full` and CI are green; Rue approves the look on screenshots at Gate 2.
+- Two people can play a full Wavelength co-op game; Rue approves the decorated screens on screenshots.
 
 ## Split off
 - **Homelab: deploy Rues-Arcade** — Terraform host entry, role copied from `life_manager`, `03_SERVICES` playbook,
