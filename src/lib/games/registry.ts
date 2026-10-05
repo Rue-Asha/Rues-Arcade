@@ -25,6 +25,5 @@ export const games: GameEntry[] = [imposter, wavelength];
 export const comingSoon: string[] = ['Duck', 'Family Feud', 'Codes', 'Most Likely To', 'Charade'];
 
 export function playerRange(def: Pick<GameDef<any, any, any>, 'minPlayers' | 'maxPlayers'>): string {
-	void def;
-	throw new Error('not implemented');
+	return `${def.minPlayers}–${def.maxPlayers} Spieler`;
 }
