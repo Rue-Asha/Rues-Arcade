@@ -18,6 +18,7 @@ Rue's Arcade ships only Imposter and Wavelength; the three games the group playe
 ### Codes (port of archive `src/lib/games/codes.ts`, Passwort-style — NOT Codenames)
 - **S1** Setup builds 2–5 teams from the roster; each team needs ≥2 players, more allowed; team building like Wavelength (deal, shuffle, move a player). Rounds 1–8, default 5.
   - edges: a team with <2 players or <2 teams → start blocked with a neutral hint; roster < 4 → blocked by player limits; roster over max → "Wer spielt mit?" picker.
+  - added at Gate 1: 4–20 players; team count offered `2 … min(5, floor(n/2))`; the start-blocking hint reads "Jedes Team braucht mind. 2 Spieler."
 - **S2** One round = one secret word drawn from the Codes pool without repeats until the pool is used, then reshuffle (arcade `draw()` pattern).
   - edges: pool below minContent → start screen blocks (existing gate).
 - **S3** Explainer per team = `players[roundIndex % team.size]`; all other team members guess together with one guess. For 2-player teams roles swap every round (archive behaviour).
@@ -41,7 +42,8 @@ Rue's Arcade ships only Imposter and Wavelength; the three games the group playe
 - **S16** Spielende: winner(s) = everyone tied at the top score ("Unentschieden" on a tie — archive bug fix), reason line, rest of ranking with correct tied ranks; "Neue Runde" restarts with the same players, new random Chuck.
 
 ### Who is most likely to (new format)
-- **S17** Setup: ≥3 players from roster (max as roster); rounds 5/10/15/20, default 10.
+- **S17** Setup: 3–20 players from roster; rounds 5/10/15/20, default 10.
+  - added at Gate 1: maximum 20 players (replaces "max as roster").
 - **S18** Each round shows one prompt ("Wer würde am ehesten …?") drawn without repeats until the pool is used; "Anderer Spruch" swaps it (rejected prompt back to pool).
 - **S19** Everyone points at 3; the reader taps the player(s) most pointed at (one or more for a tie) and confirms; at least one must be chosen.
 - **S20** Reveal shows the prompt with the chosen player(s) as title holder(s); each gets +1 title.
@@ -52,8 +54,12 @@ Rue's Arcade ships only Imposter and Wavelength; the three games the group playe
   - edges: empty line / over 200 chars → import report error; duplicate → rejected like pairs; existing pair types unchanged.
 - **S23** A forward-only seed migration fills the three new tables once: Codes 91 words (backup dev.db, deduped), Duck 60 words, Most Likely To 60 prompts (backup seeds), from `/home/Rue/Repos/00_Archive/Party-Games-content-backup-2026-10-05/`.
   - edges: existing DB on deploy → seeds land once; entries the user later deletes stay deleted.
+  - added at Gate 1 (e2e data isolation): the shared e2e DB starts with seeds. Game e2e tests play on seeded content and read the drawn word or prompt from the saved session (`arcade:session:<slug>`) or the hold control, never assuming a pool size. Exact or empty pools (empty-pool gate, demos on an empty DB, seeded counts) run on `emptyServer`. Tests that add content on the shared DB use unique tagged texts and never delete seed rows.
 - **S24** Catalogue: the three tiles become playable (removed from "Bald"); Family Feud and Charade stay locked. Each game has a start page with "So geht's" rules and the content count.
 - **S25** Full look per game like Imposter/Wavelength: own colour token (+ledge, tint, contrast-checked), tile badge SVG, banner art and deco motifs.
+  - added at Gate 1: ambient art motion animates only transform/opacity and runs only under `prefers-reduced-motion: no-preference`.
+  - added at Gate 1: each game's look coverage goes through its own `e2e/walks/<slug>.ts` (`walk(page, check)`, start page → lobby → every phase), called from `look.test.ts`; game units never edit `look.test.ts`.
+  - added at Gate 1: the neutral-fallback example in `motifs.test.ts` moves from duck to a still-locked game (charade / family-feud).
 - **S26** Demo per game: scripted walk-through with Alex/Bo/Cleo/Dani and fixture content, gated like existing demos.
 - **S27** Sound: existing cues (press/reveal/correct/wrong/win) used at matching moments (e.g. Erraten → correct, Daneben → wrong, Endstand → win).
 - **S28** Session resume: each game saves after every action and resumes on reload; leaving mid-game asks for confirmation (arcade Modal).
