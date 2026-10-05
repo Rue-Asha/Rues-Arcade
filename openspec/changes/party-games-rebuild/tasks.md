@@ -27,30 +27,30 @@ clauses. UI work cites the Mobbin refs from scope.md and follows `design/look-A1
 
 > unit: depends=2 · scope=S7,S1b · files=src/lib/server/db.ts, src/lib/server/db.test.ts, src/lib/server/content.ts, src/lib/server/content.test.ts, src/lib/content/parse.ts, src/lib/content/parse.test.ts, src/hooks.server.ts, src/routes/healthz/+server.ts, src/routes/healthz/healthz.test.ts, src/routes/api/content/[type]/+server.ts, src/routes/api/content/[type]/[id]/+server.ts, src/routes/api/content/[type]/import/+server.ts, e2e/healthz.test.ts
 
-- [ ] 3.1 `db.ts`: open `DATABASE_PATH` with node:sqlite, create its directory, forward-only `migrate()` recording `schema_migrations`, throw naming the failing migration (Scenario: Missing database directory is created · Fresh database runs with empty tables · Migration failure refuses to start · Migrations are applied once)
-- [ ] 3.2 `hooks.server.ts` `init` migrates on start so a failure stops the server; confirm adapter-node honours `PORT`, `HOST`, `PROTOCOL_HEADER`
-- [ ] 3.3 `GET /healthz` 200 on `SELECT 1`, 503 otherwise (Scenario: Healthy server · Unhealthy database)
-- [ ] 3.4 `parse.ts` + `content.ts`: list/add/update/delete/bulk import with duplicate counting, line-numbered errors and `MAX_TEXT` (Scenario: Bulk import reports skipped and malformed lines · Overlong text rejected)
-- [ ] 3.5 Content API routes per design.md, validating `type` against `ContentType`
+- [x] 3.1 `db.ts`: open `DATABASE_PATH` with node:sqlite, create its directory, forward-only `migrate()` recording `schema_migrations`, throw naming the failing migration (Scenario: Missing database directory is created · Fresh database runs with empty tables · Migration failure refuses to start · Migrations are applied once)
+- [x] 3.2 `hooks.server.ts` `init` migrates on start so a failure stops the server; confirm adapter-node honours `PORT`, `HOST`, `PROTOCOL_HEADER`
+- [x] 3.3 `GET /healthz` 200 on `SELECT 1`, 503 otherwise (Scenario: Healthy server · Unhealthy database)
+- [x] 3.4 `parse.ts` + `content.ts`: list/add/update/delete/bulk import with duplicate counting, line-numbered errors and `MAX_TEXT` (Scenario: Bulk import reports skipped and malformed lines · Overlong text rejected)
+- [x] 3.5 Content API routes per design.md, validating `type` against `ContentType`
 
 ## 4. Design system, motion and sound
 
 > unit: depends=2 · scope=S2,S3,S17 · files=src/app.css, src/app.html, src/routes/+layout.svelte, src/lib/ui/*.svelte, src/lib/ui/tokens.ts, src/lib/ui/tokens.test.ts, src/lib/motion.ts, src/lib/sound.ts, src/lib/sound.test.ts, static/fonts/*
 
-- [ ] 4.1 Tokens from the Arcade-Abend artboard in `app.css` (+ `tokens.ts` for tests), self-hosted Sora and Press Start 2P, dark only, `lang="de"`; layout shell with one alignment rule for phone 390px and desktop ≥1280px (Scenario: Text contrast meets 4.5:1)
-- [ ] 4.2 Components: Button (ledge + press sink, ≥44px), GameTile (game colour on badge, ledge, 3px top edge, 9% tint; `locked` greyed), Card, Scoreboard (leader row coloured, Press Start 2P scores), Lives, Modal, HoldToView, CoachTip, Stage
-- [ ] 4.3 Demo gating in Button and HoldToView via `getDemo()`: non-expected `action` disabled, expected highlighted, HoldToView open with [Demo] tag
-- [ ] 4.4 `motion.ts`: stage/phase transitions, press feedback, `countUp`, reveal pulse on transform/opacity, all instant under `prefers-reduced-motion`, never capturing pointer events
-- [ ] 4.5 `sound.ts`: WebAudio synth for press/reveal/correct/wrong/win, AudioContext created on first pointerdown, silent without WebAudio, mute toggle in layout header persisted as `arcade:muted` (Scenario: Mute is remembered · No sound before first interaction · WebAudio unavailable stays silent)
+- [x] 4.1 Tokens from the Arcade-Abend artboard in `app.css` (+ `tokens.ts` for tests), self-hosted Sora and Press Start 2P, dark only, `lang="de"`; layout shell with one alignment rule for phone 390px and desktop ≥1280px (Scenario: Text contrast meets 4.5:1)
+- [x] 4.2 Components: Button (ledge + press sink, ≥44px), GameTile (game colour on badge, ledge, 3px top edge, 9% tint; `locked` greyed), Card, Scoreboard (leader row coloured, Press Start 2P scores), Lives, Modal, HoldToView, CoachTip, Stage
+- [x] 4.3 Demo gating in Button and HoldToView via `getDemo()`: non-expected `action` disabled, expected highlighted, HoldToView open with [Demo] tag
+- [x] 4.4 `motion.ts`: stage/phase transitions, press feedback, `countUp`, reveal pulse on transform/opacity, all instant under `prefers-reduced-motion`, never capturing pointer events
+- [x] 4.5 `sound.ts`: WebAudio synth for press/reveal/correct/wrong/win, AudioContext created on first pointerdown, silent without WebAudio, mute toggle in layout header persisted as `arcade:muted` (Scenario: Mute is remembered · No sound before first interaction · WebAudio unavailable stays silent)
 
 ## 5. Game engines and demo scripts
 
 > unit: depends=2 · scope=S11,S12,S14,S15,S6 · files=src/lib/games/imposter/engine.ts, src/lib/games/imposter/engine.test.ts, src/lib/games/imposter/demo.ts, src/lib/games/wavelength/engine.ts, src/lib/games/wavelength/engine.test.ts, src/lib/games/wavelength/demo.ts
 
-- [ ] 5.1 Imposter reducer ported from archive `imposter.ts` + page phase machine: draw without repeats then reshuffle, imposter pick, `{NAME}`/`{NAME2}` bindings, reveal → handover → crew → unmask → next round, skip (Scenario: Skip redraws and restarts the reveal · Name placeholders filled with distinct names · No repeats until the pool is exhausted · Pool of one pair repeats)
-- [ ] 5.2 Wavelength reducer ported from archive `wavelength.ts` + page: teams, rounds 1–5 (default 3), spectrum + target from RNG, redraw, dial, lock-in 4/3/2/0, psychic rotation, winner/tie (Scenario: Scoring bands · Target at the extremes scores correctly · Psychic rotates within the team · Tie for first shown as tie · Redraw changes spectrum and target)
-- [ ] 5.3 Engine-contract tests for both games (Scenario: Same seed and actions give the same state · Reducer does not mutate its input)
-- [ ] 5.4 Demo fixtures + scripts with Alex, Bo, Cleo, Dani and German coach tips: Imposter one full round; Wavelength 2 teams × 1 turn (Scenario: Imposter demo script plays to the end · Wavelength demo script plays to the end)
+- [x] 5.1 Imposter reducer ported from archive `imposter.ts` + page phase machine: draw without repeats then reshuffle, imposter pick, `{NAME}`/`{NAME2}` bindings, reveal → handover → crew → unmask → next round, skip (Scenario: Skip redraws and restarts the reveal · Name placeholders filled with distinct names · No repeats until the pool is exhausted · Pool of one pair repeats)
+- [x] 5.2 Wavelength reducer ported from archive `wavelength.ts` + page: teams, rounds 1–5 (default 3), spectrum + target from RNG, redraw, dial, lock-in 4/3/2/0, psychic rotation, winner/tie (Scenario: Scoring bands · Target at the extremes scores correctly · Psychic rotates within the team · Tie for first shown as tie · Redraw changes spectrum and target)
+- [x] 5.3 Engine-contract tests for both games (Scenario: Same seed and actions give the same state · Reducer does not mutate its input)
+- [x] 5.4 Demo fixtures + scripts with Alex, Bo, Cleo, Dani and German coach tips: Imposter one full round; Wavelength 2 teams × 1 turn (Scenario: Imposter demo script plays to the end · Wavelength demo script plays to the end)
 
 ## 6. App shell: roster, sessions, catalogue, start and lobby
 
