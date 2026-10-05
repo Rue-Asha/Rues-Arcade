@@ -20,6 +20,34 @@ function playRound(s: ImposterState): ImposterState {
 	return run(s, ['reveal', 'unmask', 'reveal', 'nextRound']);
 }
 
+function freeze<T>(v: T): T {
+	if (v && typeof v === 'object') {
+		Object.values(v).forEach(freeze);
+		Object.freeze(v);
+	}
+	return v;
+}
+
+const allActions: ImposterAction['type'][] = ['handover', 'seen', 'skip', 'handover', 'seen', 'handover', 'seen', 'handover', 'seen', 'handover', 'seen', 'reveal', 'unmask', 'reveal', 'nextRound', 'handover'];
+
+describe('imposter engine contract', () => {
+	it('Scenario: Same seed and actions give the same state', () => {
+		const a = run(start(4, pairs(5), 42), allActions);
+		const b = run(start(4, pairs(5), 42), allActions);
+		expect(a).toEqual(b);
+		expect(a.round).toBe(2);
+	});
+
+	it('Scenario: Reducer does not mutate its input', () => {
+		let s = freeze(start(4, pairs(5)));
+		for (const type of allActions) {
+			const n = imposter.reduce(s, { type } as ImposterAction);
+			expect(n).not.toBe(s);
+			s = freeze(n);
+		}
+	});
+});
+
 describe('imposter engine', () => {
 	it('Scenario: Skip redraws and restarts the reveal', () => {
 		let s = start(4, pairs(3));

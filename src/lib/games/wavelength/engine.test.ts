@@ -30,6 +30,48 @@ const turn = (s: WavelengthState, value: number) =>
 const MIN_TARGET = 2.5 * BAND_DEGREES;
 const MAX_TARGET = DIAL_DEGREES - 2.5 * BAND_DEGREES;
 
+function freeze<T>(v: T): T {
+	if (v && typeof v === 'object') {
+		Object.values(v).forEach(freeze);
+		Object.freeze(v);
+	}
+	return v;
+}
+
+const allActions: WavelengthAction[] = [
+	{ type: 'redraw' },
+	{ type: 'show' },
+	{ type: 'redraw' },
+	{ type: 'guess' },
+	{ type: 'dial', value: 120 },
+	{ type: 'lockIn' },
+	{ type: 'next' },
+	{ type: 'show' },
+	{ type: 'guess' },
+	{ type: 'dial', value: 30 },
+	{ type: 'lockIn' },
+	{ type: 'next' },
+	{ type: 'again' }
+];
+
+describe('wavelength engine contract', () => {
+	it('Scenario: Same seed and actions give the same state', () => {
+		const a = step(start([['alex', 'bo'], ['cleo', 'dani']], 1, spectra(4), 42), ...allActions);
+		const b = step(start([['alex', 'bo'], ['cleo', 'dani']], 1, spectra(4), 42), ...allActions);
+		expect(a).toEqual(b);
+		expect(wavelength.phase(a)).toBe('prep');
+	});
+
+	it('Scenario: Reducer does not mutate its input', () => {
+		let s = freeze(start([['alex', 'bo'], ['cleo', 'dani']]));
+		for (const action of allActions) {
+			const n = wavelength.reduce(s, action);
+			expect(n).not.toBe(s);
+			s = freeze(n);
+		}
+	});
+});
+
 describe('wavelength engine', () => {
 	it('Scenario: Scoring bands', () => {
 		const at = (offset: number) => {
