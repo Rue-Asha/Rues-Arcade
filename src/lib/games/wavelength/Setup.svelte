@@ -196,7 +196,7 @@
 	}
 
 	.team.off .size {
-		color: var(--imposter);
+		color: var(--imposter-text);
 		font-weight: 700;
 	}
 

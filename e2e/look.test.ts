@@ -82,6 +82,11 @@ async function walk(page: Page, info: TestInfo, check: Check) {
 	await expect(page).toHaveURL(/\/lobby$/);
 	await press(page, '1');
 	await check('lobby-wavelength');
+	await page.getByRole('button', { name: 'Alex', exact: true }).click();
+	await expect(page.getByText('1 / 3', { exact: true })).toBeVisible();
+	await check('lobby-wavelength-short');
+	await page.getByRole('button', { name: 'Alex', exact: true }).click();
+	await expect(page.getByText('1 / 3', { exact: true })).toHaveCount(0);
 	await press(page, "Los geht's");
 	await expect(page).toHaveURL(/\/spielen$/);
 	for (const [i, psychic] of ['Alex', 'Bo'].entries()) {
@@ -166,6 +171,63 @@ test('Scenario: Touch targets are at least 44px', async ({ page }, info) => {
 	});
 	expect(small).toEqual([]);
 });
+
+test('Scenario: Text contrast meets 4.5:1', async ({ page }, info) => {
+	const low: string[] = [];
+	await walk(page, info, async (slug) => {
+		await settle(page);
+		const found = await page.evaluate(contrastFailures);
+		low.push(...found.map((f) => `${slug}: ${f}`));
+	});
+	expect(low).toEqual([]);
+});
+
+// Every visible text node against the first opaque background behind it, translucent layers composited.
+// Disabled controls are exempt (WCAG 1.4.3 "inactive components").
+function contrastFailures() {
+	type RGBA = [number, number, number, number];
+	const parse = (c: string): RGBA => {
+		const [r, g, b, a = 1] = c.match(/[\d.]+/g)!.map(Number);
+		return [r, g, b, a];
+	};
+	const over = ([r, g, b, a]: RGBA, [R, G, B]: RGBA): RGBA => [
+		r * a + R * (1 - a),
+		g * a + G * (1 - a),
+		b * a + B * (1 - a),
+		1
+	];
+	const lum = (c: RGBA) => {
+		const [r, g, b] = c.slice(0, 3).map((v) => {
+			const s = v / 255;
+			return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+		});
+		return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+	};
+	const background = (el: Element | null): RGBA => {
+		const layers: RGBA[] = [];
+		for (; el; el = el.parentElement) {
+			const c = parse(getComputedStyle(el).backgroundColor);
+			if (c[3] > 0) layers.push(c);
+			if (c[3] >= 1) break;
+		}
+		let bg: RGBA = layers.at(-1)?.[3] === 1 ? layers.pop()! : parse(getComputedStyle(document.body).backgroundColor);
+		for (const layer of layers.reverse()) bg = over(layer, bg);
+		return bg;
+	};
+	const out: string[] = [];
+	const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+	for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+		const el = node.parentElement!;
+		if (!(node as Text).data.trim() || !el.checkVisibility({ opacityProperty: true, visibilityProperty: true })) continue;
+		if (el.closest(':disabled, [aria-disabled="true"]')) continue;
+		const bg = background(el);
+		const fg = over(parse(getComputedStyle(el).color), bg);
+		const [hi, lo] = [lum(fg), lum(bg)].sort((x, y) => y - x);
+		const ratio = (hi + 0.05) / (lo + 0.05);
+		if (ratio < 4.5) out.push(`"${(node as Text).data.trim().slice(0, 30)}" ${getComputedStyle(el).color} on rgb(${bg.slice(0, 3).map(Math.round)}) = ${ratio.toFixed(2)}`);
+	}
+	return out;
+}
 
 test('Scenario: No horizontal scroll on phone', async ({ page }, info) => {
 	test.skip(info.project.name !== 'phone', 'phone layout');

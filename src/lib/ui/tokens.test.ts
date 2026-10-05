@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { contrast, textPairs, tokens } from '#lib/ui/tokens.ts';
 
 describe('design tokens', () => {
-	it('Scenario: Text contrast meets 4.5:1', () => {
+	it('listed token pairs meet 4.5:1', () => {
 		const failing = textPairs
 			.map(([fg, bg]) => ({ fg, bg, ratio: contrast(tokens[fg], tokens[bg]) }))
 			.filter((p) => p.ratio < 4.5);

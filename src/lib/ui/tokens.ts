@@ -20,6 +20,7 @@ export const tokens = {
 	reveal: '#e8ba49',
 	'on-reveal': '#171103',
 	imposter: '#eb616d',
+	'imposter-text': '#ed6c78',
 	'imposter-ledge': '#650d1d',
 	'imposter-tint': '#2d2248',
 	wavelength: '#38ccc8',
@@ -36,7 +37,8 @@ export const textPairs: [Token, Token][] = [
 		['text', bg],
 		['text-soft', bg],
 		['muted', bg],
-		['gold', bg]
+		['gold', bg],
+		['imposter-text', bg]
 	]),
 	['on-primary', 'primary'],
 	['on-primary', 'primary-press'],

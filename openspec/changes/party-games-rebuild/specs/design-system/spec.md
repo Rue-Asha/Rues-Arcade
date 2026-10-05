@@ -9,7 +9,7 @@ The UI SHALL be German and dark only.
 #### Scenario: Text contrast meets 4.5:1
 - **WHEN** every text/background token pair used by the components is evaluated
 - **THEN** each pair has a contrast ratio of at least 4.5:1
-- **proof:** unit
+- **proof:** e2e
 
 #### Scenario: Look approved on screenshots
 - **WHEN** Rue reviews the e2e screenshots of Home, Spieler, a game start screen, a reveal and a scoreboard at 390px and 1280px

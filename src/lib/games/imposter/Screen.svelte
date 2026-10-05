@@ -221,6 +221,6 @@
 
 	.now .dot {
 		border-color: var(--imposter);
-		color: var(--imposter);
+		color: var(--imposter-text);
 	}
 </style>
