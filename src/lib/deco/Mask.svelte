@@ -29,4 +29,21 @@
 	.odd {
 		transform-box: fill-box;
 	}
+
+	@media (prefers-reduced-motion: no-preference) {
+		.odd {
+			animation: lift 4s var(--ease-out) infinite;
+		}
+
+		@keyframes lift {
+			0%,
+			70%,
+			100% {
+				transform: translateY(0);
+			}
+			80% {
+				transform: translateY(-6px);
+			}
+		}
+	}
 </style>

@@ -56,4 +56,21 @@
 	.bottom .turn {
 		transform-origin: -20px 230px;
 	}
+
+	@media (prefers-reduced-motion: no-preference) {
+		.turn {
+			animation: turn 90s linear infinite;
+		}
+
+		.slow {
+			animation-duration: 140s;
+			animation-direction: reverse;
+		}
+
+		@keyframes turn {
+			to {
+				transform: rotate(360deg);
+			}
+		}
+	}
 </style>

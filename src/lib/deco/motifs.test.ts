@@ -1,3 +1,4 @@
+import { readdirSync, readFileSync } from 'node:fs';
 import { createRawSnippet } from 'svelte';
 import { render } from 'svelte/server';
 import { describe, expect, it } from 'vitest';
@@ -126,5 +127,48 @@ describe('Banner', () => {
 			/--c:\s*var\(--imposter\);\s*--tint:\s*var\(--imposter-tint[,)].*--edge:\s*var\(--imposter-ledge[,)]/
 		);
 		expect(banner({ place: 'home' })).toMatch(/--c:\s*var\(--primary\)/);
+	});
+});
+
+describe('ambient motion', () => {
+	const styles = readdirSync('src/lib/deco')
+		.filter((f) => f.endsWith('.svelte'))
+		.map((f) => [f, readFileSync(`src/lib/deco/${f}`, 'utf8').match(/<style>([\s\S]*)<\/style>/)?.[1] ?? ''] as const);
+
+	// splits a stylesheet into the prefers-reduced-motion: no-preference blocks and everything else
+	const split = (css: string) => {
+		const inside: string[] = [];
+		let outside = css;
+		for (let at = outside.indexOf('@media (prefers-reduced-motion: no-preference)'); at >= 0; at = outside.indexOf('@media (prefers-reduced-motion: no-preference)')) {
+			let depth = 0;
+			let end = outside.indexOf('{', at);
+			for (; end < outside.length; end++) {
+				if (outside[end] === '{') depth++;
+				if (outside[end] === '}' && --depth === 0) break;
+			}
+			inside.push(outside.slice(at, end + 1));
+			outside = outside.slice(0, at) + outside.slice(end + 1);
+		}
+		return { inside: inside.join('\n'), outside };
+	};
+
+	it('needle sweep (~7 s) and mask lift loop forever, only when motion is allowed', () => {
+		const all = Object.fromEntries(styles.map(([f, css]) => [f, split(css)]));
+		for (const [f, { outside }] of Object.entries(all)) {
+			expect(outside, f).not.toMatch(/animation|@keyframes/);
+		}
+		expect(all['Gauge.svelte'].inside).toMatch(/\.needle\s*\{[^}]*animation:[^;]*\b7s\b[^;]*\binfinite\b/);
+		expect(all['Mask.svelte'].inside).toMatch(/\.odd\s*\{[^}]*animation:[^;]*\binfinite\b/);
+		expect(all['Rings.svelte'].inside).toMatch(/animation:[^;]*\binfinite\b/);
+	});
+
+	it('keyframes animate transform or opacity only', () => {
+		const frames = styles.flatMap(([f, css]) => [...css.matchAll(/@keyframes\s+([\w-]+)\s*\{((?:[^{}]*\{[^}]*\})*)\s*\}/g)].map((m) => [f, m[2]] as const));
+		expect(frames.length).toBeGreaterThanOrEqual(3);
+		for (const [f, body] of frames) {
+			const props = [...body.matchAll(/([\w-]+)\s*:/g)].map((m) => m[1]);
+			expect(props.length, f).toBeGreaterThan(0);
+			for (const prop of props) expect(['transform', 'opacity'], `${f}: ${prop}`).toContain(prop);
+		}
 	});
 });

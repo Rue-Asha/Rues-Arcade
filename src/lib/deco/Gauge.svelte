@@ -52,4 +52,20 @@
 	.needle {
 		transform-box: view-box;
 	}
+
+	@media (prefers-reduced-motion: no-preference) {
+		.needle {
+			animation: sweep 7s ease-in-out infinite;
+		}
+
+		@keyframes sweep {
+			0%,
+			100% {
+				transform: rotate(52deg);
+			}
+			50% {
+				transform: rotate(128deg);
+			}
+		}
+	}
 </style>
