@@ -82,13 +82,18 @@ test('play route without a session returns to the start screen', async ({ page }
 	await expect(page).toHaveURL(/\/spiele\/wavelength$/);
 });
 
-test('discarded session shows a notice', async ({ page }) => {
+test('Scenario: Old or corrupt saved state discarded', async ({ page }) => {
+	const errors: Error[] = [];
+	page.on('pageerror', (e) => errors.push(e));
 	await page.goto('/');
-	await page.evaluate(() => localStorage.setItem('arcade:session:imposter', '{kaputt'));
-	await page.goto('/spiele/imposter/spielen');
+	for (const raw of ['{"v":0,"state":{"phase":"view"}}', '{kaputt', '{"v":1,"state":{"phase":"view"}}']) {
+		await page.evaluate((r) => localStorage.setItem('arcade:session:imposter', r), raw);
+		await page.goto('/spiele/imposter/spielen');
 
-	await expect(page.getByRole('alert')).toContainText('verworfen');
-	await expect(page.evaluate(() => localStorage.getItem('arcade:session:imposter'))).resolves.toBeNull();
+		await expect(page.getByRole('alert')).toContainText('verworfen');
+		await expect(page.evaluate(() => localStorage.getItem('arcade:session:imposter'))).resolves.toBeNull();
+	}
+	expect(errors).toEqual([]);
 });
 
 test('a session without the game state shape is discarded, not resumed', async ({ page }) => {

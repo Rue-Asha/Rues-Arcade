@@ -34,7 +34,7 @@ describe('session', () => {
 		vi.unstubAllGlobals();
 	});
 
-	it('Scenario: Old or corrupt saved state discarded', async () => {
+	it('discards an older version, invalid JSON and a state without the game shape', async () => {
 		const { session } = await fresh();
 
 		session.saveSession('imposter', 1, { phase: 'view' });

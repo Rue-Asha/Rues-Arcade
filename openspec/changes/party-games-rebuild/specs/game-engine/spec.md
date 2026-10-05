@@ -31,7 +31,7 @@ SHALL clear it.
 #### Scenario: Old or corrupt saved state discarded
 - **WHEN** the stored session has an older version, is not valid JSON, or lacks the shape of the game's state
 - **THEN** it is discarded, a notice is shown, and the app does not crash
-- **proof:** unit
+- **proof:** e2e
 
 #### Scenario: Two tabs last write wins
 - **WHEN** two tabs write the same game's session
