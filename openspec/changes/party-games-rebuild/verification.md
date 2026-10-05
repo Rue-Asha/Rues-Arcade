@@ -191,9 +191,16 @@ Four rounds of fresh-context review (Layer 3). No round found a weakened test. R
 | correctness (low): session shape check is top-level only; a valid state with `players: []` (or Wavelength `teams: [{}]`) still crashes the play page | shape check recursive (nested objects, array elements); unit + e2e cases. Index invariants (teamIndex range) not checked — would need a per-game valid() hook |
 | correctness (low): db.ts loadMigrations resolves `migrations` against cwd; starting the unpacked tarball from another directory fails with ENOENT | migrations resolved from the nearest package.json; scenario "Server starts from any working directory" (e2e, starts from tmpdir) |
 
-### Round 4 (reviewer on d01835c) — open, user's extra round used
-| Finding | Status |
+### Round 4 (reviewer on d01835c) → fixer r5 (user decision at Gate 2) b1925a2 8ce52ee
+| Finding | Resolution |
 |---|---|
-| weak: src/lib/session.test.ts:37 "Old or corrupt saved state discarded" doesn't assert "a notice is shown" (unnamed e2e tests in e2e/start.test.ts do) | open |
-| weak: src/lib/games/imposter/engine.test.ts:103 "No repeats until the pool is exhausted": `expect([1,2,3,4,5]).toContain(ids[5])` can never fail; a refill that excludes the last-used pair would pass | open |
-| spec (low confidence): Wavelength demo guess step shows no target, though hidden info should be "shown openly with a [Demo] tag"; target shows on reveal and result steps; scenario passes | open |
+| weak: src/lib/session.test.ts:37 "Old or corrupt saved state discarded" doesn't assert "a notice is shown" (unnamed e2e tests in e2e/start.test.ts do) | scenario moved to e2e (e2e/start.test.ts): older version, invalid JSON, missing shape → notice shown, key removed; spec proof line unit → e2e |
+| weak: src/lib/games/imposter/engine.test.ts:103 "No repeats until the pool is exhausted": `expect([1,2,3,4,5]).toContain(ids[5])` can never fail; a refill that excludes the last-used pair would pass | 50-seed sweep: rounds 1–5 distinct, round 6 reaches all 5 pairs incl. the last-used one; seen red on a refill that skips the last pair |
+| spec (low confidence): Wavelength demo guess step shows no target, though hidden info should be "shown openly with a [Demo] tag"; target shows on reveal and result steps; scenario passes | accepted as is (user decision at Gate 2) |
+
+### Round 5 (reviewer on 8ce52ee) → fixer 54a642c
+| Finding | Resolution |
+|---|---|
+| weakened: src/lib/games/imposter/engine.test.ts:94 rewrite in 8ce52ee dropped the check that rounds 6–10 again use 5 distinct pairs (Requirement "then reshuffled") | check restored for every seed; seen red on a refill that doesn't reset `used`; verifier re-ran at 54a642c, green |
+
+No other findings in round 5 (weak tests, spec mismatch, correctness: none).
