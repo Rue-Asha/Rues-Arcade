@@ -6,6 +6,7 @@ notes:
   - "Repo was created fresh with git init; main has no commit yet (unborn). Planner: settle how main gets its root commit before Build/Ship (new GitHub repo Rue-Asha/Rues-Arcade is created only at Ship, with consent)."
   - "User wants a pause at every checkpoint so they can /clear."
   - "U1 (wave 1): Kit 3 has no svelte.config.js; Kit config lives in vite.config.ts. Rng interface is exported from src/lib/engine/rng.ts; engine/types.ts re-exports it, no second declaration. int(rng,min,max) includes both bounds, next() is in [0,1)."
+  - "U2 (wave 2): Kit 3 removed $lib. Import via package.json imports `#lib/...` WITH explicit extension (`#lib/engine/types.ts`, `#lib/ui/Button.svelte`). storage.ts contract: read(key): string|null, write(key, value: string), remove(key) — raw strings, session.ts handles corrupt JSON. Per-game Config/State/Action are placeholders for U5 to replace. getDemo() returns null until U12. schema_migrations table is created by U3 db.ts migrate(), not 0001_content.sql. playerRange throws until U6."
   - "Open for Verify: the harness scenario that proof-full uses .e2e/<PORT>.db is only half proven until server DB code exists (content-store); recheck in Verify."
 learnings:
   - "Explore: offered 'new repo, same remote' with fresh history → can't PR unrelated histories; user then chose a separate new repo. Check the git mechanics of a repo-replacement option before offering it."
@@ -14,3 +15,4 @@ learnings:
   - "A1 (muted) read as 'zu matt' — Rue's target saturation sits between A and A1: colours that pop without stabbing; when tuning palette for Rue, show several palettes on a fixed design rather than one."
   - "U1: SvelteKit 3 / Vite 8 / TS 6 / vitest 5 broke the repo-setup.md SvelteKit recipe (svelte.config.js rejected, tsconfig must extend $app/tsconfig) → update the recipe; check the installed Kit major before scaffolding."
   - "U1: vitest picks up e2e/*.test.ts by default → the recipe should set test.include to src/**/*.test.ts."
+  - "U2: stub .svelte components with `void prop` trip state_referenced_locally under --fail-on-warnings → leave destructured props unused in stubs."
