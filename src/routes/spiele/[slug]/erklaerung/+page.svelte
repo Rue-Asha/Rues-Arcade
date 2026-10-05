@@ -128,7 +128,6 @@
 		flex-direction: column;
 		align-items: flex-start;
 		gap: 10px;
-		max-width: 560px;
 		padding: 24px;
 		border: 2px dashed var(--line);
 		background: transparent;
