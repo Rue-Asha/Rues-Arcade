@@ -1,9 +1,10 @@
 import { expect, test } from '@playwright/test';
-import { emptyServer, seedRoster, shot } from './helpers.ts';
+import { emptyServer, seedContent, seedRoster, shot } from './helpers.ts';
 
 const crew = (n: number) => Array.from({ length: n }, (_, i) => `Spieler ${i + 1}`);
 
-test('Scenario: Below minimum disables start', async ({ page }, info) => {
+test('Scenario: Below minimum disables start', async ({ page, request }, info) => {
+	await seedContent(request, 'imposter_pairs', [['Lieblingsfarbe?', 'Lieblingsblume?']]);
 	await seedRoster(page, ['Alex', 'Bo']);
 	await page.goto('/spiele/imposter');
 
@@ -14,6 +15,10 @@ test('Scenario: Below minimum disables start', async ({ page }, info) => {
 		'/spieler?from=/spiele/imposter'
 	);
 	await shot(page, info, 'start-imposter');
+
+	await seedRoster(page, ['Alex', 'Bo', 'Cleo']);
+	await page.reload();
+	await expect(page.getByRole('button', { name: 'Spiel starten' })).toBeEnabled();
 });
 
 test('Scenario: Above maximum asks who plays', async ({ page }, info) => {
