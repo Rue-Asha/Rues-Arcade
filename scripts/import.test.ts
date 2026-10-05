@@ -86,12 +86,18 @@ describe('importer', () => {
 	it('Scenario: Source missing or not SQLite', () => {
 		const notSqlite = join(dir, 'notes.txt');
 		writeFileSync(notSqlite, 'Hund | Katze\n'.repeat(100));
-		for (const source of [join(dir, 'nope.db'), notSqlite]) {
+		const empty = join(dir, 'empty.db');
+		writeFileSync(empty, '');
+		const unrelated = join(dir, 'unrelated.db');
+		const db = new DatabaseSync(unrelated);
+		db.exec('CREATE TABLE notes (id INTEGER PRIMARY KEY, text TEXT)');
+		db.close();
+		for (const source of [join(dir, 'nope.db'), notSqlite, empty, unrelated]) {
 			const target = join(dir, 'new.db');
 			const { code, out } = run(source, '--into', target);
 			expect(code).not.toBe(0);
 			expect(out).toContain(source);
-			expect(out).toMatch(/does not exist|not a SQLite database/);
+			expect(out).toMatch(/does not exist|not a SQLite database|has neither imposter_prompts nor wavelength_prompts/);
 			expect(existsSync(target)).toBe(false);
 		}
 	});

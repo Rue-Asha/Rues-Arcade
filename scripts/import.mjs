@@ -1,4 +1,4 @@
-import { existsSync } from 'node:fs';
+import { existsSync, statSync } from 'node:fs';
 import { parseArgs } from 'node:util';
 import { DatabaseSync } from 'node:sqlite';
 import { fileURLToPath } from 'node:url';
@@ -30,6 +30,8 @@ if (positionals.length !== 1 || !values.into) {
 
 const path = positionals[0];
 if (!existsSync(path)) fail(`${path} does not exist`);
+// SQLite opens a zero-byte file as an empty database
+if (statSync(path).size === 0) fail(`${path} is not a SQLite database`);
 const source = new DatabaseSync(path, { readOnly: true });
 let tables;
 try {
@@ -38,6 +40,8 @@ try {
 } catch {
 	fail(`${path} is not a SQLite database`);
 }
+if (!copies.some((c) => tables.has(c.from)))
+	fail(`${path} has neither ${copies.map((c) => c.from).join(' nor ')}`);
 
 const target = openDb(values.into);
 migrate(target, loadMigrations(fileURLToPath(new URL('../migrations', import.meta.url))));

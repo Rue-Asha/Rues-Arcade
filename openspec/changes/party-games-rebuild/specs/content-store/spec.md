@@ -65,7 +65,7 @@ new schema, printing counts per table.
 - **proof:** unit
 
 #### Scenario: Source missing or not SQLite
-- **WHEN** the source path does not exist or is not a SQLite file
+- **WHEN** the source path does not exist, is not a SQLite file (including a zero-byte file), or holds neither `imposter_prompts` nor `wavelength_prompts`
 - **THEN** the importer prints a clear error and exits non-zero without creating the target
 - **proof:** unit
 
