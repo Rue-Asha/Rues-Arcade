@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
+	import Art from '#lib/deco/Art.svelte';
 	import { games, loadGameSession } from '#lib/games/registry.ts';
 	import { clearSession, saveSession } from '#lib/session.ts';
 	import Button from '#lib/ui/Button.svelte';
@@ -42,7 +43,8 @@
 	<title>{def.name} · Rue's Arcade</title>
 </svelte:head>
 
-<div class="stack" style="--c: var(--{def.colour})">
+<div class="stack scene" style="--c: var(--{def.colour})">
+	<Art slug={def.slug} place="play" />
 	<header class="bar">
 		<div class="who">
 			<span class="label">Läuft</span>
@@ -81,6 +83,19 @@
 </Modal>
 
 <style>
+	/* fills the viewport below the app header (80–96px + page padding), so the backdrop isn't cut at the content's end */
+	.scene {
+		position: relative;
+		isolation: isolate;
+		min-height: calc(100svh - 152px);
+	}
+
+	/* the backdrop is absolutely positioned and would paint over in-flow content */
+	.scene > :global(:not([data-deco])) {
+		position: relative;
+		z-index: 1;
+	}
+
 	.bar {
 		display: flex;
 		flex-wrap: wrap;

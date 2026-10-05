@@ -6,7 +6,7 @@ const WAVELENGTH_STEPS = 10;
 
 async function openDemo(page: Page, slug: string, origin = '') {
 	await page.goto(`${origin}/spiele/${slug}`);
-	await page.getByRole('button', { name: 'Demo', exact: true }).click();
+	await page.getByRole('link', { name: 'Demo', exact: true }).click();
 	await expect(page).toHaveURL(new RegExp(`/spiele/${slug}/demo\\?from=`));
 }
 

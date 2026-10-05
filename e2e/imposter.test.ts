@@ -13,7 +13,7 @@ async function start(page: Page, pairs: [string, string][] = [[CREW, IMPOSTER]])
 	);
 	await seedRoster(page, names);
 	await page.goto('/spiele/imposter');
-	await page.getByRole('button', { name: 'Spiel starten' }).click();
+	await page.getByRole('button', { name: "Los geht's" }).click();
 	await expect(page).toHaveURL(/\/spiele\/imposter\/lobby$/);
 	await page.getByRole('button', { name: "Los geht's" }).click();
 	await expect(page).toHaveURL(/\/spiele\/imposter\/spielen$/);
@@ -138,7 +138,7 @@ test('Scenario: Spiel beenden clears the session', async ({ page }) => {
 	await expect(page).toHaveURL(/\/spiele\/imposter$/);
 
 	await page.goto('/spiele/imposter');
-	await expect(page.getByRole('button', { name: 'Spiel starten' })).toBeVisible();
+	await expect(page.getByRole('button', { name: "Los geht's" })).toBeVisible();
 	await expect(page.getByRole('button', { name: 'Weiterspielen' })).toHaveCount(0);
 	await page.goto('/spiele/imposter/spielen');
 	await expect(page).toHaveURL(/\/spiele\/imposter$/);

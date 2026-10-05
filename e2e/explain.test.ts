@@ -48,18 +48,18 @@ test('Scenario: Close by button or Esc', async ({ page }) => {
 	await serveFixture(page, 'imposter');
 	await page.goto('/spiele/imposter');
 
-	await page.getByRole('button', { name: 'Erklärung' }).click();
+	await page.getByRole('link', { name: 'Erklärung', exact: true }).click();
 	await expect(page.locator('iframe')).toBeVisible();
 	await page.keyboard.press('Escape');
 	await expect(page).toHaveURL(/\/spiele\/imposter$/);
-	await expect(page.getByRole('heading', { name: 'Imposter' })).toBeVisible();
+	await expect(page.getByRole('heading', { name: 'Imposter', exact: true })).toBeVisible();
 	await expect(page.locator('iframe')).toHaveCount(0);
 
-	await page.getByRole('button', { name: 'Erklärung' }).click();
+	await page.getByRole('link', { name: 'Erklärung', exact: true }).click();
 	await expect(page.locator('iframe')).toBeVisible();
 	await page.frameLocator('iframe').getByRole('heading', { name: 'So spielt man die Fixture' }).click();
 	await expect.poll(() => page.evaluate(() => document.activeElement?.tagName)).toBe('IFRAME');
 	await page.getByRole('button', { name: 'Erklärung schließen' }).click();
 	await expect(page).toHaveURL(/\/spiele\/imposter$/);
-	await expect(page.getByRole('heading', { name: 'Imposter' })).toBeVisible();
+	await expect(page.getByRole('heading', { name: 'Imposter', exact: true })).toBeVisible();
 });

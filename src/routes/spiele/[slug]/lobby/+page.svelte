@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import type { ContentItem } from '#lib/content/types.ts';
+	import Banner from '#lib/deco/Banner.svelte';
 	import { games } from '#lib/games/registry.ts';
 	import { roster } from '#lib/roster.svelte.ts';
 	import { saveSession } from '#lib/session.ts';
@@ -63,9 +64,12 @@
 {:else if ready}
 	{@const def = entry.def}
 	<div class="stack rise" style="--c: var(--{def.colour})">
-		<header class="hero">
-			<p class="label">Lobby</p>
-			<h1>{def.name}</h1>
+		<header>
+			<Banner slug={def.slug} place="lobby" colour={def.colour}>
+				<p class="label">Lobby</p>
+				<h1>{def.name}</h1>
+				<p class="muted">{chosen.length} Spieler</p>
+			</Banner>
 		</header>
 
 		{#if players.length < def.minPlayers}
@@ -121,15 +125,12 @@
 {/if}
 
 <style>
-	.hero {
-		display: flex;
-		flex-direction: column;
-		gap: 8px;
-		padding-block: 8px 4px;
+	header .label {
+		color: var(--c);
 	}
 
-	.hero .label {
-		color: var(--c);
+	header .muted {
+		font-weight: 500;
 	}
 
 	.gap {
