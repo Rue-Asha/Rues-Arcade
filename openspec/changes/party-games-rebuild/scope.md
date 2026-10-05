@@ -125,6 +125,9 @@ Game (registry: slug, name, colour, player limits, phases)
 - **S20** Copy: each home tile gets a one-line pitch; all new copy (banners, pitches, card descriptions,
   co-op rating) is neutral and grown-up — plain description, no exclamation marks, no puns, no
   "Spieleabend"-style slogans.
+  - added at Gate 1 (2026-10-05): existing Wavelength verdicts ("Volltreffer!", "Ganz nah dran!", "Daneben,
+    nächstes Mal!") and the demo tip "Volltreffer, 4 Punkte!" are reworded to the same neutral tone (Koop
+    reuses them); the Wavelength "So geht's" text covers both modes.
 - **S21** Wavelength modes Koop | Versus: the Wavelength lobby has a mode switch. Versus = teams as in S12
   (4+ players). Koop = all chosen players (2–18) are one team; each round every player is psychic once, in
   order, the others set the dial together; turn scoring unchanged (4/3/2/0); 1–5 rounds (default 3); one
