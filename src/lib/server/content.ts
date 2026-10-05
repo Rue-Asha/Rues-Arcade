@@ -1,4 +1,5 @@
 import type { DatabaseSync } from 'node:sqlite';
+import { error } from '@sveltejs/kit';
 import { pairError, parseBulk } from '#lib/content/parse.ts';
 import type { ContentItem, ContentType, ImportReport } from '#lib/content/types.ts';
 
@@ -13,6 +14,11 @@ const columns: Record<ContentType, [string, string]> = {
 
 export function isContentType(s: string): s is ContentType {
 	return Object.hasOwn(columns, s);
+}
+
+export function contentType(param: string): ContentType {
+	if (!isContentType(param)) error(404, 'Unbekannter Inhaltstyp.');
+	return param;
 }
 
 function sql(type: ContentType) {

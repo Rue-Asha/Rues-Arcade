@@ -1,8 +1,15 @@
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { isHttpError, json } from '@sveltejs/kit';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { MAX_TEXT } from '#lib/content/types.ts';
+import * as collection from '../../routes/api/content/[type]/+server.ts';
+import * as entry from '../../routes/api/content/[type]/[id]/+server.ts';
+import * as bulk from '../../routes/api/content/[type]/import/+server.ts';
 import { add, importBulk, isContentType, list, remove, update } from './content.ts';
-import { migrate } from './db.ts';
+import { closeDb, migrate } from './db.ts';
 
 let db: DatabaseSync;
 
@@ -84,5 +91,83 @@ describe('content store', () => {
 		expect(isContentType('wavelength_spectra')).toBe(true);
 		expect(isContentType('users')).toBe(false);
 		expect(isContentType('toString')).toBe(false);
+	});
+});
+
+type Handler = (event: never) => Response | Promise<Response>;
+
+function call(handler: Handler, params: Record<string, string>, body?: unknown) {
+	const request = new Request('http://test/', {
+		method: body === undefined ? 'GET' : 'POST',
+		body: body === undefined ? undefined : JSON.stringify(body)
+	});
+	return Promise.resolve()
+		.then(() => handler({ params, request } as never))
+		.catch((e) => {
+			if (!isHttpError(e)) throw e;
+			return json(e.body, { status: e.status });
+		});
+}
+
+describe('content API', () => {
+	beforeEach(() => {
+		process.env.DATABASE_PATH = join(mkdtempSync(join(tmpdir(), 'arcade-api-')), 'api.db');
+	});
+
+	afterEach(() => {
+		closeDb();
+		delete process.env.DATABASE_PATH;
+	});
+
+	it('creates, lists, edits and deletes an entry', async () => {
+		const type = 'wavelength_spectra';
+		const created = await call(collection.POST, { type }, { a: 'kalt', b: 'heiß' });
+		expect(created.status).toBe(201);
+		const item = await created.json();
+		expect(item).toEqual({ id: expect.any(Number), a: 'kalt', b: 'heiß' });
+
+		expect(await (await call(collection.GET, { type })).json()).toEqual([item]);
+
+		const id = String(item.id);
+		const edited = await call(entry.PUT, { type, id }, { a: 'kalt', b: 'warm' });
+		expect(await edited.json()).toEqual({ ...item, b: 'warm' });
+
+		expect((await call(entry.DELETE, { type, id })).status).toBe(204);
+		expect((await call(entry.DELETE, { type, id })).status).toBe(404);
+		expect(await (await call(collection.GET, { type })).json()).toEqual([]);
+	});
+
+	it('answers a refused entry with its status and message', async () => {
+		const res = await call(
+			collection.POST,
+			{ type: 'imposter_pairs' },
+			{ a: 'x'.repeat(MAX_TEXT + 1), b: 'B' }
+		);
+		expect(res.status).toBe(400);
+		expect((await res.json()).message).toContain(String(MAX_TEXT));
+		const bad = await call(entry.PUT, { type: 'imposter_pairs', id: 'abc' }, { a: 'A', b: 'B' });
+		expect(bad.status).toBe(404);
+	});
+
+	it('imports bulk text and returns the report', async () => {
+		const res = await call(bulk.POST, { type: 'imposter_pairs' }, { text: 'A | B\n\nkaputt' });
+		expect(await res.json()).toEqual({
+			imported: 1,
+			duplicates: 0,
+			skipped: 1,
+			errors: [{ line: 3, message: expect.any(String) }]
+		});
+	});
+
+	it('rejects an unknown content type with 404', async () => {
+		for (const [handler, params] of [
+			[collection.GET, { type: 'users' }],
+			[collection.POST, { type: 'users' }],
+			[entry.PUT, { type: 'users', id: '1' }],
+			[entry.DELETE, { type: 'users', id: '1' }],
+			[bulk.POST, { type: 'users' }]
+		] as [Handler, Record<string, string>][]) {
+			expect((await call(handler, params, { a: 'A', b: 'B', text: '' })).status).toBe(404);
+		}
 	});
 });
