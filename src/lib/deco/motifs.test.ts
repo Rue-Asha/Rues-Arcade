@@ -1,6 +1,8 @@
+import { createRawSnippet } from 'svelte';
 import { render } from 'svelte/server';
 import { describe, expect, it } from 'vitest';
 import Art from '#lib/deco/Art.svelte';
+import Banner from '#lib/deco/Banner.svelte';
 import { motifFor, type Place } from '#lib/deco/motifs.ts';
 
 const draws: [string | undefined, Place][] = [
@@ -95,5 +97,34 @@ describe('Art', () => {
 		const b = render(Art, { props: { place: 'home' }, idPrefix: 'x' }).body.match(/<pattern id="([^"]+)"/)?.[1];
 		expect(a).toBeTruthy();
 		expect(a).not.toBe(b);
+	});
+});
+
+describe('Banner', () => {
+	const children = createRawSnippet(() => ({ render: () => '<h1>Titel</h1>' }));
+	const banner = (props: { slug?: string; place: 'home' | 'start' | 'lobby'; colour?: string }) =>
+		render(Banner, { props: { ...props, children } }).body;
+
+	it('puts its text column before the art and places the motif for its place', () => {
+		const cases = [
+			[{ place: 'home' }, 'home'],
+			[{ slug: 'imposter', place: 'start', colour: 'imposter' }, 'masks'],
+			[{ slug: 'wavelength', place: 'start', colour: 'wavelength' }, 'dial'],
+			[{ slug: 'duck', place: 'start' }, 'neutral'],
+			[{ slug: 'wavelength', place: 'lobby', colour: 'wavelength' }, 'crew']
+		] as const;
+		for (const [props, motif] of cases) {
+			const body = banner(props);
+			expect(body.indexOf('<h1>Titel</h1>'), motif).toBeGreaterThan(-1);
+			expect(body.indexOf('<h1>Titel</h1>'), motif).toBeLessThan(body.indexOf('data-deco'));
+			expect(body.match(/data-motif="([^"]+)"/g), motif).toEqual([`data-motif="${motif}"`]);
+		}
+	});
+
+	it('colours itself from the token name', () => {
+		expect(banner({ slug: 'imposter', place: 'start', colour: 'imposter' })).toMatch(
+			/--c:\s*var\(--imposter\);\s*--tint:\s*var\(--imposter-tint[,)].*--edge:\s*var\(--imposter-ledge[,)]/
+		);
+		expect(banner({ place: 'home' })).toMatch(/--c:\s*var\(--primary\)/);
 	});
 });
