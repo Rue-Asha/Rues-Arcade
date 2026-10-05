@@ -5,6 +5,8 @@ import { demo } from './demo.ts';
 import {
 	BAND_DEGREES,
 	DIAL_DEGREES,
+	formatAverage,
+	koopResult,
 	modeOf,
 	psychic,
 	scoreFor,
@@ -230,6 +232,38 @@ describe('wavelength koop', () => {
 		expect(again.roundIndex).toBe(0);
 		expect(again.turn).toBe(0);
 		expect(psychic(again).name).toBe('Cleo');
+	});
+
+	it('Scenario: Koop rating tiers', () => {
+		const solo = koop(['alex'], 100);
+		const at = (average: number) =>
+			koopResult({ ...solo, phase: 'gameOver', teams: [{ ...solo.teams[0], score: Math.round(average * 100) }] });
+		const results = [4, 3.5, 3.49, 2.5, 1.5, 0.5, 0.49, 0].map(at);
+		expect(results.map((r) => r.average)).toEqual([4, 3.5, 3.49, 2.5, 1.5, 0.5, 0.49, 0]);
+		expect(results.map((r) => r.tier)).toEqual([
+			'Sehr genau',
+			'Sehr genau',
+			'Genau',
+			'Genau',
+			'Solide',
+			'Ungenau',
+			'Weit daneben',
+			'Weit daneben'
+		]);
+	});
+
+	it('Scenario: Koop average per turn', () => {
+		let s = koop(['alex', 'bo', 'cleo']);
+		const offsets = [0, 0, 3 * BAND_DEGREES];
+		for (const offset of offsets) {
+			s = step(s, { type: 'show' }, { type: 'guess' });
+			s = step(s, { type: 'dial', value: s.target + (s.target > 90 ? -offset : offset) }, { type: 'lockIn' }, { type: 'next' });
+		}
+		expect(wavelength.phase(s)).toBe('gameOver');
+		const r = koopResult(s);
+		expect(r).toMatchObject({ turns: 3, total: 8 });
+		expect(r.average).toBeCloseTo(2.67, 2);
+		expect(formatAverage(r.average)).toBe('2,7');
 	});
 
 	it('versus states carry no mode or turn', () => {

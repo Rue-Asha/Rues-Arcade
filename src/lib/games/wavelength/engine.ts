@@ -100,9 +100,15 @@ export function modeOf(s: WavelengthState): WavelengthMode {
 	return s.mode ?? 'versus';
 }
 
-export function koopResult(_s: WavelengthState): { total: number; turns: number; average: number; tier: string } {
-	throw new Error('koopResult: not implemented');
+export function koopResult(s: WavelengthState): { total: number; turns: number; average: number; tier: string } {
+	const total = s.teams[0].score;
+	const turns = s.rounds * s.teams[0].players.length;
+	const average = total / turns;
+	return { total, turns, average, tier: RATING_TIERS.find((t) => average >= t.min)!.label };
 }
+
+export const formatAverage = (n: number) =>
+	n.toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
 export function winners(s: WavelengthState): WavelengthTeam[] {
 	const best = Math.max(...s.teams.map((t) => t.score));
