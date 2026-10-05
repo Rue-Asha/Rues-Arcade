@@ -46,7 +46,7 @@
 		<aside class="panel stack crew" aria-labelledby="crew">
 			<div class="head">
 				<h2 id="crew">Spieler</h2>
-				<span class="data count">{players.length}</span>
+				<span class="count">{players.length}</span>
 			</div>
 			{#if players.length}
 				<ul class="names">
@@ -114,7 +114,9 @@
 	}
 
 	.count {
-		font-size: 16px;
+		font-weight: 800;
+		font-size: 20px;
+		font-variant-numeric: tabular-nums;
 		color: var(--gold);
 	}
 
