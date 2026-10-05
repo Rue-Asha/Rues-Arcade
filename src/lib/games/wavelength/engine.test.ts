@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ContentItem } from '#lib/content/types.ts';
 import type { Player } from '#lib/engine/types.ts';
+import { demo } from './demo.ts';
 import {
 	BAND_DEGREES,
 	DIAL_DEGREES,
@@ -159,5 +160,37 @@ describe('wavelength engine', () => {
 		expect(wavelength.phase(s)).toBe('prep');
 		expect(s.teams.map((t) => t.score)).toEqual([0, 0]);
 		expect(s.roundIndex).toBe(0);
+	});
+});
+
+describe('wavelength demo', () => {
+	const play = () => {
+		let s = wavelength.init({
+			players: demo.players.map((name) => ({ id: name, name })),
+			config: demo.config,
+			content: demo.content,
+			seed: demo.seed
+		});
+		const states = [s];
+		for (const { action } of demo.steps) {
+			const n = wavelength.reduce(s, action);
+			expect(n, `step ${states.length}: ${action.type}`).not.toBe(s);
+			states.push((s = n));
+		}
+		return states;
+	};
+
+	it('Scenario: Wavelength demo script plays to the end', () => {
+		expect(demo.players).toEqual(['Alex', 'Bo', 'Cleo', 'Dani']);
+		expect(demo.config.teams).toHaveLength(2);
+		expect(demo.config.rounds).toBe(1);
+		const a = play();
+		const b = play();
+		expect(a).toEqual(b);
+		const end = a[a.length - 1];
+		expect(wavelength.phase(end)).toBe('gameOver');
+		expect(a.filter((s) => s.phase === 'result').map((s) => s.lastScore)).toEqual([4, 3]);
+		expect(winners(end).map((t) => t.name)).toEqual(['Team 1']);
+		expect(demo.steps.every((st) => st.tip.length > 0)).toBe(true);
 	});
 });

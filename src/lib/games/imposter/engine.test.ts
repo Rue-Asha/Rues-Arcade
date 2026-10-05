@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ContentItem } from '#lib/content/types.ts';
 import type { Player } from '#lib/engine/types.ts';
+import { demo } from './demo.ts';
 import { imposter, type ImposterAction, type ImposterState } from './engine.ts';
 
 const players = (n: number): Player[] =>
@@ -138,5 +139,38 @@ describe('imposter engine', () => {
 	it('ignores actions that do not fit the phase', () => {
 		const s = start(4, pairs(3));
 		expect(run(s, ['seen', 'unmask', 'nextRound'])).toBe(s);
+	});
+});
+
+describe('imposter demo', () => {
+	const play = () => {
+		let s = imposter.init({
+			players: demo.players.map((name) => ({ id: name, name })),
+			config: demo.config,
+			content: demo.content,
+			seed: demo.seed
+		});
+		const states = [s];
+		for (const { action } of demo.steps) {
+			const n = imposter.reduce(s, action);
+			expect(n, `step ${states.length}: ${action.type}`).not.toBe(s);
+			states.push((s = n));
+		}
+		return states;
+	};
+
+	it('Scenario: Imposter demo script plays to the end', () => {
+		expect(demo.players).toEqual(['Alex', 'Bo', 'Cleo', 'Dani']);
+		const a = play();
+		const b = play();
+		expect(a).toEqual(b);
+		const end = a[a.length - 1];
+		expect(imposter.phase(end)).toBe('unmask');
+		expect(end.shown).toBe(true);
+		expect(end.round).toBe(1);
+		expect(a.filter((s) => s.phase === 'view').map((s) => s.players[s.revealIndex].name)).toEqual(demo.players);
+		expect(demo.steps.every((st) => st.tip.length > 0)).toBe(true);
+		const unmaskTip = demo.steps[demo.steps.length - 1].tip;
+		expect(unmaskTip).toContain(end.players[end.imposterIndex].name);
 	});
 });
