@@ -95,14 +95,14 @@
 		{/if}
 	</section>
 
-	<aside class="panel stack tight" aria-label="Reihenfolge">
+	<aside class="panel stack tight">
 		<div class="head">
 			<p class="label">Runde {s.round}</p>
 			{#if revealing}
 				<Button variant="ghost" size="sm" action="skip" onclick={() => (skipping = true)}>Überspringen</Button>
 			{/if}
 		</div>
-		<ol class="order">
+		<ol class="order" aria-label="Reihenfolge">
 			{#each s.players as p, i (p.id)}
 				{@const done = !revealing || i < s.revealIndex}
 				<li class:done class:now={revealing && i === s.revealIndex}>

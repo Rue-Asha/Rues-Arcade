@@ -105,3 +105,41 @@ test('skip asks first, then restarts the reveal at the first player', async ({ p
 	await dialog.getByRole('button', { name: 'Überspringen' }).click();
 	await expect(page.getByText('Gib das Handy an Alex')).toBeVisible();
 });
+
+test('Scenario: Reload mid-game resumes the same phase', async ({ page }) => {
+	await start(page);
+	await view(page, 'Alex');
+	await view(page, 'Bo');
+	await expect(page.getByText('Gib das Handy an Cleo')).toBeVisible();
+
+	await page.reload();
+	await expect(page.getByText('Gib das Handy an Cleo')).toBeVisible();
+	await expect(page.getByText('Spieler 3 / 4')).toBeVisible();
+	await expect(page.getByRole('list', { name: 'Reihenfolge' }).getByRole('listitem')).toHaveText(
+		names.map((n) => new RegExp(`${n}$`))
+	);
+
+	await view(page, 'Cleo');
+	await view(page, 'Dani');
+	await page.getByRole('button', { name: 'Crew-Frage aufdecken' }).click();
+	await expect(page.getByText(CREW)).toBeVisible();
+
+	await page.reload();
+	await expect(page.getByText(CREW)).toBeVisible();
+	await expect(page.getByRole('button', { name: 'Weiter zum Imposter' })).toBeVisible();
+});
+
+test('Scenario: Spiel beenden clears the session', async ({ page }) => {
+	await start(page);
+	await view(page, 'Alex');
+
+	await page.getByRole('button', { name: 'Spiel beenden' }).click();
+	await page.getByRole('dialog').getByRole('button', { name: 'Beenden' }).click();
+	await expect(page).toHaveURL(/\/spiele\/imposter$/);
+
+	await page.goto('/spiele/imposter');
+	await expect(page.getByRole('button', { name: 'Spiel starten' })).toBeVisible();
+	await expect(page.getByRole('button', { name: 'Weiterspielen' })).toHaveCount(0);
+	await page.goto('/spiele/imposter/spielen');
+	await expect(page).toHaveURL(/\/spiele\/imposter$/);
+});
