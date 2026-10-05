@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="de">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Fixture-Erklärung</title>
+		<style>
+			body {
+				margin: 0;
+				padding: 24px;
+				background: #111234;
+				color: #f2f3fa;
+				font-family: system-ui, sans-serif;
+			}
+			img {
+				width: 64px;
+				height: 64px;
+				image-rendering: pixelated;
+			}
+		</style>
+	</head>
+	<body>
+		<h1>So spielt man die Fixture</h1>
+		<img src="pixel.png" alt="Goldenes Pixel" />
+		<p id="script">Skripte laufen nicht.</p>
+		<script>
+			document.getElementById('script').textContent = 'Skripte laufen.';
+		</script>
+	</body>
+</html>
