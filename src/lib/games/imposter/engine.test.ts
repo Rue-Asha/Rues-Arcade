@@ -92,15 +92,21 @@ describe('imposter engine', () => {
 	});
 
 	it('Scenario: No repeats until the pool is exhausted', () => {
-		let s = start(4, pairs(5));
-		const ids = [s.pairId];
-		for (let i = 0; i < 9; i++) {
-			s = playRound(s);
-			ids.push(s.pairId);
+		const sixth = new Set<number>();
+		let lastAgain = false;
+		for (let seed = 1; seed <= 50; seed++) {
+			let s = start(4, pairs(5), seed);
+			const ids = [s.pairId];
+			for (let i = 0; i < 5; i++) {
+				s = playRound(s);
+				ids.push(s.pairId);
+			}
+			expect(new Set(ids.slice(0, 5)).size).toBe(5);
+			sixth.add(ids[5]);
+			if (ids[5] === ids[4]) lastAgain = true;
 		}
-		expect(new Set(ids.slice(0, 5)).size).toBe(5);
-		expect(new Set(ids.slice(5, 10)).size).toBe(5);
-		expect([1, 2, 3, 4, 5]).toContain(ids[5]);
+		expect([...sixth].sort()).toEqual([1, 2, 3, 4, 5]);
+		expect(lastAgain).toBe(true);
 	});
 
 	it('Scenario: Pool of one pair repeats', () => {
