@@ -8,8 +8,11 @@ describe('registry', () => {
 		for (const { def } of games)
 			expect(playerRange(def)).toBe(`${def.minPlayers}–${def.maxPlayers} Spieler`);
 
-		const imposter = games.find((g) => g.def.slug === 'imposter')!;
-		expect(playerRange(imposter.def)).toBe('3–12 Spieler');
+		const range = (slug: string) => playerRange(games.find((g) => g.def.slug === slug)!.def);
+		expect(range('imposter')).toBe('3–12 Spieler');
+		expect(range('codes')).toBe('4–20 Spieler');
+		expect(range('duck')).toBe('4–16 Spieler');
+		expect(range('most-likely')).toBe('3–20 Spieler');
 	});
 
 	it('Scenario: Wavelength player range reads 2–18', () => {
@@ -17,10 +20,42 @@ describe('registry', () => {
 		expect(playerRange(wavelength.def)).toBe('2–18 Spieler');
 	});
 
-	it('lists the five locked games and unique slugs', () => {
-		expect(comingSoon).toEqual(['Duck', 'Family Feud', 'Codes', 'Most Likely To', 'Charade']);
+	it('lists five games in order, two locked ones and unique slugs', () => {
+		expect(games.map((g) => g.def.slug)).toEqual(['imposter', 'wavelength', 'codes', 'duck', 'most-likely']);
+		expect(comingSoon).toEqual(['Family Feud', 'Charade']);
 		const slugs = games.map((g) => g.def.slug);
 		expect(new Set(slugs).size).toBe(slugs.length);
+	});
+
+	it('new games carry their contract: colour, content type, minContent 1, state version 1', () => {
+		const contract = games.slice(2).map(({ def }) => ({
+			slug: def.slug,
+			name: def.name,
+			colour: def.colour,
+			contentType: def.contentType,
+			minContent: def.minContent,
+			stateVersion: def.stateVersion
+		}));
+		expect(contract).toEqual([
+			{ slug: 'codes', name: 'Codes', colour: 'codes', contentType: 'codes_words', minContent: 1, stateVersion: 1 },
+			{ slug: 'duck', name: 'What Rhymes with Duck', colour: 'duck', contentType: 'duck_words', minContent: 1, stateVersion: 1 },
+			{
+				slug: 'most-likely',
+				name: 'Most Likely To',
+				colour: 'most-likely',
+				contentType: 'most_likely_prompts',
+				minContent: 1,
+				stateVersion: 1
+			}
+		]);
+	});
+
+	it('every demo starts from four players and fixture content', () => {
+		for (const { def, demo } of games.slice(2)) {
+			expect(demo.players, def.slug).toEqual(['Alex', 'Bo', 'Cleo', 'Dani']);
+			expect(demo.content.length, def.slug).toBeGreaterThan(0);
+			expect(loadGameSession(games.find((g) => g.def.slug === def.slug)!), def.slug).toBeNull();
+		}
 	});
 });
 

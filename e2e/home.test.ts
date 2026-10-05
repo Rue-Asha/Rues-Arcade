@@ -8,7 +8,10 @@ test('Scenario: Tiles for registered games', async ({ page }) => {
 
 	for (const [name, slug, range] of [
 		['Imposter', 'imposter', '3–12 Spieler'],
-		['Wavelength', 'wavelength', '2–18 Spieler']
+		['Wavelength', 'wavelength', '2–18 Spieler'],
+		['Codes', 'codes', '4–20 Spieler'],
+		['What Rhymes with Duck', 'duck', '4–16 Spieler'],
+		['Most Likely To', 'most-likely', '3–20 Spieler']
 	]) {
 		const tile = page.getByRole('link', { name: new RegExp(name) });
 		await expect(tile).toHaveAttribute('href', `/spiele/${slug}`);
@@ -23,8 +26,8 @@ test('Scenario: Bald tiles have no actions', async ({ page }, info) => {
 	await page.goto('/');
 	const locked = page.locator('.tile.locked');
 
-	await expect(locked).toHaveCount(5);
-	for (const name of ['Duck', 'Family Feud', 'Codes', 'Most Likely To', 'Charade']) {
+	await expect(locked).toHaveCount(2);
+	for (const name of ['Family Feud', 'Charade']) {
 		const tile = locked.filter({ hasText: name });
 		await expect(tile).toContainText('Bald verfügbar');
 		await expect(tile.locator('a, button')).toHaveCount(0);
@@ -32,7 +35,7 @@ test('Scenario: Bald tiles have no actions', async ({ page }, info) => {
 		await expect(page.getByRole('button', { name })).toHaveCount(0);
 	}
 
-	await locked.filter({ hasText: 'Duck' }).click();
+	await locked.filter({ hasText: 'Charade' }).click();
 	await expect(page).toHaveURL(/\/$/);
 	await shot(page, info, 'home');
 });

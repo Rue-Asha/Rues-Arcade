@@ -19,12 +19,30 @@
 			'Gemeinsam oder in Teams: pro Zug ein Spektrum zwischen zwei Begriffen.',
 			'Die Hellseherin oder der Hellseher sieht verdeckt, wo das Ziel liegt, und gibt einen Hinweis.',
 			'Das Team stellt die Scheibe ein: je näher am Ziel, desto mehr Punkte (4, 3 oder 2).'
+		],
+		codes: [
+			'In Teams: pro Runde kennen alle Erklärer dasselbe geheime Wort.',
+			'Reihum gibt jeder Erklärer seinem Team einen Ein-Wort-Hinweis, das Team rät gemeinsam.',
+			'Wer zuerst richtig rät, bekommt 3 Punkte im ersten Versuch, 2 im zweiten, danach 1.'
+		],
+		duck: [
+			'Ein Wort wird für alle aufgedeckt, alle suchen gleichzeitig einen Reim darauf.',
+			'Triffst du genau eine andere Person, gibt es 3 Punkte, bei mehreren je 1. Ein Match mit Chuck the Duck bringt 2 extra.',
+			'Wer keinen Reim findet, verliert einen Buchstaben von DUCKY. Das Spiel endet bei den Zielpunkten oder ohne Leben.'
+		],
+		'most-likely': [
+			'Pro Runde ein Spruch: Wer würde am ehesten …?',
+			'Auf drei zeigen alle gleichzeitig auf die Person, die am besten passt.',
+			'Wer die meisten Finger auf sich hat, bekommt den Titel. Am Ende gewinnt, wer die meisten Titel hat.'
 		]
 	};
 
 	const nouns: Record<string, [string, string]> = {
 		imposter: ['Fragenpaar', 'Fragenpaare'],
-		wavelength: ['Spektrum', 'Spektren']
+		wavelength: ['Spektrum', 'Spektren'],
+		codes: ['Wort', 'Wörter'],
+		duck: ['Wort', 'Wörter'],
+		'most-likely': ['Spruch', 'Sprüche']
 	};
 
 	const entry = $derived(games.find((g) => g.def.slug === params.slug)!);

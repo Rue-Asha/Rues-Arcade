@@ -2,7 +2,10 @@ import type { Component } from 'svelte';
 import { start } from '#lib/demo/runner.ts';
 import type { DemoScript, GameDef, Player } from '#lib/engine/types.ts';
 import { loadSession } from '#lib/session.ts';
+import { entry as codes } from './codes/index.ts';
+import { entry as duck } from './duck/index.ts';
 import { entry as imposter } from './imposter/index.ts';
+import { entry as mostLikely } from './most-likely/index.ts';
 import { entry as wavelength } from './wavelength/index.ts';
 
 export interface ScreenProps {
@@ -23,14 +26,14 @@ export interface GameEntry {
 	pitch: string;
 }
 
-export const games: GameEntry[] = [imposter, wavelength];
+export const games: GameEntry[] = [imposter, wavelength, codes, duck, mostLikely];
 
 // the demo's opening state is a known-good shape to check a saved session against
 export function loadGameSession(entry: GameEntry) {
 	return loadSession<object>(entry.def.slug, entry.def.stateVersion, start(entry.def, entry.demo).state);
 }
 
-export const comingSoon: string[] = ['Duck', 'Family Feud', 'Codes', 'Most Likely To', 'Charade'];
+export const comingSoon: string[] = ['Family Feud', 'Charade'];
 
 export function playerRange(def: Pick<GameDef<any, any, any>, 'minPlayers' | 'maxPlayers'>): string {
 	return `${def.minPlayers}–${def.maxPlayers} Spieler`;
