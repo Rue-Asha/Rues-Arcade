@@ -58,7 +58,14 @@ describe('session', () => {
 			content: [{ id: 1, a: 'Crew?', b: 'Imposter?' }],
 			seed: 7
 		});
-		for (const state of [{}, { ...valid, players: undefined }, { ...valid, revealIndex: '0' }]) {
+		for (const state of [
+			{},
+			{ ...valid, players: undefined },
+			{ ...valid, revealIndex: '0' },
+			{ ...valid, players: [] },
+			{ ...valid, players: [{ id: 'a' }] },
+			{ ...valid, used: ['1'] }
+		]) {
 			session.saveSession('imposter', 1, state);
 			expect(session.loadSession('imposter', 1, valid)).toEqual({ discarded: true });
 			expect(storage.getItem('arcade:session:imposter')).toBeNull();

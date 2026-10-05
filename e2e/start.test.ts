@@ -107,6 +107,38 @@ test('a session without the game state shape is discarded, not resumed', async (
 	expect(errors).toEqual([]);
 });
 
+test('a session with a malformed nested field is discarded, not resumed', async ({ page }) => {
+	const errors: Error[] = [];
+	page.on('pageerror', (e) => errors.push(e));
+	await page.goto('/');
+	await page.evaluate(() =>
+		localStorage.setItem(
+			'arcade:session:wavelength',
+			JSON.stringify({
+				v: 1,
+				state: {
+					rng: { state: 1 },
+					pool: [{ id: 1, a: 'Kalt', b: 'Heiß' }],
+					used: [1],
+					teams: [{}],
+					rounds: 1,
+					roundIndex: 0,
+					teamIndex: 0,
+					spectrum: { id: 1, a: 'Kalt', b: 'Heiß' },
+					target: 60,
+					dial: 90,
+					phase: 'prep',
+					lastScore: null
+				}
+			})
+		)
+	);
+	await page.goto('/spiele/wavelength/spielen');
+	await expect(page.getByRole('alert')).toContainText('verworfen');
+	await expect(page.evaluate(() => localStorage.getItem('arcade:session:wavelength'))).resolves.toBeNull();
+	expect(errors).toEqual([]);
+});
+
 test('a saved session is shown, resumed and ended', async ({ page }) => {
 	await page.goto('/');
 	await page.evaluate(() =>
