@@ -1,5 +1,7 @@
 import type { Component } from 'svelte';
 import type { DemoScript, GameDef, Player } from '#lib/engine/types.ts';
+import { entry as imposter } from './imposter/index.ts';
+import { entry as wavelength } from './wavelength/index.ts';
 
 export interface ScreenProps {
 	state: any;
@@ -18,7 +20,7 @@ export interface GameEntry {
 	demo: DemoScript<any, any>;
 }
 
-export const games: GameEntry[] = [];
+export const games: GameEntry[] = [imposter, wavelength];
 
 export const comingSoon: string[] = ['Duck', 'Family Feud', 'Codes', 'Most Likely To', 'Charade'];
 
