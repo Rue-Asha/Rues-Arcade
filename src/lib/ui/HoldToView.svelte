@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
+	import { getDemo } from '#lib/demo/context.ts';
 	import { pulse } from '#lib/motion.ts';
 	import { play } from '#lib/sound.ts';
 
@@ -14,8 +15,12 @@
 
 	let held = $state(false);
 
+	const demo = $derived(getDemo());
+	const expected = $derived(demo !== null && action !== undefined && demo.expected === action);
+	const shown = $derived(held || demo !== null);
+
 	function hold(e: PointerEvent) {
-		if (held) return;
+		if (held || demo) return;
 		held = true;
 		play('reveal');
 		(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
@@ -27,7 +32,12 @@
 		onrelease();
 	}
 
+	function tap() {
+		if (demo) onrelease();
+	}
+
 	function keydown(e: KeyboardEvent) {
+		if (demo) return;
 		if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) {
 			e.preventDefault();
 			if (!held) {
@@ -44,8 +54,11 @@
 
 <div class="htv" class:held data-action={action}>
 	<div class="window" aria-live="polite">
-		{#if held}
-			<div class="content" use:pulse>{@render children()}</div>
+		{#if shown}
+			<div class="content" use:pulse>
+				{#if demo}<span class="tag">[Demo]</span>{/if}
+				{@render children()}
+			</div>
 		{:else}
 			<div class="cover">
 				<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -62,6 +75,10 @@
 	<button
 		type="button"
 		class="hold"
+		class:expected
+		disabled={demo !== null && action !== undefined && !expected}
+		data-demo={expected ? 'expected' : undefined}
+		onclick={tap}
 		onpointerdown={hold}
 		onpointerup={release}
 		onpointercancel={release}
@@ -123,6 +140,38 @@
 		transition:
 			transform 0.07s ease-out,
 			box-shadow 0.07s ease-out;
+	}
+
+	.tag {
+		align-self: center;
+		padding: 4px 10px;
+		border-radius: 6px;
+		background: var(--gold);
+		color: var(--ink);
+		font: 600 12px/1.4 var(--font-ui);
+		letter-spacing: 0.14em;
+		text-transform: uppercase;
+	}
+
+	.hold:disabled {
+		cursor: not-allowed;
+		opacity: 0.45;
+	}
+
+	.expected {
+		outline: 3px solid var(--gold);
+		outline-offset: 4px;
+		animation: beckon 1.2s var(--ease-out) infinite;
+	}
+
+	@keyframes beckon {
+		0%,
+		100% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0.8;
+		}
 	}
 
 	.held .hold {

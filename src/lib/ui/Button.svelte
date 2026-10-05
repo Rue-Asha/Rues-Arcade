@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
+	import { getDemo } from '#lib/demo/context.ts';
 	import { play } from '#lib/sound.ts';
 
 	interface Props {
@@ -13,13 +14,24 @@
 
 	let { variant, size = 'md', action, disabled = false, onclick, children }: Props = $props();
 
+	const demo = $derived(action === undefined ? null : getDemo());
+	const expected = $derived(demo !== null && demo.expected === action);
+
 	function press() {
 		play('press');
 		onclick?.();
 	}
 </script>
 
-<button type="button" class="btn {variant} {size}" {disabled} data-action={action} onclick={press}>
+<button
+	type="button"
+	class="btn {variant} {size}"
+	class:expected
+	disabled={disabled || (demo !== null && !expected)}
+	data-action={action}
+	data-demo={expected ? 'expected' : undefined}
+	onclick={press}
+>
 	{@render children()}
 </button>
 
@@ -94,6 +106,28 @@
 		.secondary:hover:not(:disabled),
 		.ghost:hover:not(:disabled) {
 			background: var(--line);
+		}
+	}
+
+	.expected::after {
+		content: '';
+		position: absolute;
+		inset: -7px -7px calc(-7px - var(--ledge));
+		border: 3px solid var(--gold);
+		border-radius: calc(var(--radius) + 6px);
+		pointer-events: none;
+		animation: beckon 1.2s var(--ease-out) infinite;
+	}
+
+	@keyframes beckon {
+		0%,
+		100% {
+			opacity: 1;
+			transform: scale(1);
+		}
+		50% {
+			opacity: 0.45;
+			transform: scale(1.03);
 		}
 	}
 
