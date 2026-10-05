@@ -20,6 +20,14 @@ export async function seedContent(
 }
 
 export async function shot(page: Page, info: TestInfo, slug: string) {
+	await page.evaluate(() =>
+		Promise.all(
+			document
+				.getAnimations()
+				.filter((a) => a.effect?.getTiming().iterations !== Infinity)
+				.map((a) => a.finished)
+		)
+	);
 	const width = await page.evaluate(() => document.documentElement.scrollWidth);
 	expect(width).toBeLessThanOrEqual(page.viewportSize()!.width);
 	await page.screenshot({ path: `test-results/shots/${info.project.name}-${slug}.png`, fullPage: true });
