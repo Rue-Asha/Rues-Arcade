@@ -93,7 +93,7 @@ export function targetBands(target: number): { from: number; to: number; points:
 
 export function psychic(s: WavelengthState): Player {
 	const team = s.teams[s.teamIndex];
-	return team.players[s.roundIndex % team.players.length];
+	return team.players[s.mode === 'koop' ? s.turn! : s.roundIndex % team.players.length];
 }
 
 export function modeOf(s: WavelengthState): WavelengthMode {
@@ -148,12 +148,14 @@ export const wavelength: GameDef<WavelengthState, WavelengthAction, WavelengthCo
 	stateVersion: 1,
 	init({ players, config, content, seed }) {
 		const byId = new Map(players.map((p) => [p.id, p]));
+		const koop = config.mode === 'koop';
 		return newTurn({
+			...(koop && { mode: 'koop' as const, turn: 0 }),
 			rng: { state: seed >>> 0 },
 			pool: [...content],
 			used: [],
 			teams: config.teams.map((ids, i) => ({
-				name: `Team ${i + 1}`,
+				name: koop ? 'Gemeinsam' : `Team ${i + 1}`,
 				players: ids.map((id) => byId.get(id)!),
 				score: 0
 			})),
@@ -185,10 +187,11 @@ export const wavelength: GameDef<WavelengthState, WavelengthAction, WavelengthCo
 			}
 			case 'next': {
 				if (s.phase !== 'result') return s;
+				if (s.mode === 'koop' && s.turn! + 1 < s.teams[0].players.length) return newTurn({ ...s, turn: s.turn! + 1 });
 				if (s.teamIndex < s.teams.length - 1) return newTurn({ ...s, teamIndex: s.teamIndex + 1 });
 				const roundIndex = s.roundIndex + 1;
 				if (roundIndex >= s.rounds) return { ...s, phase: 'gameOver' };
-				return newTurn({ ...s, teamIndex: 0, roundIndex });
+				return newTurn({ ...s, teamIndex: 0, roundIndex, ...(s.mode === 'koop' && { turn: 0 }) });
 			}
 			case 'again':
 				if (s.phase !== 'gameOver') return s;
@@ -196,7 +199,8 @@ export const wavelength: GameDef<WavelengthState, WavelengthAction, WavelengthCo
 					...s,
 					teams: s.teams.map((t) => ({ ...t, score: 0 })),
 					roundIndex: 0,
-					teamIndex: 0
+					teamIndex: 0,
+					...(s.mode === 'koop' && { turn: 0 })
 				});
 		}
 		return s;
