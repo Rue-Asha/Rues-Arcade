@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, readFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
@@ -67,5 +67,32 @@ describe('importer', () => {
 		db.close();
 		expect(crew).toContain('Was würde {NAME} nie essen?');
 		expect(crew).toContain('Wer gewinnt im Armdrücken, {NAME} oder {NAME2}?');
+	});
+
+	it('Scenario: Missing table is named, the other still imported', () => {
+		const source = oldDb();
+		const db = new DatabaseSync(source);
+		db.exec('DROP TABLE wavelength_prompts');
+		db.close();
+		const target = join(dir, 'new.db');
+		const { code, out } = run(source, '--into', target);
+		expect(code).not.toBe(0);
+		expect(out).toMatch(/wavelength_prompts/);
+		expect(out).toMatch(/missing/);
+		expect(count(target, 'imposter_pairs')).toBe(3);
+		expect(count(target, 'wavelength_spectra')).toBe(0);
+	});
+
+	it('Scenario: Source missing or not SQLite', () => {
+		const notSqlite = join(dir, 'notes.txt');
+		writeFileSync(notSqlite, 'Hund | Katze\n'.repeat(100));
+		for (const source of [join(dir, 'nope.db'), notSqlite]) {
+			const target = join(dir, 'new.db');
+			const { code, out } = run(source, '--into', target);
+			expect(code).not.toBe(0);
+			expect(out).toContain(source);
+			expect(out).toMatch(/does not exist|not a SQLite database/);
+			expect(existsSync(target)).toBe(false);
+		}
 	});
 });
