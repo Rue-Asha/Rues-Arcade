@@ -156,7 +156,7 @@ test('Scenario: Start panel first on phone, right column on desktop', async ({ p
 				document
 					.getAnimations()
 					.filter((a) => a.effect?.getTiming().iterations !== Infinity)
-					.map((a) => a.finished)
+					.map((a) => a.finished.catch(() => {}))
 			)
 		);
 		const box = async (l: ReturnType<typeof page.locator>) => {
