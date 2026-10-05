@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ContentItem } from '#lib/content/types.ts';
 import type { Player } from '#lib/engine/types.ts';
+import { start as startDemo } from '#lib/demo/runner.ts';
 import { demo } from './demo.ts';
 import {
 	BAND_DEGREES,
@@ -290,6 +291,17 @@ describe('wavelength demo', () => {
 		}
 		return states;
 	};
+
+	it('Scenario: Wavelength demo stays the Versus demo', () => {
+		const opening = startDemo(wavelength, demo).state;
+		expect(modeOf(opening)).toBe('versus');
+		expect('mode' in opening).toBe(false);
+		expect('turn' in opening).toBe(false);
+		expect(opening.teams.map((t) => t.players.map((p) => p.name))).toEqual([
+			['Alex', 'Bo'],
+			['Cleo', 'Dani']
+		]);
+	});
 
 	it('Scenario: Wavelength demo script plays to the end', () => {
 		expect(demo.players).toEqual(['Alex', 'Bo', 'Cleo', 'Dani']);
