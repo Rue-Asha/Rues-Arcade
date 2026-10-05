@@ -4,7 +4,8 @@
 The app SHALL style every screen from one set of CSS tokens taken from the A1 · Arcade-Abend artboard
 (`design/look-A1-P2-arcade-abend.dc.html`): ground #111234, primary #6bd672, Imposter #eb616d,
 leader-gold #f4c34a, Wavelength #38ccc8, Sora for UI, Press Start 2P for the logo letter and scores only.
-The UI SHALL be German and dark only.
+The UI SHALL be German and dark only. WCAG's inactive-control contrast exemption applies to disabled buttons and
+form controls only, not to locked tiles or other greyed-out content.
 
 #### Scenario: Text contrast meets 4.5:1
 - **WHEN** every text/background token pair used by the components is evaluated

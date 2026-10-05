@@ -183,7 +183,7 @@ test('Scenario: Text contrast meets 4.5:1', async ({ page }, info) => {
 });
 
 // Every visible text node against the first opaque background behind it, translucent layers composited.
-// Disabled controls are exempt (WCAG 1.4.3 "inactive components").
+// Disabled form controls are exempt (WCAG 1.4.3 "inactive components"); locked tiles are content and are checked.
 function contrastFailures() {
 	type RGBA = [number, number, number, number];
 	const parse = (c: string): RGBA => {
@@ -219,7 +219,7 @@ function contrastFailures() {
 	for (let node = walker.nextNode(); node; node = walker.nextNode()) {
 		const el = node.parentElement!;
 		if (!(node as Text).data.trim() || !el.checkVisibility({ opacityProperty: true, visibilityProperty: true })) continue;
-		if (el.closest(':disabled, [aria-disabled="true"]')) continue;
+		if (el.closest(':disabled')) continue;
 		const bg = background(el);
 		const fg = over(parse(getComputedStyle(el).color), bg);
 		const [hi, lo] = [lum(fg), lum(bg)].sort((x, y) => y - x);
