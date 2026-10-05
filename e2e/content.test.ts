@@ -1,4 +1,4 @@
-import { expect, test, type TestInfo } from '@playwright/test';
+import { expect, test, type Locator, type TestInfo } from '@playwright/test';
 import { shot } from './helpers.ts';
 
 // phone and desktop share one database and run in parallel; giving each project its own game keeps
@@ -7,6 +7,10 @@ const game = (info: TestInfo) =>
 	info.project.name === 'phone'
 		? { slug: 'imposter', type: 'imposter_pairs', a: 'Crew-Frage', b: 'Imposter-Frage' }
 		: { slug: 'wavelength', type: 'wavelength_spectra', a: 'Links', b: 'Rechts' };
+
+// hasText matches case-insensitive substrings, so 'Tag' would also catch another test's '…Mittag?'.
+const entry = (entries: Locator, a: string) =>
+	entries.filter({ has: entries.page().getByText(a, { exact: true }) });
 
 test('Scenario: Add, edit and delete an entry', async ({ page }, info) => {
 	const g = game(info);
@@ -17,7 +21,7 @@ test('Scenario: Add, edit and delete an entry', async ({ page }, info) => {
 	await add.getByLabel(g.b).fill('Katze');
 	await add.getByRole('button', { name: 'Hinzufügen' }).click();
 	const entries = page.getByRole('list', { name: 'Einträge' }).getByRole('listitem');
-	await expect(entries.filter({ hasText: 'Hund' })).toHaveText([/Hund\s*Katze/]);
+	await expect(entry(entries, 'Hund')).toHaveText([/Hund\s*Katze/]);
 	await expect(add.getByLabel(g.a)).toHaveValue('');
 	await shot(page, info, `inhalte-${g.slug}`);
 
@@ -25,15 +29,15 @@ test('Scenario: Add, edit and delete an entry', async ({ page }, info) => {
 	const edit = page.getByRole('form', { name: 'Hund | Katze bearbeiten' });
 	await edit.getByLabel(g.b).fill('Maus');
 	await edit.getByRole('button', { name: 'Speichern' }).click();
-	await expect(entries.filter({ hasText: 'Hund' })).toHaveText([/Hund\s*Maus/]);
+	await expect(entry(entries, 'Hund')).toHaveText([/Hund\s*Maus/]);
 
 	await page.reload();
-	await expect(entries.filter({ hasText: 'Hund' })).toHaveText([/Hund\s*Maus/]);
+	await expect(entry(entries, 'Hund')).toHaveText([/Hund\s*Maus/]);
 
 	await page.getByRole('button', { name: 'Hund | Maus löschen' }).click();
 	await page.getByRole('dialog').getByRole('button', { name: 'Löschen' }).click();
 	await expect(page.getByRole('dialog')).toBeHidden();
-	await expect(entries.filter({ hasText: 'Hund' })).toHaveCount(0);
+	await expect(entry(entries, 'Hund')).toHaveCount(0);
 
 	await page.reload();
 	await expect(page.getByRole('list', { name: 'Einträge' }).getByText('Hund')).toHaveCount(0);
@@ -54,9 +58,9 @@ test('Scenario: Delete asks for confirmation', async ({ page, request }, info) =
 
 	await expect(dialog).toBeHidden();
 	const entries = page.getByRole('list', { name: 'Einträge' }).getByRole('listitem');
-	await expect(entries.filter({ hasText: 'Bleibt' })).toHaveCount(1);
+	await expect(entry(entries, 'Bleibt')).toHaveCount(1);
 	await page.reload();
-	await expect(entries.filter({ hasText: 'Bleibt' })).toHaveCount(1);
+	await expect(entry(entries, 'Bleibt')).toHaveCount(1);
 
 	await request.delete(`/api/content/${g.type}/${id}`);
 });
@@ -77,8 +81,8 @@ test('bulk import shows the report and lists the new entries', async ({ page, re
 	await expect(report).toContainText('1 leer');
 	await expect(report).toContainText('Zeile 3');
 	const entries = page.getByRole('list', { name: 'Einträge' }).getByRole('listitem');
-	await expect(entries.filter({ hasText: 'Sonne' })).toHaveCount(1);
-	await expect(entries.filter({ hasText: 'Tag' })).toHaveCount(1);
+	await expect(entry(entries, 'Sonne')).toHaveCount(1);
+	await expect(entry(entries, 'Tag')).toHaveCount(1);
 	await expect(page.getByLabel('Mehrere auf einmal')).toHaveValue('');
 });
 
