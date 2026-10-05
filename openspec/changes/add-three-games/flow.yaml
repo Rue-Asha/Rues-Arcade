@@ -2,10 +2,10 @@ triage: "feature — three new games, content-store change (single-value content
 base: main
 gate0: 2026-10-05
 gate1: 2026-10-05
+gate2: 2026-10-05
 learnings:
   - "Explore on a game port from the archive → read the archived game's rules before offering options; offer variations within the game, never a different mechanic picked by the name. (weil: proposed Codenames for Passwort-style Codes and a rhyme chain for Duck; Rue rejected both)"
   - "openspec-propose skill isn't in the subagent's Skill listing → planner brief points to ~/.claude/skills/openspec-propose/SKILL.md directly. (weil: planner had to find it by hand)"
   - "Planner on games with a player range → every game gets the upper limit and a roster-above-max scenario, not just the one the archive had. (weil: Most Likely >20 had no scenario; Rue added it after Gate 1)"
   - "e2e emptying a pool on `emptyServer` → DELETE to the content API needs an explicit `origin` header equal to `server.origin`, else Kit CSRF returns 403; belongs in e2e/helpers.ts, not per test file. (weil: U2 and U3 each solved it locally)"
   - "look.test.ts `settle()` → AbortError when a dialog opens over a hovered button (desktop), and can shoot before Stage's rise starts. (weil: U3 and U4 worked around it in their walks)"
-  - "Demo route exposes only the expected action type, not its target → game Screens import their own demo.ts to highlight the scripted control. (weil: U3 and U4 both did it; candidate for the demo contract)"
