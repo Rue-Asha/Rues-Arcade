@@ -2,6 +2,7 @@ triage: "feature — new repo, data model, deploy pipeline, new features, redesi
 base: main
 gate0: 2026-10-05
 gate1: 2026-10-05
+gate0_ext: 2026-10-05  # S18–S21 added after Gate 2 reopen; needs gate1_ext before build
 notes:
   - "Repo was created fresh with git init; main has no commit yet (unborn). Planner: settle how main gets its root commit before Build/Ship (new GitHub repo Rue-Asha/Rues-Arcade is created only at Ship, with consent)."
   - "User wants a pause at every checkpoint so they can /clear."
@@ -17,6 +18,8 @@ notes:
   - "U6 contracts: lobby renders <entry.Setup players={chosen} onstart={start} />, onstart(config) does init+save+goto, Setup renders its own start Button. Play route renders <Stage key={def.phase(state)}><entry.Screen state dispatch /></Stage> (Screen remounts per phase; dispatch = reduce + saveSession; state is $state.raw). Start screen links <base>/demo?from=<base>, <base>/erklaerung, <base>/inhalte; play header Demo uses ?from=<base>/spielen; Spieler accepts ?from=. roster.players is $state.raw [{id,name}], read after onMount. Keys arcade:roster, arcade:session:<slug> = {v,state}. e2e/helpers: seedRoster(page,names) ids p1..pN, seedContent(request,type,rows), shot(page,info,slug) waits for animations, asserts no h-scroll, writes test-results/shots/<project>-<slug>.png."
   - "Gate 2 (2026-10-05): user sent all 5 round-3 review findings back for a 4th fix round (beyond the 3-round budget, user decision). Then verifier ∥ reviewer again."
 learnings:
+  - "[user/taste] Copy for Rue's game UIs → neutral and grown-up: plain description, no exclamation marks, puns or slogans. (weil: Rue called the deco mocks' copy 'corny' at the 2026-10-05 Gate 2 reopen)"
+  - "[flow] Explore proposing a game-mode change → walk through who acts in each turn for the smallest player count before writing the S-item. (weil: 'one person per team' looked like a free shortcut until nobody was left to guess; Rue reversed it to a Koop | Versus switch)"
   # filtered 2026-10-05 per learn.md (cost · not derivable · recurs · verified); scope in brackets
   - "[flow] Builder/fixer batching → fix → proof → commit per task/finding; never proof once and split into commits afterwards. (weil: U10 and fixer r2 both did, intermediate commits unproven)"
   - "[flow] Parallel units with e2e → plan e2e data isolation (exact-text locators, per-test data, isolated-server helper) in the contract unit. (weil: wave 5 was green per unit, red merged on shared-DB collisions)"
