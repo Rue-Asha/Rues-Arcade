@@ -93,16 +93,22 @@ export function targetBands(target: number): { from: number; to: number; points:
 
 export function psychic(s: WavelengthState): Player {
 	const team = s.teams[s.teamIndex];
-	return team.players[s.roundIndex % team.players.length];
+	return team.players[s.mode === 'koop' ? s.turn! : s.roundIndex % team.players.length];
 }
 
 export function modeOf(s: WavelengthState): WavelengthMode {
 	return s.mode ?? 'versus';
 }
 
-export function koopResult(_s: WavelengthState): { total: number; turns: number; average: number; tier: string } {
-	throw new Error('koopResult: not implemented');
+export function koopResult(s: WavelengthState): { total: number; turns: number; average: number; tier: string } {
+	const total = s.teams[0].score;
+	const turns = s.rounds * s.teams[0].players.length;
+	const average = total / turns;
+	return { total, turns, average, tier: RATING_TIERS.find((t) => average >= t.min)!.label };
 }
+
+export const formatAverage = (n: number) =>
+	n.toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
 export function winners(s: WavelengthState): WavelengthTeam[] {
 	const best = Math.max(...s.teams.map((t) => t.score));
@@ -140,20 +146,22 @@ export const wavelength: GameDef<WavelengthState, WavelengthAction, WavelengthCo
 	slug: 'wavelength',
 	name: 'Wavelength',
 	colour: 'wavelength',
-	// 2–6 teams of 2–3 players
-	minPlayers: 4,
+	// koop from 2; versus needs MIN_VERSUS_PLAYERS for 2–6 teams of 2–3
+	minPlayers: MIN_KOOP_PLAYERS,
 	maxPlayers: 18,
 	minContent: 1,
 	contentType: 'wavelength_spectra',
 	stateVersion: 1,
 	init({ players, config, content, seed }) {
 		const byId = new Map(players.map((p) => [p.id, p]));
+		const koop = config.mode === 'koop';
 		return newTurn({
+			...(koop && { mode: 'koop' as const, turn: 0 }),
 			rng: { state: seed >>> 0 },
 			pool: [...content],
 			used: [],
 			teams: config.teams.map((ids, i) => ({
-				name: `Team ${i + 1}`,
+				name: koop ? 'Gemeinsam' : `Team ${i + 1}`,
 				players: ids.map((id) => byId.get(id)!),
 				score: 0
 			})),
@@ -185,10 +193,11 @@ export const wavelength: GameDef<WavelengthState, WavelengthAction, WavelengthCo
 			}
 			case 'next': {
 				if (s.phase !== 'result') return s;
+				if (s.mode === 'koop' && s.turn! + 1 < s.teams[0].players.length) return newTurn({ ...s, turn: s.turn! + 1 });
 				if (s.teamIndex < s.teams.length - 1) return newTurn({ ...s, teamIndex: s.teamIndex + 1 });
 				const roundIndex = s.roundIndex + 1;
 				if (roundIndex >= s.rounds) return { ...s, phase: 'gameOver' };
-				return newTurn({ ...s, teamIndex: 0, roundIndex });
+				return newTurn({ ...s, teamIndex: 0, roundIndex, ...(s.mode === 'koop' && { turn: 0 }) });
 			}
 			case 'again':
 				if (s.phase !== 'gameOver') return s;
@@ -196,7 +205,8 @@ export const wavelength: GameDef<WavelengthState, WavelengthAction, WavelengthCo
 					...s,
 					teams: s.teams.map((t) => ({ ...t, score: 0 })),
 					roundIndex: 0,
-					teamIndex: 0
+					teamIndex: 0,
+					...(s.mode === 'koop' && { turn: 0 })
 				});
 		}
 		return s;

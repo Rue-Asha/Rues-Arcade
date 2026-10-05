@@ -1,10 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import type { ContentItem } from '#lib/content/types.ts';
 import type { Player } from '#lib/engine/types.ts';
+import { start as startDemo } from '#lib/demo/runner.ts';
 import { demo } from './demo.ts';
 import {
 	BAND_DEGREES,
 	DIAL_DEGREES,
+	formatAverage,
+	koopResult,
+	modeOf,
 	psychic,
 	scoreFor,
 	wavelength,
@@ -179,6 +183,98 @@ describe('wavelength engine', () => {
 	});
 });
 
+describe('wavelength koop', () => {
+	const koop = (ids: string[], rounds = 1, content = spectra(4), seed = 3) =>
+		wavelength.init({ players, config: { mode: 'koop', teams: [ids], rounds }, content, seed });
+
+	it('Scenario: Koop psychic order', () => {
+		let s = koop(['alex', 'bo', 'cleo'], 2);
+		const seen: string[] = [];
+		for (let i = 0; i < 6; i++) {
+			expect(wavelength.phase(s)).toBe('prep');
+			seen.push(psychic(s).name);
+			s = turn(s, 90);
+		}
+		expect(seen).toEqual(['Alex', 'Bo', 'Cleo', 'Alex', 'Bo', 'Cleo']);
+		expect(wavelength.phase(s)).toBe('gameOver');
+	});
+
+	it('Scenario: Koop keeps one shared score', () => {
+		let s = koop(['alex', 'bo', 'cleo']);
+		const scores: number[] = [];
+		for (const offset of [0, 3 * BAND_DEGREES, 2 * BAND_DEGREES]) {
+			s = step(s, { type: 'show' }, { type: 'guess' });
+			s = step(s, { type: 'dial', value: s.target + (s.target > 90 ? -offset : offset) }, { type: 'lockIn' });
+			scores.push(s.lastScore!);
+			s = step(s, { type: 'next' });
+		}
+		expect(scores).toEqual([4, 0, 2]);
+		expect(s.teams).toHaveLength(1);
+		expect(s.teams[0].score).toBe(6);
+		expect(s.teams[0].players.map((p) => Object.keys(p).sort())).toEqual([
+			['id', 'name'],
+			['id', 'name'],
+			['id', 'name']
+		]);
+		expect(modeOf(s)).toBe('koop');
+	});
+
+	it('Scenario: Koop play again keeps players and mode', () => {
+		let s = koop(['cleo', 'alex', 'bo']);
+		s = turn(turn(turn(s, s.target), 90), 0);
+		expect(wavelength.phase(s)).toBe('gameOver');
+		expect(s.teams[0].score).toBeGreaterThan(0);
+
+		const again = step(s, { type: 'again' });
+		expect(wavelength.phase(again)).toBe('prep');
+		expect(modeOf(again)).toBe('koop');
+		expect(again.teams[0].players.map((p) => p.name)).toEqual(['Cleo', 'Alex', 'Bo']);
+		expect(again.teams[0].score).toBe(0);
+		expect(again.roundIndex).toBe(0);
+		expect(again.turn).toBe(0);
+		expect(psychic(again).name).toBe('Cleo');
+	});
+
+	it('Scenario: Koop rating tiers', () => {
+		const solo = koop(['alex'], 100);
+		const at = (average: number) =>
+			koopResult({ ...solo, phase: 'gameOver', teams: [{ ...solo.teams[0], score: Math.round(average * 100) }] });
+		const results = [4, 3.5, 3.49, 2.5, 1.5, 0.5, 0.49, 0].map(at);
+		expect(results.map((r) => r.average)).toEqual([4, 3.5, 3.49, 2.5, 1.5, 0.5, 0.49, 0]);
+		expect(results.map((r) => r.tier)).toEqual([
+			'Sehr genau',
+			'Sehr genau',
+			'Genau',
+			'Genau',
+			'Solide',
+			'Ungenau',
+			'Weit daneben',
+			'Weit daneben'
+		]);
+	});
+
+	it('Scenario: Koop average per turn', () => {
+		let s = koop(['alex', 'bo', 'cleo']);
+		const offsets = [0, 0, 3 * BAND_DEGREES];
+		for (const offset of offsets) {
+			s = step(s, { type: 'show' }, { type: 'guess' });
+			s = step(s, { type: 'dial', value: s.target + (s.target > 90 ? -offset : offset) }, { type: 'lockIn' }, { type: 'next' });
+		}
+		expect(wavelength.phase(s)).toBe('gameOver');
+		const r = koopResult(s);
+		expect(r).toMatchObject({ turns: 3, total: 8 });
+		expect(r.average).toBeCloseTo(2.67, 2);
+		expect(formatAverage(r.average)).toBe('2,7');
+	});
+
+	it('versus states carry no mode or turn', () => {
+		const s = step(start([['alex', 'bo'], ['cleo', 'dani']]), ...allActions);
+		expect('mode' in s).toBe(false);
+		expect('turn' in s).toBe(false);
+		expect(modeOf(s)).toBe('versus');
+	});
+});
+
 describe('wavelength demo', () => {
 	const play = () => {
 		let s = wavelength.init({
@@ -195,6 +291,17 @@ describe('wavelength demo', () => {
 		}
 		return states;
 	};
+
+	it('Scenario: Wavelength demo stays the Versus demo', () => {
+		const opening = startDemo(wavelength, demo).state;
+		expect(modeOf(opening)).toBe('versus');
+		expect('mode' in opening).toBe(false);
+		expect('turn' in opening).toBe(false);
+		expect(opening.teams.map((t) => t.players.map((p) => p.name))).toEqual([
+			['Alex', 'Bo'],
+			['Cleo', 'Dani']
+		]);
+	});
 
 	it('Scenario: Wavelength demo script plays to the end', () => {
 		expect(demo.players).toEqual(['Alex', 'Bo', 'Cleo', 'Dani']);

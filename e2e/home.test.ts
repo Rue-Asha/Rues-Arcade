@@ -8,7 +8,7 @@ test('Scenario: Tiles for registered games', async ({ page }) => {
 
 	for (const [name, slug, range] of [
 		['Imposter', 'imposter', '3–12 Spieler'],
-		['Wavelength', 'wavelength', '4–18 Spieler']
+		['Wavelength', 'wavelength', '2–18 Spieler']
 	]) {
 		const tile = page.getByRole('link', { name: new RegExp(name) });
 		await expect(tile).toHaveAttribute('href', `/spiele/${slug}`);
