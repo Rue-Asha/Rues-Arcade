@@ -21,7 +21,7 @@ clauses. UI work cites the Mobbin refs from scope.md and follows `design/look-A1
 - [x] 2.1 Types from design.md ## Contracts: `engine/types.ts`, `content/types.ts`, registry with `games`, `comingSoon`, `playerRange`, `ScreenProps`, `SetupProps`
 - [x] 2.2 Per-game stubs: `index.ts` wiring `engine.ts` (GameDef with real limits: Imposter 3–12, Wavelength 4–18 from 2–6 teams × 2–3, `minContent` 1), `demo.ts`, `Screen.svelte`, `Setup.svelte` — all typecheck, no behaviour
 - [x] 2.3 Stubs with final signatures: `demo/context.ts`, `session.ts`, `roster.svelte.ts`, `storage.ts`, `sound.ts`, `motion.ts`, and every `src/lib/ui/` component with the props listed in design.md
-- [ ] 2.4 `migrations/0001_content.sql` (schema in design.md); `scripts/import.mjs` and `scripts/package.mjs` stubs; package.json scripts `import` (`node scripts/import.mjs`) and `package` (`npm run build && node scripts/package.mjs`); `proof` green
+- [x] 2.4 `migrations/0001_content.sql` (schema in design.md); `scripts/import.mjs` and `scripts/package.mjs` stubs; package.json scripts `import` (`node scripts/import.mjs`) and `package` (`npm run build && node scripts/package.mjs`); `proof` green
 
 ## 3. Server runtime and content store
 
