@@ -1,24 +1,24 @@
-verified-at: b91e028
+verified-at: 7a8849d
 
 ## Layer 1 — `npm run proof:full`: green
 
-svelte-check: 458 files, 0 errors, 0 warnings · build ok · vitest: 24 files, 173 tests passed · Playwright: 234 passed, 2 skipped (by design: phone-only and desktop-only look checks).
+svelte-check: 458 files, 0 errors, 0 warnings · build ok · vitest: 24 files, 173 tests passed · Playwright: 236 passed, 2 skipped (by design: phone-only and desktop-only look checks).
 
 ```
-  -  230 [desktop] › e2e/look.test.ts:353:1 › Scenario: No horizontal scroll on phone
-  ✓  229 [phone] › e2e/look.test.ts:353:1 › Scenario: No horizontal scroll on phone (1.0m)
-  -  232 [phone] › e2e/look.test.ts:358:1 › Scenario: Desktop uses the width
-  ✓  233 [phone] › e2e/look.test.ts:476:2 › reduced motion › Scenario: Reduced motion makes transitions instant (283ms)
-  ✓  234 [phone] › e2e/look.test.ts:488:1 › Scenario: Motion never blocks input (302ms)
-  ✓  231 [desktop] › e2e/look.test.ts:358:1 › Scenario: Desktop uses the width (1.0m)
-  ✓  235 [desktop] › e2e/look.test.ts:476:2 › reduced motion › Scenario: Reduced motion makes transitions instant (240ms)
-  ✓  236 [desktop] › e2e/look.test.ts:488:1 › Scenario: Motion never blocks input (274ms)
+  -  232 [desktop] › e2e/look.test.ts:353:1 › Scenario: No horizontal scroll on phone
+  ✓  231 [phone] › e2e/look.test.ts:353:1 › Scenario: No horizontal scroll on phone (1.0m)
+  -  234 [phone] › e2e/look.test.ts:358:1 › Scenario: Desktop uses the width
+  ✓  235 [phone] › e2e/look.test.ts:476:2 › reduced motion › Scenario: Reduced motion makes transitions instant (245ms)
+  ✓  236 [phone] › e2e/look.test.ts:488:1 › Scenario: Motion never blocks input (306ms)
+  ✓  233 [desktop] › e2e/look.test.ts:358:1 › Scenario: Desktop uses the width (1.0m)
+  ✓  237 [desktop] › e2e/look.test.ts:476:2 › reduced motion › Scenario: Reduced motion makes transitions instant (223ms)
+  ✓  238 [desktop] › e2e/look.test.ts:488:1 › Scenario: Motion never blocks input (264ms)
 
-  Slow test file: [phone] › e2e/look.test.ts (5.8m)
-  Slow test file: [desktop] › e2e/look.test.ts (5.7m)
+  Slow test file: [phone] › e2e/look.test.ts (5.7m)
+  Slow test file: [desktop] › e2e/look.test.ts (5.6m)
   Consider running tests from slow files in parallel. See: https://playwright.dev/docs/test-parallel
   2 skipped
-  234 passed (6.4m)
+  236 passed (6.3m)
 ```
 
 ## Layer 2 — spec coverage
@@ -52,7 +52,7 @@ svelte-check: 458 files, 0 errors, 0 warnings · build ok · vitest: 24 files, 1
 | codes › Opening team rotates from a random start | unit | `src/lib/games/codes/engine.test.ts` › "Scenario: Opening team rotates from a random start" ✓ |
 | codes › Codes word visible only while held | e2e | `e2e/codes.test.ts` › "Scenario: Codes word visible only while held" ✓ (desktop+phone) |
 | codes › Anderes Wort returns the rejected word | unit | `src/lib/games/codes/engine.test.ts` › "Scenario: Anderes Wort returns the rejected word" ✓ |
-| codes › Anderes Wort on a pool of one word | unit | `src/lib/games/codes/engine.test.ts` › "Scenario: Anderes Wort on a pool of one word" ✓ |
+| codes › Anderes Wort on a pool of one word | unit | `src/lib/games/codes/engine.test.ts` › "Scenario: Anderes Wort on a pool of one word" ✓; also `e2e/codes.test.ts` › "Scenario: Anderes Wort on a pool of one word" ✓ (desktop+phone) |
 | codes › Codes play screen names team, explainer and guessers | e2e | `e2e/codes.test.ts` › "Scenario: Codes play screen names team, explainer and guessers" ✓ (desktop+phone) |
 | codes › Codes points by attempt | unit | `src/lib/games/codes/engine.test.ts` › "Scenario: Codes points by attempt" ✓ |
 | codes › Daneben passes to the next team | unit | `src/lib/games/codes/engine.test.ts` › "Scenario: Daneben passes to the next team" ✓ |
@@ -154,9 +154,9 @@ Start with `npm run dev` → http://localhost:5173, sound on, on a phone if poss
 
 ## Diffstat
 
-`git diff --stat main...flow/add-three-games`: 72 files changed, 6338 insertions(+), 75 deletions(-)
+`git diff --stat main...flow/add-three-games`: 145 files changed, 6541 insertions(+), 75 deletions(-)
 
-Top-level: `src/` 42 files (games/codes, games/duck, games/most-likely, content, deco, ui, server, routes), `e2e/` 12 (incl. `e2e/walks/`), `openspec/` 13 (change dir), `migrations/` 2, `scripts/` 1, `package.json`, `package-lock.json`.
+Top-level: `src/` 42 files (games/codes, games/duck, games/most-likely, content, deco, ui, server, routes), `e2e/` 12 (incl. `e2e/walks/`), `openspec/` 86 (change dir, incl. the 72 committed `shots/`), `migrations/` 2, `scripts/` 1, `package.json`, `package-lock.json`.
 
 ## Screenshots
 
