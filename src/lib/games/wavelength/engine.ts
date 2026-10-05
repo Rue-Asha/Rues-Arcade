@@ -2,8 +2,12 @@ import type { ContentItem } from '#lib/content/types.ts';
 import { next, pick, type Rng } from '#lib/engine/rng.ts';
 import type { GameDef, Player } from '#lib/engine/types.ts';
 
+export type WavelengthMode = 'versus' | 'koop';
+
 export interface WavelengthConfig {
-	// player ids per team
+	// absent = versus
+	mode?: WavelengthMode;
+	// player ids per team; koop: one team with every chosen id
 	teams: string[][];
 	rounds: number;
 }
@@ -17,6 +21,17 @@ export const MIN_TEAMS = 2;
 export const MAX_TEAMS = 6;
 export const ROUND_OPTIONS = [1, 2, 3, 4, 5];
 export const DEFAULT_ROUNDS = 3;
+export const MIN_KOOP_PLAYERS = 2;
+export const MIN_VERSUS_PLAYERS = 4;
+
+// first match on the unrounded average wins
+export const RATING_TIERS: { min: number; label: string }[] = [
+	{ min: 3.5, label: 'Sehr genau' },
+	{ min: 2.5, label: 'Genau' },
+	{ min: 1.5, label: 'Solide' },
+	{ min: 0.5, label: 'Ungenau' },
+	{ min: 0, label: 'Weit daneben' }
+];
 
 export type WavelengthPhase = 'prep' | 'reveal' | 'guess' | 'result' | 'gameOver';
 
@@ -42,6 +57,10 @@ export interface WavelengthState {
 	dial: number;
 	phase: WavelengthPhase;
 	lastScore: number | null;
+	// both only in koop, so a versus session saved before modes existed keeps its exact shape
+	mode?: 'koop';
+	// index of the psychic within the round
+	turn?: number;
 }
 
 export type WavelengthAction =
@@ -75,6 +94,14 @@ export function targetBands(target: number): { from: number; to: number; points:
 export function psychic(s: WavelengthState): Player {
 	const team = s.teams[s.teamIndex];
 	return team.players[s.roundIndex % team.players.length];
+}
+
+export function modeOf(s: WavelengthState): WavelengthMode {
+	return s.mode ?? 'versus';
+}
+
+export function koopResult(_s: WavelengthState): { total: number; turns: number; average: number; tier: string } {
+	throw new Error('koopResult: not implemented');
 }
 
 export function winners(s: WavelengthState): WavelengthTeam[] {
