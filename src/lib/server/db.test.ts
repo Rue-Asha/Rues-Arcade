@@ -68,6 +68,23 @@ describe('db', () => {
 		expect(() => getDb()).toThrow(/0001_content\.sql/);
 	});
 
+	it('Scenario: Migration failure refuses to start (server init hook rejects)', async () => {
+		process.env.DATABASE_PATH = brokenDb();
+		const { init } = await import('../../hooks.server.ts');
+
+		await expect(Promise.resolve().then(() => init?.())).rejects.toThrow(/0001_content\.sql/);
+	});
+
+	it('server init hook migrates the database on start', async () => {
+		const path = join(dir, 'start.db');
+		process.env.DATABASE_PATH = path;
+		const { init } = await import('../../hooks.server.ts');
+
+		await init?.();
+
+		expect(applied(new DatabaseSync(path, { readOnly: true }))).toEqual(['0001_content.sql']);
+	});
+
 	it('a failing migration is rolled back and not recorded', () => {
 		const db = openDb(join(dir, 'rollback.db'));
 		const run = () =>
