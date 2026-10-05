@@ -1,6 +1,6 @@
-verified-at: d01835c
+verified-at: 8ce52ee
 
-# Verification — party-games-rebuild (round 4)
+# Verification — party-games-rebuild (round 5)
 
 ## Layer 1 — `npm run proof:full` (green, exit 0)
 
@@ -9,19 +9,20 @@ COMPLETED 409 FILES 0 ERRORS 0 WARNINGS 0 FILES_WITH_PROBLEMS   (svelte-check --
 ✓ built in 212ms                                                (vite build)
  Test Files  15 passed (15)
       Tests  87 passed (87)                                     (vitest)
-  ✓   92 [desktop] › e2e/demo.test.ts:183:1 › Scenario: Reload during demo returns to start screen (1.1s)
-  ✓   94 [desktop] › e2e/demo.test.ts:193:1 › Scenario: Demo steppable with reduced motion (963ms)
+  ✓   91 [phone] › e2e/demo.test.ts:183:1 › Scenario: Reload during demo returns to start screen (1.1s)
+  ✓   92 [desktop] › e2e/demo.test.ts:193:1 › Scenario: Demo steppable with reduced motion (969ms)
+  ✓   93 [phone] › e2e/demo.test.ts:193:1 › Scenario: Demo steppable with reduced motion (1.0s)
   ✓   86 [desktop] › e2e/look.test.ts:175:1 › Scenario: Text contrast meets 4.5:1 (20.8s)
   -   96 [desktop] › e2e/look.test.ts:232:1 › Scenario: No horizontal scroll on phone
-  ✓   87 [phone] › e2e/look.test.ts:232:1 › Scenario: No horizontal scroll on phone (21.8s)
+  ✓   87 [phone] › e2e/look.test.ts:232:1 › Scenario: No horizontal scroll on phone (21.9s)
   -   98 [phone] › e2e/look.test.ts:237:1 › Scenario: Desktop uses the width
-  ✓   99 [phone] › e2e/look.test.ts:355:2 › reduced motion › Scenario: Reduced motion makes transitions instant (225ms)
-  ✓  100 [phone] › e2e/look.test.ts:367:1 › Scenario: Motion never blocks input (272ms)
-  ✓   95 [desktop] › e2e/demo.test.ts:201:1 › Scenario: Demo works with an empty database (17.0s)
-  ✓   93 [phone] › e2e/demo.test.ts:201:1 › Scenario: Demo works with an empty database (18.6s)
-  ✓   97 [desktop] › e2e/look.test.ts:237:1 › Scenario: Desktop uses the width (22.0s)
-  ✓  101 [desktop] › e2e/look.test.ts:355:2 › reduced motion › Scenario: Reduced motion makes transitions instant (225ms)
-  ✓  102 [desktop] › e2e/look.test.ts:367:1 › Scenario: Motion never blocks input (242ms)
+  ✓   99 [phone] › e2e/look.test.ts:355:2 › reduced motion › Scenario: Reduced motion makes transitions instant (211ms)
+  ✓   94 [desktop] › e2e/demo.test.ts:201:1 › Scenario: Demo works with an empty database (17.0s)
+  ✓  100 [phone] › e2e/look.test.ts:367:1 › Scenario: Motion never blocks input (288ms)
+  ✓   95 [phone] › e2e/demo.test.ts:201:1 › Scenario: Demo works with an empty database (18.6s)
+  ✓   97 [desktop] › e2e/look.test.ts:237:1 › Scenario: Desktop uses the width (21.8s)
+  ✓  101 [desktop] › e2e/look.test.ts:355:2 › reduced motion › Scenario: Reduced motion makes transitions instant (226ms)
+  ✓  102 [desktop] › e2e/look.test.ts:367:1 › Scenario: Motion never blocks input (251ms)
 
   2 skipped
   100 passed (1.2m)
@@ -29,15 +30,16 @@ COMPLETED 409 FILES 0 ERRORS 0 WARNINGS 0 FILES_WITH_PROBLEMS   (svelte-check --
 
 The 2 Playwright skips are by design: `Scenario: No horizontal scroll on phone` skips on `desktop`,
 `Scenario: Desktop uses the width` skips on `phone` (`test.skip(info.project.name !== …)` in `e2e/look.test.ts`).
-Run on Node v26.8.1; `engines.node` is `>=22.18`. Since round 3: vitest 86 → 87, Playwright 96 → 100 passed.
+Run on Node v26.8.1; `engines.node` is `>=22.18`. Counts unchanged since round 4 (vitest 87, Playwright 100 passed):
+the corrupt-session unit test was renamed, and the unnamed e2e notice test was renamed and extended.
 
 ## Layer 2 — spec coverage
 
-Re-collected from the delta specs at d01835c: 83 scenarios (2 new since round 3: "Play again keeps the teams",
-"Server starts from any working directory"). e2e rows passed in both projects (`phone`, `desktop`) unless noted.
+Re-collected from the delta specs at 8ce52ee: 83 scenarios, no new or removed titles since round 4. One proof line
+changed: "Old or corrupt saved state discarded" unit → e2e (b1925a2). Each unit/e2e name was matched against the
+green Layer 1 output. e2e rows passed in both projects (`phone`, `desktop`) unless noted.
 
 | Scenario | proof | Evidence |
-|---|---|---|
 | Tiles for registered games | e2e | `e2e/home.test.ts` › "Scenario: Tiles for registered games" ✓ |
 | Player range derived from engine limits | unit | `src/lib/games/registry.test.ts` › "Scenario: Player range derived from engine limits" ✓ |
 | Bald tiles have no actions | e2e | `e2e/home.test.ts` › "Scenario: Bald tiles have no actions" ✓ |
@@ -76,7 +78,7 @@ Re-collected from the delta specs at d01835c: 83 scenarios (2 new since round 3:
 | Reducer does not mutate its input | unit | `src/lib/games/{imposter,wavelength}/engine.test.ts` › "Scenario: Reducer does not mutate its input" ✓ ✓ |
 | Reload mid-game resumes the same phase | e2e | `e2e/imposter.test.ts` › "Scenario: Reload mid-game resumes the same phase" ✓ |
 | Spiel beenden clears the session | e2e | `e2e/imposter.test.ts` › "Scenario: Spiel beenden clears the session" ✓ |
-| Old or corrupt saved state discarded | unit | `src/lib/session.test.ts` › "session › Scenario: Old or corrupt saved state discarded" ✓ (r4: shape check now recursive, 2d9c366) |
+| Old or corrupt saved state discarded | e2e | `e2e/start.test.ts:85` › "Scenario: Old or corrupt saved state discarded" ✓ (r5: proof unit → e2e, b1925a2; walks older version, invalid JSON, missing shape; asserts notice, storage cleared, no page error) |
 | Two tabs last write wins | unit | `src/lib/session.test.ts` › "Scenario: Two tabs last write wins" ✓ |
 | Roster edit mid-game keeps the session snapshot | unit | `src/lib/session.test.ts` › "Scenario: Roster edit mid-game keeps the session snapshot" ✓ |
 | Proof prints test names and passes | manual (infrastructure) | this file's Layer 1: every test prints by name (vitest verbose, playwright list), exit 0 |
@@ -86,7 +88,7 @@ Re-collected from the delta specs at d01835c: 83 scenarios (2 new since round 3:
 | Hand-over between players | e2e | `e2e/imposter.test.ts` › "Scenario: Hand-over between players" ✓ |
 | Skip redraws and restarts the reveal | unit | `src/lib/games/imposter/engine.test.ts` › "Scenario: Skip redraws and restarts the reveal" ✓ |
 | Name placeholders filled with distinct names | unit | `src/lib/games/imposter/engine.test.ts` › "Scenario: Name placeholders filled with distinct names" ✓ |
-| No repeats until the pool is exhausted | unit | `src/lib/games/imposter/engine.test.ts` › "Scenario: No repeats until the pool is exhausted" ✓ |
+| No repeats until the pool is exhausted | unit | `src/lib/games/imposter/engine.test.ts` › "imposter engine › Scenario: No repeats until the pool is exhausted" ✓ (r5: rewritten, 8ce52ee; 50 seeds, round 6 reaches all 5 pairs incl. the last-used one) |
 | Pool of one pair repeats | unit | `src/lib/games/imposter/engine.test.ts` › "Scenario: Pool of one pair repeats" ✓ |
 | Imposter demo script plays to the end | unit | `src/lib/games/imposter/engine.test.ts` › "Scenario: Imposter demo script plays to the end" ✓ |
 | Imposter demo by tapping highlighted controls | e2e | `e2e/demo.test.ts` › "Scenario: Imposter demo by tapping highlighted controls" ✓ |
@@ -122,7 +124,7 @@ Re-collected from the delta specs at d01835c: 83 scenarios (2 new since round 3:
 | Wavelength demo script plays to the end | unit | `src/lib/games/wavelength/engine.test.ts` › "Scenario: Wavelength demo script plays to the end" ✓ |
 | Wavelength demo by tapping highlighted controls | e2e | `e2e/demo.test.ts` › "Scenario: Wavelength demo by tapping highlighted controls" ✓ |
 
-83 scenarios, 83 with evidence (74 automated: 36 unit, 38 e2e, all passed in Layer 1; 9 manual). Gaps: none.
+83 scenarios, 83 with evidence (74 automated: 35 unit, 39 e2e, all passed in Layer 1; 9 manual). Gaps: none.
 Deferred to ship: "CI is green on the change's PR" (task 14.1).
 
 ## Manual (Gate 2)
@@ -137,18 +139,16 @@ Deferred to ship: "CI is green on the change's PR" (task 14.1).
 
 ## Diffstat
 
-`git diff --stat main...flow/party-games-rebuild` (at d01835c, before this commit):
-210 files changed, 11910 insertions(+), 1 deletion(-) — of which 88 are round-3 `shots/*.png`; without `shots/`: 122 files changed, 11910 insertions(+), 1 deletion(-).
+`git diff --stat main...flow/party-games-rebuild` (at 8ce52ee, before this commit):
+210 files changed, 11931 insertions(+), 1 deletion(-) — of which 88 are `shots/*.png`; without `shots/`: 122 files changed, 11931 insertions(+), 1 deletion(-).
 
 ## Screenshots
 
-`openspec/changes/party-games-rebuild/shots/` — 88 PNGs from this green run (`phone-*.png`, `desktop-*.png`),
-including the look walk `{phone,desktop}-look-<screen>.png` (50 files). No new names since round 3; 27 files
-re-rendered with different pixels (random seeds and e2e data, no layout change intended):
-`desktop-{imposter-view, inhalte-loeschen-wavelength, inhalte-wavelength, look-imposter-unmask-shown, look-inhalte-imposter, look-inhalte-wavelength, look-start-imposter, look-wavelength-gameover, look-wavelength-result, look-wavelength-reveal-held, start-imposter, wavelength-prep, wavelength-result}.png`,
-`phone-{imposter-unmask, inhalte-imposter, inhalte-loeschen-imposter, look-imposter-unmask-shown, look-imposter-view-held, look-inhalte-imposter, look-inhalte-wavelength, look-start-imposter, look-start-wavelength, look-wavelength-gameover, look-wavelength-result, look-wavelength-reveal-held, start-imposter, wavelength-result}.png`.
+`openspec/changes/party-games-rebuild/shots/` — the 88 PNGs from round 4 (verified-at d01835c), unchanged.
+Round 5 is test-only (two test files and one proof line; no UI code changed since d01835c), so the e2e run's
+`test-results/shots/` (88 files, same names) was not copied: it would only re-render seed- and data-dependent pixels.
 
-- look-wavelength-reveal-held (r4 demo hold fix area): `shots/phone-look-wavelength-reveal-held.png`, `shots/desktop-look-wavelength-reveal-held.png`
+- look-wavelength-reveal-held: `shots/phone-look-wavelength-reveal-held.png`, `shots/desktop-look-wavelength-reveal-held.png`
 - look-lobby-wavelength-short: `shots/phone-look-lobby-wavelength-short.png`, `shots/desktop-look-lobby-wavelength-short.png`
 - look-imposter-handover: `shots/phone-look-imposter-handover.png`, `shots/desktop-look-imposter-handover.png`
 - wavelength-tie: `shots/phone-wavelength-tie.png`, `shots/desktop-wavelength-tie.png`
