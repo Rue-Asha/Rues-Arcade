@@ -5,8 +5,12 @@ gate1: 2026-10-05
 notes:
   - "Repo was created fresh with git init; main has no commit yet (unborn). Planner: settle how main gets its root commit before Build/Ship (new GitHub repo Rue-Asha/Rues-Arcade is created only at Ship, with consent)."
   - "User wants a pause at every checkpoint so they can /clear."
+  - "U1 (wave 1): Kit 3 has no svelte.config.js; Kit config lives in vite.config.ts. Rng interface is exported from src/lib/engine/rng.ts; engine/types.ts re-exports it, no second declaration. int(rng,min,max) includes both bounds, next() is in [0,1)."
+  - "Open for Verify: the harness scenario that proof-full uses .e2e/<PORT>.db is only half proven until server DB code exists (content-store); recheck in Verify."
 learnings:
   - "Explore: offered 'new repo, same remote' with fresh history → can't PR unrelated histories; user then chose a separate new repo. Check the git mechanics of a repo-replacement option before offering it."
   - "User asked for an array of visual options to pick from instead of choosing between three described directions → show visual directions as a design canvas gallery, not as text options."
   - "Look A (Arcade Boss Rush, Duolingo/Kahoot-grounded) read as 'zu kindlich und zu grell' to Rue → for Rue's game UIs, start from grown-up references (console/chess-club) and keep candy-saturated colours off large areas."
   - "A1 (muted) read as 'zu matt' — Rue's target saturation sits between A and A1: colours that pop without stabbing; when tuning palette for Rue, show several palettes on a fixed design rather than one."
+  - "U1: SvelteKit 3 / Vite 8 / TS 6 / vitest 5 broke the repo-setup.md SvelteKit recipe (svelte.config.js rejected, tsconfig must extend $app/tsconfig) → update the recipe; check the installed Kit major before scaffolding."
+  - "U1: vitest picks up e2e/*.test.ts by default → the recipe should set test.include to src/**/*.test.ts."
