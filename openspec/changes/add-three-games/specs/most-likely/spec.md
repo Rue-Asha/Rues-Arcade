@@ -13,6 +13,11 @@ Most Likely To SHALL take 3–20 players from the roster and 5, 10, 15 or 20 rou
 - **THEN** "Los geht's" is disabled and "mind. 3 Spieler" is shown
 - **proof:** e2e
 
+#### Scenario: Most Likely roster above maximum asks who plays
+- **WHEN** the roster has 21 players and the Most Likely To lobby is opened
+- **THEN** "Wer spielt mit?" is shown with "höchstens 20", and "Weiter" is enabled only once 3–20 players are chosen
+- **proof:** e2e
+
 ### Requirement: Most Likely prompt
 Each round SHALL show one prompt ("Wer würde am ehesten …?") drawn without repeats until the pool is used, then
 reshuffled. "Anderer Spruch" SHALL swap it for a different prompt and put the rejected prompt back into the pool.

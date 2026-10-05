@@ -34,6 +34,7 @@ Rue's Arcade ships only Imposter and Wavelength; the three games the group playe
 
 ### What Rhymes with Duck (port of archive `src/lib/games/duck.ts` incl. v2 fix 5becabf)
 - **S11** Setup: 4–16 solo players from roster; Zielpunkte 10/20/30/40/50, default 10, persisted with the session.
+  - added at Gate 1: maximum 16 players (archive `src/routes/games/duck/+page.svelte` `maxPlayers: 16`); roster over 16 → "Wer spielt mit?" picker.
 - **S12** Chuck the Duck: random player at start, moves to the next player in roster order after each played word; stays on skip and at game end. Chuck is visible in the banner, on the player's scoring card and in standings ("Als Nächstes bekommt … Chuck the Duck").
 - **S13** Aufdecken: Chuck banner + rule line ("Ein Reim-Match mit <name> bringt +2 Extrapunkte"), "Wort aufdecken" reveals the word to everyone; "Wort spielen" → Wertung. "Überspringen" (with confirmation) draws a new word; the skipped word stays used; Chuck stays.
 - **S14** Wertung: one card per player; point grid of T boxes (tap k → score k; tap top filled box → k−1) and DUCKY letters (tap → lose that letter and those after it; tap crossed → restore). Points and letters from earlier words are locked.
@@ -43,7 +44,7 @@ Rue's Arcade ships only Imposter and Wavelength; the three games the group playe
 
 ### Who is most likely to (new format)
 - **S17** Setup: 3–20 players from roster; rounds 5/10/15/20, default 10.
-  - added at Gate 1: maximum 20 players (replaces "max as roster").
+  - added at Gate 1: maximum 20 players (replaces "max as roster"); roster over 20 → "Wer spielt mit?" picker.
 - **S18** Each round shows one prompt ("Wer würde am ehesten …?") drawn without repeats until the pool is used; "Anderer Spruch" swaps it (rejected prompt back to pool).
 - **S19** Everyone points at 3; the reader taps the player(s) most pointed at (one or more for a tie) and confirms; at least one must be chosen.
 - **S20** Reveal shows the prompt with the chosen player(s) as title holder(s); each gets +1 title.

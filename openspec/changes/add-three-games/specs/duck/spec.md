@@ -15,6 +15,11 @@ the chosen target SHALL be part of the saved session.
 - **THEN** "Los geht's" is disabled and "mind. 4 Spieler" is shown
 - **proof:** e2e
 
+#### Scenario: Duck roster above maximum asks who plays
+- **WHEN** the roster has 17 players and the Duck lobby is opened
+- **THEN** "Wer spielt mit?" is shown with "höchstens 16", and "Weiter" is enabled only once 4–16 players are chosen
+- **proof:** e2e
+
 #### Scenario: Duck target survives reload
 - **WHEN** Duck is started with Zielpunkte 30 and the page is reloaded during Aufdecken
 - **THEN** the same word phase and players are shown and the target still reads 30
