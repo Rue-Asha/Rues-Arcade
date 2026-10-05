@@ -20,6 +20,7 @@ export interface GameEntry {
 	Screen: Component<ScreenProps>;
 	Setup: Component<SetupProps>;
 	demo: DemoScript<any, any>;
+	pitch: string;
 }
 
 export const games: GameEntry[] = [imposter, wavelength];

@@ -4,4 +4,10 @@ import { imposter as def } from './engine.ts';
 import Screen from './Screen.svelte';
 import Setup from './Setup.svelte';
 
-export const entry: GameEntry = { def, Screen, Setup, demo };
+export const entry: GameEntry = {
+	def,
+	Screen,
+	Setup,
+	demo,
+	pitch: 'Alle bekommen dieselbe Frage, bis auf eine Person.'
+};

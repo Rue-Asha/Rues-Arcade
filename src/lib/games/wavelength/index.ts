@@ -4,4 +4,10 @@ import { wavelength as def } from './engine.ts';
 import Screen from './Screen.svelte';
 import Setup from './Setup.svelte';
 
-export const entry: GameEntry = { def, Screen, Setup, demo };
+export const entry: GameEntry = {
+	def,
+	Screen,
+	Setup,
+	demo,
+	pitch: 'Einen Punkt auf einer Skala zwischen zwei Begriffen finden, gemeinsam oder in Teams.'
+};
