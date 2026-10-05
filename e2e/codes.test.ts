@@ -1,5 +1,5 @@
-import { expect, test, type Page } from '@playwright/test';
-import { emptyServer, seedRoster, shot } from './helpers.ts';
+import { expect, test, type Locator, type Page } from '@playwright/test';
+import { ambient, decoAudit, emptyServer, seedRoster, shot } from './helpers.ts';
 
 const crew = (n: number) => Array.from({ length: n }, (_, i) => `Spieler ${i + 1}`);
 
@@ -288,4 +288,46 @@ test('Scenario: Codes demo by tapping highlighted controls', async ({ page }, in
 	} finally {
 		server.close();
 	}
+});
+
+// counts the drawn shapes of one art root and how many of them are painted in --codes
+function codesArt(root: Locator) {
+	return root.evaluate((el) => {
+		const probe = document.createElement('i');
+		probe.style.color = 'var(--codes)';
+		el.append(probe);
+		const codes = getComputedStyle(probe).color;
+		probe.remove();
+		const shapes = [...el.querySelectorAll('rect, path, circle, ellipse, line, polygon')];
+		const tinted = shapes.filter((s) => [getComputedStyle(s).fill, getComputedStyle(s).stroke].includes(codes));
+		return { shapes: shapes.length, tinted: tinted.length };
+	});
+}
+
+test('Scenario: Codes art on tile and start screen', async ({ page }) => {
+	await page.goto('/');
+	const tile = page.getByRole('link', { name: /Codes/ }).locator('[data-deco][data-motif="codes"]');
+	await expect(tile).toHaveCount(1);
+	const onTile = await codesArt(tile);
+	expect(onTile.shapes).toBeGreaterThan(0);
+	expect(onTile.tinted).toBeGreaterThan(0);
+
+	await page.goto('/spiele/codes');
+	const banner = page.locator('[data-deco][data-motif="codes"]');
+	await expect(banner).toHaveCount(1);
+	const onStart = await codesArt(banner);
+	expect(onStart.shapes).toBeGreaterThan(0);
+	expect(onStart.tinted).toBeGreaterThan(0);
+	expect(await decoAudit(page)).toEqual([]);
+	const moving = await banner.evaluate(
+		(el) => el.getAnimations({ subtree: true }).filter((a) => a.effect?.getTiming().iterations === Infinity).length
+	);
+	expect(moving).toBeGreaterThan(0);
+});
+
+test('Scenario: Codes art holds still under reduced motion', async ({ page }) => {
+	await page.emulateMedia({ reducedMotion: 'reduce' });
+	await page.goto('/spiele/codes');
+	await expect(page.locator('[data-deco][data-motif="codes"]')).toHaveCount(1);
+	expect(await ambient(page)).toBe(0);
 });
