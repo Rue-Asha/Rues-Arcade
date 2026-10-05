@@ -54,11 +54,20 @@ test('Scenario: Codes roster above maximum asks who plays', async ({ page }) => 
 	await seedRoster(page, crew(21));
 	await page.goto('/spiele/codes/lobby');
 
-	await expect(page.getByText('Wer spielt mit?')).toBeVisible();
+	await expect(page.getByText('Wer spielt mit?', { exact: true })).toBeVisible();
+	await expect(page.getByText('höchstens 20')).toBeVisible();
 	await expect(page.getByRole('group', { name: 'Team 1', exact: true })).toHaveCount(0);
 	const next = page.getByRole('button', { name: 'Weiter' });
 	await expect(next).toBeDisabled();
+
 	await page.getByRole('checkbox', { name: 'Spieler 21' }).uncheck();
+	await expect(next).toBeEnabled();
+	for (let i = 5; i <= 20; i++) await page.getByRole('checkbox', { name: `Spieler ${i}`, exact: true }).uncheck();
+	await expect(next).toBeEnabled();
+	await page.getByRole('checkbox', { name: 'Spieler 4', exact: true }).uncheck();
+	await expect(next).toBeDisabled();
+	await expect(page.getByRole('group', { name: 'Team 1', exact: true })).toHaveCount(0);
+	for (let i = 4; i <= 20; i++) await page.getByRole('checkbox', { name: `Spieler ${i}`, exact: true }).check();
 	await next.click();
 
 	await expect(page.getByRole('group', { name: 'Team 5', exact: true }).getByRole('button')).toHaveCount(4);
@@ -261,6 +270,27 @@ test('Scenario: Empty Codes pool blocks start', async ({ page }, info) => {
 		await expect(page.getByRole('button', { name: "Los geht's" })).toBeDisabled();
 		await expect(page.getByText('Für Codes gibt es noch keine Inhalte.')).toBeVisible();
 		await expect(page.getByRole('link', { name: 'Inhalte hinzufügen' })).toHaveAttribute('href', '/spiele/codes/inhalte');
+	} finally {
+		server.close();
+	}
+});
+
+test('Scenario: Anderes Wort on a pool of one word', async ({ page }, info) => {
+	const server = await emptyServer(info, 'codes-one');
+	try {
+		await emptyPool(page, server.origin);
+		const added = await page.request.post(`${server.origin}/api/content/codes_words/import`, {
+			data: { text: 'Leuchtturm' },
+			headers: { origin: server.origin }
+		});
+		expect(added.ok()).toBe(true);
+		await page.goto(`${server.origin}/`);
+		await seedRoster(page, ['Alex', 'Bo', 'Cleo', 'Dani']);
+		await page.goto(`${server.origin}/spiele/codes/lobby`);
+		await page.getByRole('button', { name: "Los geht's" }).click();
+
+		await expect(page.getByText('Diese Runde erklären: Alex und Bo.', { exact: true })).toBeVisible();
+		await expect(page.getByRole('button', { name: 'Anderes Wort', exact: true })).toBeDisabled();
 	} finally {
 		server.close();
 	}
