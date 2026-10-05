@@ -5,10 +5,14 @@ export interface DemoState {
 	tip: string;
 }
 
+// a module slot rather than Svelte context: Button and HoldToView call getDemo() inside $derived, where
+// getContext isn't allowed; the getter reads the demo route's $state, so readers still re-derive
+let source: () => DemoState | null = () => null;
+
 export function setDemo(s: () => DemoState | null): void {
-	void s;
+	source = s;
 }
 
 export function getDemo(): DemoState | null {
-	return null;
+	return source();
 }

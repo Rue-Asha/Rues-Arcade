@@ -19,7 +19,7 @@
 <aside class="tip" aria-label="Demo">
 	<div class="bar" aria-hidden="true"><span style="transform: scaleX({total ? step / total : 0})"></span></div>
 	<div class="body">
-		<p class="label">Demo · Schritt {step} von {total}</p>
+		<p class="label">Demo · Schritt {step}/{total}</p>
 		<p class="text" aria-live="polite">{text}</p>
 	</div>
 	<Button variant="secondary" size="sm" onclick={onexit}>Demo beenden</Button>
