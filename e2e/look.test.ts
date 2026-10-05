@@ -52,7 +52,7 @@ async function walk(page: Page, info: TestInfo, check: Check) {
 
 	await page.goto('/spiele/imposter');
 	await check('start-imposter');
-	await press(page, 'Spiel starten');
+	await press(page, "Los geht's");
 	await expect(page).toHaveURL(/\/lobby$/);
 	await check('lobby-imposter');
 	await press(page, "Los geht's");
@@ -78,7 +78,7 @@ async function walk(page: Page, info: TestInfo, check: Check) {
 
 	await page.goto('/spiele/wavelength');
 	await check('start-wavelength');
-	await press(page, 'Spiel starten');
+	await press(page, "Los geht's");
 	await expect(page).toHaveURL(/\/lobby$/);
 	await press(page, '1');
 	await check('lobby-wavelength');

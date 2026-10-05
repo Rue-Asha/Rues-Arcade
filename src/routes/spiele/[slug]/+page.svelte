@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
+	import Banner from '#lib/deco/Banner.svelte';
 	import { games, loadGameSession, playerRange } from '#lib/games/registry.ts';
 	import { roster } from '#lib/roster.svelte.ts';
 	import Button from '#lib/ui/Button.svelte';
@@ -15,10 +16,15 @@
 			'Danach sieht die Runde die Crew-Frage, vergleicht die Antworten und entlarvt den Imposter.'
 		],
 		wavelength: [
-			'Teams aus 2–3 Personen spielen gegeneinander, ein Spektrum zwischen zwei Begriffen pro Zug.',
+			'Gemeinsam oder in Teams: pro Zug ein Spektrum zwischen zwei Begriffen.',
 			'Die Hellseherin oder der Hellseher sieht verdeckt, wo das Ziel liegt, und gibt einen Hinweis.',
 			'Das Team stellt die Scheibe ein: je näher am Ziel, desto mehr Punkte (4, 3 oder 2).'
 		]
+	};
+
+	const nouns: Record<string, [string, string]> = {
+		imposter: ['Fragenpaar', 'Fragenpaare'],
+		wavelength: ['Spektrum', 'Spektren']
 	};
 
 	const entry = $derived(games.find((g) => g.def.slug === params.slug)!);
@@ -39,33 +45,32 @@
 	const count = $derived(ready ? roster.players.length : 0);
 	const fewPlayers = $derived(count < def.minPlayers);
 	const noContent = $derived(data.count < def.minContent);
+	const noun = $derived((nouns[def.slug] ?? ['Eintrag', 'Einträge'])[data.count === 1 ? 0 : 1]);
+
+	const cards = $derived([
+		{ id: 'erklaerung', title: 'Erklärung', line: 'Die Regeln Schritt für Schritt', href: `${base}/erklaerung` },
+		{ id: 'demo', title: 'Demo', line: 'Eine Runde zum Mittippen', href: `${base}/demo?from=${base}` },
+		{ id: 'inhalte', title: 'Inhalte', line: `${data.count} ${noun} ansehen und bearbeiten`, href: `${base}/inhalte` }
+	]);
 </script>
 
 <svelte:head>
 	<title>{def.name} · Rue's Arcade</title>
 </svelte:head>
 
-<div class="layout rise" style="--c: var(--{def.colour}); --tint: var(--{def.colour}-tint); --edge: var(--{def.colour}-ledge)">
-	<section class="intro" aria-labelledby="game">
-		<div class="title">
-			<span class="badge" aria-hidden="true">{def.name.slice(0, 1)}</span>
-			<div>
-				<h1 id="game">{def.name}</h1>
-				<p class="muted">{playerRange(def)}</p>
+<div class="layout rise" style="--c: var(--{def.colour})">
+	<header class="intro">
+		<Banner slug={def.slug} place="start" colour={def.colour}>
+			<div class="title">
+				<span class="badge" aria-hidden="true">{def.name.slice(0, 1)}</span>
+				<div>
+					<h1>{def.name}</h1>
+					<p class="range">{playerRange(def)}</p>
+				</div>
 			</div>
-		</div>
-		<h2 class="label">So geht's</h2>
-		<ol class="rules">
-			{#each rules[def.slug] ?? [] as rule, i (i)}
-				<li>{rule}</li>
-			{/each}
-		</ol>
-		<div class="row">
-			<Button variant="secondary" size="sm" onclick={() => goto(`${base}/demo?from=${base}`)}>Demo</Button>
-			<Button variant="secondary" size="sm" onclick={() => goto(`${base}/erklaerung`)}>Erklärung</Button>
-			<Button variant="secondary" size="sm" onclick={() => goto(`${base}/inhalte`)}>Inhalte</Button>
-		</div>
-	</section>
+			<p class="pitch">{entry.pitch}</p>
+		</Banner>
+	</header>
 
 	<aside class="panel stack play">
 		{#if discarded}
@@ -81,7 +86,7 @@
 			disabled={fewPlayers || noContent}
 			onclick={() => goto(`${base}/lobby`)}
 		>
-			Spiel starten
+			Los geht's
 		</Button>
 
 		<ul class="checks">
@@ -109,6 +114,46 @@
 			</li>
 		</ul>
 	</aside>
+
+	<section class="panel stack how" aria-labelledby="how">
+		<h2 id="how" class="label">So geht's</h2>
+		<ol class="rules">
+			{#each rules[def.slug] ?? [] as rule, i (i)}
+				<li>{rule}</li>
+			{/each}
+		</ol>
+	</section>
+
+	<section class="panel stack more" aria-labelledby="more">
+		<h2 id="more" class="label">Mehr zu {def.name}</h2>
+		<div class="cards">
+			{#each cards as card (card.id)}
+				<a class="card" href={card.href} aria-labelledby="{card.id}-title" aria-describedby="{card.id}-line">
+					<span class="icon" aria-hidden="true">
+						<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+							{#if card.id === 'erklaerung'}
+								<path d="M12 6.5C10.5 5 8 4.5 4 4.5v13c4 0 6.5.5 8 2 1.5-1.5 4-2 8-2v-13c-4 0-6.5.5-8 2z"></path>
+								<path d="M12 6.5v13"></path>
+							{:else if card.id === 'demo'}
+								<circle cx="12" cy="12" r="8.5"></circle>
+								<path d="M10 8.8v6.4l5.2-3.2z"></path>
+							{:else}
+								<rect x="4.5" y="4" width="15" height="16" rx="2.5"></rect>
+								<path d="M8.5 9h7M8.5 12.5h7M8.5 16h4"></path>
+							{/if}
+						</svg>
+					</span>
+					<span class="text">
+						<span id="{card.id}-title" class="name">{card.title}</span>
+						<span id="{card.id}-line" class="line">{card.line}</span>
+					</span>
+					<span class="go" aria-hidden="true">
+						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"></path></svg>
+					</span>
+				</a>
+			{/each}
+		</div>
+	</section>
 </div>
 
 <style>
@@ -119,27 +164,22 @@
 		padding-top: 8px;
 	}
 
-	.intro {
-		display: flex;
-		flex-direction: column;
-		gap: 16px;
-		padding: 20px;
-		border-radius: var(--radius-xl);
-		background: var(--tint);
-		box-shadow:
-			inset 0 3px 0 var(--c),
-			0 var(--ledge) 0 var(--edge);
-	}
-
 	.title {
 		display: flex;
 		align-items: center;
 		gap: 18px;
 	}
 
-	.title p {
+	.range {
 		margin-top: 6px;
+		color: var(--muted);
 		font-weight: 500;
+	}
+
+	.pitch {
+		max-width: 46ch;
+		color: var(--text-soft);
+		font-size: 17px;
 	}
 
 	.badge {
@@ -153,6 +193,11 @@
 		color: var(--ink);
 		font-weight: 800;
 		font-size: 30px;
+	}
+
+	.how,
+	.more {
+		padding: 20px;
 	}
 
 	.rules {
@@ -189,6 +234,73 @@
 
 	.play {
 		padding: 20px;
+	}
+
+	.cards {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr);
+		gap: 12px;
+	}
+
+	.card {
+		display: flex;
+		align-items: center;
+		gap: 14px;
+		min-height: 72px;
+		padding: 12px 14px;
+		border-radius: var(--radius);
+		background: var(--raised);
+		box-shadow: 0 4px 0 var(--shadow);
+		text-decoration: none;
+		transition:
+			transform 0.08s ease-out,
+			box-shadow 0.08s ease-out;
+	}
+
+	.card:active {
+		transform: translateY(4px);
+		box-shadow: 0 0 0 var(--shadow);
+	}
+
+	.icon {
+		display: grid;
+		place-items: center;
+		flex: none;
+		width: 44px;
+		height: 44px;
+		border-radius: var(--radius-sm);
+		background: var(--surface);
+		color: var(--c);
+	}
+
+	.card .text {
+		display: flex;
+		flex: 1;
+		flex-direction: column;
+		gap: 4px;
+		min-width: 0;
+	}
+
+	.card .name {
+		font-weight: 700;
+		font-size: 17px;
+	}
+
+	.card .line {
+		color: var(--muted);
+		font-size: 14px;
+	}
+
+	.go {
+		display: grid;
+		flex: none;
+		color: var(--muted);
+	}
+
+	@media (hover: hover) {
+		.card:hover .go {
+			color: var(--c);
+		}
 	}
 
 	.notice {
@@ -252,13 +364,29 @@
 			align-items: start;
 		}
 
-		.intro {
-			padding: 32px;
+		.intro,
+		.more {
+			grid-column: 1 / -1;
+		}
+
+		.how {
+			grid-row: 2;
+			grid-column: 1;
+			padding: 28px 32px;
 		}
 
 		.play {
-			position: sticky;
-			top: 24px;
+			grid-row: 2;
+			grid-column: 2;
+		}
+
+		.more {
+			grid-row: 3;
+			padding: 24px 32px 28px;
+		}
+
+		.cards {
+			grid-template-columns: repeat(3, minmax(0, 1fr));
 		}
 	}
 </style>
