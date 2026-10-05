@@ -48,7 +48,7 @@ minus "!" and emoji; deviations only where design.md says so. Shared e2e data ru
 > unit: depends=1 · scope=S22,S30 · files=src/routes/spiele/[slug]/inhalte/+page.svelte, e2e/content.test.ts, package.json, package-lock.json, scripts/version.test.ts
 
 - [x] 5.1 Inhalte page in single mode for `isSingle` types: one field for add and edit, list shows the text, bulk import one per line with the report; pair mode unchanged (Scenario: Add, edit and delete a single entry · Bulk import of single entries on the Inhalte page · Add, edit and delete an entry · Delete asks for confirmation)
-- [ ] 5.2 Version 0.2.0 in `package.json` and `package-lock.json` (`npm version 0.2.0 --no-git-tag-version`) (Scenario: Package and lockfile carry 0.2.0)
+- [x] 5.2 Version 0.2.0 in `package.json` and `package-lock.json` (`npm version 0.2.0 --no-git-tag-version`) (Scenario: Package and lockfile carry 0.2.0)
 
 ## 6. Ship-time steps (shipper, after merge and Gate 2 consent — not a build unit)
 
