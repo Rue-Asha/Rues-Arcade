@@ -210,3 +210,15 @@ New (Koop):
 
 Refreshed (decoration, start layout): `shots/{phone,desktop}-look-home.png`, `look-start-imposter.png`, `look-start-wavelength.png`,
 `look-lobby-imposter.png`, `look-lobby-wavelength.png`, `look-lobby-wavelength-short.png`, `look-lobby-pick.png`, every `look-imposter-*` and `look-wavelength-*`.
+
+## Review
+
+Rounds 6–7 (Gate 2 reopen, S18–S21; reviewer diff `48b71b5...flow/party-games-rebuild`).
+
+| Round | Finding | Resolution |
+|---|---|---|
+| 6 | [weak] `src/lib/games/wavelength/engine.test.ts` "Scenario: Koop keeps one shared score" pinned only player keys; a per-player tally elsewhere in the state would pass | Fixed in `b38779a`: exact key sets for state and team asserted; engine unchanged (no tally existed) |
+| 7 | Re-review of `b38779a` | no findings |
+
+Weakened tests: none unjustified (all changed assertions follow spec changes: "Los geht's", card links, 2–18 range, neutral verdicts).
+Note, not a finding: Koop tier uses the unrounded average while the screen shows one decimal (e.g. 49/20 → "Ø 2,5" with tier "Solide"); spec-mandated.
