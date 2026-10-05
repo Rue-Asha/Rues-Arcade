@@ -146,8 +146,8 @@ export const wavelength: GameDef<WavelengthState, WavelengthAction, WavelengthCo
 	slug: 'wavelength',
 	name: 'Wavelength',
 	colour: 'wavelength',
-	// 2–6 teams of 2–3 players
-	minPlayers: 4,
+	// koop from 2; versus needs MIN_VERSUS_PLAYERS for 2–6 teams of 2–3
+	minPlayers: MIN_KOOP_PLAYERS,
 	maxPlayers: 18,
 	minContent: 1,
 	contentType: 'wavelength_spectra',

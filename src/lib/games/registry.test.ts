@@ -10,6 +10,11 @@ describe('registry', () => {
 		expect(playerRange(imposter.def)).toBe('3–12 Spieler');
 	});
 
+	it('Scenario: Wavelength player range reads 2–18', () => {
+		const wavelength = games.find((g) => g.def.slug === 'wavelength')!;
+		expect(playerRange(wavelength.def)).toBe('2–18 Spieler');
+	});
+
 	it('lists the five locked games and unique slugs', () => {
 		expect(comingSoon).toEqual(['Duck', 'Family Feud', 'Codes', 'Most Likely To', 'Charade']);
 		const slugs = games.map((g) => g.def.slug);
