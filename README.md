@@ -37,3 +37,21 @@ missing, it names it, still imports the other one and exits 1.
 
 Then stop the service, copy `rues-arcade.db` to the host's data directory (the file `DATABASE_PATH` points at),
 and start it again. From then on, content is edited in the app under "Inhalte".
+
+## Release
+
+```sh
+npm run package      # dist/rues-arcade-<version>.tgz + .sha256
+```
+
+The tarball holds a runnable server: `build/`, `migrations/`, the production `package.json`, the lockfile and
+its production `node_modules`. Unpack it and start it with `node build`; it reads `PORT`, `HOST`,
+`DATABASE_PATH` and `PROTOCOL_HEADER`, creates the database directory if needed and applies migrations on
+start. `GET /healthz` answers 200 while the database does.
+
+To publish a release, bump `version` in `package.json` on `main`, then tag that commit `v<version>` and push the
+tag. The `release` workflow checks that the tag matches the version, reruns CI (proof, package, e2e against the
+unpacked tarball) and publishes a GitHub release with the tarball and its `.sha256`. Tagging is manual.
+
+Deploying a release is not part of this repo: the Homelab change in Homelab-Managment will install it on the
+host and bump its version from then on.
