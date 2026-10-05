@@ -4,6 +4,7 @@ gate0: 2026-10-05
 gate1: 2026-10-05
 gate0_ext: 2026-10-05  # S18–S21 added after Gate 2 reopen; needs gate1_ext before build
 gate1_ext: 2026-10-05  # planner additions: 1 neutral verdict copy → in; 2 live lobby banner → dropped; 3 So geht's both modes → in
+gate2: 2026-10-05  # S18–S21 reopen approved; all taste items accepted as built
 notes:
   - "Repo was created fresh with git init; main has no commit yet (unborn). Planner: settle how main gets its root commit before Build/Ship (new GitHub repo Rue-Asha/Rues-Arcade is created only at Ship, with consent)."
   - "User wants a pause at every checkpoint so they can /clear."
