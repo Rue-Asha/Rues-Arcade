@@ -263,3 +263,63 @@ test('Scenario: Two or three players get Koop only', async ({ page }, info) => {
 		if (names.length === 2) await shot(page, info, 'lobby-wavelength-koop-two');
 	}
 });
+
+test('Scenario: Full Wavelength Koop game', async ({ page, request }, info) => {
+	await seedContent(request, 'wavelength_spectra', [
+		['Kalt', 'Heiß'],
+		['Leise', 'Laut']
+	]);
+	await seedRoster(page, ['Alex', 'Bo']);
+	await page.goto('/spiele/wavelength/lobby');
+	await page.getByRole('button', { name: '1', exact: true }).click();
+	await page.getByRole('button', { name: "Los geht's" }).click();
+	await expect(page).toHaveURL(/\/spiele\/wavelength\/spielen$/);
+
+	await expect(page.getByText('Runde 1 / 1 · Zug 1 / 2', { exact: true })).toBeVisible();
+	await shot(page, info, 'wavelength-koop-prep');
+	await turn(page, 'Alex', onTarget);
+	await expect(page.getByTestId('points')).toHaveText('+4');
+	await shot(page, info, 'wavelength-koop-result');
+	await page.getByRole('button', { name: 'Weiter' }).click();
+
+	await expect(page.getByText('Runde 1 / 1 · Zug 2 / 2', { exact: true })).toBeVisible();
+	await turn(page, 'Bo', farOff);
+	await expect(page.getByTestId('points')).toHaveText('0');
+	await page.getByRole('button', { name: 'Zum Endstand' }).click();
+
+	await expect(page.getByText('Ergebnis', { exact: true })).toBeVisible();
+	await expect(page.getByRole('heading', { name: 'Solide', exact: true })).toBeVisible();
+	await expect(page.getByText('4 Punkte', { exact: true })).toBeVisible();
+	await expect(page.getByText('Ø 2,0 Punkte pro Zug · 2 Züge', { exact: true })).toBeVisible();
+	await expect(page.getByText('Gewinner', { exact: true })).toHaveCount(0);
+	await expect(page.getByRole('button', { name: 'Nochmal spielen' })).toBeVisible();
+	await shot(page, info, 'wavelength-koop-gameover');
+});
+
+test('Scenario: Koop session resumes after reload', async ({ page, request }) => {
+	await seedContent(request, 'wavelength_spectra', [
+		['Kalt', 'Heiß'],
+		['Leise', 'Laut']
+	]);
+	await seedRoster(page, ['Alex', 'Bo', 'Cleo']);
+	await page.goto('/spiele/wavelength/lobby');
+	await page.getByRole('button', { name: "Los geht's" }).click();
+	await turn(page, 'Alex', onTarget);
+	await page.getByRole('button', { name: 'Weiter' }).click();
+
+	const check = async () => {
+		await expect(page.getByText('Runde 1 / 3 · Zug 2 / 3', { exact: true })).toBeVisible();
+		await expect(page.getByRole('heading', { name: 'Gib das Handy an Bo' })).toBeVisible();
+		const board = page.getByRole('region', { name: 'Punktestand' });
+		await expect(board.getByRole('listitem')).toHaveCount(1);
+		await expect(board.getByRole('listitem')).toContainText('Gemeinsam');
+		await expect(board.getByRole('listitem')).toContainText('4');
+		await expect(page.getByRole('list', { name: 'Reihenfolge' }).locator('[aria-current="true"]')).toHaveText(/Bo/);
+	};
+	await check();
+	const saved = await page.evaluate(() => localStorage.getItem('arcade:session:wavelength'));
+	await page.reload();
+	await check();
+	await expect(page.getByText(/verworfen/)).toHaveCount(0);
+	expect(await page.evaluate(() => localStorage.getItem('arcade:session:wavelength'))).toBe(saved);
+});
