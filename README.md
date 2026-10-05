@@ -4,7 +4,7 @@ Party games for one shared device (phone or laptop passed around the table).
 
 ## Setup
 
-Requires Node.js ≥ 22.5 (uses `node:sqlite`).
+Requires Node.js ≥ 22.18 (`node:sqlite` without a flag, and `npm run import` loads TypeScript directly).
 
 ```sh
 npm install

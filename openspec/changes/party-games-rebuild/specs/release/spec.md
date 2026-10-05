@@ -33,7 +33,7 @@ production `package.json`, lockfile).
 ### Requirement: Server runtime configuration
 The production server SHALL read `PORT`, `HOST`, `DATABASE_PATH` and `PROTOCOL_HEADER`, create the
 database's directory if it is missing, and apply migrations on start. `package.json` SHALL declare
-`engines.node >=22.5`.
+`engines.node >=22.18`.
 
 #### Scenario: Missing database directory is created
 - **WHEN** the server starts with `DATABASE_PATH` pointing into a directory that does not exist
