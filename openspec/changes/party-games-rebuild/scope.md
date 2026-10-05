@@ -125,16 +125,17 @@ Game (registry: slug, name, colour, player limits, phases)
 - **S20** Copy: each home tile gets a one-line pitch; all new copy (banners, pitches, card descriptions,
   co-op rating) is neutral and grown-up — plain description, no exclamation marks, no puns, no
   "Spieleabend"-style slogans.
-- **S21** Wavelength co-op for 2–3 players: with 2–3 chosen players the game runs as one team; each round every
-  player is psychic once, in order, the others set the dial together; turn scoring unchanged (4/3/2/0); 1–5
-  rounds (default 3); one shared score. Game over shows total, average points per turn and a neutral rating
-  tier from that average. 4+ players: teams as in S12. "Nochmal spielen" keeps the same players and mode.
-  - edges: 1 player → start disabled with the reason; lobby shows which mode applies before start; player
-    range shown on tile/start becomes 2+; a saved team session from before still resumes; the Wavelength
-    demo stays the team demo (S15); co-op tie handling n/a.
+- **S21** Wavelength modes Koop | Versus: the Wavelength lobby has a mode switch. Versus = teams as in S12
+  (4+ players). Koop = all chosen players (2–18) are one team; each round every player is psychic once, in
+  order, the others set the dial together; turn scoring unchanged (4/3/2/0); 1–5 rounds (default 3); one
+  shared score only (no per-player points). Game over shows total, average points per turn and a neutral
+  rating tier from that average. "Nochmal spielen" keeps the same players and mode.
+  - edges: 2–3 chosen players → Versus disabled with the reason, Koop preselected; 4+ → both available,
+    default Versus; 1 player → start disabled with the reason; player range shown on tile/start becomes 2+;
+    a saved Versus session from before still resumes; the Wavelength demo stays the Versus demo (S15).
 
 ## Non-goals
-- Co-op for 4+ players, or a co-op demo script.
+- A Koop demo script; per-player points in Koop.
 - Decoration variants 2 (Automat) and 3 (Nachtlicht) — mocked, not chosen.
 - Duck, Family Feud, Codes, Most Likely To — Rue wants to touch up their rules first; each its own later change (Split off).
 - Charade — new game, later change.
@@ -209,7 +210,7 @@ Game (registry: slug, name, colour, player limits, phases)
 - Slide viewer: Cash App https://mobbin.com/screens/ab53c620-435b-48af-8570-eb2c8890c02d · Bumble arrows+dots https://mobbin.com/screens/56d5faa0-b9cd-438e-a73c-361996fa6dd3
 - Backup of the only content copies: `00_Archive/Party-Games-content-backup-2026-10-05/` (seeds/*.sql, dev.db, static/sounds/).
 
-- Gate 2 reopen (2026-10-05, Rue): decoration variant 1 Spielbrett; ambient motion permanent; start button "Los geht's"; pitch line on tiles; copy neutral/grown-up; Wavelength co-op 2–3 rounds-based with rating; action box on start screens only.
+- Gate 2 reopen (2026-10-05, Rue): decoration variant 1 Spielbrett; ambient motion permanent; start button "Los geht's"; pitch line on tiles; copy neutral/grown-up; Wavelength mode switch Koop | Versus in the lobby (Koop 2+, Versus 4+, Koop shared score only, with rating); teams of 1 rejected (no one to guess); action box on start screens only.
 
 ## Done when
 - On phone and desktop, Rue can set up a roster, play a full game of Imposter and of Wavelength with the
@@ -217,7 +218,7 @@ Game (registry: slug, name, colour, player limits, phases)
 - Each game's Demo plays one full round on the same example, end to end, by tapping the highlighted controls.
 - Erklärung shows the empty state, and shows an HTML file once one is committed.
 - `npm run proof:full` and CI are green; Rue approves the look on screenshots at Gate 2.
-- Two people can play a full Wavelength co-op game; Rue approves the decorated screens on screenshots.
+- Two people can play a full Wavelength Koop game; Rue approves the decorated screens on screenshots.
 
 ## Split off
 - **Homelab: deploy Rues-Arcade** — Terraform host entry, role copied from `life_manager`, `03_SERVICES` playbook,
