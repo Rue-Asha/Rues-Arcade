@@ -171,3 +171,14 @@ Top-level: `src/` 42 files (games/codes, games/duck, games/most-likely, content,
 - most-likely: `{phone,desktop}-look-most-likely-{prompt,pick,pick-chosen,reveal,gameover}.png`, `{phone,desktop}-most-likely-{prompt,pick,tie,gameover}.png`
 
 Not shot by the e2e run: the So-geht's pages of the new games and the Inhalte pages of Duck and Most Likely (single-text mode is shot only for Codes).
+
+## Review
+
+Round 1 (fresh-context reviewer on `git diff main...flow/add-three-games`): no weakened tests (every changed pre-existing test is justified by the delta specs), no spec mismatch, no correctness findings. Two weak tests:
+
+- [weak] `src/lib/games/codes/engine.test.ts` — "Scenario: Anderes Wort on a pool of one word" did not pin down "the button is disabled on screen". → **Fixed** in 7a8849d: e2e test of the same name on a one-word pool asserts "Anderes Wort" is disabled; shown red with the condition broken.
+- [weak] `e2e/codes.test.ts` — "Scenario: Codes roster above maximum asks who plays" checked only the upper bound. → **Fixed** in 7a8849d: asserts "höchstens 20", Weiter enabled at 20 and 4, disabled at 3; shown red with `minPlayers` 3.
+
+Noted, not a finding (no scenario covers it): Duck's "Neue Runde" resets the used-word list, while the Codes and Most Likely rematches keep theirs. Left for the Gate 2 judgement.
+
+Round 2 (reviewer on `git diff ecb9914..7a8849d`): no findings. Verifier round 2 at 7a8849d: proof:full green, 0 gaps.
