@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { emptyServer, seedRoster, shot } from './helpers.ts';
+import { decoAudit, emptyServer, seedRoster, shot } from './helpers.ts';
 
 const names = ['Alex', 'Bo', 'Cleo', 'Dani'];
 const crew = (n: number) => Array.from({ length: n }, (_, i) => `Spieler ${i + 1}`);
@@ -297,4 +297,37 @@ test('Scenario: Duck demo by tapping highlighted controls', async ({ page }, inf
 	} finally {
 		server.close();
 	}
+});
+
+test('Scenario: Duck art on tile and start screen', async ({ page }) => {
+	await seedRoster(page, names);
+	const DUCK = 'rgb(255, 159, 67)';
+	const drawn = (art: ReturnType<Page['locator']>) =>
+		art.evaluate((root) => {
+			const shapes = [...root.querySelectorAll('path, circle, ellipse, rect, polygon, line')];
+			const own = shapes.filter((s) => !s.closest('pattern'));
+			const colours = own.flatMap((s) => [getComputedStyle(s).fill, getComputedStyle(s).stroke]);
+			return { shapes: own.length, colours };
+		});
+
+	await page.goto('/');
+	const tile = page.getByRole('link', { name: /What Rhymes with Duck/ }).locator('[data-deco][data-motif="duck"]');
+	await expect(tile).toHaveCount(1);
+	await expect(tile).toHaveAttribute('aria-hidden', 'true');
+	const onTile = await drawn(tile);
+	expect(onTile.shapes).toBeGreaterThan(0);
+	expect(onTile.colours).toContain(DUCK);
+	expect(await decoAudit(page)).toEqual([]);
+
+	await page.goto('/spiele/duck');
+	const banner = page.locator('header').filter({ has: page.getByRole('heading', { level: 1 }) });
+	const art = banner.locator('[data-deco][data-motif="duck"]');
+	await expect(art).toHaveCount(1);
+	await expect(art).toHaveAttribute('aria-hidden', 'true');
+	const onStart = await drawn(art);
+	expect(onStart.shapes).toBeGreaterThan(0);
+	await expect(art.getByText('Haus', { exact: true })).toBeAttached();
+	await expect(art.getByText('Maus', { exact: true })).toBeAttached();
+	expect(onStart.colours).toContain(DUCK);
+	expect(await decoAudit(page)).toEqual([]);
 });
