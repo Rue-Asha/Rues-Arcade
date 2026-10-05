@@ -124,7 +124,9 @@ Extension decisions (planner, S18–S21, 2026-10-05):
   ≥ 0.5 "Ungenau", else "Weit daneben". Game over Koop: label "Ergebnis", tier as the reveal word, "<total>
   Punkte" and "Ø <avg> Punkte pro Zug · <turns> Züge". Play screens in Koop: turn label "Runde r / R · Zug t / n",
   the aside shows the shared score (Scoreboard with one row "Gemeinsam") and the player order with the current
-  psychic marked; existing per-turn copy (handover, dial, verdict) is reused.
+  psychic marked; existing per-turn copy (handover, dial, verdict) is reused. Verdicts are reworded to the
+  neutral tone (accepted at Gate 1): 4 "Genau getroffen.", 3 "Knapp daneben.", 2 "In der Nähe.", 0 "Kein Punkt.";
+  the demo tip "Volltreffer, 4 Punkte! …" becomes "Genau getroffen, 4 Punkte. Weiter zu Team 2."
 - **Limits and the mode switch.** `def.minPlayers` 2, `maxPlayers` 18 (`MIN_KOOP_PLAYERS = 2`,
   `MIN_VERSUS_PLAYERS = MIN_TEAMS × MIN_TEAM_SIZE = 4`). The existing start-screen and lobby gates then block
   1 player with "mind. 2 Spieler". `Setup.svelte` gets a segmented switch "Spielmodus: Koop | Versus"; Versus is

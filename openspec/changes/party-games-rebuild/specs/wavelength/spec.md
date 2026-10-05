@@ -153,3 +153,18 @@ as a Versus game.
 - **WHEN** a stored version-1 Wavelength state without `mode` or `turn` (as written before Koop existed) is loaded
 - **THEN** it is restored, not discarded, is treated as Versus, and the next lock-in scores for the current team
 - **proof:** unit
+
+### Requirement: Neutral turn verdicts
+The Wavelength result screen SHALL name each turn's outcome in the neutral tone of S20, in Versus and in Koop:
+4 points "Genau getroffen.", 3 "Knapp daneben.", 2 "In der Nähe.", 0 "Kein Punkt." The Wavelength demo tips
+SHALL use the same tone (the first turn's result tip reads "Genau getroffen, 4 Punkte. Weiter zu Team 2.").
+
+#### Scenario: Turn verdicts read neutral
+- **WHEN** a Wavelength turn is locked in on the target and another one far outside the bands
+- **THEN** the result screens show "Genau getroffen." and "Kein Punkt.", and no verdict text contains "!"
+- **proof:** e2e
+
+#### Scenario: Wavelength demo tips read neutral
+- **WHEN** the Wavelength demo script's tips are read
+- **THEN** none contains "!" and the first result tip is "Genau getroffen, 4 Punkte. Weiter zu Team 2."
+- **proof:** unit

@@ -69,3 +69,8 @@ description. Both games SHALL use the same layout. The play header (Demo, Spiel 
 - **WHEN** the roster and content are sufficient and "Los geht's" on the start screen is tapped
 - **THEN** the game's lobby is shown
 - **proof:** e2e
+
+#### Scenario: So geht's covers both Wavelength modes
+- **WHEN** the Wavelength start screen is opened
+- **THEN** the first "So geht's" rule reads "Gemeinsam oder in Teams: pro Zug ein Spektrum zwischen zwei Begriffen."
+- **proof:** e2e
