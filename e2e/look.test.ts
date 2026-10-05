@@ -40,8 +40,9 @@ async function holding(page: Page, check: () => Promise<void>) {
 	await page.mouse.up();
 }
 
-// Home, Spieler, both start screens, lobbies, every game phase, Inhalte and Erklärung.
+// Home, Spieler, both start screens, lobbies, every game phase (Wavelength as Versus and Koop), Inhalte and Erklärung.
 async function walk(page: Page, info: TestInfo, check: Check) {
+	test.slow();
 	await content(page, info);
 	await seedRoster(page, names);
 
@@ -105,11 +106,41 @@ async function walk(page: Page, info: TestInfo, check: Check) {
 		}
 		await press(page, 'Einloggen');
 		await expect(page.getByTestId('points')).toBeVisible();
-		if (i === 0) await check('wavelength-result');
+		if (i === 0) {
+			await counted(page);
+			await check('wavelength-result');
+		}
 		await page.getByRole('button', { name: /^(Weiter|Zum Endstand)$/ }).click();
 	}
 	await expect(page.getByRole('button', { name: 'Nochmal spielen' })).toBeVisible();
+	await counted(page);
 	await check('wavelength-gameover');
+
+	await seedRoster(page, ['Alex', 'Bo']);
+	await page.goto('/spiele/wavelength/lobby');
+	await expect(page.getByRole('button', { name: 'Koop', exact: true })).toHaveAttribute('aria-pressed', 'true');
+	await press(page, '1');
+	await check('lobby-wavelength-koop');
+	await press(page, "Los geht's");
+	await expect(page).toHaveURL(/\/spielen$/);
+	for (const [i, psychic] of ['Alex', 'Bo'].entries()) {
+		await expect(page.getByText(`Runde 1 / 1 · Zug ${i + 1} / 2`, { exact: true })).toBeVisible();
+		await expect(page.getByRole('heading', { name: `Gib das Handy an ${psychic}` })).toBeVisible();
+		if (i === 0) await check('wavelength-koop-prep');
+		await press(page, 'Ziel anzeigen');
+		await page.getByRole('button', { name: /^Verdecken/ }).click();
+		await aim(page);
+		await press(page, 'Einloggen');
+		await expect(page.getByTestId('points')).toHaveText('+4');
+		if (i === 0) {
+			await counted(page);
+			await check('wavelength-koop-result');
+		}
+		await page.getByRole('button', { name: /^(Weiter|Zum Endstand)$/ }).click();
+	}
+	await expect(page.getByText('8 Punkte', { exact: true })).toBeVisible();
+	await counted(page);
+	await check('wavelength-koop-gameover');
 
 	await seedRoster(page, Array.from({ length: 13 }, (_, i) => `Spieler ${i + 1}`));
 	await page.goto('/spiele/imposter/lobby');
@@ -136,6 +167,16 @@ async function aim(page: Page) {
 	await dial.focus();
 	const steps = Math.round(target) - Number(await dial.getAttribute('aria-valuenow'));
 	for (let i = 0; i < Math.abs(steps); i++) await dial.press(steps > 0 ? 'ArrowRight' : 'ArrowLeft');
+}
+
+// countUp writes text frame by frame, outside the animations shot() waits for
+async function counted(page: Page) {
+	const { teams, phase, lastScore } = await page.evaluate(
+		() => JSON.parse(localStorage.getItem('arcade:session:wavelength')!).state
+	);
+	const scores = (teams as { score: number }[]).map((t) => String(t.score)).sort();
+	await expect.poll(async () => (await page.locator('.board .pts').allTextContents()).sort()).toEqual(scores);
+	if (phase === 'result') await expect(page.getByTestId('points')).toHaveText(lastScore > 0 ? `+${lastScore}` : '0');
 }
 
 async function settle(page: Page) {
