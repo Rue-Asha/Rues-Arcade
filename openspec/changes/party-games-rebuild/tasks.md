@@ -106,18 +106,18 @@ clauses. UI work cites the Mobbin refs from scope.md and follows `design/look-A1
 
 > unit: depends=9,10 · scope=S13,S14,S15,S10 · files=src/lib/demo/context.ts, src/lib/demo/runner.ts, src/lib/demo/runner.test.ts, src/routes/spiele/[slug]/demo/+page.svelte, e2e/demo.test.ts
 
-- [ ] 12.1 `runner.ts`: in-memory state from `DemoScript` through `def.reduce`, current step, expected action, `next()` dispatching the scripted action, end state
-- [ ] 12.2 Demo route: game Screen inside demo context, CoachTip "Schritt n/N", "Demo beenden" back to `?from=`, "Demo beendet" at the end; no session, roster or content API calls
-- [ ] 12.3 e2e (Scenario: Imposter demo by tapping highlighted controls · Wavelength demo by tapping highlighted controls · Only the expected control is enabled · Hidden information shown with Demo tag · Demo leaves real data untouched · Exiting returns to the starting screen · Reload during demo returns to start screen · Demo steppable with reduced motion · Demo works with an empty database)
+- [x] 12.1 `runner.ts`: in-memory state from `DemoScript` through `def.reduce`, current step, expected action, `next()` dispatching the scripted action, end state
+- [x] 12.2 Demo route: game Screen inside demo context, CoachTip "Schritt n/N", "Demo beenden" back to `?from=`, "Demo beendet" at the end; no session, roster or content API calls
+- [x] 12.3 e2e (Scenario: Imposter demo by tapping highlighted controls · Wavelength demo by tapping highlighted controls · Only the expected control is enabled · Hidden information shown with Demo tag · Demo leaves real data untouched · Exiting returns to the starting screen · Reload during demo returns to start screen · Demo steppable with reduced motion · Demo works with an empty database)
 
 ## 13. Look and motion pass
 
 > unit: depends=9,10,11 · scope=S2,S3 · files=e2e/look.test.ts, README.md
 
-- [ ] 13.1 e2e over Home, Spieler, start screen, lobby, each game phase, Inhalte, Erklärung in both projects, writing screenshots to `test-results/shots/` (Scenario: Touch targets are at least 44px · No horizontal scroll on phone · Desktop uses the width)
-- [ ] 13.2 e2e (Scenario: Reduced motion makes transitions instant · Motion never blocks input); fixes go into the component, not the test
-- [ ] 13.3 README "Release": `npm run package`, tag `v<version>`, release workflow, deploy is the later Homelab change
-- [ ] 13.4 Gate 2 material: screenshot list for Rue (Scenario: Look approved on screenshots · Effects sound right)
+- [x] 13.1 e2e over Home, Spieler, start screen, lobby, each game phase, Inhalte, Erklärung in both projects, writing screenshots to `test-results/shots/` (Scenario: Touch targets are at least 44px · No horizontal scroll on phone · Desktop uses the width)
+- [x] 13.2 e2e (Scenario: Reduced motion makes transitions instant · Motion never blocks input); fixes go into the component, not the test
+- [x] 13.3 README "Release": `npm run package`, tag `v<version>`, release workflow, deploy is the later Homelab change
+- [x] 13.4 Gate 2 material: screenshot list for Rue (Scenario: Look approved on screenshots · Effects sound right)
 
 ## 14. Ship-time steps (shipper, after Gate 2, with consent — not a build unit)
 
