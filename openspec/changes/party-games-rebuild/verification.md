@@ -151,3 +151,38 @@ including the look walk `{phone,desktop}-look-<screen>.png`. New since round 2:
 - wavelength-tie: `shots/phone-wavelength-tie.png`, `shots/desktop-wavelength-tie.png`
 - look-wavelength-result: `shots/phone-look-wavelength-result.png`, `shots/desktop-look-wavelength-result.png`
 - look-home: `shots/phone-look-home.png`, `shots/desktop-look-home.png`
+
+## Review
+
+Three rounds of fresh-context review (Layer 3). No round found a weakened test.
+
+### Round 1 (reviewer on 8be381d) → fixer 4f24c5e 423336a 8dd2bbf 9326391
+| Finding | Resolution |
+|---|---|
+| weak: demo "Demo leaves real data untouched" reset the request log before checking the Imposter demo | test fixed; asserts no server calls after each demo |
+| weak: "Text contrast meets 4.5:1" checked a hand-picked token list | test added: rendered-contrast walk in e2e/look.test.ts; proof unit → e2e |
+| weak: "Empty pool blocks start" mocked the server load | test runs on a dedicated empty server (emptyServer helper) |
+| weak: "Fresh database runs with empty tables" didn't pin "app serves Home" | e2e added in e2e/home.test.ts; proof unit → e2e |
+| spec: --imposter on --wavelength-tint 4.23:1 (also raised 4.40) | new token --imposter-text #ed6c78, ≥4.53 on all grounds |
+| correctness: engines >=22.5 but node:sqlite needs 22.13, importer type stripping 22.18 | engines >=22.18, release spec + README updated |
+| correctness: Esc not caught once focus is inside the sandboxed iframe | user decision 2026-10-05: spec narrowed (Esc while focus is in the app, close button always); e2e proves button after slide interaction |
+
+### Round 2 (reviewer on d23f69c) → fixer 35e64e0 efe9b3d 652def3 969c0e5 42371c8
+| Finding | Resolution |
+|---|---|
+| weak: contrast walk exempted aria-disabled locked tiles | exemption limited to :disabled; spec sentence added; tiles pass unchanged |
+| weak: Wavelength demo hidden-info didn't check the target is shown | asserts img "Ziel bei N°" visible |
+| weak: "Tie for first shown as tie" only tested winners() | e2e renders the tie ("Unentschieden", "Team 1 & Team 2"); proof unit → e2e |
+| spec: Press Start 2P beyond logo and scores | team count, round buttons, ranks, dial "?" → Sora |
+| bug: importer accepted zero-byte / unrelated SQLite and created the target | source validated before the target is opened; test extended |
+| bug: structurally invalid saved session crashed the play page | loadGameSession shape check against the game's opening state; unit + e2e |
+| spec: release.yml provenance attestation and dependabot.yml are unspecced | not fixed by decision: harmless hardening, user accepts or drops at Gate 2 |
+
+### Round 3 (reviewer on 777b90c) — open, fix budget (3 rounds) used
+| Finding | Status |
+|---|---|
+| weak: e2e/start.test.ts:6 "Below minimum disables start" seeds no content, so the button may be disabled by the empty pool, not the player gate | open |
+| spec: Wavelength reveal HoldToView has no action and stays enabled in the demo (step 2/10) though "only the expected control is enabled"; tapping it is a no-op | open |
+| spec: "Nochmal spielen" (`again`) restarts with the same teams; no scenario covers it | open |
+| correctness (low): session shape check is top-level only; a valid state with `players: []` (or Wavelength `teams: [{}]`) still crashes the play page | open |
+| correctness (low): db.ts loadMigrations resolves `migrations` against cwd; starting the unpacked tarball from another directory fails with ENOENT | open — matters for the Homelab deploy unit (WorkingDirectory) |
