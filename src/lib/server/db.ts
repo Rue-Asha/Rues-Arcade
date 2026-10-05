@@ -1,6 +1,7 @@
-import { mkdirSync, readdirSync, readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
+import { fileURLToPath } from 'node:url';
 
 export interface Migration {
 	name: string;
@@ -14,7 +15,15 @@ export function openDb(path: string): DatabaseSync {
 	return new DatabaseSync(path);
 }
 
-export function loadMigrations(dir = 'migrations'): Migration[] {
+// this module runs from src/ in dev and tests and from a bundled chunk under build/ in production, so the
+// package root is found by walking up rather than by a fixed relative path or the cwd
+function packageRoot(): string {
+	let dir = dirname(fileURLToPath(import.meta.url));
+	while (!existsSync(join(dir, 'package.json')) && dirname(dir) !== dir) dir = dirname(dir);
+	return dir;
+}
+
+export function loadMigrations(dir = join(packageRoot(), 'migrations')): Migration[] {
 	return readdirSync(dir)
 		.filter((f) => f.endsWith('.sql'))
 		.sort()

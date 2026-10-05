@@ -32,13 +32,19 @@ production `package.json`, lockfile).
 
 ### Requirement: Server runtime configuration
 The production server SHALL read `PORT`, `HOST`, `DATABASE_PATH` and `PROTOCOL_HEADER`, create the
-database's directory if it is missing, and apply migrations on start. `package.json` SHALL declare
+database's directory if it is missing, and apply the package's `migrations/` on start whatever its working
+directory. `package.json` SHALL declare
 `engines.node >=22.18`.
 
 #### Scenario: Missing database directory is created
 - **WHEN** the server starts with `DATABASE_PATH` pointing into a directory that does not exist
 - **THEN** the directory and database file are created and migrations are applied
 - **proof:** unit
+
+#### Scenario: Server starts from any working directory
+- **WHEN** the built server is started with a working directory other than the package root
+- **THEN** it applies the migrations and `GET /healthz` returns 200
+- **proof:** e2e
 
 ### Requirement: Health check
 `GET /healthz` SHALL return 200 when the database answers a query, and a non-200 status otherwise.

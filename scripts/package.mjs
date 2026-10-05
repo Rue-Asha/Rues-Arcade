@@ -12,7 +12,7 @@ const root = join(staging, name);
 rmSync('dist', { recursive: true, force: true });
 mkdirSync(root, { recursive: true });
 cpSync('build', join(root, 'build'), { recursive: true });
-// the server applies ./migrations relative to its cwd, which is the package root
+// the server applies migrations/ from the package root, found next to package.json
 cpSync('migrations', join(root, 'migrations'), { recursive: true });
 cpSync('package.json', join(root, 'package.json'));
 cpSync('package-lock.json', join(root, 'package-lock.json'));

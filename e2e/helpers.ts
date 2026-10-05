@@ -38,10 +38,10 @@ export async function shot(page: Page, info: TestInfo, slug: string) {
 
 // The shared e2e DB is never empty for long, so tests that need it empty run their own server on a DB file
 // that doesn't exist yet.
-export async function emptyServer(info: TestInfo, name: string) {
+export async function emptyServer(info: TestInfo, name: string, cwd = process.env.E2E_APP_DIR) {
 	const db = resolve(`.e2e/empty-${name}-${info.project.name}-${process.pid}.db`);
-	const server = spawn('node', ['build'], {
-		cwd: process.env.E2E_APP_DIR,
+	const server = spawn('node', [resolve(process.env.E2E_APP_DIR ?? '.', 'build')], {
+		cwd,
 		stdio: ['ignore', 'pipe', 'inherit'],
 		env: { ...process.env, HOST: '127.0.0.1', PORT: '0', PROTOCOL_HEADER: 'x-forwarded-proto', DATABASE_PATH: db }
 	});
