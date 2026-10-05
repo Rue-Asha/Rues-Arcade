@@ -136,19 +136,19 @@ test-unique text, `emptyServer` wherever a count or an empty table is asserted.
 
 > unit: depends=15 · scope=S21 · files=src/lib/games/wavelength/engine.ts, src/lib/games/wavelength/engine.test.ts, src/lib/games/registry.test.ts, e2e/home.test.ts
 
-- [ ] 16.1 Koop init/next/again/lockIn per design.md, `psychic` by mode (Scenario: Koop psychic order · Koop keeps one shared score · Koop play again keeps players and mode)
-- [ ] 16.2 `koopResult` and `RATING_TIERS` (Scenario: Koop rating tiers · Koop average per turn)
-- [ ] 16.3 Limits 2–18; update the Wavelength range in `e2e/home.test.ts` "Scenario: Tiles for registered games" to "2–18 Spieler" (Scenario: Wavelength player range reads 2–18)
-- [ ] 16.4 Compatibility: a literal pre-S21 version-1 state in storage loads through `loadGameSession` and scores as Versus; the demo stays Versus (Scenario: Saved Versus session from before resumes · Wavelength demo stays the Versus demo)
+- [x] 16.1 Koop init/next/again/lockIn per design.md, `psychic` by mode (Scenario: Koop psychic order · Koop keeps one shared score · Koop play again keeps players and mode)
+- [x] 16.2 `koopResult` and `RATING_TIERS` (Scenario: Koop rating tiers · Koop average per turn)
+- [x] 16.3 Limits 2–18; update the Wavelength range in `e2e/home.test.ts` "Scenario: Tiles for registered games" to "2–18 Spieler" (Scenario: Wavelength player range reads 2–18)
+- [x] 16.4 Compatibility: a literal pre-S21 version-1 state in storage loads through `loadGameSession` and scores as Versus; the demo stays Versus (Scenario: Saved Versus session from before resumes · Wavelength demo stays the Versus demo)
 
 ## 17. Decoration components
 
 > unit: depends=15 · scope=S18 · files=src/lib/deco/motifs.ts, src/lib/deco/motifs.test.ts, src/lib/deco/*.svelte
 
-- [ ] 17.1 `motifFor` mapping with neutral fallback (Scenario: Game without its own art gets the neutral fallback)
-- [ ] 17.2 Motif SVGs after `design/deco-1-spielbrett.html` and the PNGs: home composite (board grid, dial with bands, tilted mask card, dashed locks), masks (odd one lifts), dial (rings; start variant labelled "Kalt"/"Heiß"), crew, rings, corner, neutral — `currentColor` and existing tokens, no images or fonts, no Press Start 2P; any text inside art meets 4.5:1 as the look test measures it (set `color` to the fill)
-- [ ] 17.3 `Art` and `Banner` per design.md: aria-hidden, `pointer-events: none`, Banner art right on desktop, faded top-right on phone, no horizontal overflow at 390px
-- [ ] 17.4 Ambient motion: needle sweep ~7 s and mask lift as infinite CSS keyframes on transform/opacity inside `@media (prefers-reduced-motion: no-preference)`
+- [x] 17.1 `motifFor` mapping with neutral fallback (Scenario: Game without its own art gets the neutral fallback)
+- [x] 17.2 Motif SVGs after `design/deco-1-spielbrett.html` and the PNGs: home composite (board grid, dial with bands, tilted mask card, dashed locks), masks (odd one lifts), dial (rings; start variant labelled "Kalt"/"Heiß"), crew, rings, corner, neutral — `currentColor` and existing tokens, no images or fonts, no Press Start 2P; any text inside art meets 4.5:1 as the look test measures it (set `color` to the fill)
+- [x] 17.3 `Art` and `Banner` per design.md: aria-hidden, `pointer-events: none`, Banner art right on desktop, faded top-right on phone, no horizontal overflow at 390px
+- [x] 17.4 Ambient motion: needle sweep ~7 s and mask lift as infinite CSS keyframes on transform/opacity inside `@media (prefers-reduced-motion: no-preference)`
 
 ## 18. Wavelength Koop UI
 
