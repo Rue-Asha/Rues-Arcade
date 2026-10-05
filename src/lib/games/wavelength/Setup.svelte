@@ -58,7 +58,7 @@
 			<h2 id="teams">Teams</h2>
 			<div class="count" role="group" aria-label="Anzahl Teams">
 				<button type="button" class="step" aria-label="Weniger Teams" disabled={count <= fewest} onclick={() => deal(count - 1)}>−</button>
-				<span class="data n" aria-live="polite">{count}</span>
+				<span class="n" aria-live="polite">{count}</span>
 				<button type="button" class="step" aria-label="Mehr Teams" disabled={count >= most} onclick={() => deal(count + 1)}>+</button>
 			</div>
 		</div>
@@ -91,7 +91,7 @@
 		</div>
 		<div class="seg" role="group" aria-labelledby="rounds">
 			{#each ROUND_OPTIONS as r (r)}
-				<button type="button" class="opt data" aria-pressed={rounds === r} onclick={() => (rounds = r)}>{r}</button>
+				<button type="button" class="opt" aria-pressed={rounds === r} onclick={() => (rounds = r)}>{r}</button>
 			{/each}
 		</div>
 	</section>
@@ -158,7 +158,9 @@
 
 	.n {
 		min-width: 28px;
-		font-size: 16px;
+		font-weight: 800;
+		font-size: 20px;
+		font-variant-numeric: tabular-nums;
 		text-align: center;
 		color: var(--wavelength);
 	}

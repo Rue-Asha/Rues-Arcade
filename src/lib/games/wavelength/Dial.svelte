@@ -274,7 +274,7 @@
 
 	.mystery {
 		fill: var(--muted);
-		font: 400 22px var(--font-data);
+		font: 800 28px var(--font-ui);
 		text-anchor: middle;
 	}
 

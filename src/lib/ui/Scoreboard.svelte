@@ -13,7 +13,7 @@
 	<ol class="rows rise">
 		{#each rows as row, i (row.name)}
 			<li class="row" class:lead={row.lead}>
-				<span class="rank data">{i + 1}</span>
+				<span class="rank">{i + 1}</span>
 				<span class="who">
 					{row.name}
 					{#if row.lead}
@@ -60,7 +60,9 @@
 
 	.rank {
 		width: 20px;
-		font-size: 12px;
+		font-weight: 800;
+		font-size: 15px;
+		font-variant-numeric: tabular-nums;
 	}
 
 	.who {
