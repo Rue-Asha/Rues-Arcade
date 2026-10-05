@@ -31,6 +31,7 @@ learnings:
   - "[repo] Props named state in .svelte → destructure as `state: game`. (weil: collides with the $state rune, svelte-check store_rune_conflict)"
   - "[repo] proof:full in a worktree → make sure the unit port is free first. (weil: a leftover preview server held it)"
   - "[global] Proof runs in agent shells → keep file edits and proof in separate Bash calls, and never pipe proof without pipefail. (weil: a bundled call hung; a piped red proof got committed)"
+  - "[flow, fix flow-status] Ship-time task sections (no build unit) in tasks.md → flow-status must not count them as a wave. (weil: after /clear it reported 4 build / next wave while the change was verified and waiting at Gate 2)"
 memory_candidates:
   - "User asked for an array of visual options to pick from instead of choosing between three described directions → show visual directions as a design canvas gallery, not as text options."
   - "Look A (Arcade Boss Rush, Duolingo/Kahoot-grounded) read as 'zu kindlich und zu grell' to Rue → for Rue's game UIs, start from grown-up references (console/chess-club) and keep candy-saturated colours off large areas."
