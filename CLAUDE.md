@@ -19,21 +19,25 @@ code as `src/**/*.test.ts` (plus `scripts/*.test.ts`); e2e in `e2e/`.
 
 ## Specs
 - Before changing catalogue, read openspec/specs/catalogue/spec.md.
+- Before changing codes, read openspec/specs/codes/spec.md.
 - Before changing content-store, read openspec/specs/content-store/spec.md.
 - Before changing demo, read openspec/specs/demo/spec.md.
 - Before changing design-system, read openspec/specs/design-system/spec.md.
+- Before changing duck, read openspec/specs/duck/spec.md.
 - Before changing explanation, read openspec/specs/explanation/spec.md.
 - Before changing game-engine, read openspec/specs/game-engine/spec.md.
 - Before changing harness, read openspec/specs/harness/spec.md.
 - Before changing imposter, read openspec/specs/imposter/spec.md.
+- Before changing most-likely, read openspec/specs/most-likely/spec.md.
 - Before changing release, read openspec/specs/release/spec.md.
 - Before changing roster, read openspec/specs/roster/spec.md.
 - Before changing sound, read openspec/specs/sound/spec.md.
 - Before changing wavelength, read openspec/specs/wavelength/spec.md.
 
 ## Learnings
-- **e2e on the shared DB** → exact-text locators (`getByText(x, { exact: true })`) and `emptyServer` from `e2e/helpers.ts` for empty-data scenarios. (weil: hasText substring 'Mittag' matched 'Tag') [2026-10-05 · party-games-rebuild]
+- **e2e on the shared DB** → exact-text locators (`getByText(x, { exact: true })`) and `emptyServer` from `e2e/helpers.ts` for empty-data scenarios; content-API writes (DELETE, import) against it need `headers: { origin: server.origin }` or Kit CSRF returns 403, and that belongs in `e2e/helpers.ts`, not per test file. (weil: hasText substring 'Mittag' matched 'Tag'; U2 and U3 each solved the 403 locally) [2026-10-05 · add-three-games]
 - **e2e screenshots or geometry** → wait for animations and compare rounded boxes: `shot()` waits for `.rise`/WAAPI, geometry checks must wait for finite animations too, and after a count-up wait for the final number (`counted()` in look.test.ts) since countUp is not WAAPI. (weil: blank shots, 799.99px iframe, a column check 2px off mid-.rise, 3 of 4 score shots mid-count) [2026-10-05 · party-games-rebuild]
+- **`settle()` in look.test.ts** → expect an AbortError when a dialog opens over a hovered button (desktop), and wait for Stage's `.rise` to start before shooting. (weil: U3 and U4 each worked around it in their walks) [2026-10-05 · add-three-games]
 - **Form grid columns** → `minmax(0,1fr)`. (weil: input intrinsic width widened the phone page to 462px) [2026-10-05 · party-games-rebuild]
 - **Props named `state` in .svelte** → destructure as `state: game`. (weil: collides with the $state rune, svelte-check store_rune_conflict) [2026-10-05 · party-games-rebuild]
 - **`proof:full` in a worktree** → make sure the unit port is free first. (weil: a leftover preview server held it) [2026-10-05 · party-games-rebuild]

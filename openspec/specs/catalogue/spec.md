@@ -5,25 +5,25 @@ TBD - created by archiving change party-games-rebuild. Update Purpose after arch
 ## Requirements
 ### Requirement: Home catalogue from the registry
 Home SHALL show one tile per registered game with its name, colour and player range, all read from the game's
-own registry entry; the player range text SHALL be derived from the engine's limits, never typed separately.
+own registry entry; the player range text SHALL be derived from the engine's limits, never typed separately. The
+registered games SHALL be Imposter, Wavelength, Codes, What Rhymes with Duck and Most Likely To.
 
 #### Scenario: Tiles for registered games
 - **WHEN** Home is opened
-- **THEN** Imposter and Wavelength tiles are shown, each linking to its start screen
+- **THEN** Imposter, Wavelength, Codes, What Rhymes with Duck and Most Likely To tiles are shown, each linking to its start screen (`/spiele/imposter`, `/spiele/wavelength`, `/spiele/codes`, `/spiele/duck`, `/spiele/most-likely`)
 - **proof:** e2e
 
 #### Scenario: Player range derived from engine limits
 - **WHEN** the tile label is computed for each registered game
-- **THEN** it equals the text formatted from that game's `minPlayers`/`maxPlayers` (Imposter "3–12 Spieler")
+- **THEN** it equals the text formatted from that game's `minPlayers`/`maxPlayers` (Imposter "3–12 Spieler", Codes "4–20 Spieler", What Rhymes with Duck "4–16 Spieler", Most Likely To "3–20 Spieler")
 - **proof:** unit
 
 ### Requirement: Locked later games
-Home SHALL show Duck, Family Feud, Codes, Most Likely To and Charade as neutral, greyed "Bald verfügbar" tiles
-with no actions.
+Home SHALL show Family Feud and Charade as neutral, greyed "Bald verfügbar" tiles with no actions.
 
 #### Scenario: Bald tiles have no actions
 - **WHEN** Home is opened and a "Bald verfügbar" tile is clicked
-- **THEN** the five locked tiles are shown, none is a link or button, and the page does not change
+- **THEN** exactly two locked tiles, Family Feud and Charade, are shown, none is a link or button, and the page does not change
 - **proof:** e2e
 
 ### Requirement: Tile pitch
@@ -32,7 +32,7 @@ its name and above its player range. Locked "Bald" tiles show no pitch.
 
 #### Scenario: Each tile shows a one-line pitch
 - **WHEN** Home is opened
-- **THEN** the Imposter tile shows "Alle bekommen dieselbe Frage, bis auf eine Person." and the Wavelength tile shows "Einen Punkt auf einer Skala zwischen zwei Begriffen finden, gemeinsam oder in Teams."
+- **THEN** the Imposter tile shows "Alle bekommen dieselbe Frage, bis auf eine Person.", the Wavelength tile "Einen Punkt auf einer Skala zwischen zwei Begriffen finden, gemeinsam oder in Teams.", the Codes tile "Teams erraten ein geheimes Wort aus Ein-Wort-Hinweisen, reihum.", the Duck tile "Alle suchen gleichzeitig einen Reim auf dasselbe Wort." and the Most Likely To tile "Ein Spruch, und alle zeigen auf die Person, die am besten passt."
 - **proof:** e2e
 
 ### Requirement: Game start screen layout
@@ -41,7 +41,7 @@ the player range and the pitch. Below it, the start panel ("Weiterspielen" when 
 button "Los geht's", player and content checks) SHALL come first on phone and sit in the right column on
 desktop (≥1024px), "So geht's" SHALL follow it on phone and fill the left column on desktop, and at the bottom a
 box "Mehr zu <Spiel>" SHALL hold three cards, Erklärung, Demo and Inhalte, each a link with a one-line
-description. Both games SHALL use the same layout. The play header (Demo, Spiel beenden) is unchanged.
+description. All games SHALL use the same layout. The play header (Demo, Spiel beenden) is unchanged.
 
 #### Scenario: Start banner carries title, badge and player range
 - **WHEN** the Imposter start screen is opened
@@ -54,8 +54,8 @@ description. Both games SHALL use the same layout. The play header (Demo, Spiel 
 - **proof:** e2e
 
 #### Scenario: Same start layout for both games
-- **WHEN** the Imposter and the Wavelength start screens are rendered
-- **THEN** both show banner, start panel, "So geht's" and "Mehr zu <Spiel>" in the same order and arrangement
+- **WHEN** the start screens of all five games are rendered
+- **THEN** each shows banner, start panel, "So geht's" and "Mehr zu <Spiel>" in the same order and arrangement
 - **proof:** e2e ("Scenario: Start panel first on phone, right column on desktop")
 
 #### Scenario: Mehr-zu cards keep their targets
@@ -76,5 +76,25 @@ description. Both games SHALL use the same layout. The play header (Demo, Spiel 
 #### Scenario: So geht's covers both Wavelength modes
 - **WHEN** the Wavelength start screen is opened
 - **THEN** the first "So geht's" rule reads "Gemeinsam oder in Teams: pro Zug ein Spektrum zwischen zwei Begriffen."
+- **proof:** e2e
+
+### Requirement: Start screens of the new games
+The Codes, What Rhymes with Duck and Most Likely To start screens SHALL carry their own "So geht's" rules (three
+lines each, neutral German) and count their content with their own nouns: Codes and Duck "Wort" / "Wörter", Most
+Likely To "Spruch" / "Sprüche".
+
+#### Scenario: So geht's for the new games
+- **WHEN** the Codes, Duck and Most Likely To start screens are opened
+- **THEN** each "So geht's" holds three rules, the first reading "In Teams: pro Runde kennen alle Erklärer dasselbe geheime Wort.", "Ein Wort wird für alle aufgedeckt, alle suchen gleichzeitig einen Reim darauf." and "Pro Runde ein Spruch: Wer würde am ehesten …?" respectively, and none contains "!"
+- **proof:** e2e
+
+#### Scenario: Inhalte card counts the seeded content
+- **WHEN** on a fresh database the Codes, Duck and Most Likely To start screens are opened
+- **THEN** the Inhalte cards read "91 Wörter ansehen und bearbeiten", "60 Wörter ansehen und bearbeiten" and "60 Sprüche ansehen und bearbeiten"
+- **proof:** e2e
+
+#### Scenario: New start banners carry title, badge and range
+- **WHEN** the Codes, Duck and Most Likely To start screens are opened
+- **THEN** the banners show "Codes" with badge "C" and "4–20 Spieler", "What Rhymes with Duck" with badge "W" and "4–16 Spieler", and "Most Likely To" with badge "M" and "3–20 Spieler", each with its pitch
 - **proof:** e2e
 
