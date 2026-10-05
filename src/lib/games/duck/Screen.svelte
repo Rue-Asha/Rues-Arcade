@@ -10,4 +10,5 @@
 
 <Card tone="duck_words">
 	<p class="label">{s.phase}</p>
+	<p>Ziel: {s.target} Punkte</p>
 </Card>
