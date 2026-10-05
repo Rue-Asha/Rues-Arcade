@@ -119,9 +119,64 @@ clauses. UI work cites the Mobbin refs from scope.md and follows `design/look-A1
 - [x] 13.3 README "Release": `npm run package`, tag `v<version>`, release workflow, deploy is the later Homelab change
 - [x] 13.4 Gate 2 material: screenshot list for Rue (Scenario: Look approved on screenshots · Effects sound right)
 
-## 14. Ship-time steps (shipper, after Gate 2, with consent — not a build unit)
+## 15. Contracts for the Gate 2 additions
 
-> unit: depends=1,2,3,4,5,6,7,8,9,10,11,12,13 · scope=S1b · files=none
+Added at the Gate 2 reopen (S18–S21). Shapes in design.md ## Contracts; later units fill them in and stop and
+report if they need a change. e2e in parallel units: exact-text locators, per-test roster/content with
+test-unique text, `emptyServer` wherever a count or an empty table is asserted.
 
-- [ ] 14.1 ⚠ irreversible: create public GitHub repo `Rue-Asha/Rues-Arcade`, push `main` (root `400c1ee`) then `flow/party-games-rebuild`, open the PR; CI green on the PR (Scenario: CI is green on the change's PR)
-- [ ] 14.2 ⚠ irreversible: `main` ruleset from Life-Manager's (required checks `ci`, `security-baseline / workflow-lint`, `security-baseline / secret-scan`, `security-baseline / dependency-review`; block deletion and non-fast-forward)
+> unit: depends=13 · scope=none · files=src/lib/games/registry.ts, src/lib/games/imposter/index.ts, src/lib/games/wavelength/index.ts, src/lib/games/wavelength/engine.ts, src/lib/deco/motifs.ts, src/lib/deco/Art.svelte, src/lib/deco/Banner.svelte, e2e/helpers.ts
+
+- [ ] 15.1 `GameEntry.pitch` in the registry; set both pitches in the games' `index.ts` (texts in design.md)
+- [ ] 15.2 Wavelength engine types without behaviour change: `WavelengthMode`, optional `config.mode`, optional state `mode`/`turn`, `MIN_KOOP_PLAYERS`, `MIN_VERSUS_PLAYERS`, `RATING_TIERS`, `modeOf`, `koopResult` stub; Versus states must not gain keys (session compatibility)
+- [ ] 15.3 `src/lib/deco/motifs.ts` (`Place`, `Motif`, `motifFor` stub), `Art.svelte` rendering the empty aria-hidden `data-deco` root, `Banner.svelte` rendering its children — final props, typecheck only
+- [ ] 15.4 `e2e/helpers.ts`: `ambient(page)` and `decoAudit(page)`; `proof` green
+
+## 16. Wavelength Koop engine
+
+> unit: depends=15 · scope=S21 · files=src/lib/games/wavelength/engine.ts, src/lib/games/wavelength/engine.test.ts, src/lib/games/registry.test.ts, e2e/home.test.ts
+
+- [ ] 16.1 Koop init/next/again/lockIn per design.md, `psychic` by mode (Scenario: Koop psychic order · Koop keeps one shared score · Koop play again keeps players and mode)
+- [ ] 16.2 `koopResult` and `RATING_TIERS` (Scenario: Koop rating tiers · Koop average per turn)
+- [ ] 16.3 Limits 2–18; update the Wavelength range in `e2e/home.test.ts` "Scenario: Tiles for registered games" to "2–18 Spieler" (Scenario: Wavelength player range reads 2–18)
+- [ ] 16.4 Compatibility: a literal pre-S21 version-1 state in storage loads through `loadGameSession` and scores as Versus; the demo stays Versus (Scenario: Saved Versus session from before resumes · Wavelength demo stays the Versus demo)
+
+## 17. Decoration components
+
+> unit: depends=15 · scope=S18 · files=src/lib/deco/motifs.ts, src/lib/deco/motifs.test.ts, src/lib/deco/*.svelte
+
+- [ ] 17.1 `motifFor` mapping with neutral fallback (Scenario: Game without its own art gets the neutral fallback)
+- [ ] 17.2 Motif SVGs after `design/deco-1-spielbrett.html` and the PNGs: home composite (board grid, dial with bands, tilted mask card, dashed locks), masks (odd one lifts), dial (rings; start variant labelled "Kalt"/"Heiß"), crew, rings, corner, neutral — `currentColor` and existing tokens, no images or fonts, no Press Start 2P; any text inside art meets 4.5:1 as the look test measures it (set `color` to the fill)
+- [ ] 17.3 `Art` and `Banner` per design.md: aria-hidden, `pointer-events: none`, Banner art right on desktop, faded top-right on phone, no horizontal overflow at 390px
+- [ ] 17.4 Ambient motion: needle sweep ~7 s and mask lift as infinite CSS keyframes on transform/opacity inside `@media (prefers-reduced-motion: no-preference)`
+
+## 18. Wavelength Koop UI
+
+> unit: depends=16 · scope=S21,S20 · files=src/lib/games/wavelength/Setup.svelte, src/lib/games/wavelength/Screen.svelte, e2e/wavelength.test.ts
+
+- [ ] 18.1 Setup: "Spielmodus" switch Koop | Versus, Versus disabled below 4 with "Versus braucht mind. 4 Spieler.", defaults per design.md, Koop player order + rounds, start button unchanged "Los geht's"; lobby reached by URL with a seeded roster (Scenario: Four or more players default to Versus · Two or three players get Koop only)
+- [ ] 18.2 Screen in Koop: turn label "Runde r / R · Zug t / n", shared score aside with the player order, game over with tier, total, "Ø … Punkte pro Zug · … Züge", "Nochmal spielen"; Versus rendering unchanged (Scenario: Full Wavelength Koop game · Koop session resumes after reload)
+- [ ] 18.3 Re-run the existing Wavelength e2e unchanged in Versus ("Scenario: Full Wavelength game", "Scenario: Tie for first shown as tie", dial scenarios) — fixes go into the components, not the tests
+
+## 19. Decorated screens and start screen layout
+
+> unit: depends=15,16,17 · scope=S18,S19,S20,S21 · files=src/routes/+page.svelte, src/lib/ui/GameTile.svelte, src/routes/spiele/[slug]/+page.svelte, src/routes/spiele/[slug]/lobby/+page.svelte, src/routes/spiele/[slug]/spielen/+page.svelte, src/routes/spiele/[slug]/demo/+page.svelte, e2e/deco.test.ts, e2e/start.test.ts, e2e/imposter.test.ts, e2e/explain.test.ts, e2e/demo.test.ts, e2e/look.test.ts
+
+- [ ] 19.1 Home: Banner place=home (keep "Was spielen wir heute?" and the sr-only h1, no kicker), GameTile with tile art and `entry.pitch`, Bald tiles with the dashed corner (Scenario: Each tile shows a one-line pitch)
+- [ ] 19.2 Start screen per design.md: Banner with h1, badge, range, pitch; panel / "So geht's" / "Mehr zu <Spiel>" order and desktop columns; cards as links with their lines and the real count; "Los geht's"; Wavelength rules text for both modes (Scenario: Start banner carries title, badge and player range · Start panel first on phone, right column on desktop · Mehr-zu cards keep their targets · Inhalte card shows the real content count · Los geht's opens the lobby · One player cannot start Wavelength)
+- [ ] 19.3 R7: update locators in `start.test.ts`, `imposter.test.ts`, `explain.test.ts`, `demo.test.ts` and the walk in `look.test.ts` to "Los geht's" and the card links (`getByRole('link', { name, exact: true })`), every assertion kept; scenario wording updated in the roster/content-store specs already
+- [ ] 19.4 Lobby Banner place=lobby (Lobby, name, "<n> Spieler", crew art); play and demo routes with `<Art slug place="play">` behind the Stage (Scenario: Decoration on every main screen · Decoration is hidden and never takes pointer events)
+- [ ] 19.5 Motion (Scenario: Ambient motion runs during play · Reduced motion turns ambient motion off); confirm "Scenario: Reduced motion makes transitions instant" and "Scenario: Motion never blocks input" still pass unchanged
+
+## 20. Look pass for the additions
+
+> unit: depends=18,19 · scope=S18,S20 · files=e2e/look.test.ts
+
+- [ ] 20.1 Extend the walk: Wavelength Koop with 2 players (lobby, prep, result, game over) after the Versus game; refreshed and new shot names: `look-home`, `look-start-imposter`, `look-start-wavelength`, `look-lobby-imposter`, `look-lobby-wavelength`, `look-lobby-wavelength-short`, `look-lobby-pick`, every `look-imposter-*` and `look-wavelength-*`, new `look-lobby-wavelength-koop`, `look-wavelength-koop-prep`, `look-wavelength-koop-result`, `look-wavelength-koop-gameover`; touch-target, contrast, no-h-scroll and desktop-width scenarios green over the decorated walk (Scenario: Contrast and layout rules hold with decoration)
+- [ ] 20.2 Over the walk (Scenario: Press Start 2P stays limited to logo and scores · Decoration loads no external assets · New copy has no exclamation marks)
+- [ ] 20.3 Gate 2 material: shot list for the decorated screens and Koop, manual checks (Scenario: Decorated screens approved on screenshots · New copy reads neutral and grown-up · Desktop uses the width)
+
+## 21. Ship-time steps (shipper, after Gate 2, with consent — not a build unit)
+
+- [ ] 21.1 ⚠ irreversible: create public GitHub repo `Rue-Asha/Rues-Arcade`, push `main` (root `400c1ee`) then `flow/party-games-rebuild`, open the PR; CI green on the PR (Scenario: CI is green on the change's PR)
+- [ ] 21.2 ⚠ irreversible: `main` ruleset from Life-Manager's (required checks `ci`, `security-baseline / workflow-lint`, `security-baseline / secret-scan`, `security-baseline / dependency-review`; block deletion and non-fast-forward)

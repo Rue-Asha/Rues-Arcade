@@ -21,7 +21,7 @@ The database file SHALL be gitignored.
 - **proof:** unit
 
 ### Requirement: Content editor
-Each game's start screen SHALL link to "Inhalte", which lists the game's content and lets the user add, edit,
+Each game's start screen SHALL link to "Inhalte" (a card in its "Mehr zu <Spiel>" box), which lists the game's content and lets the user add, edit,
 delete and bulk import entries (`a | b` per line).
 
 #### Scenario: Add, edit and delete an entry
@@ -79,7 +79,7 @@ A game SHALL NOT start without enough content; it says so and links to Inhalte.
 
 #### Scenario: Empty pool blocks start
 - **WHEN** the Imposter content table is empty and the start screen is opened with enough players
-- **THEN** start is disabled, a message says content is missing, and a link leads to Inhalte
+- **THEN** "Los geht's" is disabled, a message says content is missing, and a link leads to Inhalte
 - **proof:** e2e
 
 #### Scenario: Demo works with an empty database

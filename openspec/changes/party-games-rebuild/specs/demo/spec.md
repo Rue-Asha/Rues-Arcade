@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Guided demo
-Each game's start screen and the header during play SHALL offer "Demo". The demo plays one full round of the
+Each game's start screen (a card in its "Mehr zu <Spiel>" box) and the header during play SHALL offer "Demo". The demo plays one full round of the
 game's committed fixture with fixed players (Alex, Bo, Cleo, Dani) through the real engine; each step shows a
 coach tip with progress ("Schritt 3/12") and only the expected control is enabled; hidden information is shown
 openly with a [Demo] tag; "Demo beenden" is available at every step.

@@ -39,7 +39,7 @@ A game's start SHALL be gated on its player limits.
 
 #### Scenario: Below minimum disables start
 - **WHEN** the roster has 2 players and the Imposter start screen is opened
-- **THEN** start is disabled and shows "mind. 3 Spieler"
+- **THEN** "Los geht's" is disabled and shows "mind. 3 Spieler"
 - **proof:** e2e
 
 #### Scenario: Above maximum asks who plays
