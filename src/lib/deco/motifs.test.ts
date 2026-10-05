@@ -13,10 +13,17 @@ const draws: [string | undefined, Place][] = [
 	[undefined, 'tile'],
 	['imposter', 'start'],
 	['wavelength', 'start'],
+	['codes', 'tile'],
+	['duck', 'tile'],
+	['most-likely', 'tile'],
+	['codes', 'start'],
 	['duck', 'start'],
+	['most-likely', 'start'],
+	['charade', 'start'],
 	['wavelength', 'lobby'],
 	['imposter', 'play'],
-	['duck', 'play']
+	['duck', 'play'],
+	['charade', 'play']
 ];
 
 const html = (slug: string | undefined, place: Place) => render(Art, { props: { slug, place } }).body;
@@ -24,8 +31,8 @@ const html = (slug: string | undefined, place: Place) => render(Art, { props: { 
 describe('motifFor', () => {
 	it('Scenario: Game without its own art gets the neutral fallback', () => {
 		for (const place of ['tile', 'start', 'play'] as const) {
-			expect(motifFor('duck', place), place).toBe('neutral');
 			expect(motifFor('charade', place), place).toBe('neutral');
+			expect(motifFor('family-feud', place), place).toBe('neutral');
 		}
 		expect(motifFor('imposter', 'tile')).toBe('masks');
 		expect(motifFor('wavelength', 'tile')).toBe('dial');
@@ -33,6 +40,15 @@ describe('motifFor', () => {
 		expect(motifFor('wavelength', 'start')).toBe('dial');
 		expect(motifFor('imposter', 'play')).toBe('rings');
 		expect(motifFor('wavelength', 'play')).toBe('rings');
+	});
+
+	it('Scenario: New games get their own motifs', () => {
+		for (const slug of ['codes', 'duck', 'most-likely']) {
+			expect(motifFor(slug, 'tile'), slug).toBe(slug);
+			expect(motifFor(slug, 'start'), slug).toBe(slug);
+			expect(motifFor(slug, 'lobby'), slug).toBe('crew');
+			expect(motifFor(slug, 'play'), slug).toBe('rings');
+		}
 	});
 
 	it('home, lobby and the locked tile have their own motifs', () => {
@@ -111,7 +127,8 @@ describe('Banner', () => {
 			[{ place: 'home' }, 'home'],
 			[{ slug: 'imposter', place: 'start', colour: 'imposter' }, 'masks'],
 			[{ slug: 'wavelength', place: 'start', colour: 'wavelength' }, 'dial'],
-			[{ slug: 'duck', place: 'start' }, 'neutral'],
+			[{ slug: 'charade', place: 'start' }, 'neutral'],
+			[{ slug: 'duck', place: 'start', colour: 'duck' }, 'duck'],
 			[{ slug: 'wavelength', place: 'lobby', colour: 'wavelength' }, 'crew']
 		] as const;
 		for (const [props, motif] of cases) {

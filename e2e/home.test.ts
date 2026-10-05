@@ -40,6 +40,21 @@ test('Scenario: Bald tiles have no actions', async ({ page }, info) => {
 	await shot(page, info, 'home');
 });
 
+test('Scenario: New tiles carry their own badge', async ({ page }) => {
+	await page.goto('/');
+	const badge = (name: string) => page.getByRole('link', { name: new RegExp(name) }).locator('.badge svg');
+	// the fallback badge is a game pad: a rounded frame with a plus and a button
+	const fallback = '<rect x="3" y="7" width="18" height="11" rx="3">';
+
+	const drawn: string[] = [];
+	for (const name of ['Imposter', 'Wavelength', 'Codes', 'What Rhymes with Duck', 'Most Likely To']) {
+		await expect(badge(name), name).toHaveCount(1);
+		drawn.push((await badge(name).innerHTML()).replace(/<!--.*?-->/g, ''));
+	}
+	for (const svg of drawn.slice(2)) expect(svg).not.toContain(fallback);
+	expect(new Set(drawn).size).toBe(drawn.length);
+});
+
 test('Scenario: Fresh database runs with empty tables', async ({ page }, info) => {
 	const server = await emptyServer(info, 'fresh');
 	try {

@@ -1,10 +1,13 @@
 <script lang="ts">
 	import { motifFor, type Place } from '#lib/deco/motifs.ts';
+	import Codes from './Codes.svelte';
 	import Corner from './Corner.svelte';
 	import Crew from './Crew.svelte';
 	import Dial from './Dial.svelte';
+	import Duck from './Duck.svelte';
 	import Home from './Home.svelte';
 	import Masks from './Masks.svelte';
+	import MostLikely from './MostLikely.svelte';
 	import Neutral from './Neutral.svelte';
 	import Rings from './Rings.svelte';
 
@@ -29,6 +32,12 @@
 		<Crew />
 	{:else if motif === 'rings'}
 		<Rings />
+	{:else if motif === 'codes'}
+		<Codes {place} />
+	{:else if motif === 'duck'}
+		<Duck {place} />
+	{:else if motif === 'most-likely'}
+		<MostLikely {place} />
 	{:else if motif === 'corner'}
 		<Corner />
 	{:else}

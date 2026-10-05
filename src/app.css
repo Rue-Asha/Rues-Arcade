@@ -44,6 +44,15 @@
 	--wavelength: #38ccc8;
 	--wavelength-ledge: #065c5a;
 	--wavelength-tint: #1d2c50;
+	--codes: #9d8cff;
+	--codes-ledge: #423b6b;
+	--codes-tint: #22214c;
+	--duck: #ff9f43;
+	--duck-ledge: #6b431c;
+	--duck-tint: #2e2336;
+	--most-likely: #f27bc4;
+	--most-likely-ledge: #663452;
+	--most-likely-tint: #2c1f45;
 
 	--font-ui: 'Sora', ui-sans-serif, system-ui, sans-serif;
 	--font-data: 'Press Start 2P', ui-monospace, monospace;

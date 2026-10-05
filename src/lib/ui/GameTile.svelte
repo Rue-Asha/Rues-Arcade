@@ -35,6 +35,16 @@
 						<circle cx="12" cy="18" r="1.6"></circle>
 						<path d="M6.5 13.5l1 .8"></path>
 						<path d="M12 9v1.3"></path>
+					{:else if def.slug === 'codes'}
+						<path d="M4 5h16v11H10l-5 4v-4H4z"></path>
+						<path d="M8 10.5h2.5M13.5 10.5H16"></path>
+					{:else if def.slug === 'duck'}
+						<circle cx="9" cy="8" r="3.5"></circle>
+						<path d="M12.5 8.5l3.5-.5"></path>
+						<path d="M4 14c0 3.3 3.1 6 8 6s8-2.7 8-6c-2 1-4 1-6 0-1.5-.8-3-1-4-1"></path>
+					{:else if def.slug === 'most-likely'}
+						<path d="M4 15l2-9 4 5 2-6 2 6 4-5 2 9z"></path>
+						<path d="M4 19h16"></path>
 					{:else}
 						<rect x="3" y="7" width="18" height="11" rx="3"></rect>
 						<path d="M8 11v3M6.5 12.5h3"></path>
