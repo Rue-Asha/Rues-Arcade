@@ -1,5 +1,7 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
+	import { pulse } from '#lib/motion.ts';
+	import { play } from '#lib/sound.ts';
 
 	interface Props {
 		action?: string;
@@ -9,6 +11,123 @@
 	}
 
 	let { action, onrelease, label, children }: Props = $props();
+
+	let held = $state(false);
+
+	function hold(e: PointerEvent) {
+		if (held) return;
+		held = true;
+		play('reveal');
+		(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+	}
+
+	function release() {
+		if (!held) return;
+		held = false;
+		onrelease();
+	}
+
+	function keydown(e: KeyboardEvent) {
+		if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) {
+			e.preventDefault();
+			if (!held) {
+				held = true;
+				play('reveal');
+			}
+		}
+	}
+
+	function keyup(e: KeyboardEvent) {
+		if (e.key === ' ' || e.key === 'Enter') release();
+	}
 </script>
 
-<button type="button">{label}</button>
+<div class="htv" class:held data-action={action}>
+	<div class="window" aria-live="polite">
+		{#if held}
+			<div class="content" use:pulse>{@render children()}</div>
+		{:else}
+			<div class="cover">
+				<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+					<path d="M3 3l18 18"></path>
+					<path d="M10.6 5.1A10 10 0 0 1 12 5c5 0 9 4.5 10 7a13 13 0 0 1-3 4.2"></path>
+					<path d="M6.6 6.6A13 13 0 0 0 2 12c1 2.5 5 7 10 7a9.7 9.7 0 0 0 4.4-1"></path>
+					<path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"></path>
+				</svg>
+				<span class="label">Verdeckt</span>
+				<span class="muted">Gedrückt halten, nur du schaust hin.</span>
+			</div>
+		{/if}
+	</div>
+	<button
+		type="button"
+		class="hold"
+		onpointerdown={hold}
+		onpointerup={release}
+		onpointercancel={release}
+		onkeydown={keydown}
+		onkeyup={keyup}
+		onblur={release}
+		oncontextmenu={(e) => e.preventDefault()}
+	>
+		{label}
+	</button>
+</div>
+
+<style>
+	.htv {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+	}
+
+	.window {
+		display: grid;
+		min-height: 220px;
+		border-radius: 20px;
+		background: var(--surface);
+		box-shadow: 0 var(--ledge) 0 var(--shadow);
+		overflow: hidden;
+	}
+
+	.cover,
+	.content {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 10px;
+		padding: 24px;
+		text-align: center;
+	}
+
+	.cover {
+		color: var(--muted);
+		background: repeating-linear-gradient(-45deg, transparent 0 12px, rgb(255 255 255 / 0.025) 12px 24px);
+	}
+
+	.hold {
+		min-height: 64px;
+		padding: 0 24px;
+		border: 0;
+		border-radius: var(--radius);
+		background: var(--primary);
+		color: var(--on-primary);
+		font: 700 18px/1.1 var(--font-ui);
+		box-shadow: 0 var(--ledge) 0 var(--primary-ledge);
+		cursor: pointer;
+		user-select: none;
+		-webkit-user-select: none;
+		-webkit-touch-callout: none;
+		touch-action: none;
+		transition:
+			transform 0.07s ease-out,
+			box-shadow 0.07s ease-out;
+	}
+
+	.held .hold {
+		transform: translateY(var(--ledge));
+		box-shadow: 0 0 0 transparent;
+		background: var(--primary-press);
+	}
+</style>
