@@ -48,8 +48,14 @@ test('Scenario: Fresh database runs with empty tables', async ({ page }, info) =
 		const db = new DatabaseSync(server.db, { readOnly: true });
 		const applied = db.prepare('SELECT name FROM schema_migrations ORDER BY name').all().map((r) => r.name);
 		expect(applied).toEqual(readdirSync('migrations').filter((f) => f.endsWith('.sql')).sort());
-		for (const table of ['imposter_pairs', 'wavelength_spectra'])
-			expect(db.prepare(`SELECT count(*) AS n FROM ${table}`).get()?.n).toBe(0);
+		for (const [table, n] of [
+			['imposter_pairs', 0],
+			['wavelength_spectra', 0],
+			['codes_words', 91],
+			['duck_words', 60],
+			['most_likely_prompts', 60]
+		] as const)
+			expect(db.prepare(`SELECT count(*) AS n FROM ${table}`).get()?.n).toBe(n);
 		db.close();
 	} finally {
 		server.close();
