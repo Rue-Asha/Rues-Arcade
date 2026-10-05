@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { seedRoster, shot } from './helpers.ts';
+import { emptyServer, seedRoster, shot } from './helpers.ts';
 
 const crew = (n: number) => Array.from({ length: n }, (_, i) => `Spieler ${i + 1}`);
 
@@ -42,28 +42,23 @@ test('Scenario: Above maximum asks who plays', async ({ page }, info) => {
 	await expect(page.getByRole('checkbox')).toHaveCount(0);
 });
 
-test('Scenario: Empty pool blocks start', async ({ page }) => {
-	await seedRoster(page, crew(4));
-	// The e2e database is shared by parallel tests that seed content, so the empty pool is
-	// served by patching the start screen's load data instead of emptying the table.
-	await page.route('**/spiele/imposter/__data.json*', async (route) => {
-		const body = await (await route.fetch()).json();
-		for (const node of body.nodes) {
-			const keys = node?.type === 'data' ? node.data[0] : null;
-			if (keys && 'count' in keys) node.data[keys.count] = 0;
-		}
-		await route.fulfill({ json: body });
-	});
-	await page.goto('/');
-	await page.getByRole('link', { name: /Imposter/ }).click();
+test('Scenario: Empty pool blocks start', async ({ page }, info) => {
+	const server = await emptyServer(info, 'start');
+	try {
+		await page.goto(`${server.origin}/`);
+		await seedRoster(page, crew(4));
+		await page.getByRole('link', { name: /Imposter/ }).click();
 
-	await expect(page).toHaveURL(/\/spiele\/imposter$/);
-	await expect(page.getByRole('button', { name: 'Spiel starten' })).toBeDisabled();
-	await expect(page.getByText('Für Imposter gibt es noch keine Inhalte.')).toBeVisible();
-	await expect(page.getByRole('link', { name: 'Inhalte hinzufügen' })).toHaveAttribute(
-		'href',
-		'/spiele/imposter/inhalte'
-	);
+		await expect(page).toHaveURL(/\/spiele\/imposter$/);
+		await expect(page.getByRole('button', { name: 'Spiel starten' })).toBeDisabled();
+		await expect(page.getByText('Für Imposter gibt es noch keine Inhalte.')).toBeVisible();
+		await expect(page.getByRole('link', { name: 'Inhalte hinzufügen' })).toHaveAttribute(
+			'href',
+			'/spiele/imposter/inhalte'
+		);
+	} finally {
+		server.close();
+	}
 });
 
 test('start screen links to Demo, Erklärung and Inhalte and starts with enough players', async ({ page, request }) => {

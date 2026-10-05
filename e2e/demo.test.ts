@@ -1,8 +1,5 @@
-import { expect, test, type Page, type TestInfo } from '@playwright/test';
-import { spawn } from 'node:child_process';
-import { rmSync } from 'node:fs';
-import { resolve } from 'node:path';
-import { seedRoster } from './helpers.ts';
+import { expect, test, type Page } from '@playwright/test';
+import { emptyServer, seedRoster } from './helpers.ts';
 
 const IMPOSTER_STEPS = 11;
 const WAVELENGTH_STEPS = 10;
@@ -106,7 +103,9 @@ test('Scenario: Demo leaves real data untouched', async ({ page }) => {
 	await openDemo(page, 'imposter');
 	const calls = serverCalls(page);
 	await playToEnd(page, IMPOSTER_STEPS);
+	expect(calls).toEqual([]);
 	await openDemo(page, 'wavelength');
+	// opening the second demo is a navigation, which loads its page from the server
 	calls.length = 0;
 	await playToEnd(page, WAVELENGTH_STEPS);
 	expect(calls).toEqual([]);
@@ -172,32 +171,8 @@ test('Scenario: Demo steppable with reduced motion', async ({ page }) => {
 	await playToEnd(page, WAVELENGTH_STEPS);
 });
 
-// The shared e2e DB is never empty for long, so this test runs its own server on a fresh DB file.
-async function emptyServer(info: TestInfo) {
-	const db = resolve(`.e2e/empty-${info.project.name}-${process.pid}.db`);
-	const server = spawn('node', ['build'], {
-		cwd: process.env.E2E_APP_DIR,
-		stdio: ['ignore', 'pipe', 'inherit'],
-		env: { ...process.env, HOST: '127.0.0.1', PORT: '0', PROTOCOL_HEADER: 'x-forwarded-proto', DATABASE_PATH: db }
-	});
-	const origin = await new Promise<string>((ok, fail) => {
-		server.stdout.on('data', (b) => {
-			const m = /Listening on (http:\/\/\S+)/.exec(String(b));
-			if (m) ok(m[1].replace(/\/$/, ''));
-		});
-		server.once('exit', (code) => fail(new Error(`server exited with ${code}`)));
-	});
-	return {
-		origin,
-		close() {
-			server.kill();
-			for (const f of [db, `${db}-wal`, `${db}-shm`]) rmSync(f, { force: true });
-		}
-	};
-}
-
 test('Scenario: Demo works with an empty database', async ({ page }, info) => {
-	const server = await emptyServer(info);
+	const server = await emptyServer(info, 'demo');
 	try {
 		for (const type of ['imposter_pairs', 'wavelength_spectra'])
 			expect(await (await page.request.get(`${server.origin}/api/content/${type}`)).json()).toEqual([]);

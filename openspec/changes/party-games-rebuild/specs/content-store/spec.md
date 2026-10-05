@@ -8,7 +8,7 @@ The database file SHALL be gitignored.
 #### Scenario: Fresh database runs with empty tables
 - **WHEN** the server starts with no database file
 - **THEN** all migrations are applied, the content tables exist and are empty, and the app serves Home
-- **proof:** unit
+- **proof:** e2e
 
 #### Scenario: Migration failure refuses to start
 - **WHEN** a migration throws during startup

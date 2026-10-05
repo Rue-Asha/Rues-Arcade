@@ -49,7 +49,7 @@ describe('db', () => {
 		expect(applied(db)).toEqual(['0001_content.sql']);
 	});
 
-	it('Scenario: Fresh database runs with empty tables', () => {
+	it('fresh database gets every migration and empty tables', () => {
 		const db = openDb(join(dir, 'fresh.db'));
 		migrate(db);
 

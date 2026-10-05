@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
-import { shot } from './helpers.ts';
+import { existsSync, readdirSync } from 'node:fs';
+import { DatabaseSync } from 'node:sqlite';
+import { emptyServer, shot } from './helpers.ts';
 
 test('Scenario: Tiles for registered games', async ({ page }) => {
 	await page.goto('/');
@@ -33,4 +35,23 @@ test('Scenario: Bald tiles have no actions', async ({ page }, info) => {
 	await locked.filter({ hasText: 'Duck' }).click();
 	await expect(page).toHaveURL(/\/$/);
 	await shot(page, info, 'home');
+});
+
+test('Scenario: Fresh database runs with empty tables', async ({ page }, info) => {
+	const server = await emptyServer(info, 'fresh');
+	try {
+		await page.goto(`${server.origin}/`);
+		await expect(page.getByRole('link', { name: /Imposter/ })).toBeVisible();
+		await expect(page.getByRole('link', { name: /Wavelength/ })).toBeVisible();
+
+		expect(existsSync(server.db)).toBe(true);
+		const db = new DatabaseSync(server.db, { readOnly: true });
+		const applied = db.prepare('SELECT name FROM schema_migrations ORDER BY name').all().map((r) => r.name);
+		expect(applied).toEqual(readdirSync('migrations').filter((f) => f.endsWith('.sql')).sort());
+		for (const table of ['imposter_pairs', 'wavelength_spectra'])
+			expect(db.prepare(`SELECT count(*) AS n FROM ${table}`).get()?.n).toBe(0);
+		db.close();
+	} finally {
+		server.close();
+	}
 });
