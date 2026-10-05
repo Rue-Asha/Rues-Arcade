@@ -1,5 +1,5 @@
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
-import { seedRoster, shot } from './helpers.ts';
+import { emptyServer, seedRoster, shot } from './helpers.ts';
 
 const crew = (n: number) => Array.from({ length: n }, (_, i) => `Spieler ${i + 1}`);
 const names = ['Alex', 'Bo', 'Cleo'];
@@ -192,5 +192,27 @@ test('Scenario: Most Likely copy reads neutral', async ({ page }) => {
 	for (const text of seen) {
 		expect(text).not.toContain('!');
 		expect(text).not.toMatch(/\p{Extended_Pictographic}/u);
+	}
+});
+
+test('Scenario: Most Likely demo by tapping highlighted controls', async ({ page }, info) => {
+	const server = await emptyServer(info, 'most-likely-demo');
+	try {
+		await page.goto(`${server.origin}/spiele/most-likely`);
+		await page.getByRole('link', { name: 'Demo', exact: true }).click();
+		await expect(page).toHaveURL(/\/spiele\/most-likely\/demo\?from=/);
+		await expect(page.getByTestId('prompt')).toHaveText('Wer würde am ehesten einen Marathon laufen?');
+
+		const expected = page.locator('[data-demo="expected"]');
+		for (let n = 1; n <= 4; n++) {
+			await expect(page.getByText(`Demo · Schritt ${n}/4`, { exact: true })).toBeVisible();
+			await expect(expected).toHaveCount(1);
+			await expected.click();
+		}
+		await expect(page.getByText('Demo beendet', { exact: true })).toBeVisible();
+		await expect(expected).toHaveCount(0);
+		await expect(page.getByTestId('holders')).toHaveText('Alex und Cleo');
+	} finally {
+		server.close();
 	}
 });
