@@ -216,3 +216,106 @@ async function reach(page: Page) {
 		return (right - left) / area.width;
 	});
 }
+
+async function seedGuess(page: Page) {
+	await page.goto('/');
+	await page.evaluate(() => {
+		const team = (name: string, players: string[]) => ({
+			name,
+			players: players.map((p) => ({ id: p, name: p })),
+			score: 0
+		});
+		localStorage.setItem(
+			'arcade:session:wavelength',
+			JSON.stringify({
+				v: 1,
+				state: {
+					rng: { state: 1 },
+					pool: [{ id: 1, a: 'Kalt', b: 'Heiß' }],
+					used: [1],
+					teams: [team('Team 1', ['Alex', 'Cleo']), team('Team 2', ['Bo', 'Dani'])],
+					rounds: 2,
+					roundIndex: 0,
+					teamIndex: 0,
+					spectrum: { id: 1, a: 'Kalt', b: 'Heiß' },
+					target: 90,
+					dial: 90,
+					phase: 'guess',
+					lastScore: null
+				}
+			})
+		);
+	});
+	await page.goto('/spiele/wavelength/spielen');
+	await expect(page.getByRole('button', { name: 'Einloggen' })).toBeVisible();
+}
+
+const running = (page: Page) =>
+	page.evaluate(
+		() =>
+			document
+				.getAnimations()
+				.filter((a) => a.playState === 'running' && a.effect?.getTiming().iterations !== Infinity).length
+	);
+
+// Clicks inside the page and reports what the next frame shows, before any count-up could finish.
+const clickAndLook = (page: Page, name: string) =>
+	page.evaluate(
+		(name) =>
+			new Promise<{ animations: number; points: string; scores: string[] }>((resolve) => {
+				[...document.querySelectorAll('button')].find((b) => b.textContent?.trim() === name)!.click();
+				requestAnimationFrame(() =>
+					requestAnimationFrame(() =>
+						resolve({
+							animations: document
+								.getAnimations()
+								.filter((a) => a.playState === 'running' && a.effect?.getTiming().iterations !== Infinity)
+								.length,
+							points: document.querySelector('[data-testid="points"]')?.textContent?.trim() ?? '',
+							scores: [...document.querySelectorAll('.board .pts')].map((s) => s.textContent!.trim())
+						})
+					)
+				);
+			}),
+		name
+	);
+
+async function tap(page: Page, info: TestInfo, name: string | RegExp) {
+	const box = (await page.getByRole(typeof name === 'string' ? 'button' : 'link', { name }).boundingBox())!;
+	const [x, y] = [box.x + box.width / 2, box.y + box.height / 2];
+	if (info.project.name === 'phone') await page.touchscreen.tap(x, y);
+	else await page.mouse.click(x, y);
+}
+
+test.describe('reduced motion', () => {
+	test.use({ reducedMotion: 'reduce' });
+
+	test('Scenario: Reduced motion makes transitions instant', async ({ page }, info) => {
+		await page.goto('/');
+		expect(await running(page)).toBe(0);
+		await tap(page, info, /Imposter/);
+		await expect(page).toHaveURL(/\/spiele\/imposter$/);
+		expect(await running(page)).toBe(0);
+
+		await seedGuess(page);
+		expect(await clickAndLook(page, 'Einloggen')).toEqual({ animations: 0, points: '+4', scores: ['4', '0'] });
+	});
+});
+
+test('Scenario: Motion never blocks input', async ({ page }, info) => {
+	await page.goto('/');
+	expect(await running(page)).toBeGreaterThan(0);
+	await tap(page, info, /Imposter/);
+	await expect(page).toHaveURL(/\/spiele\/imposter$/, { timeout: 1000 });
+
+	await seedGuess(page);
+	const mid = await clickAndLook(page, 'Einloggen');
+	expect(mid.animations).toBeGreaterThan(0);
+	expect(mid.scores).not.toEqual(['4', '0']);
+	await tap(page, info, 'Weiter');
+	const phase = await page.evaluate(
+		() => JSON.parse(localStorage.getItem('arcade:session:wavelength')!).state.phase as string
+	);
+	expect(phase).toBe('prep');
+	await expect(page.getByRole('heading', { name: 'Gib das Handy an Bo' })).toBeVisible({ timeout: 1000 });
+});
