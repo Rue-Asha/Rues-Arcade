@@ -270,6 +270,78 @@ function contrastFailures() {
 	return out;
 }
 
+// The logo, scores and dial band labels are the only places for Press Start 2P (design-system spec).
+const PIXEL = {
+	logo: '.brand .letter',
+	score: '[data-testid="points"], .board .pts, .total',
+	band: '.bands text'
+};
+const NEW_COPY = {
+	banner: '.banner',
+	tile: '.tile',
+	more: 'section[aria-labelledby="more"]',
+	mode: 'section[aria-labelledby="mode"], section[aria-labelledby="order"]'
+};
+
+test('Scenario: Press Start 2P stays limited to logo and scores', async ({ page }, info) => {
+	const stray: string[] = [];
+	const seen = new Set<string>();
+	await walk(page, info, async (slug) => {
+		const found = await page.evaluate(
+			({ allowed, banned }) => {
+				const out: { text: string; kind: string | null; inside: string | null }[] = [];
+				const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+				for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+					const el = node.parentElement!;
+					if (!(node as Text).data.trim() || !el.checkVisibility()) continue;
+					if (!getComputedStyle(el).fontFamily.includes('Press Start 2P')) continue;
+					const kind = Object.entries(allowed).find(([, sel]) => el.closest(sel))?.[0] ?? null;
+					const box = el.closest(banned);
+					out.push({ text: (node as Text).data.trim().slice(0, 30), kind, inside: box && (box.getAttribute('class') || box.tagName) });
+				}
+				return out;
+			},
+			{ allowed: PIXEL, banned: `${NEW_COPY.banner}, ${NEW_COPY.tile}, ${NEW_COPY.more}, [data-deco]` }
+		);
+		for (const { text, kind, inside } of found) {
+			if (kind) seen.add(kind);
+			if (!kind || inside) stray.push(`${slug}: "${text}"${inside ? ` in ${inside}` : ''}`);
+		}
+	});
+	expect(stray).toEqual([]);
+	expect([...seen].sort()).toEqual(Object.keys(PIXEL).sort());
+});
+
+test('Scenario: Decoration loads no external assets', async ({ page, baseURL }, info) => {
+	const foreign: string[] = [];
+	page.on('request', (req) => {
+		const url = new URL(req.url());
+		if (/^https?:$/.test(url.protocol) && url.origin !== new URL(baseURL!).origin) foreign.push(req.url());
+	});
+	const screens: string[] = [];
+	await walk(page, info, async (slug) => {
+		await settle(page);
+		screens.push(slug);
+	});
+	expect(screens.length).toBeGreaterThan(20);
+	expect(foreign).toEqual([]);
+});
+
+test('Scenario: New copy has no exclamation marks', async ({ page }, info) => {
+	const loud: string[] = [];
+	const seen = new Set<string>();
+	await walk(page, info, async (slug) => {
+		const parts = { ...NEW_COPY, ...(slug === 'wavelength-koop-gameover' ? { gameover: 'main .reveal' } : {}) };
+		for (const [kind, sel] of Object.entries(parts))
+			for (const text of await page.locator(sel).allInnerTexts()) {
+				seen.add(kind);
+				if (/!|Spieleabend/.test(text)) loud.push(`${slug} ${kind}: ${text.replace(/\s+/g, ' ').slice(0, 60)}`);
+			}
+	});
+	expect(loud).toEqual([]);
+	expect([...seen].sort()).toEqual([...Object.keys(NEW_COPY), 'gameover'].sort());
+});
+
 test('Scenario: No horizontal scroll on phone', async ({ page }, info) => {
 	test.skip(info.project.name !== 'phone', 'phone layout');
 	await walk(page, info, (slug) => shot(page, info, `look-${slug}`));
