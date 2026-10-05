@@ -46,7 +46,7 @@ describe('db', () => {
 		const db = getDb();
 
 		expect(existsSync(path)).toBe(true);
-		expect(applied(db)).toEqual(['0001_content.sql']);
+		expect(applied(db)).toEqual(loadMigrations().map((m) => m.name));
 	});
 
 	it('fresh database gets every migration and empty tables', () => {
@@ -82,7 +82,9 @@ describe('db', () => {
 
 		await init?.();
 
-		expect(applied(new DatabaseSync(path, { readOnly: true }))).toEqual(['0001_content.sql']);
+		expect(applied(new DatabaseSync(path, { readOnly: true }))).toEqual(
+			loadMigrations().map((m) => m.name)
+		);
 	});
 
 	it('a failing migration is rolled back and not recorded', () => {

@@ -1,4 +1,15 @@
-export type ContentType = 'imposter_pairs' | 'wavelength_spectra';
+export type ContentType =
+	| 'imposter_pairs'
+	| 'wavelength_spectra'
+	| 'codes_words'
+	| 'duck_words'
+	| 'most_likely_prompts';
+
+const singles: ContentType[] = ['codes_words', 'duck_words', 'most_likely_prompts'];
+
+export function isSingle(type: ContentType): boolean {
+	return singles.includes(type);
+}
 
 export interface ContentItem {
 	id: number;

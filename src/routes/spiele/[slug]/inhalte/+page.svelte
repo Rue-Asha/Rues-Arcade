@@ -9,7 +9,7 @@
 
 	let { data, params }: PageProps = $props();
 
-	const sides: Record<ContentType, { a: string; b: string; hint: string; intro: string }> = {
+	const sides: Record<ContentType, { a: string; b?: string; hint: string; intro: string }> = {
 		imposter_pairs: {
 			a: 'Crew-Frage',
 			b: 'Imposter-Frage',
@@ -21,6 +21,21 @@
 			b: 'Rechts',
 			hint: 'Kalt | Heiß',
 			intro: 'Pro Eintrag ein Spektrum zwischen zwei Begriffen.'
+		},
+		codes_words: {
+			a: 'Wort',
+			hint: 'Leuchtturm',
+			intro: 'Pro Eintrag ein geheimes Wort, das die Teams erraten.'
+		},
+		duck_words: {
+			a: 'Wort',
+			hint: 'Haus',
+			intro: 'Pro Eintrag ein Wort, auf das sich gut reimen lässt.'
+		},
+		most_likely_prompts: {
+			a: 'Spruch',
+			hint: 'Wer würde am ehesten auswandern?',
+			intro: 'Pro Eintrag ein Spruch, der mit „Wer würde am ehesten“ beginnt.'
 		}
 	};
 

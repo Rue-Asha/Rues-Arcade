@@ -86,9 +86,71 @@ describe('content store', () => {
 		]);
 	});
 
+	it('Scenario: Single bulk import reports skipped, overlong and duplicate lines', () => {
+		db.exec('DELETE FROM duck_words');
+
+		const report = importBulk(db, 'duck_words', `Anker\n\n${'x'.repeat(MAX_TEXT + 1)}\nAnker\nA | B`);
+
+		expect(report.skipped).toBe(1);
+		expect(report.errors).toEqual([{ line: 3, message: expect.stringContaining(String(MAX_TEXT)) }]);
+		expect(report.duplicates).toBe(1);
+		expect(report.imported).toBe(2);
+		expect(list(db, 'duck_words')).toEqual([
+			{ id: expect.any(Number), a: 'Anker', b: '' },
+			{ id: expect.any(Number), a: 'A | B', b: '' }
+		]);
+	});
+
+	it('Scenario: Duplicate single entry rejected', () => {
+		db.exec('DELETE FROM duck_words');
+		add(db, 'duck_words', 'Anker', '');
+		const other = add(db, 'duck_words', 'Boje', '');
+		if (!other.ok) throw new Error('setup');
+
+		const again = add(db, 'duck_words', ' Anker ', '');
+		const edited = update(db, 'duck_words', other.item.id, 'Anker', '');
+
+		for (const saved of [again, edited])
+			expect(saved).toEqual({ ok: false, status: 409, message: 'Diesen Eintrag gibt es schon.' });
+		expect(list(db, 'duck_words').map((i) => i.a)).toEqual(['Anker', 'Boje']);
+	});
+
+	it('Scenario: Overlong single entry rejected', () => {
+		db.exec('DELETE FROM most_likely_prompts');
+		const long = 'x'.repeat(MAX_TEXT + 1);
+		const ok = add(db, 'most_likely_prompts', 'Wer würde am ehesten?', 'ignored');
+		expect(ok).toEqual({ ok: true, item: { id: expect.any(Number), a: 'Wer würde am ehesten?', b: '' } });
+		if (!ok.ok) return;
+
+		const added = add(db, 'most_likely_prompts', long, '');
+		const edited = update(db, 'most_likely_prompts', ok.item.id, long, '');
+
+		for (const saved of [added, edited]) {
+			expect(saved).toMatchObject({ ok: false, status: 400 });
+			expect(!saved.ok && saved.message).toContain(String(MAX_TEXT));
+		}
+		expect(list(db, 'most_likely_prompts')).toEqual([ok.item]);
+	});
+
+	it('stores single values in each type’s own column', () => {
+		db.exec('DELETE FROM codes_words; DELETE FROM most_likely_prompts');
+		add(db, 'codes_words', 'Laterne', '');
+		add(db, 'most_likely_prompts', 'Wer würde am ehesten tanzen?', '');
+		expect(db.prepare('SELECT word FROM codes_words').all()).toEqual([{ word: 'Laterne' }]);
+		expect(db.prepare('SELECT text FROM most_likely_prompts').all()).toEqual([
+			{ text: 'Wer würde am ehesten tanzen?' }
+		]);
+	});
+
 	it('accepts only known content types', () => {
-		expect(isContentType('imposter_pairs')).toBe(true);
-		expect(isContentType('wavelength_spectra')).toBe(true);
+		for (const type of [
+			'imposter_pairs',
+			'wavelength_spectra',
+			'codes_words',
+			'duck_words',
+			'most_likely_prompts'
+		])
+			expect(isContentType(type)).toBe(true);
 		expect(isContentType('users')).toBe(false);
 		expect(isContentType('toString')).toBe(false);
 	});

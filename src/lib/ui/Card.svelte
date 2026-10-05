@@ -11,7 +11,10 @@
 
 	const colour: Record<ContentType, string> = {
 		imposter_pairs: 'imposter',
-		wavelength_spectra: 'wavelength'
+		wavelength_spectra: 'wavelength',
+		codes_words: 'codes',
+		duck_words: 'duck',
+		most_likely_prompts: 'most-likely'
 	};
 	const c = $derived(tone === 'neutral' ? null : colour[tone]);
 </script>
