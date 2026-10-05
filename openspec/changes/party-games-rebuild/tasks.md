@@ -83,24 +83,24 @@ clauses. UI work cites the Mobbin refs from scope.md and follows `design/look-A1
 
 > unit: depends=5,6 · scope=S11,S17,S6 · files=src/lib/games/imposter/Screen.svelte, src/lib/games/imposter/Setup.svelte, e2e/imposter.test.ts
 
-- [ ] 9.1 Setup (no settings beyond players) and Screen per phase: HoldToView reveal, "Gib das Handy an <Name>", crew question, unmask with reveal animation, next round, skip; every control tagged with its `action`; SFX on press/reveal (Scenario: Full Imposter round · Hand-over between players · Hold-to-view reveals only while held)
-- [ ] 9.2 Resume and end in Imposter (Scenario: Reload mid-game resumes the same phase · Spiel beenden clears the session)
+- [x] 9.1 Setup (no settings beyond players) and Screen per phase: HoldToView reveal, "Gib das Handy an <Name>", crew question, unmask with reveal animation, next round, skip; every control tagged with its `action`; SFX on press/reveal (Scenario: Full Imposter round · Hand-over between players · Hold-to-view reveals only while held)
+- [x] 9.2 Resume and end in Imposter (Scenario: Reload mid-game resumes the same phase · Spiel beenden clears the session)
 
 ## 10. Wavelength UI
 
 > unit: depends=5,6 · scope=S12,S17,S3 · files=src/lib/games/wavelength/Screen.svelte, src/lib/games/wavelength/Setup.svelte, src/lib/games/wavelength/Dial.svelte, e2e/wavelength.test.ts
 
-- [ ] 10.1 Setup: team formation from the picked players (2–6 teams of 2–3), rounds 1–5 default 3
-- [ ] 10.2 Dial: pointer drag (mouse + touch) and arrow keys, 0°–180°, bands drawn on result (Scenario: Dial by keyboard · Dial by drag)
-- [ ] 10.3 Screen: psychic hold-to-view, redraw, dial, lock-in, result with count-up, scoreboard, game over with winner/tie, SFX correct/wrong/win; controls tagged with `action` (Scenario: Full Wavelength game)
+- [x] 10.1 Setup: team formation from the picked players (2–6 teams of 2–3), rounds 1–5 default 3
+- [x] 10.2 Dial: pointer drag (mouse + touch) and arrow keys, 0°–180°, bands drawn on result (Scenario: Dial by keyboard · Dial by drag)
+- [x] 10.3 Screen: psychic hold-to-view, redraw, dial, lock-in, result with count-up, scoreboard, game over with winner/tie, SFX correct/wrong/win; controls tagged with `action` (Scenario: Full Wavelength game)
 
 ## 11. Content editor and explanation viewer
 
 > unit: depends=3,6 · scope=S8,S16 · files=src/routes/spiele/[slug]/inhalte/+page.svelte, src/routes/spiele/[slug]/inhalte/+page.server.ts, src/routes/spiele/[slug]/erklaerung/+page.svelte, static/explain/README.md, e2e/content.test.ts, e2e/explain.test.ts, e2e/fixtures/explain/index.html, e2e/fixtures/explain/pixel.png
 
-- [ ] 11.1 Inhalte: list, add, edit, delete with Modal confirmation, bulk import textarea showing the ImportReport (Scenario: Add, edit and delete an entry · Delete asks for confirmation)
-- [ ] 11.2 Erklärung: `HEAD /explain/<slug>/index.html`, fullscreen iframe `sandbox="allow-scripts"`, close button + Esc, empty-state text (Scenario: No explanation shows empty state · Committed explanation is shown sandboxed · Close by button or Esc)
-- [ ] 11.3 `static/explain/README.md`: self-contained HTML, assets next to index.html, no CDN
+- [x] 11.1 Inhalte: list, add, edit, delete with Modal confirmation, bulk import textarea showing the ImportReport (Scenario: Add, edit and delete an entry · Delete asks for confirmation)
+- [x] 11.2 Erklärung: `HEAD /explain/<slug>/index.html`, fullscreen iframe `sandbox="allow-scripts"`, close button + Esc, empty-state text (Scenario: No explanation shows empty state · Committed explanation is shown sandboxed · Close by button or Esc)
+- [x] 11.3 `static/explain/README.md`: self-contained HTML, assets next to index.html, no CDN
 
 ## 12. Guided demo
 
