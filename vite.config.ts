@@ -5,6 +5,6 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
 	plugins: [sveltekit({ adapter: adapter() })],
 	test: {
-		include: ['src/**/*.test.ts']
+		include: ['src/**/*.test.ts', 'scripts/**/*.test.ts']
 	}
 });
