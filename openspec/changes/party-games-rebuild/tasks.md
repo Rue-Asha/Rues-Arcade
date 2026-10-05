@@ -127,10 +127,10 @@ test-unique text, `emptyServer` wherever a count or an empty table is asserted.
 
 > unit: depends=13 · scope=none · files=src/lib/games/registry.ts, src/lib/games/imposter/index.ts, src/lib/games/wavelength/index.ts, src/lib/games/wavelength/engine.ts, src/lib/deco/motifs.ts, src/lib/deco/Art.svelte, src/lib/deco/Banner.svelte, e2e/helpers.ts
 
-- [ ] 15.1 `GameEntry.pitch` in the registry; set both pitches in the games' `index.ts` (texts in design.md)
-- [ ] 15.2 Wavelength engine types without behaviour change: `WavelengthMode`, optional `config.mode`, optional state `mode`/`turn`, `MIN_KOOP_PLAYERS`, `MIN_VERSUS_PLAYERS`, `RATING_TIERS`, `modeOf`, `koopResult` stub; Versus states must not gain keys (session compatibility)
-- [ ] 15.3 `src/lib/deco/motifs.ts` (`Place`, `Motif`, `motifFor` stub), `Art.svelte` rendering the empty aria-hidden `data-deco` root, `Banner.svelte` rendering its children — final props, typecheck only
-- [ ] 15.4 `e2e/helpers.ts`: `ambient(page)` and `decoAudit(page)`; `proof` green
+- [x] 15.1 `GameEntry.pitch` in the registry; set both pitches in the games' `index.ts` (texts in design.md)
+- [x] 15.2 Wavelength engine types without behaviour change: `WavelengthMode`, optional `config.mode`, optional state `mode`/`turn`, `MIN_KOOP_PLAYERS`, `MIN_VERSUS_PLAYERS`, `RATING_TIERS`, `modeOf`, `koopResult` stub; Versus states must not gain keys (session compatibility)
+- [x] 15.3 `src/lib/deco/motifs.ts` (`Place`, `Motif`, `motifFor` stub), `Art.svelte` rendering the empty aria-hidden `data-deco` root, `Banner.svelte` rendering its children — final props, typecheck only
+- [x] 15.4 `e2e/helpers.ts`: `ambient(page)` and `decoAudit(page)`; `proof` green
 
 ## 16. Wavelength Koop engine
 
