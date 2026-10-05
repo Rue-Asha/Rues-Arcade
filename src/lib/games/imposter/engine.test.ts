@@ -97,11 +97,12 @@ describe('imposter engine', () => {
 		for (let seed = 1; seed <= 50; seed++) {
 			let s = start(4, pairs(5), seed);
 			const ids = [s.pairId];
-			for (let i = 0; i < 5; i++) {
+			for (let i = 0; i < 9; i++) {
 				s = playRound(s);
 				ids.push(s.pairId);
 			}
 			expect(new Set(ids.slice(0, 5)).size).toBe(5);
+			expect(new Set(ids.slice(5, 10)).size).toBe(5);
 			sixth.add(ids[5]);
 			if (ids[5] === ids[4]) lastAgain = true;
 		}
