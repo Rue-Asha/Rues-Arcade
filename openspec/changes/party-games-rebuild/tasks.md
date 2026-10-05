@@ -8,11 +8,11 @@ clauses. UI work cites the Mobbin refs from scope.md and follows `design/look-A1
 
 > unit: depends=none · scope=S1 · files=package.json, package-lock.json, svelte.config.js, vite.config.ts, tsconfig.json, playwright.config.ts, .gitignore, src/app.html, src/app.d.ts, src/routes/+page.svelte, src/lib/engine/rng.ts, src/lib/engine/rng.test.ts, e2e/smoke.test.ts, CLAUDE.md, README.md
 
-- [ ] 1.1 Scaffold a minimal SvelteKit + TypeScript app (adapter-node, npm), `engines.node >=22.5`, `"name": "rues-arcade"`, version `0.1.0`; `.gitignore` covers `node_modules`, `build`, `dist`, `.e2e/`, `test-results/`, `*.db`
-- [ ] 1.2 `npm i -D vitest @playwright/test`, `npx playwright install chromium`; scripts `test:unit` (vitest `--reporter=verbose`), `test:e2e` (playwright `--reporter=list`), `proof`, `proof:full` per repo-setup.md
-- [ ] 1.3 `playwright.config.ts`: projects `phone` (390×844, touch) and `desktop` (1280×800); webServer `node build` on `$PORT` (default 4173) with `DATABASE_PATH=.e2e/$PORT.db`, file removed before start
-- [ ] 1.4 `src/lib/engine/rng.ts` (seeded, pure: `next`, `int`, `pick`, `shuffle` returning `[value, Rng]`) with a unit test proving same seed → same sequence; `e2e/smoke.test.ts` loads `/`
-- [ ] 1.5 `CLAUDE.md` with `## Harness` (proof, proof-full, run `npm run dev` → http://localhost:5173, `ship: merge`); README setup section; run `proof:full` green, and once with a deliberately failing test to see it exit non-zero (Scenario: Proof prints test names and passes · Proof fails on a failing check · Proof-full runs e2e on an isolated database)
+- [x] 1.1 Scaffold a minimal SvelteKit + TypeScript app (adapter-node, npm), `engines.node >=22.5`, `"name": "rues-arcade"`, version `0.1.0`; `.gitignore` covers `node_modules`, `build`, `dist`, `.e2e/`, `test-results/`, `*.db`
+- [x] 1.2 `npm i -D vitest @playwright/test`, `npx playwright install chromium`; scripts `test:unit` (vitest `--reporter=verbose`), `test:e2e` (playwright `--reporter=list`), `proof`, `proof:full` per repo-setup.md
+- [x] 1.3 `playwright.config.ts`: projects `phone` (390×844, touch) and `desktop` (1280×800); webServer `node build` on `$PORT` (default 4173) with `DATABASE_PATH=.e2e/$PORT.db`, file removed before start
+- [x] 1.4 `src/lib/engine/rng.ts` (seeded, pure: `next`, `int`, `pick`, `shuffle` returning `[value, Rng]`) with a unit test proving same seed → same sequence; `e2e/smoke.test.ts` loads `/`
+- [x] 1.5 `CLAUDE.md` with `## Harness` (proof, proof-full, run `npm run dev` → http://localhost:5173, `ship: merge`); README setup section; run `proof:full` green, and once with a deliberately failing test to see it exit non-zero (Scenario: Proof prints test names and passes · Proof fails on a failing check · Proof-full runs e2e on an isolated database)
 
 ## 2. Contracts
 
