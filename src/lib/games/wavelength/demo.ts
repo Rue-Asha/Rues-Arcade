@@ -27,7 +27,7 @@ export const demo: DemoScript<WavelengthAction, WavelengthConfig> = {
 		},
 		{ action: { type: 'dial', value: 22 }, tip: 'Bo hört den Hinweis und dreht den Zeiger dorthin.' },
 		{ action: { type: 'lockIn' }, tip: 'Einloggen: Wie nah liegt der Zeiger am Ziel?' },
-		{ action: { type: 'next' }, tip: 'Volltreffer, 4 Punkte! Weiter zu Team 2.' },
+		{ action: { type: 'next' }, tip: 'Genau getroffen, 4 Punkte. Weiter zu Team 2.' },
 		{
 			action: { type: 'show' },
 			tip: 'Team 2: Cleo gibt den Hinweis. Gib Cleo das Handy, Dani schaut weg.'

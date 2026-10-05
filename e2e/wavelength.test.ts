@@ -102,7 +102,7 @@ test('Scenario: Full Wavelength game', async ({ page, request }, info) => {
 		const steps = Math.round(t) - 90;
 		for (let i = 0; i < Math.abs(steps); i++) await dial.press(steps > 0 ? 'ArrowRight' : 'ArrowLeft');
 	});
-	await expect(page.getByText('Volltreffer!')).toBeVisible();
+	await expect(page.getByText('Genau getroffen.', { exact: true })).toBeVisible();
 	await expect(page.getByTestId('points')).toHaveText('+4');
 	await expect(page.getByRole('img', { name: /Ziel bei/ })).toBeVisible();
 	await shot(page, info, 'wavelength-result');
@@ -113,7 +113,7 @@ test('Scenario: Full Wavelength game', async ({ page, request }, info) => {
 		await dial.press(t > 90 ? 'Home' : 'End');
 	});
 	await expect(page.getByTestId('points')).toHaveText('0');
-	await expect(page.getByText('Daneben')).toBeVisible();
+	await expect(page.getByText('Kein Punkt.', { exact: true })).toBeVisible();
 	await page.getByRole('button', { name: 'Zum Endstand' }).click();
 
 	await expect(page.getByText('Gewinner', { exact: true })).toBeVisible();
@@ -279,6 +279,7 @@ test('Scenario: Full Wavelength Koop game', async ({ page, request }, info) => {
 	await shot(page, info, 'wavelength-koop-prep');
 	await turn(page, 'Alex', onTarget);
 	await expect(page.getByTestId('points')).toHaveText('+4');
+	await expect(page.getByTestId('verdict')).toHaveText('Genau getroffen.');
 	await shot(page, info, 'wavelength-koop-result');
 	await page.getByRole('button', { name: 'Weiter' }).click();
 
@@ -322,4 +323,17 @@ test('Scenario: Koop session resumes after reload', async ({ page, request }) =>
 	await check();
 	await expect(page.getByText(/verworfen/)).toHaveCount(0);
 	expect(await page.evaluate(() => localStorage.getItem('arcade:session:wavelength'))).toBe(saved);
+});
+
+test('Scenario: Turn verdicts read neutral', async ({ page }) => {
+	for (const [dial, text] of [
+		[60, 'Genau getroffen.'],
+		[180, 'Kein Punkt.']
+	] as const) {
+		await seedGuess(page, dial);
+		await page.getByRole('button', { name: 'Einloggen' }).click();
+		const verdict = page.getByTestId('verdict');
+		await expect(verdict).toHaveText(text);
+		expect(await verdict.textContent()).not.toContain('!');
+	}
 });

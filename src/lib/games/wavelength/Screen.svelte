@@ -38,10 +38,10 @@
 			.map((t) => ({ name: t.name, score: t.score, lead: !koop && t.score > 0 && best.includes(t) }))
 	);
 	const verdict: Record<number, string> = {
-		4: 'Volltreffer!',
-		3: 'Ganz nah dran!',
-		2: 'Knapp, aber zählt.',
-		0: 'Daneben, nächstes Mal!'
+		4: 'Genau getroffen.',
+		3: 'Knapp daneben.',
+		2: 'In der Nähe.',
+		0: 'Kein Punkt.'
 	};
 
 	const act = (a: WavelengthAction) => dispatch(a);
@@ -105,7 +105,7 @@
 				<p class="score data" data-testid="points">{#if points > 0}+{/if}<span use:countUp={points}></span></p>
 				<div class="stack tight">
 					<p class="label">{points === 1 ? 'Punkt' : 'Punkte'} für {koop ? 'euch' : team.name}</p>
-					<h2>{verdict[points]}</h2>
+					<h2 data-testid="verdict">{verdict[points]}</h2>
 				</div>
 			</div>
 			<Dial value={s.dial} needle target={s.target} left={s.spectrum.a} right={s.spectrum.b} />
