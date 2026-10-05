@@ -161,6 +161,22 @@ describe('wavelength engine', () => {
 		expect(s.teams.map((t) => t.score)).toEqual([0, 0]);
 		expect(s.roundIndex).toBe(0);
 	});
+
+	it('Scenario: Play again keeps the teams', () => {
+		let s = start([['alex', 'bo', 'eli'], ['cleo', 'dani']], 2);
+		s = turn(turn(turn(turn(s, s.target), 0), 180), 90);
+		expect(wavelength.phase(s)).toBe('gameOver');
+		expect(s.teams.some((t) => t.score > 0)).toBe(true);
+		const teams = s.teams.map((t) => ({ name: t.name, players: t.players }));
+
+		const again = step(s, { type: 'again' });
+		expect(wavelength.phase(again)).toBe('prep');
+		expect(again.teams.map((t) => ({ name: t.name, players: t.players }))).toEqual(teams);
+		expect(again.teams.map((t) => t.score)).toEqual([0, 0]);
+		expect(again.roundIndex).toBe(0);
+		expect(again.teamIndex).toBe(0);
+		expect(psychic(again).id).toBe('alex');
+	});
 });
 
 describe('wavelength demo', () => {

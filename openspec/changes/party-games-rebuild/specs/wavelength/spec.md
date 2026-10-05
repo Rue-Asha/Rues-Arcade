@@ -5,7 +5,7 @@ Wavelength SHALL take 2–6 teams of 2–3 players and 1–5 rounds (default 3).
 (left | right) and a random target; only the psychic sees the target (hold-to-view); the team sets the dial;
 lock-in scores 4/3/2/0 by distance bands as in the archive (21 bands over 180°, target centre clamped so all
 five bands fit); a result is shown. The psychic rotates within the team each round; a round is every team
-taking one turn; game over shows the winner or a tie.
+taking one turn; game over shows the winner or a tie, and "Nochmal spielen" starts a new game with the same teams.
 
 #### Scenario: Full Wavelength game
 - **WHEN** 2 teams of 2 play 1 round
@@ -31,6 +31,11 @@ taking one turn; game over shows the winner or a tie.
 - **WHEN** two teams end with the same highest score
 - **THEN** game over shows a tie between them
 - **proof:** e2e
+
+#### Scenario: Play again keeps the teams
+- **WHEN** "Nochmal spielen" is tapped at game over
+- **THEN** a new game starts with the same teams and players, every score at 0, round 1 and the first team's turn
+- **proof:** unit
 
 #### Scenario: Redraw changes spectrum and target
 - **WHEN** the psychic redraws before the team sets the dial
