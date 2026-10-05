@@ -1,6 +1,7 @@
 triage: "feature — new repo, data model, deploy pipeline, new features, redesign; appetite ~3 sessions (foundation + Imposter + Wavelength)"
 base: main
 gate0: 2026-10-05
+gate1: 2026-10-05
 notes:
   - "Repo was created fresh with git init; main has no commit yet (unborn). Planner: settle how main gets its root commit before Build/Ship (new GitHub repo Rue-Asha/Rues-Arcade is created only at Ship, with consent)."
   - "User wants a pause at every checkpoint so they can /clear."
