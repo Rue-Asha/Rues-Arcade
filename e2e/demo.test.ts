@@ -73,6 +73,8 @@ test('Scenario: Only the expected control is enabled', async ({ page }) => {
 
 	// on the guess step the dial is the control, and the pointer's angle is replaced by the script's
 	await page.locator('[data-demo="expected"]').click();
+	await expect(progress(page)).toHaveText(`Demo · Schritt 2/${WAVELENGTH_STEPS}`);
+	await expect(page.getByRole('button', { name: 'Gedrückt halten' })).toBeDisabled();
 	await page.locator('[data-demo="expected"]').click();
 	await expect(page.locator('[data-demo="expected"]')).toHaveAttribute('data-action', 'dial');
 	await expect(page.getByRole('button', { name: 'Einloggen' })).toBeDisabled();

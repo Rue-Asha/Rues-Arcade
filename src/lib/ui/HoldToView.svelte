@@ -76,7 +76,7 @@
 		type="button"
 		class="hold"
 		class:expected
-		disabled={demo !== null && action !== undefined && !expected}
+		disabled={demo !== null && !expected}
 		data-demo={expected ? 'expected' : undefined}
 		onclick={tap}
 		onpointerdown={hold}
