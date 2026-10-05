@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { MAX_TEXT } from '#lib/content/types.ts';
 import { closeDb, getDb, loadMigrations, migrate, openDb } from './db.ts';
 
 let dir: string;
@@ -30,6 +31,15 @@ function applied(db: DatabaseSync): string[] {
 		.map((r) => String(r.name));
 }
 
+function seedCounts(db: DatabaseSync): Record<string, number> {
+	return Object.fromEntries(
+		['codes_words', 'duck_words', 'most_likely_prompts'].map((t) => [
+			t,
+			Number(db.prepare(`SELECT count(*) AS n FROM ${t}`).get()?.n)
+		])
+	);
+}
+
 function brokenDb(): string {
 	const path = join(dir, 'broken.db');
 	const pre = new DatabaseSync(path);
@@ -46,7 +56,7 @@ describe('db', () => {
 		const db = getDb();
 
 		expect(existsSync(path)).toBe(true);
-		expect(applied(db)).toEqual(['0001_content.sql']);
+		expect(applied(db)).toEqual(loadMigrations().map((m) => m.name));
 	});
 
 	it('fresh database gets every migration and empty tables', () => {
@@ -82,7 +92,9 @@ describe('db', () => {
 
 		await init?.();
 
-		expect(applied(new DatabaseSync(path, { readOnly: true }))).toEqual(['0001_content.sql']);
+		expect(applied(new DatabaseSync(path, { readOnly: true }))).toEqual(
+			loadMigrations().map((m) => m.name)
+		);
 	});
 
 	it('a failing migration is rolled back and not recorded', () => {
@@ -113,6 +125,63 @@ describe('db', () => {
 		expect(counts.length).toBe(loadMigrations().length);
 		expect(counts.every((r) => r.n === 1)).toBe(true);
 		second.close();
+	});
+
+	it('Scenario: Seeds land once on an existing database', () => {
+		const path = join(dir, 'existing.db');
+		const [first, ...rest] = loadMigrations();
+		const db = openDb(path);
+		migrate(db, [first]);
+		db.exec("INSERT INTO imposter_pairs (crew, imposter) VALUES ('Hund', 'Katze')");
+
+		migrate(db);
+		const after = seedCounts(db);
+		migrate(db);
+
+		expect(rest.length).toBeGreaterThan(0);
+		expect(db.prepare('SELECT crew, imposter FROM imposter_pairs').all()).toEqual([
+			{ crew: 'Hund', imposter: 'Katze' }
+		]);
+		expect(after).toEqual({ codes_words: 91, duck_words: 60, most_likely_prompts: 60 });
+		expect(seedCounts(db)).toEqual(after);
+		db.close();
+	});
+
+	it('Scenario: Deleted seed entries stay deleted', () => {
+		const db = openDb(join(dir, 'deleted.db'));
+		migrate(db);
+		const word = String(db.prepare('SELECT word FROM codes_words ORDER BY id LIMIT 1').get()?.word);
+		db.prepare('DELETE FROM codes_words WHERE word = ?').run(word);
+
+		migrate(db);
+
+		expect(db.prepare('SELECT 1 FROM codes_words WHERE word = ?').get(word)).toBeUndefined();
+		expect(seedCounts(db).codes_words).toBe(90);
+		db.close();
+	});
+
+	it('Scenario: Seed rows are clean', () => {
+		const db = openDb(join(dir, 'clean.db'));
+		migrate(db);
+
+		for (const [table, column] of [
+			['codes_words', 'word'],
+			['duck_words', 'word'],
+			['most_likely_prompts', 'text']
+		]) {
+			const rows = db
+				.prepare(`SELECT ${column} AS t FROM ${table}`)
+				.all()
+				.map((r) => String(r.t));
+			expect(rows.length).toBeGreaterThan(0);
+			for (const t of rows) {
+				expect(t.trim()).toBe(t);
+				expect(t.length).toBeGreaterThan(0);
+				expect(t.length).toBeLessThanOrEqual(MAX_TEXT);
+			}
+			expect(new Set(rows).size).toBe(rows.length);
+		}
+		db.close();
 	});
 
 	it('loads migrations in name order', () => {

@@ -25,12 +25,31 @@ export const tokens = {
 	'imposter-tint': '#2d2248',
 	wavelength: '#38ccc8',
 	'wavelength-ledge': '#065c5a',
-	'wavelength-tint': '#1d2c50'
+	'wavelength-tint': '#1d2c50',
+	codes: '#9d8cff',
+	'codes-ledge': '#423b6b',
+	'codes-tint': '#22214c',
+	duck: '#ff9f43',
+	'duck-ledge': '#6b431c',
+	'duck-tint': '#2e2336',
+	'most-likely': '#f27bc4',
+	'most-likely-ledge': '#663452',
+	'most-likely-tint': '#2c1f45'
 } as const;
 
 export type Token = keyof typeof tokens;
 
-const grounds: Token[] = ['ground', 'surface', 'raised', 'gold-tint', 'imposter-tint', 'wavelength-tint'];
+const grounds: Token[] = [
+	'ground',
+	'surface',
+	'raised',
+	'gold-tint',
+	'imposter-tint',
+	'wavelength-tint',
+	'codes-tint',
+	'duck-tint',
+	'most-likely-tint'
+];
 
 export const textPairs: [Token, Token][] = [
 	...grounds.flatMap((bg): [Token, Token][] => [
@@ -45,11 +64,17 @@ export const textPairs: [Token, Token][] = [
 	['ink', 'gold'],
 	['ink', 'imposter'],
 	['ink', 'wavelength'],
+	['ink', 'codes'],
+	['ink', 'duck'],
+	['ink', 'most-likely'],
 	['on-reveal', 'reveal'],
 	['primary', 'on-primary'],
 	['primary', 'surface'],
 	['imposter', 'surface'],
-	['wavelength', 'surface']
+	['wavelength', 'surface'],
+	['codes', 'surface'],
+	['duck', 'surface'],
+	['most-likely', 'surface']
 ];
 
 function luminance(hex: string): number {

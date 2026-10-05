@@ -1,6 +1,9 @@
 import { readFileSync } from 'node:fs';
 import { expect, test, type Page, type Route, type TestInfo } from '@playwright/test';
 import { seedRoster, shot } from './helpers.ts';
+import { walk as walkCodes } from './walks/codes.ts';
+import { walk as walkDuck } from './walks/duck.ts';
+import { walk as walkMostLikely } from './walks/most-likely.ts';
 
 type Check = (slug: string) => Promise<void>;
 
@@ -40,7 +43,8 @@ async function holding(page: Page, check: () => Promise<void>) {
 	await page.mouse.up();
 }
 
-// Home, Spieler, both start screens, lobbies, every game phase (Wavelength as Versus and Koop), Inhalte and Erklärung.
+// Home, Spieler, every start screen, lobbies, every game phase (Wavelength as Versus and Koop), Inhalte and Erklärung.
+// Codes, Duck and Most Likely To walk their own screens from e2e/walks/.
 async function walk(page: Page, info: TestInfo, check: Check) {
 	test.slow();
 	await content(page, info);
@@ -141,6 +145,10 @@ async function walk(page: Page, info: TestInfo, check: Check) {
 	await expect(page.getByText('8 Punkte', { exact: true })).toBeVisible();
 	await counted(page);
 	await check('wavelength-koop-gameover');
+
+	await walkCodes(page, check);
+	await walkDuck(page, check);
+	await walkMostLikely(page, check);
 
 	await seedRoster(page, Array.from({ length: 13 }, (_, i) => `Spieler ${i + 1}`));
 	await page.goto('/spiele/imposter/lobby');

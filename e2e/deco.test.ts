@@ -3,7 +3,10 @@ import { ambient, decoAudit, seedRoster } from './helpers.ts';
 
 const PITCH = {
 	Imposter: 'Alle bekommen dieselbe Frage, bis auf eine Person.',
-	Wavelength: 'Einen Punkt auf einer Skala zwischen zwei Begriffen finden, gemeinsam oder in Teams.'
+	Wavelength: 'Einen Punkt auf einer Skala zwischen zwei Begriffen finden, gemeinsam oder in Teams.',
+	Codes: 'Teams erraten ein geheimes Wort aus Ein-Wort-Hinweisen, reihum.',
+	'What Rhymes with Duck': 'Alle suchen gleichzeitig einen Reim auf dasselbe Wort.',
+	'Most Likely To': 'Ein Spruch, und alle zeigen auf die Person, die am besten passt.'
 };
 
 test('Scenario: Each tile shows a one-line pitch', async ({ page }) => {
@@ -23,7 +26,7 @@ test('Scenario: Each tile shows a one-line pitch', async ({ page }) => {
 	}
 
 	const locked = page.locator('.tile.locked');
-	await expect(locked).toHaveCount(5);
+	await expect(locked).toHaveCount(2);
 	for (const pitch of Object.values(PITCH)) await expect(locked.getByText(pitch)).toHaveCount(0);
 	for (const tile of await locked.all()) await expect(tile).toHaveText(/^\s*[\w ]+\s*Bald verfügbar\s*$/);
 });
@@ -105,7 +108,7 @@ test('Scenario: Decoration on every main screen', async ({ page }) => {
 	await expect(page.getByRole('link', { name: /Imposter/ }).locator(deco('masks'))).toHaveCount(1);
 	await expect(page.getByRole('link', { name: /Wavelength/ }).locator(deco('dial'))).toHaveCount(1);
 	const locked = page.locator('.tile.locked');
-	await expect(locked).toHaveCount(5);
+	await expect(locked).toHaveCount(2);
 	for (const tile of await locked.all()) await expect(tile.locator(deco('corner'))).toHaveCount(1);
 
 	await open(page, '/spiele/wavelength');

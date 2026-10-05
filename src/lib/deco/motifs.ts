@@ -1,7 +1,23 @@
 export type Place = 'home' | 'tile' | 'start' | 'lobby' | 'play';
-export type Motif = 'home' | 'dial' | 'masks' | 'crew' | 'rings' | 'corner' | 'neutral';
+export type Motif =
+	| 'home'
+	| 'dial'
+	| 'masks'
+	| 'crew'
+	| 'rings'
+	| 'corner'
+	| 'neutral'
+	| 'codes'
+	| 'duck'
+	| 'most-likely';
 
-const own: Record<string, Motif> = { imposter: 'masks', wavelength: 'dial' };
+const own: Record<string, Motif> = {
+	imposter: 'masks',
+	wavelength: 'dial',
+	codes: 'codes',
+	duck: 'duck',
+	'most-likely': 'most-likely'
+};
 
 export function motifFor(slug: string | undefined, place: Place): Motif {
 	if (place === 'home') return 'home';

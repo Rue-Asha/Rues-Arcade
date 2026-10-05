@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseBulk } from './parse.ts';
+import { parseBulk, singleError } from './parse.ts';
 import { MAX_TEXT } from './types.ts';
 
 describe('parseBulk', () => {
@@ -42,5 +42,21 @@ describe('parseBulk', () => {
 		const r = parseBulk(`${'x'.repeat(MAX_TEXT + 1)} | B\n${'y'.repeat(MAX_TEXT)} | B`);
 		expect(r.rows).toEqual([{ a: 'y'.repeat(MAX_TEXT), b: 'B' }]);
 		expect(r.errors).toEqual([{ line: 1, message: expect.stringContaining(String(MAX_TEXT)) }]);
+	});
+
+	it('single mode keeps each trimmed line whole, pipes included', () => {
+		const r = parseBulk(`  Anker \n\nA | B\n${'x'.repeat(MAX_TEXT + 1)}`, true);
+		expect(r.rows).toEqual([
+			{ a: 'Anker', b: '' },
+			{ a: 'A | B', b: '' }
+		]);
+		expect(r.skipped).toBe(1);
+		expect(r.errors).toEqual([{ line: 4, message: expect.stringContaining(String(MAX_TEXT)) }]);
+	});
+
+	it('singleError refuses empty and overlong text', () => {
+		expect(singleError('')).not.toBeNull();
+		expect(singleError('x'.repeat(MAX_TEXT + 1))).toContain(String(MAX_TEXT));
+		expect(singleError('x'.repeat(MAX_TEXT))).toBeNull();
 	});
 });

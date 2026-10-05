@@ -12,12 +12,25 @@ export function pairError(a: string, b: string): string | null {
 	return null;
 }
 
-export function parseBulk(text: string): ParsedBulk {
+export function singleError(a: string): string | null {
+	if (!a) return 'Der Eintrag braucht Text.';
+	if (a.length > MAX_TEXT) return `Höchstens ${MAX_TEXT} Zeichen.`;
+	return null;
+}
+
+export function parseBulk(text: string, single = false): ParsedBulk {
 	const out: ParsedBulk = { rows: [], skipped: 0, errors: [] };
 	text.split(/\r?\n/).forEach((raw, i) => {
 		const line = i + 1;
 		if (!raw.trim()) {
 			out.skipped++;
+			return;
+		}
+		if (single) {
+			const a = raw.trim();
+			const message = singleError(a);
+			if (message) out.errors.push({ line, message });
+			else out.rows.push({ a, b: '' });
 			return;
 		}
 		const parts = raw.split('|');

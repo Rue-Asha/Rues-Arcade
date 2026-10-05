@@ -14,11 +14,10 @@ export async function seedRoster(page: Page, names: string[]) {
 export async function seedContent(
 	request: APIRequestContext,
 	type: ContentType,
-	rows: [string, string][]
+	rows: [string, string][] | string[]
 ) {
-	const res = await request.post(`/api/content/${type}/import`, {
-		data: { text: rows.map(([a, b]) => `${a} | ${b}`).join('\n') }
-	});
+	const lines = rows.map((row) => (typeof row === 'string' ? row : `${row[0]} | ${row[1]}`));
+	const res = await request.post(`/api/content/${type}/import`, { data: { text: lines.join('\n') } });
 	expect(res.ok()).toBe(true);
 }
 
