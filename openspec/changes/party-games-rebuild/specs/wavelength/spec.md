@@ -30,7 +30,7 @@ taking one turn; game over shows the winner or a tie.
 #### Scenario: Tie for first shown as tie
 - **WHEN** two teams end with the same highest score
 - **THEN** game over shows a tie between them
-- **proof:** unit
+- **proof:** e2e
 
 #### Scenario: Redraw changes spectrum and target
 - **WHEN** the psychic redraws before the team sets the dial

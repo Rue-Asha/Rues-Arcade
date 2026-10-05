@@ -119,7 +119,7 @@ describe('wavelength engine', () => {
 		expect(wavelength.phase(s)).toBe('gameOver');
 	});
 
-	it('Scenario: Tie for first shown as tie', () => {
+	it('winners returns every team tied for first', () => {
 		let s = start([['alex', 'bo'], ['cleo', 'dani'], ['eli', 'fynn']]);
 		const lock = (st: WavelengthState, value: number) =>
 			step(st, { type: 'show' }, { type: 'guess' }, { type: 'dial', value: st.target + value }, { type: 'lockIn' }, { type: 'next' });

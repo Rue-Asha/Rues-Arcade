@@ -91,6 +91,7 @@ test('Scenario: Hidden information shown with Demo tag', async ({ page }) => {
 	await page.locator('[data-demo="expected"]').click();
 	await expect(progress(page)).toHaveText(`Demo · Schritt 2/${WAVELENGTH_STEPS}`);
 	await expect(page.getByText('[Demo]', { exact: true })).toBeVisible();
+	await expect(page.getByRole('img', { name: /^Ziel bei \d+°$/ })).toBeVisible();
 	await expect(page.getByText('Verdeckt', { exact: true })).toHaveCount(0);
 });
 

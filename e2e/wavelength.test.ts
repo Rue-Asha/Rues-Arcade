@@ -169,3 +169,41 @@ test('Scenario: Dial by drag', async ({ page }) => {
 	await dial.dispatchEvent('pointerup', { ...touch, clientX: to.x, clientY: to.y });
 	expect(Math.abs((await value(dial)) - 135)).toBeLessThanOrEqual(2);
 });
+
+test('Scenario: Tie for first shown as tie', async ({ page }, info) => {
+	await page.goto('/');
+	await page.evaluate(() => {
+		const team = (n: number, names: string[], score: number) => ({
+			name: `Team ${n}`,
+			players: names.map((name) => ({ id: name, name })),
+			score
+		});
+		localStorage.setItem(
+			'arcade:session:wavelength',
+			JSON.stringify({
+				v: 1,
+				state: {
+					rng: { state: 1 },
+					pool: [{ id: 1, a: 'Kalt', b: 'Heiß' }],
+					used: [1],
+					teams: [team(1, ['Alex', 'Bo'], 4), team(2, ['Cleo', 'Dani'], 4), team(3, ['Eli', 'Fynn'], 1)],
+					rounds: 1,
+					roundIndex: 0,
+					teamIndex: 2,
+					spectrum: { id: 1, a: 'Kalt', b: 'Heiß' },
+					target: 60,
+					dial: 90,
+					phase: 'result',
+					lastScore: 1
+				}
+			})
+		);
+	});
+	await page.goto('/spiele/wavelength/spielen');
+	await page.getByRole('button', { name: 'Zum Endstand' }).click();
+
+	await expect(page.getByText('Unentschieden', { exact: true })).toBeVisible();
+	await expect(page.getByText('Gewinner', { exact: true })).toHaveCount(0);
+	await expect(page.getByRole('heading', { name: 'Team 1 & Team 2', exact: true })).toBeVisible();
+	await shot(page, info, 'wavelength-tie');
+});
