@@ -8,10 +8,10 @@ const players = [
 	{ id: 'd', name: 'Dani' }
 ];
 
-async function seedGuess(page: Page) {
+async function seedGuess(page: Page, dial = 90) {
 	await page.goto('/');
 	await page.evaluate(
-		(players) =>
+		({ players, dial }) =>
 			localStorage.setItem(
 				'arcade:session:wavelength',
 				JSON.stringify({
@@ -29,13 +29,13 @@ async function seedGuess(page: Page) {
 						teamIndex: 0,
 						spectrum: { id: 1, a: 'Kalt', b: 'Heiß' },
 						target: 60,
-						dial: 90,
+						dial,
 						phase: 'guess',
 						lastScore: null
 					}
 				})
 			),
-		players
+		{ players, dial }
 	);
 	await page.goto('/spiele/wavelength/spielen');
 	return page.getByRole('slider', { name: 'Zeiger' });
@@ -206,4 +206,60 @@ test('Scenario: Tie for first shown as tie', async ({ page }, info) => {
 	await expect(page.getByText('Gewinner', { exact: true })).toHaveCount(0);
 	await expect(page.getByRole('heading', { name: 'Team 1 & Team 2', exact: true })).toBeVisible();
 	await shot(page, info, 'wavelength-tie');
+});
+
+const onTarget = async (dial: Locator, t: number) => {
+	await dial.focus();
+	const steps = Math.round(t) - 90;
+	for (let i = 0; i < Math.abs(steps); i++) await dial.press(steps > 0 ? 'ArrowRight' : 'ArrowLeft');
+};
+
+const farOff = async (dial: Locator, t: number) => {
+	await dial.focus();
+	await dial.press(t > 90 ? 'Home' : 'End');
+};
+
+test('Scenario: Four or more players default to Versus', async ({ page }, info) => {
+	await seedRoster(page, ['Alex', 'Bo', 'Cleo', 'Dani']);
+	await page.goto('/spiele/wavelength/lobby');
+
+	const mode = page.getByRole('group', { name: 'Spielmodus' });
+	const koop = mode.getByRole('button', { name: 'Koop', exact: true });
+	const versus = mode.getByRole('button', { name: 'Versus', exact: true });
+	await expect(koop).toBeEnabled();
+	await expect(versus).toBeEnabled();
+	await expect(versus).toHaveAttribute('aria-pressed', 'true');
+	await expect(koop).toHaveAttribute('aria-pressed', 'false');
+	await expect(page.getByRole('group', { name: 'Team 1' })).toBeVisible();
+	await expect(page.getByRole('group', { name: 'Team 2' })).toBeVisible();
+	await expect(page.getByText('Versus braucht mind. 4 Spieler.', { exact: true })).toHaveCount(0);
+
+	await koop.click();
+	await expect(koop).toHaveAttribute('aria-pressed', 'true');
+	await expect(page.getByRole('group', { name: 'Team 1' })).toHaveCount(0);
+	await expect(page.getByRole('list', { name: 'Reihenfolge' }).getByRole('listitem')).toHaveText([
+		/Alex/,
+		/Bo/,
+		/Cleo/,
+		/Dani/
+	]);
+	await shot(page, info, 'lobby-wavelength-koop');
+});
+
+test('Scenario: Two or three players get Koop only', async ({ page }, info) => {
+	for (const names of [
+		['Alex', 'Bo'],
+		['Alex', 'Bo', 'Cleo']
+	]) {
+		await seedRoster(page, names);
+		await page.goto('/spiele/wavelength/lobby');
+
+		const mode = page.getByRole('group', { name: 'Spielmodus' });
+		await expect(mode.getByRole('button', { name: 'Koop', exact: true })).toHaveAttribute('aria-pressed', 'true');
+		await expect(mode.getByRole('button', { name: 'Versus', exact: true })).toBeDisabled();
+		await expect(page.getByText('Versus braucht mind. 4 Spieler.', { exact: true })).toBeVisible();
+		await expect(page.getByRole('list', { name: 'Reihenfolge' }).getByRole('listitem')).toHaveCount(names.length);
+		await expect(page.getByRole('button', { name: "Los geht's" })).toBeEnabled();
+		if (names.length === 2) await shot(page, info, 'lobby-wavelength-koop-two');
+	}
 });
