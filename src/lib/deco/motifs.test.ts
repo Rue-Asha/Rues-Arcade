@@ -1,5 +1,22 @@
+import { render } from 'svelte/server';
 import { describe, expect, it } from 'vitest';
-import { motifFor } from '#lib/deco/motifs.ts';
+import Art from '#lib/deco/Art.svelte';
+import { motifFor, type Place } from '#lib/deco/motifs.ts';
+
+const draws: [string | undefined, Place][] = [
+	[undefined, 'home'],
+	['imposter', 'tile'],
+	['wavelength', 'tile'],
+	[undefined, 'tile'],
+	['imposter', 'start'],
+	['wavelength', 'start'],
+	['duck', 'start'],
+	['wavelength', 'lobby'],
+	['imposter', 'play'],
+	['duck', 'play']
+];
+
+const html = (slug: string | undefined, place: Place) => render(Art, { props: { slug, place } }).body;
 
 describe('motifFor', () => {
 	it('Scenario: Game without its own art gets the neutral fallback', () => {
@@ -21,5 +38,62 @@ describe('motifFor', () => {
 		expect(motifFor('imposter', 'lobby')).toBe('crew');
 		expect(motifFor('wavelength', 'lobby')).toBe('crew');
 		expect(motifFor('duck', 'lobby')).toBe('crew');
+	});
+});
+
+describe('Art', () => {
+	it('draws every motif inside the aria-hidden decoration root', () => {
+		for (const [slug, place] of draws) {
+			const body = html(slug, place);
+			const label = `${slug} ${place}`;
+			expect(body, label).toMatch(new RegExp(`<div[^>]*data-motif="${motifFor(slug, place)}"[^>]*aria-hidden="true"`));
+			expect(body.match(/data-deco/g), label).toHaveLength(1);
+			expect(body, label).toMatch(/<svg|class="corner/);
+		}
+	});
+
+	it('home composite has board grid, dial with bands, mask card and dashed locks', () => {
+		const body = html(undefined, 'home');
+		expect(body).toContain('<pattern');
+		expect(body).toContain('class="band');
+		expect(body).toContain('class="needle');
+		expect(body).toContain('class="card');
+		expect(body.match(/class="lock/g)?.length).toBeGreaterThanOrEqual(2);
+	});
+
+	it('the Imposter masks have one odd mask, the start dial is labelled Kalt and Heiß', () => {
+		for (const place of ['tile', 'start'] as const) {
+			expect(html('imposter', place).match(/class="mask/g)?.length, place).toBeGreaterThanOrEqual(4);
+			expect(html('imposter', place).match(/class="[^"]*\bodd\b/g), place).toHaveLength(1);
+		}
+		const start = html('wavelength', 'start');
+		expect(start).toMatch(/>Kalt<\/text>/);
+		expect(start).toMatch(/>Heiß<\/text>/);
+		expect(html('wavelength', 'tile')).not.toContain('Kalt');
+	});
+
+	it('text inside the art carries its fill as color, in Sora, never Press Start 2P', () => {
+		for (const [slug, place] of draws) {
+			for (const [, style] of html(slug, place).matchAll(/<text[^>]*style="([^"]*)"/g)) {
+				const fill = style.match(/fill:\s*([^;]+)/)?.[1].trim();
+				const color = style.match(/(?:^|;)\s*color:\s*([^;]+)/)?.[1].trim();
+				expect(color, `${slug} ${place}: ${style}`).toBe(fill);
+				expect(style, `${slug} ${place}`).toContain('var(--font-ui)');
+			}
+		}
+	});
+
+	it('loads nothing: no images, links or external urls', () => {
+		for (const [slug, place] of draws) {
+			const body = html(slug, place);
+			expect(body, `${slug} ${place}`).not.toMatch(/<image|<img|<use|href=|url\((?!#)|font-data|Press Start/);
+		}
+	});
+
+	it('pattern ids are unique per instance', () => {
+		const a = html(undefined, 'home').match(/<pattern id="([^"]+)"/)?.[1];
+		const b = render(Art, { props: { place: 'home' }, idPrefix: 'x' }).body.match(/<pattern id="([^"]+)"/)?.[1];
+		expect(a).toBeTruthy();
+		expect(a).not.toBe(b);
 	});
 });
