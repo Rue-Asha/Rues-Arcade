@@ -2,6 +2,7 @@
 	import { afterNavigate, goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { onDestroy } from 'svelte';
+	import Art from '#lib/deco/Art.svelte';
 	import { setDemo } from '#lib/demo/context.ts';
 	import { next, start, view, type DemoRun } from '#lib/demo/runner.ts';
 	import { games, type GameEntry } from '#lib/games/registry.ts';
@@ -43,7 +44,8 @@
 
 {#if demo && tip}
 	{@const { def, Screen } = demo.entry}
-	<div class="stack" style="--c: var(--{def.colour})">
+	<div class="stack scene" style="--c: var(--{def.colour})">
+		<Art slug={def.slug} place="play" />
 		<header class="bar">
 			<div class="who">
 				<span class="label">Demo</span>
@@ -60,6 +62,19 @@
 {/if}
 
 <style>
+	/* fills the viewport below the app header (80–96px + page padding), so the backdrop isn't cut at the content's end */
+	.scene {
+		position: relative;
+		isolation: isolate;
+		min-height: calc(100svh - 152px);
+	}
+
+	/* the backdrop is absolutely positioned and would paint over in-flow content */
+	.scene > :global(:not([data-deco])) {
+		position: relative;
+		z-index: 1;
+	}
+
 	.bar {
 		display: flex;
 		flex-wrap: wrap;
