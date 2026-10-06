@@ -80,6 +80,11 @@ export async function deleteSurvey(request: APIRequestContext, id: number, origi
 	expect(res.status()).toBe(204);
 }
 
+export async function seedPlayed(request: APIRequestContext, surveyId: number, playerIds: number[], origin = sharedOrigin()) {
+	const res = await request.post(`${origin}/api/feud/played`, { headers: writeHeaders(origin), data: { surveyId, playerIds } });
+	expect(res.status()).toBe(204);
+}
+
 export async function shot(page: Page, info: TestInfo, slug: string) {
 	await page.evaluate(() =>
 		Promise.all(
