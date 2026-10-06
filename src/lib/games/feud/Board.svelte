@@ -12,9 +12,12 @@
 		// accessible name of a hidden tile's button, by rank; null = tiles are not tappable
 		verb: ((rank: number) => string) | null;
 		onpick: (tile: number) => void;
+		// demo: only the scripted tile is live
+		locked?: boolean;
+		expected?: number | null;
 	}
 
-	let { tiles, revealed, before, result = false, verb, onpick }: Props = $props();
+	let { tiles, revealed, before, result = false, verb, onpick, locked = false, expected = null }: Props = $props();
 
 	// WAAPI on transform and opacity, so the e2e settle waits for it
 	function flip(node: HTMLElement, { delay = 0, still = false } = {}) {
@@ -45,7 +48,15 @@
 					<span class="text">{t.text}</span>
 				</div>
 			{:else if verb}
-				<button type="button" class="face" aria-label={verb(i + 1)} onclick={() => onpick(i)}>
+				<button
+					type="button"
+					class="face"
+					class:expected={expected === i}
+					aria-label={verb(i + 1)}
+					disabled={locked && expected !== i}
+					data-demo={expected === i ? 'expected' : undefined}
+					onclick={() => onpick(i)}
+				>
 					<span class="rank">{i + 1}</span>
 				</button>
 			{:else}
@@ -99,6 +110,11 @@
 	button.face {
 		cursor: pointer;
 		touch-action: manipulation;
+	}
+
+	button.face.expected {
+		outline: 3px solid var(--gold);
+		outline-offset: 3px;
 	}
 
 	button.face:active {
