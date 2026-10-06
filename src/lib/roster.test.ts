@@ -1,6 +1,6 @@
 import type { DatabaseSync } from 'node:sqlite';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { playersApi } from '#lib/players.ts';
+import { playerId, playersApi, savedId } from '#lib/players.ts';
 import { migrate, openDb } from '#lib/server/db.ts';
 import { addPlayer, deletePlayer, listPlayers, renamePlayer } from '#lib/server/players.ts';
 
@@ -129,6 +129,84 @@ describe('roster', () => {
 
 		expect(roster.rename(roster.players[1].id, 'Ali')).toEqual({ ok: true });
 		expect(names(roster.players)).toEqual(['Bo', 'Ali']);
+	});
+
+	const stored = (...list: string[]) =>
+		storage.setItem('arcade:roster', JSON.stringify(list.map((name, i) => ({ id: `p${i + 1}`, name }))));
+
+	it('Scenario: Matching guests become linked on load', async () => {
+		stored('alex', 'Gustav', 'Bo');
+		const alex = addPlayer(db, 'Alex');
+		const bo = addPlayer(db, 'Bo');
+		const roster = await fresh();
+
+		await roster.ready();
+
+		expect(roster.players).toEqual([
+			{ id: playerId(alex.ok ? alex.player.id : 0), name: 'Alex' },
+			{ id: 'p2', name: 'Gustav' },
+			{ id: playerId(bo.ok ? bo.player.id : 0), name: 'Bo' }
+		]);
+		expect(roster.players.map((p) => savedId(p.id) === null)).toEqual([false, true, false]);
+		expect(roster.saved.map((p) => p.name)).toEqual(['Alex', 'Bo']);
+		expect(names(JSON.parse(storage.getItem('arcade:roster')!))).toEqual(['Alex', 'Gustav', 'Bo']);
+	});
+
+	it('refreshes the name of a linked entry on load', async () => {
+		const alex = addPlayer(db, 'Alex');
+		const id = alex.ok ? alex.player.id : 0;
+		storage.setItem('arcade:roster', JSON.stringify([{ id: playerId(id), name: 'Alex' }]));
+		renamePlayer(db, id, 'Alexander');
+		const roster = await fresh();
+
+		await roster.ready();
+
+		expect(roster.players).toEqual([{ id: playerId(id), name: 'Alexander' }]);
+	});
+
+	it('Scenario: Two entries matching one saved player', async () => {
+		stored('Alex', 'alex ');
+		const alex = addPlayer(db, 'Alex');
+		const roster = await fresh();
+
+		await roster.ready();
+
+		expect(roster.players).toEqual([
+			{ id: playerId(alex.ok ? alex.player.id : 0), name: 'Alex' },
+			{ id: 'p2', name: 'alex ' }
+		]);
+	});
+
+	it('Scenario: Server unreachable leaves the roster unchanged', async () => {
+		stored('alex', 'Bo');
+		const alex = addPlayer(db, 'Alex');
+		vi.stubGlobal('fetch', unreachable);
+		const down = await fresh();
+
+		await down.ready();
+
+		expect(down.players).toEqual([
+			{ id: 'p1', name: 'alex' },
+			{ id: 'p2', name: 'Bo' }
+		]);
+		expect(down.savedError).toBeTruthy();
+		expect(down.saved).toEqual([]);
+
+		vi.stubGlobal('fetch', serve(db));
+		const up = await fresh();
+		await up.ready();
+
+		expect(up.players[0]).toEqual({ id: playerId(alex.ok ? alex.player.id : 0), name: 'Alex' });
+		expect(up.savedError).toBe('');
+	});
+
+	it('syncs once and hands out the same promise', async () => {
+		const roster = await fresh();
+		const first = roster.ready();
+
+		expect(roster.ready()).toBe(first);
+		await first;
+		expect(roster.ready()).toBe(first);
 	});
 
 	it('reloads the stored order and trims names', async () => {

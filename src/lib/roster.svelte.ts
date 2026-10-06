@@ -1,4 +1,5 @@
 import type { Player } from '#lib/engine/types.ts';
+import { playerId, playersApi, savedId, type SavedPlayer } from '#lib/players.ts';
 import { read, write } from '#lib/storage.ts';
 
 export type Result = { ok: true } | { ok: false; message: string };
@@ -18,7 +19,35 @@ function load(): Player[] {
 }
 
 let players = $state.raw<Player[]>(load());
+let saved = $state.raw<SavedPlayer[]>([]);
+let savedError = $state('');
+let synced: Promise<void> | null = null;
 let seq = 0;
+
+const key = (name: string) => name.trim().toLocaleLowerCase('de');
+
+async function sync() {
+	let list: SavedPlayer[];
+	try {
+		list = await playersApi.list();
+	} catch {
+		savedError = 'Gespeicherte Spieler sind gerade nicht erreichbar.';
+		return;
+	}
+	saved = list;
+	savedError = '';
+	const linked = new Set(players.map((p) => savedId(p.id)));
+	save(
+		players.map((p) => {
+			const id = savedId(p.id);
+			if (id !== null) return { ...p, name: list.find((s) => s.id === id)?.name ?? p.name };
+			const match = list.find((s) => !linked.has(s.id) && key(s.name) === key(p.name));
+			if (!match) return p;
+			linked.add(match.id);
+			return { id: playerId(match.id), name: match.name };
+		})
+	);
+}
 
 function save(next: Player[]) {
 	players = next;
@@ -39,6 +68,9 @@ function newId() {
 
 export const roster: {
 	readonly players: Player[];
+	readonly saved: SavedPlayer[];
+	readonly savedError: string;
+	ready(): Promise<void>;
 	add(name: string): Result;
 	rename(id: string, name: string): Result;
 	remove(id: string): void;
@@ -46,6 +78,15 @@ export const roster: {
 } = {
 	get players(): Player[] {
 		return players;
+	},
+	get saved(): SavedPlayer[] {
+		return saved;
+	},
+	get savedError(): string {
+		return savedError;
+	},
+	ready() {
+		return (synced ??= sync());
 	},
 	add(name) {
 		name = name.trim();
