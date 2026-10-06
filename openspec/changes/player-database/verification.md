@@ -1,14 +1,13 @@
-verified-at: fd02eb8
+verified-at: b9df4e4
 
 ## Layer 1: proof:full (green)
 ```
-  Slow test file: [phone] › e2e/look.test.ts (5.9m)
+  Slow test file: [phone] › e2e/look.test.ts (5.8m)
   Slow test file: [desktop] › e2e/look.test.ts (5.8m)
   Consider running tests from slow files in parallel. See: https://playwright.dev/docs/test-parallel
   2 skipped
-  260 passed (6.6m)
+  262 passed (6.6m)
 ```
-Vitest: 205 passed. Playwright: 260 passed, 2 skipped (phone + desktop).
 
 ## Layer 2: spec coverage
 
@@ -16,6 +15,7 @@ Vitest: 205 passed. Playwright: 260 passed, 2 skipped (phone + desktop).
 |---|---|---|
 | Add, rename, delete and list saved players | unit | `src/lib/server/players.test.ts` "Scenario: Add, rename, delete and list saved players" ✓ |
 | Empty or whitespace saved name rejected | unit | `src/lib/server/players.test.ts` "Scenario: Empty or whitespace saved name rejected" ✓ |
+| Request without a usable name rejected | e2e | `e2e/players-api.test.ts` "Scenario: Request without a usable name rejected" ✓ |
 | Overlong saved name rejected | unit | `src/lib/server/players.test.ts` "Scenario: Overlong saved name rejected" ✓ |
 | Duplicate saved name rejected | unit | `src/lib/server/players.test.ts` "Scenario: Duplicate saved name rejected" ✓ |
 | Unknown saved player id | unit | `src/lib/server/players.test.ts` "Scenario: Unknown saved player id" ✓ |
@@ -46,6 +46,7 @@ Vitest: 205 passed. Playwright: 260 passed, 2 skipped (phone + desktop).
 | Deleting a saved player mid-game keeps the session snapshot | unit | `src/lib/roster.test.ts` "Scenario: Deleting a saved player mid-game keeps the session snapshot" ✓ |
 | Matching guests become linked on load | unit | `src/lib/roster.test.ts` "Scenario: Matching guests become linked on load" ✓ |
 | Two entries matching one saved player | unit | `src/lib/roster.test.ts` "Scenario: Two entries matching one saved player" ✓ |
+| Linked entry whose saved player is gone becomes a guest | unit | `src/lib/roster.test.ts` "Scenario: Linked entry whose saved player is gone becomes a guest" ✓ |
 | Server unreachable leaves the roster unchanged | unit | `src/lib/roster.test.ts` "Scenario: Server unreachable leaves the roster unchanged" ✓ |
 | Old roster shows linked after the update | e2e | `e2e/players.test.ts` "Scenario: Old roster shows linked after the update" ✓ |
 | Saved player id is the same on every device | unit | `src/lib/roster.test.ts` "Scenario: Saved player id is the same on every device" ✓ |
@@ -59,31 +60,46 @@ none
 ```
  e2e/helpers.ts                                     |  26 ++
  e2e/look.test.ts                                   |   2 +
- e2e/players-api.test.ts                            |  24 ++
- e2e/players.test.ts                                | 245 +++++++++++++++
+ e2e/players-api.test.ts                            |  45 +++
+ e2e/players.test.ts                                | 245 ++++++++++++++
  e2e/roster.test.ts                                 |  18 +-
  migrations/0004_players.sql                        |   5 +
  openspec/changes/player-database/.openspec.yaml    |   2 +
- openspec/changes/player-database/design.md         | 158 ++++++++++
+ openspec/changes/player-database/design.md         | 158 +++++++++
  openspec/changes/player-database/flow.yaml         |  10 +
  openspec/changes/player-database/proposal.md       |  59 ++++
  openspec/changes/player-database/scope.md          |  65 ++++
- .../changes/player-database/specs/players/spec.md  |  83 ++++++
- .../changes/player-database/specs/roster/spec.md   | 153 ++++++++++
+ .../shots/desktop-look-lobby-pick.png              | Bin 0 -> 104804 bytes
+ .../player-database/shots/desktop-look-spieler.png | Bin 0 -> 70118 bytes
+ .../player-database/shots/desktop-spieler-gast.png | Bin 0 -> 60220 bytes
+ .../shots/desktop-spieler-gespeichert-leer.png     | Bin 0 -> 59974 bytes
+ .../shots/desktop-spieler-gespeichert.png          | Bin 0 -> 57081 bytes
+ .../player-database/shots/desktop-spieler-leer.png | Bin 0 -> 59974 bytes
+ .../player-database/shots/desktop-spieler.png      | Bin 0 -> 60339 bytes
+ .../shots/phone-look-lobby-pick.png                | Bin 0 -> 60655 bytes
+ .../player-database/shots/phone-look-spieler.png   | Bin 0 -> 71844 bytes
+ .../player-database/shots/phone-spieler-gast.png   | Bin 0 -> 53441 bytes
+ .../shots/phone-spieler-gespeichert-leer.png       | Bin 0 -> 51588 bytes
+ .../shots/phone-spieler-gespeichert.png            | Bin 0 -> 51254 bytes
+ .../player-database/shots/phone-spieler-leer.png   | Bin 0 -> 51588 bytes
+ .../player-database/shots/phone-spieler.png        | Bin 0 -> 57736 bytes
+ .../changes/player-database/specs/players/spec.md  |  88 +++++
+ .../changes/player-database/specs/roster/spec.md   | 158 +++++++++
  openspec/changes/player-database/tasks.md          |  32 ++
- src/lib/players.ts                                 |  52 ++++
- src/lib/roster.svelte.ts                           | 122 +++++++-
- src/lib/roster.test.ts                             | 327 +++++++++++++++++++++
- src/lib/server/db.test.ts                          |  37 +++
+ openspec/changes/player-database/verification.md   | 103 ++++++
+ src/lib/players.ts                                 |  52 +++
+ src/lib/roster.svelte.ts                           | 138 +++++++-
+ src/lib/roster.test.ts                             | 372 +++++++++++++++++++++
+ src/lib/server/db.test.ts                          |  51 +++
  src/lib/server/db.ts                               |   5 +-
- src/lib/server/players.test.ts                     | 111 +++++++
+ src/lib/server/players.test.ts                     | 111 ++++++
  src/lib/server/players.ts                          |  45 +++
  src/routes/+layout.svelte                          |   6 +-
  src/routes/api/players/+server.ts                  |  13 +
  src/routes/api/players/[id]/+server.ts             |  23 ++
  src/routes/spiele/[slug]/lobby/+page.svelte        |   3 +-
- src/routes/spieler/+page.svelte                    | 211 ++++++++++++-
- 26 files changed, 1818 insertions(+), 19 deletions(-)
+ src/routes/spieler/+page.svelte                    | 211 +++++++++++-
+ 41 files changed, 2027 insertions(+), 19 deletions(-)
 ```
 
 ## Screenshots
