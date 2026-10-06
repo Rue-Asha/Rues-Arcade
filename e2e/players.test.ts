@@ -181,3 +181,65 @@ test('Scenario: Old roster shows linked after the update', async ({ page, reques
 		server.close();
 	}
 });
+
+const stored = (page: Page, key: string) => page.evaluate((k) => localStorage.getItem(k), key);
+
+test('Scenario: Old session resumes after the update', async ({ page, request }, info) => {
+	const server = await emptyServer(info, 'players-old-session');
+	const names = ['Vera', 'Gustav', 'Rita'];
+	try {
+		const pair = await request.post(`${server.origin}/api/content/imposter_pairs`, {
+			headers: { origin: server.origin },
+			data: { a: 'Was isst du zum Frühstück?', b: 'Was isst du zu Mittag?' }
+		});
+		expect(pair.status()).toBe(201);
+		await page.goto(`${server.origin}/`);
+		await seedRoster(page, names);
+		await page.goto(`${server.origin}/spiele/imposter`);
+		await page.getByRole('button', { name: "Los geht's" }).click();
+		await expect(page).toHaveURL(/\/lobby$/);
+		await page.getByRole('button', { name: "Los geht's" }).click();
+		await expect(page).toHaveURL(/\/spielen$/);
+		await expect(page.getByText('Gib das Handy an Vera')).toBeVisible();
+		expect(JSON.parse((await stored(page, 'arcade:session:imposter'))!).state.players.map((p: { id: string }) => p.id)).toEqual(['p1', 'p2', 'p3']);
+
+		const [vera] = await seedPlayers(request, server.origin, ['Vera']);
+		await page.reload();
+		await expect(page.getByText('Gib das Handy an Vera')).toBeVisible();
+		await expect(page.getByText('Spieler 1 / 3')).toBeVisible();
+		await expect(page.getByRole('list', { name: 'Reihenfolge' }).getByRole('listitem')).toHaveText(
+			names.map((n) => new RegExp(`${n}$`))
+		);
+		await expect.poll(async () => JSON.parse((await stored(page, 'arcade:roster'))!)[0].id).toBe(`player-${vera.id}`);
+	} finally {
+		server.close();
+	}
+});
+
+test('Scenario: Demo leaves saved players untouched', async ({ page, request }, info) => {
+	const server = await emptyServer(info, 'players-demo');
+	try {
+		await seedPlayers(request, server.origin, ['Vera']);
+		await page.goto(`${server.origin}/`);
+		await seedRoster(page, ['Mira', 'Noah', 'Olli']);
+		const list = async () => (await request.get(`${server.origin}/api/players`)).json();
+		const before = await list();
+		const crew = await stored(page, 'arcade:roster');
+
+		await page.goto(`${server.origin}/spiele/imposter`);
+		await page.getByRole('link', { name: 'Demo', exact: true }).click();
+		await expect(page).toHaveURL(/\/demo\?from=/);
+		const progress = page.getByText(/^Demo · Schritt \d+\/\d+$/);
+		const total = Number((await progress.textContent())!.split('/')[1]);
+		for (let n = 1; n <= total; n++) {
+			await expect(progress).toHaveText(`Demo · Schritt ${n}/${total}`);
+			await page.locator('[data-demo="expected"]').click();
+		}
+		await expect(page.getByText('Demo beendet', { exact: true })).toBeVisible();
+
+		expect(await list()).toEqual(before);
+		expect(await stored(page, 'arcade:roster')).toBe(crew);
+	} finally {
+		server.close();
+	}
+});
