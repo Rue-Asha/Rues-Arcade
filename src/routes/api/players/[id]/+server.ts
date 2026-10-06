@@ -10,8 +10,8 @@ function playerId(param: string): number {
 
 export const PATCH: RequestHandler = async ({ params, request }) => {
 	const id = playerId(params.id);
-	const { name } = await request.json();
-	const saved = renamePlayer(getDb(), id, String(name ?? ''));
+	const body = await request.json().catch(() => null);
+	const saved = renamePlayer(getDb(), id, String(body?.name ?? ''));
 	if (!saved.ok) return json({ message: saved.message }, { status: saved.status });
 	return json(saved.player);
 };

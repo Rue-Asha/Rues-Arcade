@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Saved-player store
-The server SHALL keep saved players in a `players` table (`id INTEGER PRIMARY KEY`, `name`, `created_at`), created by
+The server SHALL keep saved players in a `players` table (`id INTEGER PRIMARY KEY AUTOINCREMENT`, so ids are never reused,, `name`, `created_at`), created by
 the forward-only migration `0004_players.sql`, and SHALL offer a JSON API: `GET /api/players` lists all saved players
 sorted alphabetically (case-insensitive), `POST /api/players` adds one, `PATCH /api/players/<id>` renames one and
 `DELETE /api/players/<id>` deletes one. Names SHALL be trimmed, non-empty, at most 40 characters and unique
@@ -17,6 +17,11 @@ case-insensitively. Rejections SHALL carry a German `message`: 400 for an empty 
 - **WHEN** "" or "   " is added, or a saved player is renamed to "   "
 - **THEN** the response is 400 with "Bitte gib einen Namen ein." and the table is unchanged
 - **proof:** unit
+
+#### Scenario: Request without a usable name rejected
+- **WHEN** `POST /api/players` or `PATCH /api/players/<id>` is sent with an empty body or the body `null`
+- **THEN** the response is 400 with "Bitte gib einen Namen ein." and the table is unchanged
+- **proof:** e2e
 
 #### Scenario: Overlong saved name rejected
 - **WHEN** a 41-character name is added or a saved player is renamed to one

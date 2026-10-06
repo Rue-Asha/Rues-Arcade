@@ -6,8 +6,8 @@ import type { RequestHandler } from './$types';
 export const GET: RequestHandler = () => json(listPlayers(getDb()));
 
 export const POST: RequestHandler = async ({ request }) => {
-	const { name } = await request.json();
-	const saved = addPlayer(getDb(), String(name ?? ''));
+	const body = await request.json().catch(() => null);
+	const saved = addPlayer(getDb(), String(body?.name ?? ''));
 	if (!saved.ok) return json({ message: saved.message }, { status: saved.status });
 	return json(saved.player, { status: 201 });
 };
