@@ -8,3 +8,4 @@ learnings:
   - "builder U3: chaining proof with ; after a piped run committed a red state (demo e2e) → use && / pipefail; layout sync that always called save() wrote arcade:roster=[] on first load and broke a localStorage-snapshot e2e → write only on change"
 gate0: 2026-10-06
 gate1: 2026-10-06
+gate2: 2026-10-06
