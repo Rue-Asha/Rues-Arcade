@@ -231,7 +231,7 @@ describe('roster', () => {
 
 		for (const result of [roster.addSaved(dbId('Alex')), roster.add('alex')]) {
 			expect(result.ok).toBe(false);
-			expect(result.ok === false && result.message).toContain('Alex');
+			expect(result.ok === false && result.message).toBe('„Alex“ ist schon dabei.');
 		}
 		expect(names(roster.players)).toEqual(['Alex']);
 	});
@@ -244,7 +244,7 @@ describe('roster', () => {
 		const result = roster.add('gustav');
 
 		expect(result.ok).toBe(false);
-		expect(result.ok === false && result.message).toContain('Gustav');
+		expect(result.ok === false && result.message).toBe('„Gustav“ ist schon dabei.');
 		expect(names(roster.players)).toEqual(['Gustav']);
 		expect(roster.isGuest(roster.players[0])).toBe(true);
 	});

@@ -5,6 +5,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { MAX_TEXT } from '#lib/content/types.ts';
 import { closeDb, getDb, loadMigrations, migrate, openDb } from './db.ts';
+import { deletePlayer } from './players.ts';
 
 let dir: string;
 
@@ -214,7 +215,7 @@ describe('db', () => {
 		const id = Number(db.prepare("INSERT INTO players (name) VALUES ('Alex')").run().lastInsertRowid);
 		db.prepare('INSERT INTO seen (player_id) VALUES (?)').run(id);
 
-		db.prepare('DELETE FROM players WHERE id = ?').run(id);
+		expect(deletePlayer(db, id)).toEqual({ ok: true });
 
 		expect(db.prepare('SELECT count(*) AS n FROM seen').get()?.n).toBe(0);
 		expect(db.prepare('PRAGMA foreign_keys').get()?.foreign_keys).toBe(1);
