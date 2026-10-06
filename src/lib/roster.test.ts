@@ -209,6 +209,98 @@ describe('roster', () => {
 		expect(roster.ready()).toBe(first);
 	});
 
+	const dbId = (name: string) => listPlayers(db).find((p) => p.name === name)!.id;
+
+	it('Scenario: Typed name matching a saved player adds the saved player', async () => {
+		addPlayer(db, 'Alex');
+		const roster = await fresh();
+		await roster.ready();
+
+		expect(roster.add(' alex ')).toEqual({ ok: true });
+
+		expect(roster.players).toEqual([{ id: playerId(dbId('Alex')), name: 'Alex' }]);
+		expect(roster.isGuest(roster.players[0])).toBe(false);
+	});
+
+	it('Scenario: Saved player already in the roster is not added twice', async () => {
+		addPlayer(db, 'Alex');
+		const roster = await fresh();
+		await roster.ready();
+		roster.addSaved(dbId('Alex'));
+
+		for (const result of [roster.addSaved(dbId('Alex')), roster.add('alex')]) {
+			expect(result.ok).toBe(false);
+			expect(result.ok === false && result.message).toContain('Alex');
+		}
+		expect(names(roster.players)).toEqual(['Alex']);
+	});
+
+	it('Scenario: Guest named like a roster entry rejected', async () => {
+		const roster = await fresh();
+		await roster.ready();
+		roster.add('Gustav');
+
+		const result = roster.add('gustav');
+
+		expect(result.ok).toBe(false);
+		expect(result.ok === false && result.message).toContain('Gustav');
+		expect(names(roster.players)).toEqual(['Gustav']);
+		expect(roster.isGuest(roster.players[0])).toBe(true);
+	});
+
+	it('rejects a saved player it does not know', async () => {
+		const roster = await fresh();
+		await roster.ready();
+
+		expect(roster.addSaved(99).ok).toBe(false);
+		expect(roster.players).toEqual([]);
+	});
+
+	it('only guests are renamed in the roster', async () => {
+		addPlayer(db, 'Alex');
+		const roster = await fresh();
+		await roster.ready();
+		roster.addSaved(dbId('Alex'));
+		roster.add('Gustav');
+
+		const saved = roster.rename(roster.players[0].id, 'Ali');
+		expect(saved.ok).toBe(false);
+		expect(roster.rename(roster.players[1].id, 'Gus')).toEqual({ ok: true });
+		expect(names(roster.players)).toEqual(['Alex', 'Gus']);
+	});
+
+	it('Scenario: Removing a saved player\'s entry keeps the saved player', async () => {
+		addPlayer(db, 'Alex');
+		const roster = await fresh();
+		await roster.ready();
+		roster.addSaved(dbId('Alex'));
+
+		roster.remove(roster.players[0].id);
+
+		expect(roster.players).toEqual([]);
+		expect(roster.saved.map((p) => p.name)).toEqual(['Alex']);
+		expect(listPlayers(db).map((p) => p.name)).toEqual(['Alex']);
+	});
+
+	it('Scenario: Saved player id is the same on every device', async () => {
+		addPlayer(db, 'Alex');
+		const rosters = [];
+		for (let device = 0; device < 2; device++) {
+			vi.stubGlobal('window', { localStorage: new FakeStorage() });
+			const roster = await fresh();
+			await roster.ready();
+			roster.add('Alex');
+			roster.add('Gustav');
+			rosters.push(roster.players);
+		}
+
+		const [a, b] = rosters;
+		expect(a[0].id).toBe(playerId(dbId('Alex')));
+		expect(b[0].id).toBe(a[0].id);
+		expect(a[1].id).not.toBe(b[1].id);
+		expect(savedId(a[1].id)).toBeNull();
+	});
+
 	it('reloads the stored order and trims names', async () => {
 		const roster = await fresh();
 		roster.add('  Alex ');

@@ -56,8 +56,8 @@ function save(next: Player[]) {
 
 function check(name: string, self?: string): Result {
 	if (!name) return { ok: false, message: 'Bitte gib einen Namen ein.' };
-	const taken = players.some((p) => p.id !== self && p.name.toLowerCase() === name.toLowerCase());
-	if (taken) return { ok: false, message: `„${name}“ ist schon dabei.` };
+	const taken = players.find((p) => p.id !== self && key(p.name) === key(name));
+	if (taken) return { ok: false, message: `„${taken.name}“ ist schon dabei.` };
 	return { ok: true };
 }
 
@@ -71,7 +71,9 @@ export const roster: {
 	readonly saved: SavedPlayer[];
 	readonly savedError: string;
 	ready(): Promise<void>;
+	isGuest(p: Player): boolean;
 	add(name: string): Result;
+	addSaved(dbId: number): Result;
 	rename(id: string, name: string): Result;
 	remove(id: string): void;
 	move(id: string, to: number): void;
@@ -88,13 +90,30 @@ export const roster: {
 	ready() {
 		return (synced ??= sync());
 	},
+	isGuest(p) {
+		return savedId(p.id) === null;
+	},
 	add(name) {
 		name = name.trim();
+		const match = saved.find((s) => key(s.name) === key(name));
+		if (match) return roster.addSaved(match.id);
 		const result = check(name);
 		if (result.ok) save([...players, { id: newId(), name }]);
 		return result;
 	},
+	addSaved(dbId) {
+		const match = saved.find((s) => s.id === dbId);
+		if (!match) return { ok: false, message: 'Diesen Spieler gibt es nicht mehr.' };
+		const id = playerId(dbId);
+		const result = players.some((p) => p.id === id)
+			? { ok: false as const, message: `„${match.name}“ ist schon dabei.` }
+			: check(match.name);
+		if (result.ok) save([...players, { id, name: match.name }]);
+		return result;
+	},
 	rename(id, name) {
+		if (savedId(id) !== null)
+			return { ok: false, message: 'Gespeicherte Spieler benennst du unter „Gespeicherte Spieler“ um.' };
 		name = name.trim();
 		const result = check(name, id);
 		if (result.ok) save(players.map((p) => (p.id === id ? { ...p, name } : p)));
