@@ -37,6 +37,16 @@ export const demo: DemoScript<FeudAction, FeudConfig> = {
 	},
 	content: surveys.map((s) => ({ id: s.id, a: s.question, b: '' })),
 	seed: 1,
-	// placeholder so the generic demo runner tests have a step; U7 replaces it with the real script
-	steps: [{ action: { type: 'play' }, tip: 'Das Demo folgt.' }]
+	// one survey, so it is the last round and counts double; Team B wins the face-off, strikes out, Team A steals
+	steps: [
+		{ action: { type: 'answer', tile: 1 }, tip: 'Alex nennt als Erster Eier. Die Antwort steht auf Platz 2.' },
+		{ action: { type: 'answer', tile: 0 }, tip: 'Cleo nennt Milch, Platz 1. Team B gewinnt das Duell.' },
+		{ action: { type: 'play' }, tip: 'Team B entscheidet: Spielen oder passen. Hier spielt Team B.' },
+		{ action: { type: 'reveal', tile: 2 }, tip: 'Team B nennt Butter. Tippe auf die Antwort, sie kommt in den Topf.' },
+		{ action: { type: 'strike' }, tip: 'Eine Antwort, die nicht auf der Tafel steht, ist ein Fehler.' },
+		{ action: { type: 'strike' }, tip: 'Zweiter Fehler.' },
+		{ action: { type: 'strike' }, tip: 'Dritter Fehler. Jetzt darf Team A eine Antwort stehlen.' },
+		{ action: { type: 'steal', tile: 3 }, tip: 'Team A nennt Käse und holt den Topf, die Punkte zählen doppelt.' },
+		{ action: { type: 'next' }, tip: 'Zum Ergebnis.' }
+	]
 };
