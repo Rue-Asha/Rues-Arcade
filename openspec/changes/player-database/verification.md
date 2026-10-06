@@ -117,3 +117,23 @@ openspec/changes/player-database/shots/phone-spieler-gespeichert-leer.png
 openspec/changes/player-database/shots/phone-spieler-gespeichert.png
 openspec/changes/player-database/shots/phone-spieler-leer.png
 openspec/changes/player-database/shots/phone-spieler.png
+
+## Review
+
+Round 1 (fd02eb8) → fixer 3cd1525, 8163db1, b9df4e4:
+- promote() could link two roster entries to one saved player → refuses with „Alex“ ist schon dabei. Fixed.
+- Migration lacked AUTOINCREMENT, a deleted player's id could be reused; orphaned linked entries stayed stuck → AUTOINCREMENT, sync demotes an orphan to a guest. Fixed.
+- renameSaved / sync name refresh could clash with a guest name → checked. Fixed.
+- API 500 on non-JSON or null body → 400 with message. Fixed.
+- Cascade test used raw SQL; two duplicate-message tests too loose → through the store, exact wording. Fixed.
+
+Round 2 (b9df4e4) → fixer c77ef3e, ad6e365, 34a2689:
+- Flaky shared-DB list compare in players-api e2e → own row only. Fixed.
+- Double tap on Löschen sent two DELETEs → guarded, e2e added. Fixed.
+- renameSaved refused for saved players outside the roster → refuses only when linked. Fixed.
+
+Round 3 (34a2689), left open at the round limit, all low:
+- sync keeps a stale name when a rename from another device would clash with another roster entry (spec says "refresh names"; no scenario for the clash).
+- API accepts a non-string `name` (`{"name":["Alex"]}` saves "Alex", an object saves "[object Object]").
+- Double tap on Speichern / Anlegen sends two POSTs; second gets 409 and shows „Wanda“ ist schon gespeichert. though the entry ends linked.
+- (reviewer: no weakened tests, no weak scenario tests)
