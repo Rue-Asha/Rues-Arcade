@@ -34,6 +34,11 @@
 			'Pro Runde ein Spruch: Wer würde am ehesten …?',
 			'Auf drei zeigen alle gleichzeitig auf die Person, die am besten passt.',
 			'Wer die meisten Finger auf sich hat, bekommt den Titel. Am Ende gewinnt, wer die meisten Titel hat.'
+		],
+		'family-feud': [
+			'Zwei Teams, eine Umfrage: gesucht sind die häufigsten Antworten.',
+			'Im Duell nennen zwei Personen je eine Antwort. Wer höher liegt, wählt Spielen oder Passen.',
+			'Das Team deckt Antworten auf. Nach drei Fehlern darf das andere Team die Punkte klauen. Die letzte Runde zählt doppelt.'
 		]
 	};
 
@@ -42,7 +47,8 @@
 		wavelength: ['Spektrum', 'Spektren'],
 		codes: ['Wort', 'Wörter'],
 		duck: ['Wort', 'Wörter'],
-		'most-likely': ['Spruch', 'Sprüche']
+		'most-likely': ['Spruch', 'Sprüche'],
+		'family-feud': ['Umfrage', 'Umfragen']
 	};
 
 	const entry = $derived(games.find((g) => g.def.slug === params.slug)!);

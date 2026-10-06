@@ -13,6 +13,7 @@ describe('registry', () => {
 		expect(range('codes')).toBe('4–20 Spieler');
 		expect(range('duck')).toBe('4–16 Spieler');
 		expect(range('most-likely')).toBe('3–20 Spieler');
+		expect(range('family-feud')).toBe('4–20 Spieler');
 	});
 
 	it('Scenario: Wavelength player range reads 2–18', () => {
@@ -20,9 +21,16 @@ describe('registry', () => {
 		expect(playerRange(wavelength.def)).toBe('2–18 Spieler');
 	});
 
-	it('lists five games in order, two locked ones and unique slugs', () => {
-		expect(games.map((g) => g.def.slug)).toEqual(['imposter', 'wavelength', 'codes', 'duck', 'most-likely']);
-		expect(comingSoon).toEqual(['Family Feud', 'Charade']);
+	it('lists six games in order, one locked one and unique slugs', () => {
+		expect(games.map((g) => g.def.slug)).toEqual([
+			'imposter',
+			'wavelength',
+			'codes',
+			'duck',
+			'most-likely',
+			'family-feud'
+		]);
+		expect(comingSoon).toEqual(['Charade']);
 		const slugs = games.map((g) => g.def.slug);
 		expect(new Set(slugs).size).toBe(slugs.length);
 	});
@@ -46,8 +54,23 @@ describe('registry', () => {
 				contentType: 'most_likely_prompts',
 				minContent: 1,
 				stateVersion: 1
+			},
+			{
+				slug: 'family-feud',
+				name: 'Family Feud',
+				colour: 'feud',
+				contentType: 'feud_surveys',
+				minContent: 2,
+				stateVersion: 1
 			}
 		]);
+	});
+
+	it('Family Feud is saved-only and the other games are not', () => {
+		expect(games.filter((g) => g.savedOnly).map((g) => g.def.slug)).toEqual(['family-feud']);
+		expect(games.find((g) => g.def.slug === 'family-feud')!.pitch).toBe(
+			'Zwei Teams suchen die häufigsten Antworten einer Umfrage.'
+		);
 	});
 
 	it('every demo starts from four players and fixture content', () => {
