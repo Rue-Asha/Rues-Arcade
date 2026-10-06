@@ -18,7 +18,8 @@
 	let picked = $state<string[]>([]);
 	let failure = $state('');
 
-	onMount(() => {
+	onMount(async () => {
+		await roster.ready();
 		picked = roster.players.map((p) => p.id);
 		picking = entry !== undefined && picked.length > entry.def.maxPlayers;
 		ready = true;

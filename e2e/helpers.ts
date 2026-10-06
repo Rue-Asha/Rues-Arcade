@@ -2,6 +2,7 @@ import { expect, type APIRequestContext, type Page, type TestInfo } from '@playw
 import { spawn } from 'node:child_process';
 import { rmSync } from 'node:fs';
 import { resolve } from 'node:path';
+import type { SavedPlayer } from '../src/lib/players.ts';
 import type { ContentType } from '../src/lib/content/types.ts';
 
 export async function seedRoster(page: Page, names: string[]) {
@@ -19,6 +20,31 @@ export async function seedContent(
 	const lines = rows.map((row) => (typeof row === 'string' ? row : `${row[0]} | ${row[1]}`));
 	const res = await request.post(`/api/content/${type}/import`, { data: { text: lines.join('\n') } });
 	expect(res.ok()).toBe(true);
+}
+
+// Kit's CSRF check rejects form-less writes without an origin header, so every players write goes through here
+export function playerCall(
+	request: APIRequestContext,
+	origin: string,
+	method: 'POST' | 'PATCH' | 'DELETE',
+	path: string,
+	name?: string
+) {
+	return request.fetch(`${origin}/api/players${path}`, {
+		method,
+		headers: { origin },
+		data: name === undefined ? undefined : { name }
+	});
+}
+
+export async function seedPlayers(request: APIRequestContext, origin: string, names: string[]) {
+	const saved: SavedPlayer[] = [];
+	for (const name of names) {
+		const res = await playerCall(request, origin, 'POST', '', name);
+		expect(res.status()).toBe(201);
+		saved.push(await res.json());
+	}
+	return saved;
 }
 
 export async function shot(page: Page, info: TestInfo, slug: string) {

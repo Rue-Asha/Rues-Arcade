@@ -1,8 +1,5 @@
-# roster Specification
+## MODIFIED Requirements
 
-## Purpose
-TBD - created by archiving change party-games-rebuild. Update Purpose after archive.
-## Requirements
 ### Requirement: Shared roster
 The Spieler screen SHALL let the user add, rename, remove and reorder players in one roster shared by all games
 and remembered on the device. Each roster entry SHALL be either a saved player (linked to its `players` row) or a
@@ -44,18 +41,7 @@ through the saved-player store; removing a saved player's entry from the roster 
 - **THEN** the roster no longer holds Alex and the saved-player list still does
 - **proof:** unit
 
-### Requirement: Roster against game limits
-A game's start SHALL be gated on its player limits.
-
-#### Scenario: Below minimum disables start
-- **WHEN** the roster has 2 players and the Imposter start screen is opened
-- **THEN** "Los geht's" is disabled and shows "mind. 3 Spieler"
-- **proof:** e2e
-
-#### Scenario: Above maximum asks who plays
-- **WHEN** the roster has more players than the game's maximum
-- **THEN** the lobby asks the user to pick who plays and start is enabled only once the selection is within limits
-- **proof:** e2e
+## ADDED Requirements
 
 ### Requirement: Saved players and guests in the roster
 Saved players SHALL be added to the roster by tapping them in the saved list; typed names SHALL be added as guests,
@@ -170,4 +156,3 @@ players SHALL never touch the saved-player store.
 - **WHEN** saved player "Vera" exists and a game's Demo is played to the end
 - **THEN** `GET /api/players` returns the same list as before and the roster is unchanged
 - **proof:** e2e
-
