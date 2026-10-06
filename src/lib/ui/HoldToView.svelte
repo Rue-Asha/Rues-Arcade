@@ -8,10 +8,12 @@
 		action?: string;
 		onrelease: () => void;
 		label: string;
+		// a small button in a corner; what it shows floats over the page while held
+		corner?: boolean;
 		children: Snippet;
 	}
 
-	let { action, onrelease, label, children }: Props = $props();
+	let { action, onrelease, label, corner = false, children }: Props = $props();
 
 	let held = $state(false);
 
@@ -52,14 +54,14 @@
 	}
 </script>
 
-<div class="htv" class:held data-action={action}>
+<div class="htv" class:held class:corner class:demo={demo !== null} data-action={action}>
 	<div class="window" aria-live="polite">
 		{#if shown}
 			<div class="content" use:pulse>
 				{#if demo}<span class="tag">[Demo]</span>{/if}
 				{@render children()}
 			</div>
-		{:else}
+		{:else if !corner}
 			<div class="cover">
 				<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 					<path d="M3 3l18 18"></path>
@@ -178,5 +180,49 @@
 		transform: translateY(var(--ledge));
 		box-shadow: 0 0 0 transparent;
 		background: var(--primary-press);
+	}
+
+	.corner .window {
+		display: contents;
+	}
+
+	.corner .content {
+		position: fixed;
+		inset: auto 0 76px;
+		z-index: 30;
+		width: min(560px, 100% - 32px);
+		max-height: 70svh;
+		margin-inline: auto;
+		border-radius: 20px;
+		background: var(--surface);
+		box-shadow:
+			0 0 0 2px var(--line),
+			0 var(--ledge) 0 var(--shadow);
+		overflow-y: auto;
+		pointer-events: none;
+	}
+
+	.corner.demo .content {
+		position: static;
+		inset: auto;
+		width: auto;
+		max-height: none;
+		margin: 0;
+	}
+
+	.corner .hold {
+		min-width: 44px;
+		min-height: 44px;
+		padding: 0 14px;
+		border: 1px solid var(--line);
+		background: var(--raised);
+		color: var(--text);
+		font-size: 14px;
+		box-shadow: 0 4px 0 var(--shadow);
+	}
+
+	.corner.held .hold {
+		background: var(--line);
+		color: var(--text);
 	}
 </style>
