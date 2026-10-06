@@ -3,11 +3,11 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { DatabaseSync } from 'node:sqlite';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { board } from '#lib/content/survey.ts';
+import { board, surveyError } from '#lib/content/survey.ts';
 import type { Survey } from '#lib/content/types.ts';
 import { loadMigrations, migrate, openDb } from './db.ts';
 import { addPlayer } from './players.ts';
-import { listSurveys, removeSurvey } from './surveys.ts';
+import { addSurvey, importSurveys, listSurveys, removeSurvey, updateSurvey } from './surveys.ts';
 
 let dir: string;
 let db: DatabaseSync;
@@ -80,5 +80,104 @@ describe('surveys', () => {
 		expect(db.prepare('SELECT * FROM feud_played WHERE survey_id = ?').all(survey.id)).toEqual([]);
 		expect(db.prepare('SELECT survey_id FROM feud_played').all()).toEqual([{ survey_id: other.id }]);
 		expect(db.prepare('SELECT count(*) AS n FROM players').get()?.n).toBe(2);
+	});
+
+	it('Scenario: Duplicate survey question rejected', () => {
+		migrate(db);
+		const answers = [
+			{ text: 'Apfel', points: 40 },
+			{ text: 'Birne', points: 30 },
+			{ text: 'Kiwi', points: 20 }
+		];
+		const first = addSurvey(db, 'Nenne ein Obst', answers);
+		const other = addSurvey(db, 'Nenne ein Tier', answers);
+		if (!first.ok || !other.ok) throw new Error('surveys not saved');
+
+		expect(addSurvey(db, 'nenne ein obst ', answers)).toEqual({
+			ok: false,
+			status: 409,
+			message: 'Diese Frage gibt es schon.'
+		});
+		expect(updateSurvey(db, other.survey.id, 'NENNE EIN OBST', answers)).toEqual({
+			ok: false,
+			status: 409,
+			message: 'Diese Frage gibt es schon.'
+		});
+		expect(listSurveys(db).filter((s) => /obst/i.test(s.question))).toHaveLength(1);
+		expect(listSurveys(db).find((s) => s.id === other.survey.id)?.question).toBe('Nenne ein Tier');
+	});
+
+	it('adds, updates and lists a survey in entry order, trimmed', () => {
+		migrate(db);
+		const added = addSurvey(db, ' Frage ', [
+			{ text: ' A ', points: 10 },
+			{ text: 'B', points: 30 },
+			{ text: 'C', points: 20 }
+		]);
+		expect(added).toEqual({
+			ok: true,
+			survey: {
+				id: expect.any(Number),
+				question: 'Frage',
+				answers: [
+					{ text: 'A', points: 10 },
+					{ text: 'B', points: 30 },
+					{ text: 'C', points: 20 }
+				]
+			}
+		});
+		if (!added.ok) return;
+		const id = added.survey.id;
+		const four = [...added.survey.answers, { text: 'D', points: 5 }];
+
+		expect(updateSurvey(db, id, 'Frage', four)).toEqual({ ok: true, survey: { id, question: 'Frage', answers: four } });
+		expect(listSurveys(db).find((s) => s.id === id)?.answers).toEqual(four);
+		expect(updateSurvey(db, 99999, 'Frage 2', four)).toMatchObject({ ok: false, status: 404 });
+		expect(addSurvey(db, 'Zu wenig', four.slice(0, 2))).toMatchObject({ ok: false, status: 400 });
+		expect(updateSurvey(db, id, 'Frage', four.slice(0, 2))).toMatchObject({ ok: false, status: 400 });
+	});
+
+	it('Scenario: Survey bulk import reports per line', () => {
+		migrate(db);
+		const before = surveyCount();
+		expect(addSurvey(db, 'Schon da', [
+			{ text: 'A', points: 10 },
+			{ text: 'B', points: 10 },
+			{ text: 'C', points: 10 }
+		]).ok).toBe(true);
+		const text = [
+			'Nenne eine Uhrzeit | Uhr: 12:00 : 30 | Mittag : 20 | Abend : 10',
+			'',
+			'kaputt ohne Trenner',
+			'Zwei Antworten | A : 10 | B : 20',
+			'schon DA | A : 10 | B : 10 | C : 10'
+		].join('\n');
+
+		const report = importSurveys(db, text);
+
+		expect(report).toEqual({
+			imported: 1,
+			duplicates: 1,
+			skipped: 1,
+			errors: [
+				{ line: 3, message: expect.any(String) },
+				{ line: 4, message: expect.stringMatching(/3 bis 8/) }
+			]
+		});
+		expect(surveyCount()).toBe(before + 2);
+		expect(listSurveys(db).find((s) => s.question === 'Nenne eine Uhrzeit')?.answers[0]).toEqual({
+			text: 'Uhr: 12:00',
+			points: 30
+		});
+	});
+
+	it('Scenario: Seed surveys are valid', () => {
+		migrate(db);
+
+		const surveys = listSurveys(db);
+
+		expect(surveys).toHaveLength(26);
+		for (const s of surveys) expect(surveyError(s.question, s.answers), s.question).toBeNull();
+		expect(new Set(surveys.map((s) => s.question.toLowerCase())).size).toBe(26);
 	});
 });
