@@ -1,12 +1,16 @@
 <script lang="ts">
 	import { onMount, type Snippet } from 'svelte';
+	import { roster } from '#lib/roster.svelte.ts';
 	import { muted, setMuted } from '#lib/sound.ts';
 	import '../app.css';
 
 	let { children }: { children: Snippet } = $props();
 
 	let silent = $state(false);
-	onMount(() => (silent = muted.value));
+	onMount(() => {
+		silent = muted.value;
+		roster.ready();
+	});
 
 	function toggle() {
 		silent = !silent;

@@ -12,7 +12,10 @@ let instance: DatabaseSync | null = null;
 
 export function openDb(path: string): DatabaseSync {
 	mkdirSync(dirname(resolve(path)), { recursive: true });
-	return new DatabaseSync(path);
+	const db = new DatabaseSync(path);
+	// a no-op inside a transaction, so it is set here, before migrate() opens any
+	db.exec('PRAGMA foreign_keys = ON');
+	return db;
 }
 
 // this module runs from src/ in dev and tests and from a bundled chunk under build/ in production, so the

@@ -53,6 +53,8 @@ async function walk(page: Page, info: TestInfo, check: Check) {
 	await page.goto('/');
 	await check('home');
 	await page.goto('/spieler');
+	await expect(page.getByRole('region', { name: 'Gespeicherte Spieler' })).toBeVisible();
+	await expect(page.getByText('Gast', { exact: true })).toHaveCount(names.length);
 	await check('spieler');
 
 	await page.goto('/spiele/imposter');

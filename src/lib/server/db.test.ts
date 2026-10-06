@@ -5,6 +5,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { MAX_TEXT } from '#lib/content/types.ts';
 import { closeDb, getDb, loadMigrations, migrate, openDb } from './db.ts';
+import { addPlayer, deletePlayer } from './players.ts';
 
 let dir: string;
 
@@ -181,6 +182,56 @@ describe('db', () => {
 			}
 			expect(new Set(rows).size).toBe(rows.length);
 		}
+		db.close();
+	});
+
+	it('Scenario: Players table arrives once on an existing database', () => {
+		const path = join(dir, 'before-players.db');
+		const db = openDb(path);
+		const old = loadMigrations().filter((m) => m.name < '0004');
+		migrate(db, old);
+		db.exec("INSERT INTO imposter_pairs (crew, imposter) VALUES ('Hund', 'Katze')");
+		const content = seedCounts(db);
+
+		migrate(db);
+		migrate(db);
+
+		expect(tables(db)).toContain('players');
+		expect(db.prepare('SELECT count(*) AS n FROM players').get()?.n).toBe(0);
+		expect(db.prepare('SELECT crew, imposter FROM imposter_pairs').all()).toEqual([
+			{ crew: 'Hund', imposter: 'Katze' }
+		]);
+		expect(seedCounts(db)).toEqual(content);
+		expect(applied(db).filter((n) => n === '0004_players.sql')).toEqual(['0004_players.sql']);
+		db.close();
+	});
+
+	it('Scenario: Deleting a player cascades to referencing rows', () => {
+		const db = openDb(join(dir, 'cascade.db'));
+		migrate(db);
+		db.exec(
+			'CREATE TABLE seen (player_id INTEGER NOT NULL REFERENCES players(id) ON DELETE CASCADE)'
+		);
+		const id = Number(db.prepare("INSERT INTO players (name) VALUES ('Alex')").run().lastInsertRowid);
+		db.prepare('INSERT INTO seen (player_id) VALUES (?)').run(id);
+
+		expect(deletePlayer(db, id)).toEqual({ ok: true });
+
+		expect(db.prepare('SELECT count(*) AS n FROM seen').get()?.n).toBe(0);
+		expect(db.prepare('PRAGMA foreign_keys').get()?.foreign_keys).toBe(1);
+		db.close();
+	});
+
+	it('never hands the id of a deleted player to a new one', () => {
+		const db = openDb(join(dir, 'ids.db'));
+		migrate(db);
+		const first = addPlayer(db, 'Rita');
+		const gone = first.ok ? first.player.id : 0;
+		deletePlayer(db, gone);
+
+		const next = addPlayer(db, 'Tom');
+
+		expect(next.ok && next.player.id).toBeGreaterThan(gone);
 		db.close();
 	});
 
