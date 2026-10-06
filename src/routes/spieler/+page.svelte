@@ -19,6 +19,7 @@
 	let draft = $state('');
 	let editMessage = $state('');
 
+	let crewMessage = $state('');
 	let savedName = $state('');
 	let savedMessage = $state('');
 	let renaming = $state<number | null>(null);
@@ -51,6 +52,11 @@
 		const result = roster.rename(editing, draft);
 		editMessage = result.ok ? '' : result.message;
 		if (result.ok) editing = null;
+	}
+
+	async function promote(p: Player) {
+		const result = await roster.promote(p.id);
+		crewMessage = result.ok ? '' : result.message;
 	}
 
 	async function create(e?: SubmitEvent) {
@@ -134,6 +140,10 @@
 				<span class="count">{players.length}</span>
 			</div>
 
+			{#if crewMessage}
+				<p class="error" role="alert">{crewMessage}</p>
+			{/if}
+
 			{#if players.length}
 				<ol class="rows">
 					{#each players as p, i (p.id)}
@@ -160,16 +170,22 @@
 								{/if}
 							{:else}
 								<span class="name">{p.name}</span>
+								{#if roster.isGuest(p)}<span class="tag">Gast</span>{/if}
 								<span class="tools">
+									{#if roster.isGuest(p)}
+										<button class="text" type="button" aria-label="{p.name} speichern" onclick={() => promote(p)}>Speichern</button>
+									{/if}
 									<button class="icon" type="button" aria-label="{p.name} nach oben" disabled={i === 0} onclick={() => roster.move(p.id, i - 1)}>
 										<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6"></path></svg>
 									</button>
 									<button class="icon" type="button" aria-label="{p.name} nach unten" disabled={i === players.length - 1} onclick={() => roster.move(p.id, i + 1)}>
 										<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
 									</button>
-									<button class="icon" type="button" aria-label="{p.name} umbenennen" onclick={() => edit(p)}>
-										<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"></path><path d="M13.5 6.5l4 4"></path></svg>
-									</button>
+									{#if roster.isGuest(p)}
+										<button class="icon" type="button" aria-label="{p.name} umbenennen" onclick={() => edit(p)}>
+											<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"></path><path d="M13.5 6.5l4 4"></path></svg>
+										</button>
+									{/if}
 									<button class="icon danger" type="button" aria-label="{p.name} entfernen" onclick={() => roster.remove(p.id)}>
 										<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 7h14M10 7V4.5h4V7M7 7l1 13h8l1-13"></path></svg>
 									</button>
@@ -430,6 +446,26 @@
 		transition:
 			transform 0.06s,
 			box-shadow 0.06s;
+	}
+
+	.text {
+		flex: none;
+		min-height: 48px;
+		padding: 0 14px;
+		border: 0;
+		border-radius: var(--radius-sm);
+		background: var(--raised);
+		color: var(--text);
+		font: inherit;
+		font-size: 15px;
+		font-weight: 700;
+		cursor: pointer;
+		box-shadow: 0 3px 0 var(--shadow);
+	}
+
+	.text:active {
+		transform: translateY(3px);
+		box-shadow: 0 0 0 var(--shadow);
 	}
 
 	.icon:active:not(:disabled) {

@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { emptyServer, seedPlayers, shot } from './helpers.ts';
+import { emptyServer, seedPlayers, seedRoster, shot } from './helpers.ts';
 
 const saved = (page: Page) => page.getByRole('region', { name: 'Gespeicherte Spieler' });
 const crew = (page: Page) => page.getByRole('region', { name: 'Dabei' });
@@ -97,6 +97,7 @@ test('Scenario: Server unreachable keeps guests working', async ({ page }, info)
 		await page.getByLabel('Name', { exact: true }).fill('Gustav');
 		await page.getByLabel('Name', { exact: true }).press('Enter');
 		await expect(crew(page).getByRole('listitem')).toHaveText([/Gustav/]);
+		await expect(crew(page).getByText('Gast', { exact: true })).toBeVisible();
 	} finally {
 		server.close();
 	}
@@ -118,6 +119,64 @@ test('Scenario: Deleting a saved player removes its roster entry', async ({ page
 		await page.reload();
 		await expect(saved(page).getByRole('listitem')).toHaveCount(0);
 		await expect(crew(page).getByRole('listitem')).toHaveCount(0);
+	} finally {
+		server.close();
+	}
+});
+
+const tag = (page: Page, name: string) =>
+	crew(page).getByRole('listitem').filter({ hasText: name }).getByText('Gast', { exact: true });
+
+test('Scenario: Tapping a saved player adds it to the roster', async ({ page, request }, info) => {
+	const server = await emptyServer(info, 'players-tap');
+	try {
+		await seedPlayers(request, server.origin, ['Ute']);
+		await page.goto(`${server.origin}/spieler`);
+		await saved(page).getByRole('button', { name: 'Ute hinzufügen' }).click();
+		await page.getByLabel('Name', { exact: true }).fill('Gustav');
+		await page.getByLabel('Name', { exact: true }).press('Enter');
+
+		await expect(crew(page).getByRole('listitem')).toHaveText([/Ute/, /Gustav/]);
+		await expect(tag(page, 'Ute')).toHaveCount(0);
+		await expect(tag(page, 'Gustav')).toHaveCount(1);
+		await expect(crew(page).getByRole('button', { name: 'Ute umbenennen' })).toHaveCount(0);
+		await expect(crew(page).getByRole('button', { name: 'Gustav umbenennen' })).toBeVisible();
+		await shot(page, info, 'spieler-gast');
+	} finally {
+		server.close();
+	}
+});
+
+test('Scenario: Speichern on a guest row', async ({ page }, info) => {
+	const server = await emptyServer(info, 'players-promote');
+	try {
+		await page.goto(`${server.origin}/spieler`);
+		await page.getByLabel('Name', { exact: true }).fill('Wanda');
+		await page.getByLabel('Name', { exact: true }).press('Enter');
+		await expect(tag(page, 'Wanda')).toHaveCount(1);
+
+		await crew(page).getByRole('button', { name: 'Wanda speichern' }).click();
+		await expect(tag(page, 'Wanda')).toHaveCount(0);
+		await page.reload();
+		await expect(saved(page).getByRole('listitem')).toHaveText([/Wanda/]);
+		await expect(crew(page).getByRole('listitem')).toHaveText([/Wanda/]);
+		await expect(tag(page, 'Wanda')).toHaveCount(0);
+	} finally {
+		server.close();
+	}
+});
+
+test('Scenario: Old roster shows linked after the update', async ({ page, request }, info) => {
+	const server = await emptyServer(info, 'players-old-roster');
+	try {
+		await seedPlayers(request, server.origin, ['Vera']);
+		await page.goto(`${server.origin}/`);
+		await seedRoster(page, ['Vera', 'Gustav']);
+		await page.goto(`${server.origin}/spieler`);
+
+		await expect(tag(page, 'Vera')).toHaveCount(0);
+		await expect(tag(page, 'Gustav')).toHaveCount(1);
+		await expect(crew(page).getByRole('listitem')).toHaveText([/Vera/, /Gustav/]);
 	} finally {
 		server.close();
 	}
