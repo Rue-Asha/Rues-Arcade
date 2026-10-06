@@ -6,24 +6,24 @@ TBD - created by archiving change party-games-rebuild. Update Purpose after arch
 ### Requirement: Home catalogue from the registry
 Home SHALL show one tile per registered game with its name, colour and player range, all read from the game's
 own registry entry; the player range text SHALL be derived from the engine's limits, never typed separately. The
-registered games SHALL be Imposter, Wavelength, Codes, What Rhymes with Duck and Most Likely To.
+registered games SHALL be Imposter, Wavelength, Codes, What Rhymes with Duck, Most Likely To and Family Feud.
 
 #### Scenario: Tiles for registered games
 - **WHEN** Home is opened
-- **THEN** Imposter, Wavelength, Codes, What Rhymes with Duck and Most Likely To tiles are shown, each linking to its start screen (`/spiele/imposter`, `/spiele/wavelength`, `/spiele/codes`, `/spiele/duck`, `/spiele/most-likely`)
+- **THEN** Imposter, Wavelength, Codes, What Rhymes with Duck, Most Likely To and Family Feud tiles are shown, each linking to its start screen (`/spiele/imposter`, `/spiele/wavelength`, `/spiele/codes`, `/spiele/duck`, `/spiele/most-likely`, `/spiele/family-feud`)
 - **proof:** e2e
 
 #### Scenario: Player range derived from engine limits
 - **WHEN** the tile label is computed for each registered game
-- **THEN** it equals the text formatted from that game's `minPlayers`/`maxPlayers` (Imposter "3–12 Spieler", Codes "4–20 Spieler", What Rhymes with Duck "4–16 Spieler", Most Likely To "3–20 Spieler")
+- **THEN** it equals the text formatted from that game's `minPlayers`/`maxPlayers` (Imposter "3–12 Spieler", Codes "4–20 Spieler", What Rhymes with Duck "4–16 Spieler", Most Likely To "3–20 Spieler", Family Feud "4–20 Spieler")
 - **proof:** unit
 
 ### Requirement: Locked later games
-Home SHALL show Family Feud and Charade as neutral, greyed "Bald verfügbar" tiles with no actions.
+Home SHALL show Charade as a neutral, greyed "Bald verfügbar" tile with no actions.
 
 #### Scenario: Bald tiles have no actions
-- **WHEN** Home is opened and a "Bald verfügbar" tile is clicked
-- **THEN** exactly two locked tiles, Family Feud and Charade, are shown, none is a link or button, and the page does not change
+- **WHEN** Home is opened and the "Bald verfügbar" tile is clicked
+- **THEN** exactly one locked tile, Charade, is shown, it is not a link or button, and the page does not change
 - **proof:** e2e
 
 ### Requirement: Tile pitch
@@ -32,7 +32,7 @@ its name and above its player range. Locked "Bald" tiles show no pitch.
 
 #### Scenario: Each tile shows a one-line pitch
 - **WHEN** Home is opened
-- **THEN** the Imposter tile shows "Alle bekommen dieselbe Frage, bis auf eine Person.", the Wavelength tile "Einen Punkt auf einer Skala zwischen zwei Begriffen finden, gemeinsam oder in Teams.", the Codes tile "Teams erraten ein geheimes Wort aus Ein-Wort-Hinweisen, reihum.", the Duck tile "Alle suchen gleichzeitig einen Reim auf dasselbe Wort." and the Most Likely To tile "Ein Spruch, und alle zeigen auf die Person, die am besten passt."
+- **THEN** the Imposter tile shows "Alle bekommen dieselbe Frage, bis auf eine Person.", the Wavelength tile "Einen Punkt auf einer Skala zwischen zwei Begriffen finden, gemeinsam oder in Teams.", the Codes tile "Teams erraten ein geheimes Wort aus Ein-Wort-Hinweisen, reihum.", the Duck tile "Alle suchen gleichzeitig einen Reim auf dasselbe Wort.", the Most Likely To tile "Ein Spruch, und alle zeigen auf die Person, die am besten passt." and the Family Feud tile "Zwei Teams suchen die häufigsten Antworten einer Umfrage."
 - **proof:** e2e
 
 ### Requirement: Game start screen layout
@@ -54,7 +54,7 @@ description. All games SHALL use the same layout. The play header (Demo, Spiel b
 - **proof:** e2e
 
 #### Scenario: Same start layout for both games
-- **WHEN** the start screens of all five games are rendered
+- **WHEN** the start screens of all six games are rendered
 - **THEN** each shows banner, start panel, "So geht's" and "Mehr zu <Spiel>" in the same order and arrangement
 - **proof:** e2e ("Scenario: Start panel first on phone, right column on desktop")
 
@@ -96,5 +96,25 @@ Likely To "Spruch" / "Sprüche".
 #### Scenario: New start banners carry title, badge and range
 - **WHEN** the Codes, Duck and Most Likely To start screens are opened
 - **THEN** the banners show "Codes" with badge "C" and "4–20 Spieler", "What Rhymes with Duck" with badge "W" and "4–16 Spieler", and "Most Likely To" with badge "M" and "3–20 Spieler", each with its pitch
+- **proof:** e2e
+
+### Requirement: Family Feud start screen
+The Family Feud start screen SHALL carry the banner "Family Feud" with badge "F", "4–20 Spieler" and its pitch,
+three neutral "So geht's" rules, and count its content as "Umfrage" / "Umfragen" in the Inhalte card of its "Mehr
+zu Family Feud" box, which holds the Erklärung, Demo and Inhalte cards like every game.
+
+#### Scenario: Family Feud banner carries title, badge and range
+- **WHEN** the Family Feud start screen is opened
+- **THEN** the banner shows "Family Feud" with badge "F", "4–20 Spieler" and the Family Feud pitch
+- **proof:** e2e
+
+#### Scenario: So geht's for Family Feud
+- **WHEN** the Family Feud start screen is opened
+- **THEN** "So geht's" holds three rules, the first reading "Zwei Teams, eine Umfrage: gesucht sind die häufigsten Antworten.", and none contains "!"
+- **proof:** e2e
+
+#### Scenario: Family Feud Inhalte card counts the seeded surveys
+- **WHEN** on a fresh database the Family Feud start screen is opened
+- **THEN** the box "Mehr zu Family Feud" holds Erklärung, Demo and Inhalte, and the Inhalte card reads "26 Umfragen ansehen und bearbeiten"
 - **proof:** e2e
 
