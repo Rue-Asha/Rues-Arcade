@@ -434,3 +434,180 @@ test('Scenario: Leaving Feud clears the session', async ({ page, request }, info
 		server.close();
 	}
 });
+
+const running = (page: Page) =>
+	page.evaluate(
+		() =>
+			document
+				.getAnimations()
+				.filter((a) => a.playState === 'running' && a.effect?.getTiming().iterations !== Infinity).length
+	);
+
+test('Scenario: Feud board fits a phone', async ({ page, request }, info) => {
+	await page.setViewportSize({ width: 390, height: 844 });
+	const server = await emptyServer(info, 'feud-phone');
+	try {
+		const { surveys } = await begin(page, request, server, [HOLES, ZOO]);
+		expect(surveys[0].answers).toHaveLength(8);
+		await toBoard(page);
+
+		const width = await page.evaluate(() => document.documentElement.scrollWidth);
+		expect(width).toBeLessThanOrEqual(390);
+		for (let i = 0; i < 8; i++) {
+			await expect(tile(page, i)).toBeVisible();
+			const box = (await tile(page, i).boundingBox())!;
+			expect(box.x).toBeGreaterThanOrEqual(0);
+			expect(box.x + box.width).toBeLessThanOrEqual(390);
+		}
+	} finally {
+		server.close();
+	}
+});
+
+test('Scenario: Feud motion uses transform and opacity only', async ({ page, request }, info) => {
+	await page.addInitScript(() => {
+		const seen = new Set<string>();
+		(window as unknown as { animated: Set<string> }).animated = seen;
+		// hover and press feedback of the shared buttons are CSS transitions, not the game's motion
+		const sample = () => {
+			for (const a of document.getAnimations()) {
+				if (a instanceof CSSTransition) continue;
+				for (const k of (a.effect as KeyframeEffect).getKeyframes()) for (const p of Object.keys(k)) seen.add(p);
+			}
+			requestAnimationFrame(sample);
+		};
+		requestAnimationFrame(sample);
+	});
+	const server = await emptyServer(info, 'feud-motion');
+	try {
+		await begin(page, request, server, [FRIDGE, ZOO]);
+		await toBoard(page);
+		await pick(page, 1).click();
+		await press(page, 'Fehler');
+		await expect(pods(page, 1)).toBeVisible();
+		await page.waitForTimeout(900);
+		await pick(page, 2).click();
+		await press(page, 'Fehler');
+		await press(page, 'Fehler');
+		await handoff(page).getByRole('button', { name: 'Weiter', exact: true }).click();
+		await press(page, 'Nicht auf der Tafel');
+		await expect(page.getByTestId('points')).toBeVisible();
+		await page.waitForTimeout(1500);
+
+		const seen = await page.evaluate(() => [...(window as unknown as { animated: Set<string> }).animated]);
+		expect(seen).toContain('transform');
+		expect(seen.filter((p) => !['transform', 'opacity', 'offset', 'computedOffset', 'easing', 'composite'].includes(p))).toEqual([]);
+	} finally {
+		server.close();
+	}
+});
+
+test('Scenario: Feud motion never blocks input', async ({ page, request }, info) => {
+	const server = await emptyServer(info, 'feud-input');
+	try {
+		await begin(page, request, server, [FRIDGE, ZOO]);
+		await toBoard(page);
+
+		// one task, so the flip can't have finished between the two taps
+		const seen = await page.evaluate(async () => {
+			const frame = () => new Promise((ok) => requestAnimationFrame(ok));
+			document.querySelector<HTMLElement>('[data-tile="1"] button')!.click();
+			await frame();
+			const flip = () => document.querySelector('[data-tile="1"] .face')!.getAnimations().length;
+			const before = flip();
+			[...document.querySelectorAll('button')].find((b) => b.textContent?.trim() === 'Fehler')!.click();
+			await frame();
+			return {
+				before,
+				after: flip(),
+				pods: document.querySelector('.lives')?.getAttribute('aria-label')
+			};
+		});
+
+		expect(seen.before).toBeGreaterThan(0);
+		expect(seen.after).toBeGreaterThan(0);
+		expect(seen.pods).toBe('1 von 3 Fehlern');
+		expect((await session(page)).strikes).toBe(1);
+	} finally {
+		server.close();
+	}
+});
+
+test('Scenario: Feud reduced motion is instant', async ({ page, request }, info) => {
+	await page.emulateMedia({ reducedMotion: 'reduce' });
+	const server = await emptyServer(info, 'feud-reduced');
+	try {
+		const { surveys } = await begin(page, request, server, [FRIDGE, ZOO]);
+		await toBoard(page);
+		expect(await running(page)).toBe(0);
+
+		await pick(page, 1).click();
+		await expect(tile(page, 1)).toHaveAttribute('data-state', 'revealed');
+		expect(await running(page)).toBe(0);
+
+		await press(page, 'Fehler');
+		await expect(pods(page, 1)).toBeVisible();
+		expect(await running(page)).toBe(0);
+
+		await press(page, 'Fehler');
+		await press(page, 'Fehler');
+		await handoff(page).getByRole('button', { name: 'Weiter', exact: true }).click();
+		await press(page, 'Nicht auf der Tafel');
+		await expect(page.getByTestId('points')).toBeVisible();
+		expect(await running(page)).toBe(0);
+		const gained = total(surveys[0], 2);
+		await expect(page.getByTestId('points')).toHaveText(`+${gained}`, { timeout: 500 });
+		await expect(score(page, 0)).toHaveText(String(gained), { timeout: 500 });
+	} finally {
+		server.close();
+	}
+});
+
+test('Scenario: Feud peek does not block a tile flip', async ({ page, request }, info) => {
+	const server = await emptyServer(info, 'feud-peek-flip');
+	try {
+		const { surveys } = await begin(page, request, server, [FRIDGE, ZOO]);
+		const second = board(surveys[0])[1];
+		await toBoard(page);
+
+		await hold(page);
+		// the peek floats over the tiles, so the tap goes straight to the tile's button
+		await tile(page, 1).getByRole('button').dispatchEvent('click');
+		const flips = await page.evaluate(() => {
+			const list = document.querySelector('[data-tile="1"] .face')!.getAnimations();
+			(window as unknown as { flips: Animation[] }).flips = list;
+			return list.length;
+		});
+		expect(flips).toBeGreaterThan(0);
+		await expect(page.getByTestId('peek')).toBeVisible();
+		const settled = await page.evaluate(async () =>
+			(await Promise.allSettled((window as unknown as { flips: Animation[] }).flips.map((a) => a.finished))).map((r) => r.status)
+		);
+		await page.mouse.up();
+
+		expect(settled.every((s) => s === 'fulfilled')).toBe(true);
+		await expect(tile(page, 1)).toContainText(second.text);
+		await expect(tile(page, 1)).toContainText(String(second.points));
+	} finally {
+		server.close();
+	}
+});
+
+test('Scenario: Feud peek instant under reduced motion', async ({ page, request }, info) => {
+	await page.emulateMedia({ reducedMotion: 'reduce' });
+	const server = await emptyServer(info, 'feud-peek-reduced');
+	try {
+		await begin(page, request, server, [FRIDGE, ZOO]);
+		await toBoard(page);
+
+		await hold(page);
+		await expect(page.getByTestId('peek')).toBeVisible();
+		expect(await running(page)).toBe(0);
+		await page.mouse.up();
+
+		await expect(page.getByTestId('peek')).toHaveCount(0);
+		expect(await running(page)).toBe(0);
+	} finally {
+		server.close();
+	}
+});
