@@ -20,12 +20,12 @@ describe('most likely demo', () => {
 		const a = play();
 		const b = play();
 		expect(a).toEqual(b);
-		expect(a.map((s) => s.phase)).toEqual(['prompt', 'pick', 'pick', 'pick', 'reveal']);
-		const end = a.at(-1)!;
-		expect(end.round).toBe(0);
-		expect(end.prompt.a).toBe('Wer würde am ehesten einen Marathon laufen?');
-		expect(end.chosen.map((i) => end.players[i].name)).toEqual(['Alex', 'Cleo']);
-		expect(end.titles).toEqual([1, 0, 1, 0]);
+		expect(a[0].teams.map((t) => t.players.map((p) => p.name))).toEqual([
+			['Alex', 'Bo'],
+			['Cleo', 'Dani']
+		]);
+		expect(a.map((s) => s.phase)).toEqual(['prompt', 'count', 'result', 'prompt', 'count', 'result']);
+		expect(a.at(-1)!.teams.map((t) => t.score).sort()).toEqual([0, 2]);
 		expect(demo.steps.every((st) => st.tip.length > 0 && !st.tip.includes('!'))).toBe(true);
 	});
 });
