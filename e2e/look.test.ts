@@ -326,11 +326,13 @@ test('Scenario: Press Start 2P stays limited to logo and scores', async ({ page 
 
 test('Scenario: Decoration loads no external assets', async ({ page, baseURL }, info) => {
 	const foreign: string[] = [];
+	// the Feud walk loads its pages from its own loopback server (emptyServer), so the origins the main frame
+	// navigates to are the page's own
+	const own = new Set([new URL(baseURL!).origin]);
 	page.on('request', (req) => {
 		const url = new URL(req.url());
-		// the Feud walk runs against its own loopback server (emptyServer)
-		const own = url.origin === new URL(baseURL!).origin || url.hostname === '127.0.0.1';
-		if (/^https?:$/.test(url.protocol) && !own) foreign.push(req.url());
+		if (req.isNavigationRequest() && req.frame() === page.mainFrame() && /^https?:$/.test(url.protocol)) own.add(url.origin);
+		if (/^https?:$/.test(url.protocol) && !own.has(url.origin)) foreign.push(req.url());
 	});
 	const screens: string[] = [];
 	await walk(page, info, async (slug) => {
