@@ -32,7 +32,7 @@
 
 	.tip {
 		position: fixed;
-		z-index: 20;
+		z-index: 50;
 		left: var(--gutter);
 		right: var(--gutter);
 		bottom: calc(var(--gutter) + env(safe-area-inset-bottom));

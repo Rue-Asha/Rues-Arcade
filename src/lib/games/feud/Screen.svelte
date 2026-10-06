@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount, untrack } from 'svelte';
 	import { board } from '#lib/content/survey.ts';
+	import { getDemo } from '#lib/demo/context.ts';
 	import type { ScreenProps } from '#lib/games/registry.ts';
 	import { countUp, ease, reducedMotion } from '#lib/motion.ts';
 	import { roster } from '#lib/roster.svelte.ts';
@@ -24,6 +25,7 @@
 		type FeudAction,
 		type FeudState
 	} from './engine.ts';
+	import { demo as script } from './demo.ts';
 	import Handoff from './Handoff.svelte';
 
 	let { state: game, dispatch }: ScreenProps = $props();
@@ -46,8 +48,16 @@
 	);
 	const round = $derived(suddenDeath(s) ? 'Stichfrage' : `Runde ${s.round + 1} / ${s.config.surveys.length}`);
 
-	// Handoff for the steal is shown once per visit; Stage remounts this per phase, so it starts closed
-	let stealing = $state(false);
+	// the tiles aren't Buttons: in the demo only the one the script names may be tapped
+	const demo = $derived(getDemo());
+	const scripted = $derived.by(() => {
+		const action = demo?.expected ? script.steps[demo.step - 1]?.action : undefined;
+		return action && 'tile' in action ? action.tile : null;
+	});
+
+	// Handoff for the steal is shown once per visit; Stage remounts this per phase, so it starts closed.
+	// The demo has no control for its Weiter, so it goes straight to the board.
+	let stealing = $state(getDemo() !== null);
 	let arena: HTMLElement | undefined = $state();
 	let stamp: HTMLElement | undefined = $state();
 
@@ -259,6 +269,8 @@
 							? (r) => `Antwort ${r} stehlen`
 							: null}
 				onpick={s.phase === 'faceoff' ? answer : s.phase === 'board' ? reveal : steal}
+				locked={demo !== null}
+				expected={scripted}
 			/>
 			<div class="stamp" bind:this={stamp} aria-hidden="true">
 				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"></path></svg>
