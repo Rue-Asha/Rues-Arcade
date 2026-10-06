@@ -6,3 +6,4 @@ learnings:
   - "planner: `openspec instructions` in a zsh loop broke on a literal ===== (zsh =word expansion) → quote args or run in bash"
 depends_on: player-database  # build only after flow/player-database is merged into main; then merge main into flow/family-feud
 gate0: 2026-10-06
+gate1: 2026-10-06
