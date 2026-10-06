@@ -328,7 +328,9 @@ test('Scenario: Decoration loads no external assets', async ({ page, baseURL }, 
 	const foreign: string[] = [];
 	page.on('request', (req) => {
 		const url = new URL(req.url());
-		if (/^https?:$/.test(url.protocol) && url.origin !== new URL(baseURL!).origin) foreign.push(req.url());
+		// the Feud walk runs against its own loopback server (emptyServer)
+		const own = url.origin === new URL(baseURL!).origin || url.hostname === '127.0.0.1';
+		if (/^https?:$/.test(url.protocol) && !own) foreign.push(req.url());
 	});
 	const screens: string[] = [];
 	await walk(page, info, async (slug) => {
