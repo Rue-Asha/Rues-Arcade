@@ -4,6 +4,7 @@ base: main
 worktree: /home/Rue/Repos/Rues-Arcade-family-feud
 learnings:
   - "planner: `openspec instructions` in a zsh loop broke on a literal ===== (zsh =word expansion) → quote args or run in bash"
+  - "U1 builder: brief said check boxes in worktree-free serial mode but build.md says orchestrator-only in worktrees → brief must state the mode once; Contracts said demo steps: [] but runner.test.ts needs a non-empty script → planner: check generic tests against stub contracts"
 depends_on: player-database  # build only after flow/player-database is merged into main; then merge main into flow/family-feud
 gate0: 2026-10-06
 gate1: 2026-10-06
