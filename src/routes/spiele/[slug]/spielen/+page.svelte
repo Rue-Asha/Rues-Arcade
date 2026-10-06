@@ -28,8 +28,10 @@
 	});
 
 	function dispatch(action: { type: string }) {
+		const prev = game;
 		game = def.reduce(game, action);
 		saveSession(def.slug, def.stateVersion, game);
+		entry.onchange?.(prev, game);
 	}
 
 	function end() {
