@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { tick } from 'svelte';
 	import { invalidateAll } from '$app/navigation';
-	import { isSingle, type ContentItem, type ContentType, type ImportReport } from '#lib/content/types.ts';
+	import { isSingle, type ContentItem, type ImportReport, type ItemType } from '#lib/content/types.ts';
 	import { games } from '#lib/games/registry.ts';
 	import Button from '#lib/ui/Button.svelte';
 	import Modal from '#lib/ui/Modal.svelte';
@@ -9,7 +9,7 @@
 
 	let { data, params }: PageProps = $props();
 
-	const sides: Record<ContentType, { a: string; b?: string; hint: string; intro: string }> = {
+	const sides: Record<ItemType, { a: string; b?: string; hint: string; intro: string }> = {
 		imposter_pairs: {
 			a: 'Crew-Frage',
 			b: 'Imposter-Frage',
@@ -41,7 +41,7 @@
 
 	const def = $derived(games.find((g) => g.def.slug === params.slug)!.def);
 	const base = $derived(`/spiele/${def.slug}`);
-	const side = $derived(sides[def.contentType]);
+	const side = $derived(sides[def.contentType as ItemType]);
 	const single = $derived(isSingle(def.contentType));
 	const api = $derived(`/api/content/${def.contentType}`);
 	const items = $derived(data.items);
