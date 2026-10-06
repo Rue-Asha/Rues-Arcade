@@ -125,6 +125,11 @@ function bank(s: FeudState, team: number, stolen = false): FeudState {
 	return { ...s, phase: 'result', scores, gain: { team, points, stolen } };
 }
 
+// the cue is for the move that banks a pot, not for a result that is mounted again or has nothing to bank
+export function banks(before: FeudState, after: FeudState): boolean {
+	return before.phase !== 'result' && after.phase === 'result' && after.gain!.points > 0;
+}
+
 function fresh(s: FeudState, round: number): FeudState {
 	const next = { ...s, round };
 	return {

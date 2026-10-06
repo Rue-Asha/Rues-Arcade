@@ -14,8 +14,10 @@
 	import BoardTiles from './Board.svelte';
 	import {
 		STRIKES,
+		banks,
 		canUndo,
 		due,
+		feud,
 		multiplier,
 		named,
 		opener,
@@ -61,7 +63,10 @@
 	let arena: HTMLElement | undefined = $state();
 	let stamp: HTMLElement | undefined = $state();
 
-	const act = (a: FeudAction) => dispatch(a);
+	const act = (a: FeudAction) => {
+		if (banks(s, feud.reduce(s, a))) play('correct');
+		dispatch(a);
+	};
 
 	function answer(tile: number | null) {
 		play(tile === null ? 'wrong' : 'reveal');
@@ -133,7 +138,6 @@
 	);
 
 	onMount(() => {
-		if (s.phase === 'result') play('correct');
 		if (s.phase === 'gameOver') play('win');
 	});
 </script>

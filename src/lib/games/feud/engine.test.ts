@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Survey } from '#lib/content/types.ts';
-import { canUndo, due, feud, multiplier, named, pot, survey as current, type FeudAction, type FeudState, type FeudTeam } from './engine.ts';
+import { banks, canUndo, due, feud, multiplier, named, pot, survey as current, type FeudAction, type FeudState, type FeudTeam } from './engine.ts';
 
 const survey = (id: number, points: number[]): Survey => ({
 	id,
@@ -351,5 +351,20 @@ describe('feud engine: undo and purity', () => {
 		let s = freeze(init());
 		for (const action of actions) s = freeze(feud.reduce(s, action));
 		expect(s).toEqual(a);
+	});
+});
+
+describe('feud engine: banks', () => {
+	it('is true only on the move into a result with points', () => {
+		const board = step(start(), { type: 'answer', tile: 0 }, { type: 'play' }, ...[1, 2, 3].map((tile): FeudAction => ({ type: 'reveal', tile })));
+		const cleared = step(board, { type: 'reveal', tile: 4 });
+		expect(banks(board, cleared)).toBe(true);
+		expect(banks(cleared, cleared)).toBe(false);
+		expect(banks(cleared, step(cleared, { type: 'undo' }))).toBe(false);
+
+		const sudden = closeAt([80, 80]);
+		const decided = step(sudden, { type: 'answer', tile: 0 });
+		expect(decided.phase).toBe('result');
+		expect(banks(sudden, decided)).toBe(false);
 	});
 });
