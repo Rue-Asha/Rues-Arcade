@@ -107,6 +107,28 @@ describe('surveys', () => {
 		expect(listSurveys(db).find((s) => s.id === other.survey.id)?.question).toBe('Nenne ein Tier');
 	});
 
+	it('treats umlaut case variants of a question as duplicates on add, update and import', () => {
+		migrate(db);
+		const answers = [
+			{ text: 'Apfel', points: 40 },
+			{ text: 'Birne', points: 30 },
+			{ text: 'Kiwi', points: 20 }
+		];
+		const first = addSurvey(db, 'Äpfel nennen', answers);
+		const other = addSurvey(db, 'Nenne ein Tier', answers);
+		if (!first.ok || !other.ok) throw new Error('surveys not saved');
+		const before = surveyCount();
+		const dup = { ok: false, status: 409, message: 'Diese Frage gibt es schon.' };
+
+		expect(addSurvey(db, 'äpfel nennen', answers)).toEqual(dup);
+		expect(updateSurvey(db, other.survey.id, 'ÄPFEL NENNEN', answers)).toEqual(dup);
+		expect(updateSurvey(db, first.survey.id, 'äpfel nennen', answers)).toMatchObject({ ok: true });
+		const report = importSurveys(db, 'ÄPFEL NENNEN | A : 10 | B : 10 | C : 10\nÖl | A : 10 | B : 10 | C : 10\nöl | A : 10 | B : 10 | C : 10');
+
+		expect(report).toMatchObject({ imported: 1, duplicates: 2 });
+		expect(surveyCount()).toBe(before + 1);
+	});
+
 	it('adds, updates and lists a survey in entry order, trimmed', () => {
 		migrate(db);
 		const added = addSurvey(db, ' Frage ', [
