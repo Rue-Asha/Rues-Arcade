@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { playerId, playersApi, savedId } from '#lib/players.ts';
 import { migrate, openDb } from '#lib/server/db.ts';
 import { addPlayer, deletePlayer, listPlayers, renamePlayer } from '#lib/server/players.ts';
+import { loadSession, saveSession } from '#lib/session.ts';
 
 class FakeStorage {
 	items = new Map<string, string>();
@@ -299,6 +300,125 @@ describe('roster', () => {
 		expect(b[0].id).toBe(a[0].id);
 		expect(a[1].id).not.toBe(b[1].id);
 		expect(savedId(a[1].id)).toBeNull();
+	});
+
+	it('Scenario: Saving a guest links it in place', async () => {
+		const roster = await fresh();
+		await roster.ready();
+		for (const name of ['Bo', 'Gustav', 'Cleo']) roster.add(name);
+		const [bo, gustav, cleo] = roster.players;
+
+		expect(await roster.promote(gustav.id)).toEqual({ ok: true });
+
+		expect(roster.saved.map((p) => p.name)).toEqual(['Gustav']);
+		expect(listPlayers(db).map((p) => p.name)).toEqual(['Gustav']);
+		expect(roster.players).toEqual([bo, { id: playerId(dbId('Gustav')), name: 'Gustav' }, cleo]);
+		expect(roster.isGuest(roster.players[1])).toBe(false);
+		expect(names(JSON.parse(storage.getItem('arcade:roster')!))).toEqual(['Bo', 'Gustav', 'Cleo']);
+	});
+
+	it('Scenario: Saving a guest whose name is already saved links to it', async () => {
+		const roster = await fresh();
+		await roster.ready();
+		roster.add('Bo');
+		roster.add('alex');
+		expect(await roster.createSaved('Alex')).toEqual({ ok: true });
+
+		expect(await roster.promote(roster.players[1].id)).toEqual({ ok: true });
+
+		expect(listPlayers(db).map((p) => p.name)).toEqual(['Alex']);
+		expect(roster.players[1]).toEqual({ id: playerId(dbId('Alex')), name: 'Alex' });
+		expect(roster.players).toHaveLength(2);
+	});
+
+	it('creates saved players without touching the roster, and reports the server message', async () => {
+		const roster = await fresh();
+		await roster.ready();
+
+		expect(await roster.createSaved('Ute')).toEqual({ ok: true });
+		const again = await roster.createSaved('ute');
+
+		expect(again.ok).toBe(false);
+		expect(again.ok === false && again.message).toContain('schon gespeichert');
+		expect(roster.saved.map((p) => p.name)).toEqual(['Ute']);
+		expect(roster.players).toEqual([]);
+	});
+
+	it('keeps guests working when the server is gone mid-change', async () => {
+		const roster = await fresh();
+		await roster.ready();
+		roster.add('Gustav');
+		vi.stubGlobal('fetch', unreachable);
+
+		for (const result of [
+			await roster.promote(roster.players[0].id),
+			await roster.createSaved('Ute'),
+			await roster.renameSaved(1, 'Uta'),
+			await roster.deleteSaved(1)
+		]) {
+			expect(result.ok).toBe(false);
+			expect(result.ok === false && result.message).toBeTruthy();
+		}
+		expect(roster.players).toEqual([{ id: roster.players[0].id, name: 'Gustav' }]);
+		expect(roster.isGuest(roster.players[0])).toBe(true);
+	});
+
+	it('Scenario: Renaming a saved player renames its roster entry', async () => {
+		addPlayer(db, 'Alex');
+		const roster = await fresh();
+		await roster.ready();
+		roster.add('Bo');
+		roster.add('Alex');
+		roster.add('Cleo');
+		const id = roster.players[1].id;
+
+		expect(await roster.renameSaved(dbId('Alex'), 'Alexander')).toEqual({ ok: true });
+
+		expect(roster.players[1]).toEqual({ id, name: 'Alexander' });
+		expect(names(roster.players)).toEqual(['Bo', 'Alexander', 'Cleo']);
+		expect(roster.saved.map((p) => p.name)).toEqual(['Alexander']);
+		expect(names(JSON.parse(storage.getItem('arcade:roster')!))).toEqual(['Bo', 'Alexander', 'Cleo']);
+	});
+
+	it('shows the server message when a saved rename is refused', async () => {
+		addPlayer(db, 'Alex');
+		addPlayer(db, 'Bo');
+		const roster = await fresh();
+		await roster.ready();
+
+		const result = await roster.renameSaved(dbId('Bo'), 'alex');
+
+		expect(result.ok).toBe(false);
+		expect(result.ok === false && result.message).toContain('schon gespeichert');
+		expect(roster.saved.map((p) => p.name)).toEqual(['Alex', 'Bo']);
+	});
+
+	it('deletes a saved player and its roster entry', async () => {
+		addPlayer(db, 'Rita');
+		const roster = await fresh();
+		await roster.ready();
+		roster.add('Rita');
+		roster.add('Bo');
+
+		expect(await roster.deleteSaved(dbId('Rita'))).toEqual({ ok: true });
+
+		expect(names(roster.players)).toEqual(['Bo']);
+		expect(roster.saved).toEqual([]);
+		expect(listPlayers(db)).toEqual([]);
+	});
+
+	it('Scenario: Deleting a saved player mid-game keeps the session snapshot', async () => {
+		addPlayer(db, 'Alex');
+		const roster = await fresh();
+		await roster.ready();
+		roster.add('Alex');
+		const alex = roster.players[0];
+		saveSession('quiz', 1, { players: [alex], phase: 'play' });
+
+		await roster.deleteSaved(dbId('Alex'));
+
+		expect(roster.players).toEqual([]);
+		expect(loadSession('quiz', 1)).toEqual({ state: { players: [alex], phase: 'play' } });
 	});
 
 	it('reloads the stored order and trims names', async () => {

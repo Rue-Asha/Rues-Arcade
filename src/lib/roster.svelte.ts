@@ -24,7 +24,21 @@ let savedError = $state('');
 let synced: Promise<void> | null = null;
 let seq = 0;
 
+const offline: Result = { ok: false, message: 'Der Server ist gerade nicht erreichbar.' };
+
 const key = (name: string) => name.trim().toLocaleLowerCase('de');
+
+const sorted = (list: SavedPlayer[]) =>
+	[...list].sort((a, b) => a.name.localeCompare(b.name, 'de', { sensitivity: 'base' }) || a.id - b.id);
+
+// add, rename and remove reject on a network failure, unlike their ApiResult
+async function call<T>(run: () => Promise<T>): Promise<T | null> {
+	try {
+		return await run();
+	} catch {
+		return null;
+	}
+}
 
 async function sync() {
 	let list: SavedPlayer[];
@@ -75,6 +89,10 @@ export const roster: {
 	add(name: string): Result;
 	addSaved(dbId: number): Result;
 	rename(id: string, name: string): Result;
+	promote(id: string): Promise<Result>;
+	createSaved(name: string): Promise<Result>;
+	renameSaved(dbId: number, name: string): Promise<Result>;
+	deleteSaved(dbId: number): Promise<Result>;
 	remove(id: string): void;
 	move(id: string, to: number): void;
 } = {
@@ -118,6 +136,46 @@ export const roster: {
 		const result = check(name, id);
 		if (result.ok) save(players.map((p) => (p.id === id ? { ...p, name } : p)));
 		return result;
+	},
+	async promote(id) {
+		const guest = players.find((p) => p.id === id);
+		if (!guest || savedId(id) !== null) return { ok: false, message: 'Das ist schon ein gespeicherter Spieler.' };
+		let match = saved.find((s) => key(s.name) === key(guest.name));
+		if (!match) {
+			const res = await call(() => playersApi.add(guest.name));
+			if (!res) return offline;
+			if (!res.ok) return res;
+			match = res.player;
+			saved = sorted([...saved, match]);
+		}
+		const link = { id: playerId(match.id), name: match.name };
+		save(players.map((p) => (p.id === id ? link : p)));
+		return { ok: true };
+	},
+	async createSaved(name) {
+		const res = await call(() => playersApi.add(name));
+		if (!res) return offline;
+		if (!res.ok) return res;
+		saved = sorted([...saved, res.player]);
+		return { ok: true };
+	},
+	async renameSaved(dbId, name) {
+		const res = await call(() => playersApi.rename(dbId, name));
+		if (!res) return offline;
+		if (!res.ok) return res;
+		saved = sorted(saved.map((s) => (s.id === dbId ? res.player : s)));
+		const id = playerId(dbId);
+		save(players.map((p) => (p.id === id ? { ...p, name: res.player.name } : p)));
+		return { ok: true };
+	},
+	async deleteSaved(dbId) {
+		const res = await call(() => playersApi.remove(dbId));
+		if (!res) return offline;
+		if (!res.ok) return res;
+		saved = saved.filter((s) => s.id !== dbId);
+		const id = playerId(dbId);
+		save(players.filter((p) => p.id !== id));
+		return { ok: true };
 	},
 	remove(id) {
 		save(players.filter((p) => p.id !== id));
