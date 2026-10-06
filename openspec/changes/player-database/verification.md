@@ -1,12 +1,12 @@
-verified-at: b9df4e4
+verified-at: 34a2689
 
 ## Layer 1: proof:full (green)
 ```
   Slow test file: [phone] › e2e/look.test.ts (5.8m)
-  Slow test file: [desktop] › e2e/look.test.ts (5.8m)
+  Slow test file: [desktop] › e2e/look.test.ts (5.7m)
   Consider running tests from slow files in parallel. See: https://playwright.dev/docs/test-parallel
   2 skipped
-  262 passed (6.6m)
+  264 passed (6.6m)
 ```
 
 ## Layer 2: spec coverage
@@ -60,8 +60,8 @@ none
 ```
  e2e/helpers.ts                                     |  26 ++
  e2e/look.test.ts                                   |   2 +
- e2e/players-api.test.ts                            |  45 +++
- e2e/players.test.ts                                | 245 ++++++++++++++
+ e2e/players-api.test.ts                            |  47 +++
+ e2e/players.test.ts                                | 265 ++++++++++++++
  e2e/roster.test.ts                                 |  18 +-
  migrations/0004_players.sql                        |   5 +
  openspec/changes/player-database/.openspec.yaml    |   2 +
@@ -86,10 +86,10 @@ none
  .../changes/player-database/specs/players/spec.md  |  88 +++++
  .../changes/player-database/specs/roster/spec.md   | 158 +++++++++
  openspec/changes/player-database/tasks.md          |  32 ++
- openspec/changes/player-database/verification.md   | 103 ++++++
+ openspec/changes/player-database/verification.md   | 119 +++++++
  src/lib/players.ts                                 |  52 +++
  src/lib/roster.svelte.ts                           | 138 +++++++-
- src/lib/roster.test.ts                             | 372 +++++++++++++++++++++
+ src/lib/roster.test.ts                             | 384 +++++++++++++++++++++
  src/lib/server/db.test.ts                          |  51 +++
  src/lib/server/db.ts                               |   5 +-
  src/lib/server/players.test.ts                     | 111 ++++++
@@ -98,8 +98,8 @@ none
  src/routes/api/players/+server.ts                  |  13 +
  src/routes/api/players/[id]/+server.ts             |  23 ++
  src/routes/spiele/[slug]/lobby/+page.svelte        |   3 +-
- src/routes/spieler/+page.svelte                    | 211 +++++++++++-
- 41 files changed, 2027 insertions(+), 19 deletions(-)
+ src/routes/spieler/+page.svelte                    | 212 +++++++++++-
+ 41 files changed, 2078 insertions(+), 19 deletions(-)
 ```
 
 ## Screenshots
