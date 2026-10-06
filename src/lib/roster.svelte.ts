@@ -51,16 +51,16 @@ async function sync() {
 	saved = list;
 	savedError = '';
 	const linked = new Set(players.map((p) => savedId(p.id)));
-	save(
-		players.map((p) => {
-			const id = savedId(p.id);
-			if (id !== null) return { ...p, name: list.find((s) => s.id === id)?.name ?? p.name };
-			const match = list.find((s) => !linked.has(s.id) && key(s.name) === key(p.name));
-			if (!match) return p;
-			linked.add(match.id);
-			return { id: playerId(match.id), name: match.name };
-		})
-	);
+	const next = players.map((p) => {
+		const id = savedId(p.id);
+		if (id !== null) return { ...p, name: list.find((s) => s.id === id)?.name ?? p.name };
+		const match = list.find((s) => !linked.has(s.id) && key(s.name) === key(p.name));
+		if (!match) return p;
+		linked.add(match.id);
+		return { id: playerId(match.id), name: match.name };
+	});
+	// an unchanged roster is not rewritten: a fresh device would gain an "[]" key on every page load
+	if (next.some((p, i) => p.id !== players[i].id || p.name !== players[i].name)) save(next);
 }
 
 function save(next: Player[]) {
