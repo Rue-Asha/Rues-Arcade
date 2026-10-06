@@ -175,7 +175,7 @@ export const roster: {
 	},
 	async renameSaved(dbId, name) {
 		const id = playerId(dbId);
-		const taken = players.find((p) => p.id !== id && key(p.name) === key(name));
+		const taken = players.some((p) => p.id === id) && players.find((p) => p.id !== id && key(p.name) === key(name));
 		if (taken) return { ok: false, message: `„${taken.name}“ ist schon dabei.` };
 		const res = await call(() => playersApi.rename(dbId, name));
 		if (!res) return offline;

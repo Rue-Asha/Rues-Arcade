@@ -208,7 +208,19 @@ describe('roster', () => {
 		expect(roster.rename(roster.players[0].id, 'Rita B')).toEqual({ ok: true });
 	});
 
-	it('refuses to rename a saved player to the name of a roster guest', async () => {
+	it('lets a saved player outside the roster take the name of a roster guest', async () => {
+		addPlayer(db, 'Alex');
+		const roster = await fresh();
+		await roster.ready();
+		roster.add('Gustav');
+
+		expect(await roster.renameSaved(dbId('Alex'), 'gustav')).toEqual({ ok: true });
+
+		expect(names(roster.players)).toEqual(['Gustav']);
+		expect(listPlayers(db).map((p) => p.name)).toEqual(['gustav']);
+	});
+
+	it('refuses to rename a linked saved player to the name of a roster guest', async () => {
 		addPlayer(db, 'Alex');
 		const roster = await fresh();
 		await roster.ready();
