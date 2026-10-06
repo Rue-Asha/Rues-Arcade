@@ -1,7 +1,15 @@
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
 import { board } from '../src/lib/content/survey.ts';
 import type { Survey } from '../src/lib/content/types.ts';
-import { emptyServer, seedPlayed, seedPlayers, seedSavedRoster, surveyByQuestion } from './helpers.ts';
+import {
+	deleteSurvey,
+	emptyServer,
+	seedPlayed,
+	seedPlayers,
+	seedSavedRoster,
+	surveyByQuestion,
+	writeHeaders
+} from './helpers.ts';
 
 const CREW = ['Alex', 'Bo', 'Cleo', 'Dani'];
 // seeded surveys: six answers (Milch 30 ... ), six answers, eight answers
@@ -320,6 +328,108 @@ test('Scenario: Feud played-with list hidden outside prep', async ({ page, reque
 		await page.goto(`${server.origin}/spiele/family-feud/inhalte`);
 		await expect(page.getByText(FRIDGE).first()).toBeVisible();
 		await hidden();
+	} finally {
+		server.close();
+	}
+});
+
+const notice = (page: Page) => page.getByRole('alert').filter({ hasText: 'Spielstand' });
+
+test('Scenario: Feud session resumes after reload', async ({ page, request }, info) => {
+	const server = await emptyServer(info, 'feud-resume');
+	try {
+		const { surveys } = await begin(page, request, server, [FRIDGE, ZOO]);
+		const tiles = board(surveys[0]);
+		await toBoard(page);
+		await pick(page, 1).click();
+		await press(page, 'Fehler');
+		const gained = String(tiles[0].points + tiles[1].points);
+		await expect(pot(page)).toHaveText(gained);
+
+		await page.reload();
+
+		await expect(pods(page, 1)).toBeVisible();
+		await expect(pot(page)).toHaveText(gained);
+		for (const i of [0, 1]) await expect(tile(page, i)).toHaveAttribute('data-state', 'revealed');
+		for (let i = 2; i < tiles.length; i++) await expect(tile(page, i)).toHaveAttribute('data-state', 'hidden');
+		await expect(score(page, 0)).toHaveText('0');
+		await expect(score(page, 1)).toHaveText('0');
+		await expect(notice(page)).toHaveCount(0);
+	} finally {
+		server.close();
+	}
+});
+
+test('Scenario: Feud game keeps its survey copy', async ({ page, request }, info) => {
+	const server = await emptyServer(info, 'feud-copy-kept');
+	try {
+		const { surveys } = await begin(page, request, server, [FRIDGE, ZOO]);
+		const [first, second] = surveys;
+		await toBoard(page);
+		await deleteSurvey(request, first.id, server.origin);
+		const edit = await request.put(`${server.origin}/api/content/feud_surveys/${second.id}`, {
+			headers: writeHeaders(server.origin),
+			data: {
+				question: ZOO,
+				answers: [
+					{ text: 'Pinguin', points: 60 },
+					{ text: 'Bär', points: 20 },
+					{ text: 'Wolf', points: 10 }
+				]
+			}
+		});
+		expect(edit.ok()).toBe(true);
+
+		await page.reload();
+
+		await expect(page.getByRole('heading', { name: FRIDGE, exact: true })).toBeVisible();
+		const top = board(first)[0];
+		await expect(tile(page, 0)).toContainText(top.text);
+		await expect(tile(page, 0)).toContainText(String(top.points));
+		for (let i = 1; i < board(first).length; i++) await pick(page, i).click();
+		await press(page, 'Nächste Runde');
+		await toBoard(page);
+		const lion = board(second)[0];
+		await expect(page.getByRole('heading', { name: ZOO, exact: true })).toBeVisible();
+		await expect(tile(page, 0)).toContainText(lion.text);
+		await expect(tile(page, 0)).toContainText(String(lion.points));
+		await expect(page.getByText('Pinguin')).toHaveCount(0);
+	} finally {
+		server.close();
+	}
+});
+
+test('Scenario: Feud old or corrupt save discarded', async ({ page, request }, info) => {
+	const server = await emptyServer(info, 'feud-discard');
+	try {
+		await begin(page, request, server, [FRIDGE, ZOO]);
+		const raw = await page.evaluate(() => localStorage.getItem('arcade:session:family-feud')!);
+
+		await page.evaluate(() => localStorage.setItem('arcade:session:family-feud', 'not json{'));
+		await page.goto(`${server.origin}/spiele/family-feud/spielen`);
+		await expect(notice(page)).toBeVisible();
+
+		await page.evaluate((r) => localStorage.setItem('arcade:session:family-feud', r), raw.replace(/^\{"v":\d+/, '{"v":99'));
+		await page.goto(`${server.origin}/spiele/family-feud/spielen`);
+		await expect(notice(page)).toBeVisible();
+	} finally {
+		server.close();
+	}
+});
+
+test('Scenario: Leaving Feud clears the session', async ({ page, request }, info) => {
+	const server = await emptyServer(info, 'feud-leave');
+	try {
+		await begin(page, request, server, [FRIDGE, ZOO]);
+		await expect(page.getByRole('heading', { name: FRIDGE, exact: true })).toBeVisible();
+
+		await page.getByRole('button', { name: 'Spiel beenden' }).click();
+		await page.getByRole('dialog').getByRole('button', { name: 'Beenden' }).click();
+		await expect(page).toHaveURL(/\/spiele\/family-feud$/);
+
+		await page.goto(`${server.origin}/spiele/family-feud`);
+		await expect(page.getByRole('button', { name: 'Weiterspielen' })).toHaveCount(0);
+		expect(await page.evaluate(() => localStorage.getItem('arcade:session:family-feud'))).toBeNull();
 	} finally {
 		server.close();
 	}
