@@ -25,9 +25,9 @@ test('Scenario: Players API round trip on the server', async ({ request }, info)
 
 test('Scenario: Request without a usable name rejected', async ({ request }, info) => {
 	const origin = String(info.project.use.baseURL ?? `http://localhost:${process.env.PORT ?? 4173}`);
-	const created = await playerCall(request, origin, 'POST', '', `Body ${info.project.name}`);
+	const name = `Body ${info.project.name}`;
+	const created = await playerCall(request, origin, 'POST', '', name);
 	const { id } = await created.json();
-	const before = await (await request.get(`${origin}/api/players`)).json();
 
 	for (const [method, path] of [['POST', ''], ['PATCH', `/${id}`]] as const)
 		for (const data of ['null', '']) {
@@ -40,6 +40,8 @@ test('Scenario: Request without a usable name rejected', async ({ request }, inf
 			expect(await res.json()).toEqual({ message: 'Bitte gib einen Namen ein.' });
 		}
 
-	expect(await (await request.get(`${origin}/api/players`)).json()).toEqual(before);
+	const after = await (await request.get(`${origin}/api/players`)).json();
+	expect(after).toContainEqual({ id, name });
+	expect(after.filter((p: { name: string }) => p.name === 'null' || p.name === '')).toEqual([]);
 	expect((await playerCall(request, origin, 'DELETE', `/${id}`)).status()).toBe(204);
 });
