@@ -153,8 +153,8 @@
 	</HoldToView>
 {/snippet}
 
-{#snippet undo()}
-	<Button variant={s.phase === 'result' ? 'secondary' : 'ghost'} action="undo" disabled={!canUndo(s)} onclick={() => act({ type: 'undo' })}>Rückgängig</Button>
+{#snippet undo(variant: 'secondary' | 'ghost' = 'ghost')}
+	<Button {variant} action="undo" disabled={!canUndo(s)} onclick={() => act({ type: 'undo' })}>Rückgängig</Button>
 {/snippet}
 
 {#if s.phase === 'gameOver'}
@@ -170,12 +170,12 @@
 	<Handoff colour={colours[s.control!]} label="Duell gewonnen" team={teams[s.control!].name} note="Spielen oder passen?">
 		<Button variant="primary" action="play" onclick={() => act({ type: 'play' })}>Spielen</Button>
 		<Button variant="secondary" action="pass" onclick={() => act({ type: 'pass' })}>Passen</Button>
-		{@render undo()}
+		{@render undo('secondary')}
 	</Handoff>
 {:else if s.phase === 'steal' && !stealing}
 	<Handoff colour={colours[1 - s.playing!]} label="Dritter Fehler" team={teams[1 - s.playing!].name} note="Eine Antwort zum Stehlen.">
 		<Button variant="primary" onclick={() => (stealing = true)}>Weiter</Button>
-		{@render undo()}
+		{@render undo('secondary')}
 	</Handoff>
 {:else}
 	<div class="stack">
@@ -291,7 +291,7 @@
 		{:else}
 			<div class="row">
 				<Button variant="primary" action="next" onclick={() => act({ type: 'next' })}>{last || suddenDeath(s) ? 'Zum Ergebnis' : 'Nächste Runde'}</Button>
-				{@render undo()}
+				{@render undo('secondary')}
 			</div>
 		{/if}
 	</div>
