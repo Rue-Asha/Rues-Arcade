@@ -1,52 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { parseSurveyBulk, surveyError } from './survey.ts';
-import { MAX_TEXT, type SurveyAnswer } from './types.ts';
+import type { SurveyAnswer } from './types.ts';
 
 const answers = (...points: number[]): SurveyAnswer[] => points.map((p, i) => ({ text: `A${i + 1}`, points: p }));
 
 describe('surveyError', () => {
 	it('accepts a valid survey', () => {
 		expect(surveyError('Nenne ein Obst', answers(40, 30, 20))).toBeNull();
-	});
-
-	it('Scenario: Duplicate answer within a survey rejected', () => {
-		const message = surveyError('Nenne ein Obst', [
-			{ text: 'Apfel', points: 10 },
-			{ text: 'apfel', points: 10 },
-			{ text: 'Birne', points: 10 }
-		]);
-
-		expect(message).toMatch(/nur einmal/);
-	});
-
-	it('Scenario: Survey points must be whole numbers above zero', () => {
-		for (const points of [0, -3, 2.5, 'x' as unknown as number]) {
-			const message = surveyError('Frage', [{ text: 'A', points }, ...answers(10, 10).slice(0, 2)]);
-
-			expect(message, String(points)).toMatch(/ganze Zahlen über 0/);
-		}
-	});
-
-	it('Scenario: Survey points sum at most 100', () => {
-		expect(surveyError('Frage', answers(50, 30, 21))).toMatch(/100/);
-		expect(surveyError('Frage', answers(50, 30, 20))).toBeNull();
-	});
-
-	it('Scenario: Survey needs three to eight answers', () => {
-		const n = (count: number) => surveyError('Frage', answers(...Array(count).fill(5)));
-
-		expect(n(2)).toMatch(/3 bis 8/);
-		expect(n(9)).toMatch(/3 bis 8/);
-		expect(n(3)).toBeNull();
-		expect(n(8)).toBeNull();
-	});
-
-	it('Scenario: Overlong survey text rejected', () => {
-		const long = 'x'.repeat(MAX_TEXT + 1);
-
-		expect(surveyError(long, answers(10, 10, 10))).toMatch(/200 Zeichen/);
-		expect(surveyError('Frage', [{ text: long, points: 10 }, ...answers(10, 10)])).toMatch(/200 Zeichen/);
-		expect(surveyError('x'.repeat(MAX_TEXT), [{ text: 'y'.repeat(MAX_TEXT), points: 10 }, ...answers(10, 10)])).toBeNull();
 	});
 
 	it('needs a question and answer texts', () => {

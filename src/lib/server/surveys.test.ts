@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import type { DatabaseSync } from 'node:sqlite';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { board, surveyError } from '#lib/content/survey.ts';
-import type { Survey } from '#lib/content/types.ts';
+import { MAX_TEXT, type Survey, type SurveyAnswer } from '#lib/content/types.ts';
 import { loadMigrations, migrate, openDb } from './db.ts';
 import { addPlayer } from './players.ts';
 import { addSurvey, importSurveys, listSurveys, removeSurvey, updateSurvey } from './surveys.ts';
@@ -105,6 +105,68 @@ describe('surveys', () => {
 		});
 		expect(listSurveys(db).filter((s) => /obst/i.test(s.question))).toHaveLength(1);
 		expect(listSurveys(db).find((s) => s.id === other.survey.id)?.question).toBe('Nenne ein Tier');
+	});
+
+	describe('validation reaches the caller as status 400', () => {
+		const points = (...p: number[]): SurveyAnswer[] => p.map((x, i) => ({ text: `A${i + 1}`, points: x }));
+		const rejected = (message: RegExp) => ({ ok: false, status: 400, message: expect.stringMatching(message) });
+
+		it('Scenario: Duplicate answer within a survey rejected', () => {
+			migrate(db);
+			const before = surveyCount();
+
+			expect(
+				addSurvey(db, 'Nenne ein Obst', [
+					{ text: 'Apfel', points: 10 },
+					{ text: 'apfel', points: 10 },
+					{ text: 'Birne', points: 10 }
+				])
+			).toEqual(rejected(/nur einmal/));
+			expect(surveyCount()).toBe(before);
+		});
+
+		it('Scenario: Survey points must be whole numbers above zero', () => {
+			migrate(db);
+			const before = surveyCount();
+			for (const p of [0, -3, 2.5, 'x' as unknown as number]) {
+				const result = addSurvey(db, 'Frage', [{ text: 'A', points: p }, ...points(10, 10)]);
+
+				expect(result, String(p)).toEqual(rejected(/ganze Zahlen über 0/));
+			}
+			expect(surveyCount()).toBe(before);
+		});
+
+		it('Scenario: Survey points sum at most 100', () => {
+			migrate(db);
+
+			expect(addSurvey(db, 'Zu viel', points(50, 30, 21))).toEqual(rejected(/100/));
+			expect(addSurvey(db, 'Genau richtig', points(50, 30, 20))).toMatchObject({ ok: true });
+			expect(listSurveys(db).map((s) => s.question)).not.toContain('Zu viel');
+		});
+
+		it('Scenario: Survey needs three to eight answers', () => {
+			migrate(db);
+			const save = (n: number) => addSurvey(db, `Mit ${n}`, points(...Array(n).fill(5)));
+
+			expect(save(2)).toEqual(rejected(/3 bis 8/));
+			expect(save(9)).toEqual(rejected(/3 bis 8/));
+			expect(save(3)).toMatchObject({ ok: true });
+			expect(save(8)).toMatchObject({ ok: true });
+			expect(listSurveys(db).map((s) => s.question)).not.toContain('Mit 2');
+		});
+
+		it('Scenario: Overlong survey text rejected', () => {
+			migrate(db);
+			const long = 'x'.repeat(MAX_TEXT + 1);
+			const before = surveyCount();
+
+			expect(addSurvey(db, long, points(10, 10, 10))).toEqual(rejected(/200 Zeichen/));
+			expect(addSurvey(db, 'Frage', [{ text: long, points: 10 }, ...points(10, 10)])).toEqual(rejected(/200 Zeichen/));
+			expect(surveyCount()).toBe(before);
+			expect(
+				addSurvey(db, 'x'.repeat(MAX_TEXT), [{ text: 'y'.repeat(MAX_TEXT), points: 10 }, ...points(10, 10)])
+			).toMatchObject({ ok: true });
+		});
 	});
 
 	it('treats umlaut case variants of a question as duplicates on add, update and import', () => {
