@@ -270,3 +270,17 @@ Gaps: none. 115 scenarios: 112 with a passing test (44 unit, 68 e2e), 3 manual. 
 `openspec/changes/family-feud/shots/{phone,desktop}-look-<slug>.png`, slugs: feud-board, feud-faceoff, feud-faceoff-double, feud-handoff, feud-peek-held, feud-prep, feud-result, feud-result-double, feud-steal, feud-steal-handoff, feud-winner, lobby-family-feud, start-family-feud.
 
 Round 3 shots match round 1 pixel-for-pixel up to animation and count-up noise. The seven round-2 differences were noise too: phone feud-faceoff-double was captured at a later frame of the entry fade (same layout and content, 5.5k pixels differ in brightness only); phone feud-result, feud-result-double, feud-steal, feud-winner differed in under 90 pixels in the score column (count-up); desktop feud-faceoff-double and feud-steal differed by at most 16/255 per channel. Twelve shots were re-committed to match this run; none differs in layout, colour or content.
+
+## Review
+
+Fresh-context reviewer, three rounds (diff `origin/main...flow/family-feud`). Final verified tip `29fb8d4`.
+
+Resolved:
+- Round 1: `UNIQUE COLLATE NOCASE` folds ASCII only, so "Äpfel nennen" and "äpfel nennen" were distinct questions → fixed in `src/lib/server/surveys.ts` (`toLocaleLowerCase('de')` on add, update, import; test added, red first). Release spec still said 0.2.0 → release delta spec for 0.3.0, version test retitled. Look test accepted any 127.0.0.1 port → narrowed. Five survey scenarios said "(status 400)" but did not check it → moved to `surveys.test.ts`, status pinned. Tiebreak test used one pick → two picks, random value 0.
+- Round 2: look test accepted external main-frame origins → loopback hosts only. `play('correct')` fired on every result mount and for sudden death → `banks(before, after)` in `engine.ts`, cue only on the move into a result with points (unit test, red first). Demo skips the steal handoff while the look spec required it → exception written into the feud delta spec (Rue's confirmation pending at Gate 2).
+
+Open after round 3 (low severity, not fixed; the loop is capped at 3 rounds):
+- `e2e/look.test.ts:327-337` trusts any loopback origin the main frame visits; needed for the Feud walk's own server.
+- `e2e/feud.test.ts:233-251` "Feud copy reads neutral": `snap()` never runs while a full-screen handoff is open, nor on setup and prep.
+- `e2e/feud.test.ts:120-136` "Feud double round marked before it starts": checks `toHaveCount(0)` before the round-1 face-off has rendered, so it can pass on an empty page.
+- `src/lib/games/feud/prep.test.ts:75-80` "Feud tiebreak survey drawn like the fill": with 3 surveys and 2 picks only one survey is left, so the rule is not exercised (the spec's own input forces it).

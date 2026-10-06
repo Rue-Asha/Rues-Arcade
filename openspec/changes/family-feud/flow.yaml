@@ -5,6 +5,10 @@ worktree: /home/Rue/Repos/Rues-Arcade-family-feud
 learnings:
   - "planner: `openspec instructions` in a zsh loop broke on a literal ===== (zsh =word expansion) → quote args or run in bash"
   - "U1 builder: brief said check boxes in worktree-free serial mode but build.md says orchestrator-only in worktrees → brief must state the mode once; Contracts said demo steps: [] but runner.test.ts needs a non-empty script → planner: check generic tests against stub contracts"
+  - "reviewer r1: SQLite COLLATE NOCASE folds ASCII only → German unique text (umlauts) needs a JS fold (toLocaleLowerCase('de')) as well as the column constraint. Planner: when a scenario says 'ignoring case', add an umlaut example"
+  - "planner/orchestrator: a version bump at Rue's request needs a release delta spec and a retitled version test in the same change, or the reviewer flags a spec mismatch"
+  - "verifier r2/r3: phone feud-faceoff-double shot is taken mid-.rise (brightness varies per run) → shot() wait for .rise does not fully cover that screen"
+  - "builder U7: generic runner tests need a non-empty demo script, and board controls must carry data-demo=expected → planner: give the demo unit the Screen/Board files it will have to touch"
 depends_on: player-database  # build only after flow/player-database is merged into main; then merge main into flow/family-feud
 gate0: 2026-10-06
 gate1: 2026-10-06
