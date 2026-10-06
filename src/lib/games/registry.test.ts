@@ -12,7 +12,7 @@ describe('registry', () => {
 		expect(range('imposter')).toBe('3–12 Spieler');
 		expect(range('codes')).toBe('4–20 Spieler');
 		expect(range('duck')).toBe('4–16 Spieler');
-		expect(range('most-likely')).toBe('3–20 Spieler');
+		expect(range('most-likely')).toBe('4–20 Spieler');
 		expect(range('family-feud')).toBe('4–20 Spieler');
 	});
 
@@ -35,7 +35,7 @@ describe('registry', () => {
 		expect(new Set(slugs).size).toBe(slugs.length);
 	});
 
-	it('new games carry their contract: colour, content type, minContent 1, state version 1', () => {
+	it('new games carry their contract: colour, content type, minContent, state version', () => {
 		const contract = games.slice(2).map(({ def }) => ({
 			slug: def.slug,
 			name: def.name,
@@ -53,7 +53,7 @@ describe('registry', () => {
 				colour: 'most-likely',
 				contentType: 'most_likely_prompts',
 				minContent: 1,
-				stateVersion: 1
+				stateVersion: 2
 			},
 			{
 				slug: 'family-feud',
