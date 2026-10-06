@@ -13,3 +13,4 @@ depends_on: player-database  # build only after flow/player-database is merged i
 gate0: 2026-10-06
 gate1: 2026-10-06
 release: "v0.3.0 (Rue, 2026-10-06): package.json + lock bumped on the branch; after the PR merges, tag v0.3.0 on the merge commit on main and push the tag (triggers release.yml). Part of ship."
+gate2: 2026-10-06
