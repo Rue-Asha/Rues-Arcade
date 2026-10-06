@@ -7,10 +7,10 @@ responses. Units run serially: each needs the previous one's merged code.
 
 > unit: depends=none · scope=S1,S5 · files=migrations/0004_players.sql, src/lib/server/db.ts, src/lib/server/db.test.ts, src/lib/players.ts, src/lib/server/players.ts, src/lib/server/players.test.ts, src/routes/api/players/+server.ts, src/routes/api/players/[id]/+server.ts, e2e/helpers.ts, e2e/players-api.test.ts
 
-- [ ] 1.1 ⚠ irreversible (production data migration, forward-only) `migrations/0004_players.sql` per Contracts; `openDb` sets `PRAGMA foreign_keys = ON` before any migration; `db.test.ts` runs the real migrations on a real file (Scenario: Players table arrives once on an existing database · Deleting a player cascades to referencing rows; unchanged and green: Migrations are applied once · Migration failure refuses to start · Seeds land once on an existing database)
-- [ ] 1.2 `src/lib/players.ts` (types, `NAME_MAX`, `nameError`, `playerId`, `savedId`, `playersApi`) and `src/lib/server/players.ts` (`listPlayers`, `addPlayer`, `renamePlayer`, `deletePlayer`) on a migrated real DB in `players.test.ts` (Scenario: Add, rename, delete and list saved players · Empty or whitespace saved name rejected · Overlong saved name rejected · Duplicate saved name rejected · Unknown saved player id)
-- [ ] 1.3 Routes `src/routes/api/players/+server.ts` (GET, POST) and `[id]/+server.ts` (PATCH, DELETE) per design.md
-- [ ] 1.4 `e2e/helpers.ts`: `seedPlayers(request, origin, names)` sending `headers: { origin }`; `e2e/players-api.test.ts` on the shared server with a per-project name; run `proof:full` green (Scenario: Players API round trip on the server)
+- [x] 1.1 ⚠ irreversible (production data migration, forward-only) `migrations/0004_players.sql` per Contracts; `openDb` sets `PRAGMA foreign_keys = ON` before any migration; `db.test.ts` runs the real migrations on a real file (Scenario: Players table arrives once on an existing database · Deleting a player cascades to referencing rows; unchanged and green: Migrations are applied once · Migration failure refuses to start · Seeds land once on an existing database)
+- [x] 1.2 `src/lib/players.ts` (types, `NAME_MAX`, `nameError`, `playerId`, `savedId`, `playersApi`) and `src/lib/server/players.ts` (`listPlayers`, `addPlayer`, `renamePlayer`, `deletePlayer`) on a migrated real DB in `players.test.ts` (Scenario: Add, rename, delete and list saved players · Empty or whitespace saved name rejected · Overlong saved name rejected · Duplicate saved name rejected · Unknown saved player id)
+- [x] 1.3 Routes `src/routes/api/players/+server.ts` (GET, POST) and `[id]/+server.ts` (PATCH, DELETE) per design.md
+- [x] 1.4 `e2e/helpers.ts`: `seedPlayers(request, origin, names)` sending `headers: { origin }`; `e2e/players-api.test.ts` on the shared server with a per-project name; run `proof:full` green (Scenario: Players API round trip on the server)
 
 ## 2. Roster with saved players and guests
 
