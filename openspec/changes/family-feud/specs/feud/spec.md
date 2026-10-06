@@ -421,6 +421,8 @@ Family Feud SHALL ship a committed demo fixture (surveys, seed, scripted actions
 and Dani playing one round: face-off, "Spielen", a reveal, three strikes, a steal and the result, to "Demo
 beendet". Hidden survey information SHALL be shown openly with the [Demo] tag. The demo SHALL never touch the
 database, the roster or the played-with history, and SHALL run on an empty database and under reduced motion.
+The demo SHALL go from the third strike straight to the steal board, without the steal's full-screen handoff,
+because the handoff's "Weiter" has no scripted control.
 
 #### Scenario: Feud demo script plays to the end
 - **WHEN** the Family Feud demo script's actions are applied to its fixture through the real reducer, twice
@@ -445,7 +447,7 @@ database, the roster or the played-with history, and SHALL run on an empty datab
 ### Requirement: Family Feud look, motion and sound
 The board SHALL be ledge tiles showing their rank number while hidden; a versus header SHALL show both team names
 and scores; strike pods SHALL reuse Lives; "Spielen/Passen" and the steal SHALL open with a full-screen handoff in
-the team's colour. Motion SHALL be: tile flip (rotateX), strike pod pop with a short board shake and an X stamp,
+the team's colour (the demo excepted, see its requirement). Motion SHALL be: tile flip (rotateX), strike pod pop with a short board shake and an X stamp,
 pot count-up into the score, staggered reveal of the remaining tiles — transform/opacity only, never blocking
 input, instant under reduced motion. Sounds SHALL use `play()`: reveal on a revealed tile, wrong on a strike or a
 miss, correct when a team banks the pot, win on the winner screen. Copy SHALL be neutral German with no "!" and no
