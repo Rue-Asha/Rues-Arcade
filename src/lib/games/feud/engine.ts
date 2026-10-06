@@ -45,6 +45,8 @@ export interface FeudState {
 	strikes: number;
 	// what the round's result adds, multiplier applied
 	gain: FeudGain | null;
+	// set on game over
+	winner: number | null;
 }
 
 export interface FeudGain {
@@ -66,6 +68,10 @@ export type FeudAction =
 	| { type: 'undo' };
 
 export const STRIKES = 3;
+
+export function suddenDeath(s: FeudState): boolean {
+	return s.round === s.config.surveys.length;
+}
 
 export function survey(s: FeudState): Survey {
 	return s.config.surveys[s.round] ?? s.config.tiebreak;
@@ -127,8 +133,15 @@ function fresh(s: FeudState, round: number): FeudState {
 		playing: null,
 		revealed: survey(next).answers.map(() => false),
 		strikes: 0,
-		gain: null
+		gain: null,
+		winner: null
 	};
+}
+
+// in sudden death the face-off decides the game, so its result carries no points
+function won(s: FeudState, team: number): FeudState {
+	if (suddenDeath(s)) return { ...s, phase: 'result', control: team, gain: { team, points: 0, stolen: false } };
+	return { ...s, phase: 'choose', control: team };
 }
 
 function answer(s: FeudState, tile: number | null): FeudState {
@@ -136,17 +149,22 @@ function answer(s: FeudState, tile: number | null): FeudState {
 	const revealed = tile === null ? s.revealed : reveal(s, tile);
 	const first = opener(s);
 	if (s.answers.length === 0) {
-		if (tile === 0) return { ...s, revealed, phase: 'choose', control: first };
+		if (tile === 0) return won({ ...s, revealed, answers: [tile] }, first);
 		return { ...s, revealed, answers: [tile] };
 	}
 	const [a] = s.answers;
 	if (a === null && tile === null) return { ...s, answers: [], cursors: advance(s) };
 	const firstWins = tile === null || (a !== null && a < tile);
-	return { ...s, revealed, answers: [a, tile], phase: 'choose', control: firstWins ? first : 1 - first };
+	return won({ ...s, revealed, answers: [a, tile] }, firstWins ? first : 1 - first);
 }
 
 function close(s: FeudState): FeudState {
-	return fresh({ ...s, closed: [...s.closed, survey(s).id] }, s.round + 1);
+	const next = { ...s, closed: [...s.closed, survey(s).id] };
+	if (suddenDeath(s)) return { ...next, phase: 'gameOver', winner: s.gain!.team };
+	if (s.round + 1 < s.config.surveys.length) return fresh(next, s.round + 1);
+	const [a, b] = s.scores;
+	if (a === b) return fresh(next, s.round + 1);
+	return { ...next, phase: 'gameOver', winner: a > b ? 0 : 1 };
 }
 
 export const feud: GameDef<FeudState, FeudAction, FeudConfig> = {
@@ -173,7 +191,8 @@ export const feud: GameDef<FeudState, FeudAction, FeudConfig> = {
 			playing: null,
 			revealed: (config.surveys[0] ?? config.tiebreak).answers.map(() => false),
 			strikes: 0,
-			gain: null
+			gain: null,
+			winner: null
 		};
 	},
 	reduce(s, action) {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Survey } from '#lib/content/types.ts';
-import { due, feud, multiplier, named, pot, type FeudAction, type FeudState, type FeudTeam } from './engine.ts';
+import { due, feud, multiplier, named, pot, survey as current, type FeudAction, type FeudState, type FeudTeam } from './engine.ts';
 
 const survey = (id: number, points: number[]): Survey => ({
 	id,
@@ -206,5 +206,66 @@ describe('feud engine: board, steal and result', () => {
 		const s = bank40(s0);
 		expect(s.gain).toEqual({ team: 0, points: 80, stolen: false });
 		expect(s.scores).toEqual([80, 0]);
+	});
+});
+
+// the last round's result with the scores set as given, then closed
+const closeAt = (scores: [number, number], rounds = 1) => {
+	let s = start(rounds, [A3, B2], forty);
+	for (let r = 1; r < rounds; r++) s = step(bank40(s), { type: 'next' });
+	return step({ ...bank40(s), scores }, { type: 'next' });
+};
+
+describe('feud engine: end and sudden death', () => {
+	it('Scenario: Feud higher score wins', () => {
+		const s = closeAt([120, 80], 2);
+		expect(s.phase).toBe('gameOver');
+		expect(s.winner).toBe(0);
+		expect(s.closed).toEqual([1, 2]);
+		expect(closeAt([80, 120]).winner).toBe(1);
+	});
+
+	it('Scenario: Feud tie goes to sudden death', () => {
+		const s = closeAt([80, 80]);
+		expect(s.phase).toBe('faceoff');
+		expect(s.round).toBe(1);
+		expect(current(s).id).toBe(99);
+		expect(s.revealed).toEqual([false, false, false]);
+		expect(named(s)).toEqual(['a2', 'b2']);
+		expect(due(s)).toBe(1);
+		expect(multiplier(s)).toBe(1);
+
+		const won = step(s, { type: 'answer', tile: 2 }, { type: 'answer', tile: 1 });
+		expect(won.phase).toBe('result');
+		expect(won.gain).toEqual({ team: 0, points: 0, stolen: false });
+		expect(won.winner).toBe(null);
+		const end = step(won, { type: 'next' });
+		expect(end.phase).toBe('gameOver');
+		expect(end.winner).toBe(0);
+		expect(end.scores).toEqual([80, 80]);
+		expect(end.closed).toEqual([1, 99]);
+
+		const first = step(closeAt([80, 80]), { type: 'answer', tile: 0 });
+		expect(first.phase).toBe('result');
+		expect(first.gain?.team).toBe(1);
+	});
+
+	it('Scenario: Feud sudden death never ends in a draw', () => {
+		let s = closeAt([80, 80]);
+		const pairs = [named(s)];
+		// both teams' players once (3 pairs for the larger team) and one more pair
+		for (let i = 0; i < 4; i++) {
+			s = step(s, { type: 'answer', tile: null }, { type: 'answer', tile: null });
+			pairs.push(named(s));
+		}
+		expect(s.phase).toBe('faceoff');
+		expect(s.winner).toBe(null);
+		expect(pairs).toEqual([
+			['a2', 'b2'],
+			['a3', 'b1'],
+			['a1', 'b2'],
+			['a2', 'b1'],
+			['a3', 'b2']
+		]);
 	});
 });
