@@ -89,9 +89,10 @@
 
 	async function destroy() {
 		if (!doomed) return;
-		const result = await roster.deleteSaved(doomed.id);
-		savedMessage = result.ok ? '' : result.message;
+		const { id } = doomed;
 		doomed = null;
+		const result = await roster.deleteSaved(id);
+		savedMessage = result.ok ? '' : result.message;
 	}
 
 	function cancel(e: KeyboardEvent) {

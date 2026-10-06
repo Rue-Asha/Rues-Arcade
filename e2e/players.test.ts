@@ -55,6 +55,26 @@ test('Scenario: Deleting a saved player asks for confirmation', async ({ page, r
 	}
 });
 
+test('a double tap on Löschen sends one DELETE and no error', async ({ page, request }, info) => {
+	const server = await emptyServer(info, 'players-double-delete');
+	try {
+		await seedPlayers(request, server.origin, ['Ute']);
+		await page.goto(`${server.origin}/spieler`);
+		const deletes: string[] = [];
+		page.on('request', (r) => r.method() === 'DELETE' && deletes.push(r.url()));
+		await saved(page).getByRole('button', { name: 'Ute löschen' }).click();
+		await page.getByRole('dialog').getByRole('button', { name: 'Löschen' }).evaluate((b: HTMLElement) => {
+			b.click();
+			b.click();
+		});
+		await expect(saved(page).getByRole('listitem')).toHaveCount(0);
+		await expect(saved(page).getByText('Diesen Spieler gibt es nicht mehr.')).toHaveCount(0);
+		expect(deletes).toHaveLength(1);
+	} finally {
+		server.close();
+	}
+});
+
 test('Scenario: Duplicate saved name shows the server message', async ({ page, request }, info) => {
 	const server = await emptyServer(info, 'players-duplicate');
 	try {
