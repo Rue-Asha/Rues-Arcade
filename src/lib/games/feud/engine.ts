@@ -43,6 +43,14 @@ export interface FeudState {
 	// per board position of the current survey
 	revealed: boolean[];
 	strikes: number;
+	// what the round's result adds, multiplier applied
+	gain: FeudGain | null;
+}
+
+export interface FeudGain {
+	team: number;
+	points: number;
+	stolen: boolean;
 }
 
 export type FeudAction =
@@ -88,6 +96,24 @@ function reveal(s: FeudState, tile: number): boolean[] {
 	return s.revealed.map((r, i) => r || i === tile);
 }
 
+// sum of all revealed answers, face-off answers included
+export function pot(s: FeudState): number {
+	const tiles = board(survey(s));
+	return s.revealed.reduce((sum, r, i) => (r ? sum + tiles[i].points : sum), 0);
+}
+
+// only the last round counts double; it is known from its face-off on
+export function multiplier(s: FeudState): number {
+	return s.round === s.config.surveys.length - 1 ? 2 : 1;
+}
+
+function bank(s: FeudState, team: number, stolen = false): FeudState {
+	const points = pot(s) * multiplier(s);
+	const scores: [number, number] = [s.scores[0], s.scores[1]];
+	scores[team] += points;
+	return { ...s, phase: 'result', scores, gain: { team, points, stolen } };
+}
+
 const hidden = (s: FeudState, tile: number) => s.revealed[tile] === false;
 
 function fresh(s: FeudState, round: number): FeudState {
@@ -100,7 +126,8 @@ function fresh(s: FeudState, round: number): FeudState {
 		control: null,
 		playing: null,
 		revealed: survey(next).answers.map(() => false),
-		strikes: 0
+		strikes: 0,
+		gain: null
 	};
 }
 
@@ -145,7 +172,8 @@ export const feud: GameDef<FeudState, FeudAction, FeudConfig> = {
 			control: null,
 			playing: null,
 			revealed: (config.surveys[0] ?? config.tiebreak).answers.map(() => false),
-			strikes: 0
+			strikes: 0,
+			gain: null
 		};
 	},
 	reduce(s, action) {
@@ -156,15 +184,19 @@ export const feud: GameDef<FeudState, FeudAction, FeudConfig> = {
 			case 'pass':
 				if (s.phase !== 'choose') return s;
 				return { ...s, phase: 'board', playing: action.type === 'play' ? s.control : 1 - s.control! };
-			case 'reveal':
+			case 'reveal': {
 				if (s.phase !== 'board' || !hidden(s, action.tile)) return s;
-				return { ...s, revealed: reveal(s, action.tile) };
+				const next = { ...s, revealed: reveal(s, action.tile) };
+				return next.revealed.every(Boolean) ? bank(next, s.playing!) : next;
+			}
 			case 'strike':
 				if (s.phase !== 'board') return s;
 				return { ...s, strikes: s.strikes + 1, phase: s.strikes + 1 === STRIKES ? 'steal' : 'board' };
 			case 'steal':
-				if (s.phase !== 'steal' || (action.tile !== null && !hidden(s, action.tile))) return s;
-				return { ...s, phase: 'result', revealed: action.tile === null ? s.revealed : reveal(s, action.tile) };
+				if (s.phase !== 'steal') return s;
+				if (action.tile === null) return bank(s, s.playing!);
+				if (!hidden(s, action.tile)) return s;
+				return bank({ ...s, revealed: reveal(s, action.tile) }, 1 - s.playing!, true);
 			case 'next':
 				return s.phase === 'result' ? close(s) : s;
 		}
