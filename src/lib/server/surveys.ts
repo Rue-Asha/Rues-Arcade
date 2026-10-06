@@ -1,11 +1,10 @@
 import type { DatabaseSync } from 'node:sqlite';
+import { parseSurveyBulk, surveyError } from '#lib/content/survey.ts';
 import type { ImportReport, Survey, SurveyAnswer } from '#lib/content/types.ts';
 
 export type SavedSurvey =
 	| { ok: true; survey: Survey }
 	| { ok: false; status: 400 | 404 | 409; message: string };
-
-const notYet: SavedSurvey = { ok: false, status: 400, message: 'Noch nicht verfügbar.' };
 
 export function listSurveys(db: DatabaseSync): Survey[] {
 	return db
@@ -18,9 +17,24 @@ export function removeSurvey(db: DatabaseSync, id: number): boolean {
 	return db.prepare('DELETE FROM feud_surveys WHERE id = ?').run(id).changes > 0;
 }
 
+const duplicate = { ok: false, status: 409, message: 'Diese Frage gibt es schon.' } as const;
+
+function clean(question: string, answers: SurveyAnswer[]) {
+	return {
+		question: question.trim(),
+		answers: answers.map((a) => ({ text: String(a?.text ?? '').trim(), points: a?.points }))
+	};
+}
+
 export function addSurvey(db: DatabaseSync, question: string, answers: SurveyAnswer[]): SavedSurvey {
-	void db, question, answers;
-	return notYet;
+	const c = clean(question, answers);
+	const message = surveyError(c.question, c.answers);
+	if (message) return { ok: false, status: 400, message };
+	const r = db
+		.prepare('INSERT OR IGNORE INTO feud_surveys (question, answers) VALUES (?, ?)')
+		.run(c.question, JSON.stringify(c.answers));
+	if (!r.changes) return duplicate;
+	return { ok: true, survey: { id: Number(r.lastInsertRowid), ...c } };
 }
 
 export function updateSurvey(
@@ -29,11 +43,25 @@ export function updateSurvey(
 	question: string,
 	answers: SurveyAnswer[]
 ): SavedSurvey {
-	void db, id, question, answers;
-	return notYet;
+	const c = clean(question, answers);
+	const message = surveyError(c.question, c.answers);
+	if (message) return { ok: false, status: 400, message };
+	if (!db.prepare('SELECT 1 FROM feud_surveys WHERE id = ?').get(id))
+		return { ok: false, status: 404, message: 'Umfrage nicht gefunden.' };
+	const r = db
+		.prepare('UPDATE OR IGNORE feud_surveys SET question = ?, answers = ? WHERE id = ?')
+		.run(c.question, JSON.stringify(c.answers), id);
+	if (!r.changes) return duplicate;
+	return { ok: true, survey: { id, ...c } };
 }
 
 export function importSurveys(db: DatabaseSync, text: string): ImportReport {
-	void db, text;
-	return { imported: 0, duplicates: 0, skipped: 0, errors: [] };
+	const { rows, skipped, errors } = parseSurveyBulk(text);
+	const insert = db.prepare('INSERT OR IGNORE INTO feud_surveys (question, answers) VALUES (?, ?)');
+	let imported = 0;
+	db.exec('BEGIN');
+	for (const { question, answers } of rows)
+		imported += Number(insert.run(question, JSON.stringify(answers)).changes);
+	db.exec('COMMIT');
+	return { imported, duplicates: rows.length - imported, skipped, errors };
 }
