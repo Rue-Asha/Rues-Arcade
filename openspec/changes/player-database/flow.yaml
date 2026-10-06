@@ -5,5 +5,6 @@ worktree: /home/Rue/Repos/Rues-Arcade-player-database
 learnings:
   - "planner: phone+desktop Playwright projects write the shared e2e DB concurrently and layout sync links any guest whose name is saved → UI tests writing saved players use emptyServer, shared-DB API writes use per-project names"
   - "builder U1: node_modules missing in a fresh worktree needs npm ci first; node:sqlite enables foreign keys by default so a cascade test can't go red before the pragma; proof:full takes ~6.5 min, nearly all look.test.ts"
+  - "builder U3: chaining proof with ; after a piped run committed a red state (demo e2e) → use && / pipefail; layout sync that always called save() wrote arcade:roster=[] on first load and broke a localStorage-snapshot e2e → write only on change"
 gate0: 2026-10-06
 gate1: 2026-10-06
