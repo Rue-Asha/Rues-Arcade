@@ -74,8 +74,9 @@ describe('prep', () => {
 
 	it('Scenario: Feud tiebreak survey drawn like the fill', () => {
 		const list = table([0, 0, 1]);
+		const picks = [1, 3];
 
-		expect(drawTiebreak(list, [1, null].filter((s) => s !== null) as number[], () => 0.7).id).toBe(2);
+		expect(drawTiebreak(list, picks, () => 0).id).toBe(2);
 	});
 
 	it('a full set of slots is left alone', () => {
