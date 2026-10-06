@@ -27,6 +27,7 @@
 
 	const players = $derived(ready ? roster.players : []);
 	const chosen = $derived(players.filter((p) => picked.includes(p.id)));
+	const guests = $derived(entry?.savedOnly ? chosen.filter((p) => roster.isGuest(p)) : []);
 
 	function toggle(id: string) {
 		picked = picked.includes(id) ? picked.filter((p) => p !== id) : [...picked, id];
@@ -107,6 +108,17 @@
 					<Button variant="primary" disabled={!within} onclick={() => (picking = false)}>Weiter</Button>
 				</div>
 			</section>
+		{:else if guests.length}
+			<div class="panel stack gap">
+				<p>{def.name} braucht gespeicherte Spieler.</p>
+				<p class="muted">Nicht gespeichert: {guests.map((p) => p.name).join(', ')}.</p>
+				<a class="more" href="/spieler?from=/spiele/{def.slug}/lobby">Spieler speichern</a>
+				{#if players.length > def.maxPlayers}
+					<div class="row">
+						<Button variant="ghost" size="sm" onclick={() => (picking = true)}>Andere Spieler wählen</Button>
+					</div>
+				{/if}
+			</div>
 		{:else}
 			<section class="stack" aria-label="Einstellungen">
 				{#if failure}
