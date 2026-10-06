@@ -1,15 +1,16 @@
 <script lang="ts">
 	import { tick } from 'svelte';
 	import { invalidateAll } from '$app/navigation';
-	import { isSingle, type ContentItem, type ContentType, type ImportReport } from '#lib/content/types.ts';
+	import { isSingle, isSurvey, type ContentItem, type ImportReport, type ItemType } from '#lib/content/types.ts';
 	import { games } from '#lib/games/registry.ts';
 	import Button from '#lib/ui/Button.svelte';
 	import Modal from '#lib/ui/Modal.svelte';
+	import SurveyEditor from './SurveyEditor.svelte';
 	import type { PageProps } from './$types';
 
 	let { data, params }: PageProps = $props();
 
-	const sides: Record<ContentType, { a: string; b?: string; hint: string; intro: string }> = {
+	const sides: Record<ItemType, { a: string; b?: string; hint: string; intro: string }> = {
 		imposter_pairs: {
 			a: 'Crew-Frage',
 			b: 'Imposter-Frage',
@@ -41,7 +42,7 @@
 
 	const def = $derived(games.find((g) => g.def.slug === params.slug)!.def);
 	const base = $derived(`/spiele/${def.slug}`);
-	const side = $derived(sides[def.contentType]);
+	const side = $derived(sides[def.contentType as ItemType]);
 	const single = $derived(isSingle(def.contentType));
 	const api = $derived(`/api/content/${def.contentType}`);
 	const items = $derived(data.items);
@@ -136,141 +137,145 @@
 	<title>Inhalte · {def.name} · Rue's Arcade</title>
 </svelte:head>
 
-<div class="stack rise" style="--c: var(--{def.colour})">
-	<header class="hero">
-		<a class="back" href={base}>
-			<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>
-			{def.name}
-		</a>
-		<h1>Inhalte</h1>
-		<p class="muted">{side.intro}</p>
-	</header>
+{#if isSurvey(def.contentType)}
+	<SurveyEditor {def} surveys={data.surveys} />
+{:else}
+	<div class="stack rise" style="--c: var(--{def.colour})">
+		<header class="hero">
+			<a class="back" href={base}>
+				<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>
+				{def.name}
+			</a>
+			<h1>Inhalte</h1>
+			<p class="muted">{side.intro}</p>
+		</header>
 
-	<div class="layout">
-		<div class="side stack">
-			<form class="panel stack add" aria-label="Neuer Eintrag" onsubmit={add}>
-				<div class="fields">
-					<label class="field">
-						<span class="label">{side.a}</span>
-						<input id="new-a" bind:value={a} onkeydown={enter} autocomplete="off" aria-describedby={message ? 'new-error' : undefined} />
-					</label>
-					{#if !single}
+		<div class="layout">
+			<div class="side stack">
+				<form class="panel stack add" aria-label="Neuer Eintrag" onsubmit={add}>
+					<div class="fields">
 						<label class="field">
-							<span class="label">{side.b}</span>
-							<input bind:value={b} onkeydown={enter} autocomplete="off" enterkeyhint="done" aria-describedby={message ? 'new-error' : undefined} />
+							<span class="label">{side.a}</span>
+							<input id="new-a" bind:value={a} onkeydown={enter} autocomplete="off" aria-describedby={message ? 'new-error' : undefined} />
 						</label>
+						{#if !single}
+							<label class="field">
+								<span class="label">{side.b}</span>
+								<input bind:value={b} onkeydown={enter} autocomplete="off" enterkeyhint="done" aria-describedby={message ? 'new-error' : undefined} />
+							</label>
+						{/if}
+					</div>
+					{#if message}
+						<p id="new-error" class="error" role="alert">{message}</p>
 					{/if}
-				</div>
-				{#if message}
-					<p id="new-error" class="error" role="alert">{message}</p>
-				{/if}
-				<Button variant="primary" onclick={() => add()}>Hinzufügen</Button>
-			</form>
+					<Button variant="primary" onclick={() => add()}>Hinzufügen</Button>
+				</form>
 
-			<section class="panel stack bulk">
-				<label class="label" for="bulk">Mehrere auf einmal</label>
-				<p class="muted small">{single ? 'Eine Zeile pro Eintrag.' : 'Eine Zeile pro Eintrag, Seiten getrennt mit „|“.'}</p>
-				<textarea id="bulk" bind:value={bulk} rows="5" placeholder={side.hint} spellcheck="false"></textarea>
-				<Button variant="secondary" disabled={!bulk.trim()} onclick={importBulk}>Importieren</Button>
-				<div role="status">
-					{#if report}
-						<div class="report">
-							<p class="counts">
-								<span class="good">{report.imported} importiert</span>
-								<span>{report.duplicates} doppelt</span>
-								<span>{report.skipped} leer</span>
-							</p>
-							{#if report.errors.length}
-								<ul class="errors">
-									{#each report.errors as err (err.line)}
-										<li>
-											<span class="where">Zeile {err.line}</span>
-											<span class="text">{bulkLines[err.line - 1]}</span>
-											<span class="why">{err.message}</span>
-										</li>
-									{/each}
-								</ul>
-							{/if}
-						</div>
-					{/if}
-				</div>
-			</section>
-		</div>
-
-		<section class="list" aria-labelledby="entries">
-			<div class="head">
-				<h2 id="entries">Einträge</h2>
-				<span class="count">{items.length}</span>
+				<section class="panel stack bulk">
+					<label class="label" for="bulk">Mehrere auf einmal</label>
+					<p class="muted small">{single ? 'Eine Zeile pro Eintrag.' : 'Eine Zeile pro Eintrag, Seiten getrennt mit „|“.'}</p>
+					<textarea id="bulk" bind:value={bulk} rows="5" placeholder={side.hint} spellcheck="false"></textarea>
+					<Button variant="secondary" disabled={!bulk.trim()} onclick={importBulk}>Importieren</Button>
+					<div role="status">
+						{#if report}
+							<div class="report">
+								<p class="counts">
+									<span class="good">{report.imported} importiert</span>
+									<span>{report.duplicates} doppelt</span>
+									<span>{report.skipped} leer</span>
+								</p>
+								{#if report.errors.length}
+									<ul class="errors">
+										{#each report.errors as err (err.line)}
+											<li>
+												<span class="where">Zeile {err.line}</span>
+												<span class="text">{bulkLines[err.line - 1]}</span>
+												<span class="why">{err.message}</span>
+											</li>
+										{/each}
+									</ul>
+								{/if}
+							</div>
+						{/if}
+					</div>
+				</section>
 			</div>
 
-			{#if items.length}
-				<ul class="rows" aria-labelledby="entries">
-					{#each items as item (item.id)}
-						<li class="row">
-							{#if editing === item.id}
-								<form class="edit" aria-label="{name(item)} bearbeiten" onsubmit={save}>
-									<label class="field">
-										<span class="label">{side.a}</span>
-										<input id="edit-{item.id}-a" bind:value={draftA} onkeydown={cancel} autocomplete="off" />
-									</label>
-									{#if !single}
+			<section class="list" aria-labelledby="entries">
+				<div class="head">
+					<h2 id="entries">Einträge</h2>
+					<span class="count">{items.length}</span>
+				</div>
+
+				{#if items.length}
+					<ul class="rows" aria-labelledby="entries">
+						{#each items as item (item.id)}
+							<li class="row">
+								{#if editing === item.id}
+									<form class="edit" aria-label="{name(item)} bearbeiten" onsubmit={save}>
 										<label class="field">
-											<span class="label">{side.b}</span>
-											<input bind:value={draftB} onkeydown={cancel} autocomplete="off" />
+											<span class="label">{side.a}</span>
+											<input id="edit-{item.id}-a" bind:value={draftA} onkeydown={cancel} autocomplete="off" />
 										</label>
-									{/if}
-									{#if editMessage}
-										<p class="error" role="alert">{editMessage}</p>
-									{/if}
+										{#if !single}
+											<label class="field">
+												<span class="label">{side.b}</span>
+												<input bind:value={draftB} onkeydown={cancel} autocomplete="off" />
+											</label>
+										{/if}
+										{#if editMessage}
+											<p class="error" role="alert">{editMessage}</p>
+										{/if}
+										<span class="tools">
+											<button class="icon ok" type="submit" aria-label="Speichern">
+												<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>
+											</button>
+											<button class="icon" type="button" aria-label="Abbrechen" onclick={() => (editing = null)}>
+												<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+											</button>
+										</span>
+									</form>
+								{:else}
+									<span class="text">
+										<span class="a">{item.a}</span>
+										{#if !single}<span class="b">{item.b}</span>{/if}
+									</span>
 									<span class="tools">
-										<button class="icon ok" type="submit" aria-label="Speichern">
-											<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>
+										<button class="icon" type="button" aria-label="{name(item)} bearbeiten" onclick={() => edit(item)}>
+											<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"></path><path d="M13.5 6.5l4 4"></path></svg>
 										</button>
-										<button class="icon" type="button" aria-label="Abbrechen" onclick={() => (editing = null)}>
-											<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+										<button class="icon danger" type="button" aria-label="{name(item)} löschen" onclick={() => (deleting = item)}>
+											<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 7h14M10 7V4.5h4V7M7 7l1 13h8l1-13"></path></svg>
 										</button>
 									</span>
-								</form>
-							{:else}
-								<span class="text">
-									<span class="a">{item.a}</span>
-									{#if !single}<span class="b">{item.b}</span>{/if}
-								</span>
-								<span class="tools">
-									<button class="icon" type="button" aria-label="{name(item)} bearbeiten" onclick={() => edit(item)}>
-										<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"></path><path d="M13.5 6.5l4 4"></path></svg>
-									</button>
-									<button class="icon danger" type="button" aria-label="{name(item)} löschen" onclick={() => (deleting = item)}>
-										<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 7h14M10 7V4.5h4V7M7 7l1 13h8l1-13"></path></svg>
-									</button>
-								</span>
-							{/if}
-						</li>
-					{/each}
-				</ul>
-			{:else}
-				<div class="empty panel">
-					<p class="empty-title">Noch keine Einträge</p>
-					<p class="muted">Leg den ersten an oder füg mehrere Zeilen auf einmal ein.</p>
-				</div>
-			{/if}
-		</section>
+								{/if}
+							</li>
+						{/each}
+					</ul>
+				{:else}
+					<div class="empty panel">
+						<p class="empty-title">Noch keine Einträge</p>
+						<p class="muted">Leg den ersten an oder füg mehrere Zeilen auf einmal ein.</p>
+					</div>
+				{/if}
+			</section>
+		</div>
 	</div>
-</div>
 
-<Modal open={deleting !== null} title="Eintrag löschen?" onclose={() => (deleting = null)}>
-	{#if deleting}
-		<p class="doomed">
-			<span class="a">{deleting.a}</span>
-			{#if !single}<span class="b">{deleting.b}</span>{/if}
-		</p>
-		<p class="muted">Das lässt sich nicht rückgängig machen.</p>
-	{/if}
-	<div class="row">
-		<Button variant="primary" onclick={remove}>Löschen</Button>
-		<Button variant="ghost" onclick={() => (deleting = null)}>Abbrechen</Button>
-	</div>
-</Modal>
+	<Modal open={deleting !== null} title="Eintrag löschen?" onclose={() => (deleting = null)}>
+		{#if deleting}
+			<p class="doomed">
+				<span class="a">{deleting.a}</span>
+				{#if !single}<span class="b">{deleting.b}</span>{/if}
+			</p>
+			<p class="muted">Das lässt sich nicht rückgängig machen.</p>
+		{/if}
+		<div class="row">
+			<Button variant="primary" onclick={remove}>Löschen</Button>
+			<Button variant="ghost" onclick={() => (deleting = null)}>Abbrechen</Button>
+		</div>
+	</Modal>
+{/if}
 
 <style>
 	.hero {

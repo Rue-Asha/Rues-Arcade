@@ -6,7 +6,8 @@ const PITCH = {
 	Wavelength: 'Einen Punkt auf einer Skala zwischen zwei Begriffen finden, gemeinsam oder in Teams.',
 	Codes: 'Teams erraten ein geheimes Wort aus Ein-Wort-Hinweisen, reihum.',
 	'What Rhymes with Duck': 'Alle suchen gleichzeitig einen Reim auf dasselbe Wort.',
-	'Most Likely To': 'Ein Spruch, und alle zeigen auf die Person, die am besten passt.'
+	'Most Likely To': 'Ein Spruch, und alle zeigen auf die Person, die am besten passt.',
+	'Family Feud': 'Zwei Teams suchen die häufigsten Antworten einer Umfrage.'
 };
 
 test('Scenario: Each tile shows a one-line pitch', async ({ page }) => {
@@ -26,7 +27,7 @@ test('Scenario: Each tile shows a one-line pitch', async ({ page }) => {
 	}
 
 	const locked = page.locator('.tile.locked');
-	await expect(locked).toHaveCount(2);
+	await expect(locked).toHaveCount(1);
 	for (const pitch of Object.values(PITCH)) await expect(locked.getByText(pitch)).toHaveCount(0);
 	for (const tile of await locked.all()) await expect(tile).toHaveText(/^\s*[\w ]+\s*Bald verfügbar\s*$/);
 });
@@ -108,7 +109,7 @@ test('Scenario: Decoration on every main screen', async ({ page }) => {
 	await expect(page.getByRole('link', { name: /Imposter/ }).locator(deco('masks'))).toHaveCount(1);
 	await expect(page.getByRole('link', { name: /Wavelength/ }).locator(deco('dial'))).toHaveCount(1);
 	const locked = page.locator('.tile.locked');
-	await expect(locked).toHaveCount(2);
+	await expect(locked).toHaveCount(1);
 	for (const tile of await locked.all()) await expect(tile.locator(deco('corner'))).toHaveCount(1);
 
 	await open(page, '/spiele/wavelength');
@@ -216,4 +217,46 @@ test.describe('reduced motion', () => {
 			expect(await ambient(page), path).toBe(0);
 		}
 	});
+});
+
+test('Scenario: Family Feud tile carries its own badge', async ({ page }) => {
+	await page.goto('/');
+	const badge = (name: string) => page.getByRole('link', { name: new RegExp(name) }).locator('.badge svg');
+	const markup = async (name: string) => (await badge(name).innerHTML()).replace(/<!--.*?-->/g, '');
+	const fallback = '<rect x="3" y="7" width="18" height="11" rx="3">';
+
+	await expect(badge('Family Feud')).toHaveCount(1);
+	const feud = await markup('Family Feud');
+	expect(feud).not.toContain(fallback);
+	for (const other of ['Imposter', 'Wavelength', 'Codes', 'What Rhymes with Duck', 'Most Likely To'])
+		expect(feud, other).not.toBe(await markup(other));
+});
+
+test('Scenario: Family Feud art on tile and start screen', async ({ page }) => {
+	const art = (scope: ReturnType<typeof page.locator>) => scope.locator('[data-deco][data-motif="feud"]');
+	// the shapes' paint, compared with what --c resolves to
+	const drawn = (loc: ReturnType<typeof page.locator>) =>
+		loc.evaluate((root) => {
+			const probe = document.createElement('span');
+			probe.style.color = 'var(--feud)';
+			document.body.append(probe);
+			const colour = getComputedStyle(probe).color;
+			probe.remove();
+			const shapes = [...root.querySelectorAll('svg *')].filter((el) => 'getBBox' in el);
+			return { shapes: shapes.length, coloured: shapes.some((el) => getComputedStyle(el).fill === colour) };
+		});
+
+	await page.goto('/');
+	const tile = art(page.getByRole('link', { name: /Family Feud/ }));
+	await expect(tile).toHaveCount(1);
+	expect((await drawn(tile)).shapes).toBeGreaterThan(0);
+	expect((await drawn(tile)).coloured).toBe(true);
+	expect(await decoAudit(page)).toEqual([]);
+
+	await page.goto('/spiele/family-feud');
+	const banner = art(page.locator('header').filter({ has: page.getByRole('heading', { level: 1 }) }));
+	await expect(banner).toHaveCount(1);
+	expect((await drawn(banner)).shapes).toBeGreaterThan(0);
+	expect((await drawn(banner)).coloured).toBe(true);
+	expect(await decoAudit(page)).toEqual([]);
 });

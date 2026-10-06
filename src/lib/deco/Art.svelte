@@ -5,6 +5,7 @@
 	import Crew from './Crew.svelte';
 	import Dial from './Dial.svelte';
 	import Duck from './Duck.svelte';
+	import Feud from './Feud.svelte';
 	import Home from './Home.svelte';
 	import Masks from './Masks.svelte';
 	import MostLikely from './MostLikely.svelte';
@@ -38,6 +39,8 @@
 		<Duck {place} />
 	{:else if motif === 'most-likely'}
 		<MostLikely {place} />
+	{:else if motif === 'feud'}
+		<Feud {place} />
 	{:else if motif === 'corner'}
 		<Corner />
 	{:else}

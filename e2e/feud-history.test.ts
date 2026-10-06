@@ -1,0 +1,120 @@
+import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
+import { board } from '../src/lib/content/survey.ts';
+import type { Survey } from '../src/lib/content/types.ts';
+import { emptyServer, seedPlayers, seedSavedRoster, surveyByQuestion } from './helpers.ts';
+
+const ZOO = 'Nenne ein Tier, das man im Zoo sieht';
+const CREW = ['Alex', 'Bo', 'Cleo', 'Dani'];
+const FRIDGE = 'Nenne etwas, das man in einem Kühlschrank findet';
+// Milch + Eier = 52 in round 1 and Geldbeutel 26 doubled in the last round tie the game
+const BAG = 'Nenne etwas, das in einer Handtasche ist';
+
+type Server = Awaited<ReturnType<typeof emptyServer>>;
+
+async function begin(page: Page, request: APIRequestContext, server: Server, questions: string[]) {
+	const crew = await seedPlayers(request, server.origin, CREW);
+	const surveys: Survey[] = [];
+	for (const q of questions) surveys.push(await surveyByQuestion(request, q, server.origin));
+	await page.goto(`${server.origin}/`);
+	await seedSavedRoster(page, crew);
+	await page.goto(`${server.origin}/spiele/family-feud/lobby`);
+	await page.getByRole('button', { name: String(questions.length), exact: true }).click();
+	await page.getByRole('button', { name: 'Weiter' }).click();
+	await expect(page.getByRole('heading', { name: 'Umfragen', exact: true })).toBeVisible();
+	for (const s of surveys) await page.locator(`[data-survey="${s.id}"]`).getByRole('button', { name: 'Wählen', exact: true }).click();
+	await page.getByRole('button', { name: 'Start', exact: true }).click();
+	await page.waitForURL('**/spielen');
+	return { crew, surveys };
+}
+
+const pick = (page: Page, i: number) => page.locator(`[data-tile="${i}"]`).getByRole('button');
+const press = (page: Page, name: string) => page.getByRole('button', { name, exact: true }).click();
+const handoff = (page: Page) => page.getByTestId('handoff');
+
+async function toBoard(page: Page) {
+	await pick(page, 0).click();
+	await expect(handoff(page)).toBeVisible();
+	await handoff(page).getByRole('button', { name: 'Spielen', exact: true }).click();
+	await expect(handoff(page)).toHaveCount(0);
+}
+
+async function strikeOut(page: Page) {
+	for (let i = 0; i < 3; i++) await press(page, 'Fehler');
+	await expect(handoff(page)).toBeVisible();
+	await handoff(page).getByRole('button', { name: 'Weiter', exact: true }).click();
+	await press(page, 'Nicht auf der Tafel');
+}
+
+type Played = { surveyId: number; playerIds: number[] }[];
+const played = async (request: APIRequestContext, server: Server): Promise<Played> =>
+	(await request.get(`${server.origin}/api/feud/played`)).json();
+const players = (list: Played, id: number) => list.find((p) => p.surveyId === id)?.playerIds.sort((a, b) => a - b);
+
+test('Scenario: Feud closed rounds are recorded', async ({ page, request }, info) => {
+	const server = await emptyServer(info, 'history-closed');
+	try {
+		const { crew, surveys } = await begin(page, request, server, [FRIDGE, ZOO]);
+		await toBoard(page);
+		for (let i = 1; i < board(surveys[0]).length; i++) await pick(page, i).click();
+		await press(page, 'Nächste Runde');
+		await toBoard(page);
+		await pick(page, 1).click();
+		await strikeOut(page);
+		await press(page, 'Zum Ergebnis');
+		await expect(page.getByText('Gewinner', { exact: true })).toBeVisible();
+
+		const ids = crew.map((p) => p.id).sort((a, b) => a - b);
+		await expect.poll(async () => players(await played(request, server), surveys[0].id)).toEqual(ids);
+		await expect.poll(async () => players(await played(request, server), surveys[1].id)).toEqual(ids);
+	} finally {
+		server.close();
+	}
+});
+
+test('Scenario: Feud early end records only closed rounds', async ({ page, request }, info) => {
+	const server = await emptyServer(info, 'history-early');
+	try {
+		const { crew, surveys } = await begin(page, request, server, [FRIDGE, ZOO]);
+		await toBoard(page);
+		for (let i = 1; i < board(surveys[0]).length; i++) await pick(page, i).click();
+		await press(page, 'Nächste Runde');
+		await toBoard(page);
+
+		const ids = crew.map((p) => p.id).sort((a, b) => a - b);
+		await expect.poll(async () => players(await played(request, server), surveys[0].id)).toEqual(ids);
+		await page.getByRole('button', { name: 'Spiel beenden' }).click();
+		await page.getByRole('dialog').getByRole('button', { name: 'Beenden' }).click();
+		await expect(page).toHaveURL(/\/spiele\/family-feud$/);
+
+		expect(players(await played(request, server), surveys[1].id)).toBeUndefined();
+	} finally {
+		server.close();
+	}
+});
+
+test('Scenario: Feud tiebreak survey is recorded', async ({ page, request }, info) => {
+	const server = await emptyServer(info, 'history-tiebreak');
+	try {
+		const { crew, surveys } = await begin(page, request, server, [FRIDGE, BAG]);
+		await toBoard(page);
+		await pick(page, 1).click();
+		await strikeOut(page);
+		await press(page, 'Nächste Runde');
+		await toBoard(page);
+		await strikeOut(page);
+		await press(page, 'Zum Ergebnis');
+
+		await expect(page.getByText('Gewinner', { exact: true })).toHaveCount(0);
+		await pick(page, 0).click();
+		await expect(page.getByText('Stichfrage entschieden', { exact: true })).toBeVisible();
+		await press(page, 'Zum Ergebnis');
+		await expect(page.getByText('Gewinner', { exact: true })).toBeVisible();
+
+		const tiebreak = (await page.evaluate(() => JSON.parse(localStorage.getItem('arcade:session:family-feud')!).state)).config.tiebreak.id;
+		expect(surveys.map((s) => s.id)).not.toContain(tiebreak);
+		const ids = crew.map((p) => p.id).sort((a, b) => a - b);
+		await expect.poll(async () => players(await played(request, server), tiebreak)).toEqual(ids);
+	} finally {
+		server.close();
+	}
+});

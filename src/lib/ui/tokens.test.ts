@@ -25,6 +25,19 @@ describe('design tokens', () => {
 		}
 	});
 
+	it('Scenario: Family Feud colour meets contrast', () => {
+		const listed = (fg: string, bg: string) => textPairs.some(([f, b]) => f === fg && b === bg);
+		expect(listed('ink', 'feud')).toBe(true);
+		expect(listed('feud', 'surface')).toBe(true);
+		for (const text of ['text', 'text-soft', 'muted', 'gold', 'imposter-text'])
+			expect(listed(text, 'feud-tint'), `${text} on feud-tint`).toBe(true);
+		expect(tokens['feud-ledge']).toMatch(/^#[0-9a-f]{6}$/);
+		expect(contrast(tokens.ink, tokens.feud)).toBeGreaterThanOrEqual(4.5);
+		expect(contrast(tokens.feud, tokens.surface)).toBeGreaterThanOrEqual(4.5);
+		for (const text of ['text', 'text-soft', 'muted', 'gold', 'imposter-text'] as const)
+			expect(contrast(tokens[text], tokens['feud-tint']), text).toBeGreaterThanOrEqual(4.5);
+	});
+
 	it('contrast matches the WCAG formula on known pairs', () => {
 		expect(contrast('#000000', '#ffffff')).toBeCloseTo(21, 5);
 		expect(contrast('#777777', '#ffffff')).toBeCloseTo(4.48, 2);

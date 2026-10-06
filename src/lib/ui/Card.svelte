@@ -14,7 +14,8 @@
 		wavelength_spectra: 'wavelength',
 		codes_words: 'codes',
 		duck_words: 'duck',
-		most_likely_prompts: 'most-likely'
+		most_likely_prompts: 'most-likely',
+		feud_surveys: 'feud'
 	};
 	const c = $derived(tone === 'neutral' ? null : colour[tone]);
 </script>

@@ -3,6 +3,7 @@ import { expect, test, type Page, type Route, type TestInfo } from '@playwright/
 import { seedRoster, shot } from './helpers.ts';
 import { walk as walkCodes } from './walks/codes.ts';
 import { walk as walkDuck } from './walks/duck.ts';
+import { walk as walkFeud } from './walks/feud.ts';
 import { walk as walkMostLikely } from './walks/most-likely.ts';
 
 type Check = (slug: string) => Promise<void>;
@@ -151,6 +152,7 @@ async function walk(page: Page, info: TestInfo, check: Check) {
 	await walkCodes(page, check);
 	await walkDuck(page, check);
 	await walkMostLikely(page, check);
+	await walkFeud(page, check);
 
 	await seedRoster(page, Array.from({ length: 13 }, (_, i) => `Spieler ${i + 1}`));
 	await page.goto('/spiele/imposter/lobby');
@@ -324,9 +326,14 @@ test('Scenario: Press Start 2P stays limited to logo and scores', async ({ page 
 
 test('Scenario: Decoration loads no external assets', async ({ page, baseURL }, info) => {
 	const foreign: string[] = [];
+	// the Feud walk loads its pages from its own loopback server (emptyServer), so the origins the main frame
+	// navigates to are the page's own, as long as they are loopback
+	const own = new Set([new URL(baseURL!).origin]);
 	page.on('request', (req) => {
 		const url = new URL(req.url());
-		if (/^https?:$/.test(url.protocol) && url.origin !== new URL(baseURL!).origin) foreign.push(req.url());
+		if (req.isNavigationRequest() && req.frame() === page.mainFrame() && /^https?:$/.test(url.protocol) && /^(localhost|127\.0\.0\.1)$/.test(url.hostname))
+			own.add(url.origin);
+		if (/^https?:$/.test(url.protocol) && !own.has(url.origin)) foreign.push(req.url());
 	});
 	const screens: string[] = [];
 	await walk(page, info, async (slug) => {

@@ -1,13 +1,20 @@
 import type { DatabaseSync } from 'node:sqlite';
 import { error } from '@sveltejs/kit';
 import { pairError, parseBulk, singleError } from '#lib/content/parse.ts';
-import { isSingle, type ContentItem, type ContentType, type ImportReport } from '#lib/content/types.ts';
+import {
+	isSingle,
+	isSurvey,
+	type ContentItem,
+	type ContentType,
+	type ImportReport,
+	type ItemType
+} from '#lib/content/types.ts';
 
 export type Saved =
 	| { ok: true; item: ContentItem }
 	| { ok: false; status: 400 | 404 | 409; message: string };
 
-const columns: Record<ContentType, [string, string] | [string]> = {
+const columns: Record<ItemType, [string, string] | [string]> = {
 	imposter_pairs: ['crew', 'imposter'],
 	wavelength_spectra: ['left_text', 'right_text'],
 	codes_words: ['word'],
@@ -16,7 +23,7 @@ const columns: Record<ContentType, [string, string] | [string]> = {
 };
 
 export function isContentType(s: string): s is ContentType {
-	return Object.hasOwn(columns, s);
+	return Object.hasOwn(columns, s) || isSurvey(s as ContentType);
 }
 
 export function contentType(param: string): ContentType {
@@ -24,7 +31,7 @@ export function contentType(param: string): ContentType {
 	return param;
 }
 
-function sql(type: ContentType) {
+function sql(type: ItemType) {
 	const [a, b] = columns[type];
 	if (!b)
 		return {
@@ -43,12 +50,16 @@ function sql(type: ContentType) {
 	};
 }
 
-export function list(db: DatabaseSync, type: ContentType): ContentItem[] {
+export function count(db: DatabaseSync, type: ContentType): number {
+	return Number(db.prepare(`SELECT count(*) AS n FROM ${type}`).get()?.n);
+}
+
+export function list(db: DatabaseSync, type: ItemType): ContentItem[] {
 	return db.prepare(sql(type).list).all() as unknown as ContentItem[];
 }
 
 // single types take only `a`; `b` is stored nowhere and always comes back as ''
-function clean(type: ContentType, a: string, b: string): { values: string[]; message: string | null } {
+function clean(type: ItemType, a: string, b: string): { values: string[]; message: string | null } {
 	if (isSingle(type)) return { values: [a.trim()], message: singleError(a.trim()) };
 	[a, b] = [a.trim(), b.trim()];
 	return { values: [a, b], message: pairError(a, b) };
@@ -58,7 +69,7 @@ function item(id: number, [a, b = '']: string[]): ContentItem {
 	return { id, a, b };
 }
 
-export function add(db: DatabaseSync, type: ContentType, a: string, b: string): Saved {
+export function add(db: DatabaseSync, type: ItemType, a: string, b: string): Saved {
 	const { values, message } = clean(type, a, b);
 	if (message) return { ok: false, status: 400, message };
 	const r = db.prepare(sql(type).insert).run(...values);
@@ -68,7 +79,7 @@ export function add(db: DatabaseSync, type: ContentType, a: string, b: string): 
 
 export function update(
 	db: DatabaseSync,
-	type: ContentType,
+	type: ItemType,
 	id: number,
 	a: string,
 	b: string
@@ -83,11 +94,11 @@ export function update(
 	return { ok: true, item: item(id, values) };
 }
 
-export function remove(db: DatabaseSync, type: ContentType, id: number): boolean {
+export function remove(db: DatabaseSync, type: ItemType, id: number): boolean {
 	return db.prepare(sql(type).delete).run(id).changes > 0;
 }
 
-export function importBulk(db: DatabaseSync, type: ContentType, text: string): ImportReport {
+export function importBulk(db: DatabaseSync, type: ItemType, text: string): ImportReport {
 	const single = isSingle(type);
 	const { rows, skipped, errors } = parseBulk(text, single);
 	const insert = db.prepare(sql(type).insert);

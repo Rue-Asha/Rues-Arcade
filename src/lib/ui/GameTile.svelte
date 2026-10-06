@@ -45,6 +45,10 @@
 					{:else if def.slug === 'most-likely'}
 						<path d="M4 15l2-9 4 5 2-6 2 6 4-5 2 9z"></path>
 						<path d="M4 19h16"></path>
+					{:else if def.slug === 'family-feud'}
+						<rect x="3" y="5" width="18" height="5" rx="1.5"></rect>
+						<rect x="3" y="12" width="11" height="5" rx="1.5"></rect>
+						<path d="M17 14.5h4"></path>
 					{:else}
 						<rect x="3" y="7" width="18" height="11" rx="3"></rect>
 						<path d="M8 11v3M6.5 12.5h3"></path>

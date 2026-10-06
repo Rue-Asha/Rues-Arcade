@@ -9,14 +9,16 @@ export type Motif =
 	| 'neutral'
 	| 'codes'
 	| 'duck'
-	| 'most-likely';
+	| 'most-likely'
+	| 'feud';
 
 const own: Record<string, Motif> = {
 	imposter: 'masks',
 	wavelength: 'dial',
 	codes: 'codes',
 	duck: 'duck',
-	'most-likely': 'most-likely'
+	'most-likely': 'most-likely',
+	'family-feud': 'feud'
 };
 
 export function motifFor(slug: string | undefined, place: Place): Motif {

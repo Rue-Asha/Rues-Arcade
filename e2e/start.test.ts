@@ -114,7 +114,8 @@ test("Scenario: So geht's for the new games", async ({ page }) => {
 	for (const [slug, first] of [
 		['codes', 'In Teams: pro Runde kennen alle Erklärer dasselbe geheime Wort.'],
 		['duck', 'Ein Wort wird für alle aufgedeckt, alle suchen gleichzeitig einen Reim darauf.'],
-		['most-likely', 'Pro Runde ein Spruch: Wer würde am ehesten …?']
+		['most-likely', 'Pro Runde ein Spruch: Wer würde am ehesten …?'],
+		['family-feud', 'Zwei Teams, eine Umfrage: gesucht sind die häufigsten Antworten.']
 	]) {
 		await page.goto(`/spiele/${slug}`);
 		const rules = page.getByRole('region', { name: "So geht's" }).getByRole('listitem');
@@ -122,6 +123,42 @@ test("Scenario: So geht's for the new games", async ({ page }) => {
 		await expect(rules, slug).toHaveCount(3);
 		await expect(rules.first(), slug).toHaveText(first);
 		for (const rule of await rules.allTextContents()) expect(rule, slug).not.toContain('!');
+	}
+});
+
+test('Scenario: Family Feud banner carries title, badge and range', async ({ page }) => {
+	await page.goto('/spiele/family-feud');
+	const banner = page.locator('header').filter({ has: page.getByRole('heading', { level: 1 }) });
+
+	await expect(banner.getByRole('heading', { level: 1 })).toHaveText('Family Feud');
+	await expect(banner.getByText('F', { exact: true })).toBeVisible();
+	await expect(banner.getByText('4–20 Spieler', { exact: true })).toBeVisible();
+	await expect(
+		banner.getByText('Zwei Teams suchen die häufigsten Antworten einer Umfrage.', { exact: true })
+	).toBeVisible();
+});
+
+test("Scenario: So geht's for Family Feud", async ({ page }) => {
+	await page.goto('/spiele/family-feud');
+	const rules = page.getByRole('region', { name: "So geht's" }).getByRole('listitem');
+
+	await expect(rules).toHaveCount(3);
+	await expect(rules.first()).toHaveText('Zwei Teams, eine Umfrage: gesucht sind die häufigsten Antworten.');
+	for (const rule of await rules.allTextContents()) expect(rule).not.toContain('!');
+});
+
+test('Scenario: Family Feud Inhalte card counts the seeded surveys', async ({ page }, info) => {
+	const server = await emptyServer(info, 'feud-count');
+	try {
+		await page.goto(`${server.origin}/spiele/family-feud`);
+		const more = page.getByRole('region', { name: 'Mehr zu Family Feud' });
+
+		for (const name of ['Erklärung', 'Demo']) await expect(more.getByRole('link', { name, exact: true })).toBeVisible();
+		await expect(more.getByRole('link', { name: 'Inhalte', exact: true })).toHaveAccessibleDescription(
+			'26 Umfragen ansehen und bearbeiten'
+		);
+	} finally {
+		server.close();
 	}
 });
 
@@ -147,7 +184,8 @@ test('Scenario: Start panel first on phone, right column on desktop', async ({ p
 		['wavelength', 'Wavelength'],
 		['codes', 'Codes'],
 		['duck', 'What Rhymes with Duck'],
-		['most-likely', 'Most Likely To']
+		['most-likely', 'Most Likely To'],
+		['family-feud', 'Family Feud']
 	]) {
 		await page.goto(`/spiele/${slug}`);
 		// the page rises in; measure once it has landed
