@@ -184,6 +184,43 @@ describe('db', () => {
 		db.close();
 	});
 
+	it('Scenario: Players table arrives once on an existing database', () => {
+		const path = join(dir, 'before-players.db');
+		const db = openDb(path);
+		const old = loadMigrations().filter((m) => m.name < '0004');
+		migrate(db, old);
+		db.exec("INSERT INTO imposter_pairs (crew, imposter) VALUES ('Hund', 'Katze')");
+		const content = seedCounts(db);
+
+		migrate(db);
+		migrate(db);
+
+		expect(tables(db)).toContain('players');
+		expect(db.prepare('SELECT count(*) AS n FROM players').get()?.n).toBe(0);
+		expect(db.prepare('SELECT crew, imposter FROM imposter_pairs').all()).toEqual([
+			{ crew: 'Hund', imposter: 'Katze' }
+		]);
+		expect(seedCounts(db)).toEqual(content);
+		expect(applied(db).filter((n) => n === '0004_players.sql')).toEqual(['0004_players.sql']);
+		db.close();
+	});
+
+	it('Scenario: Deleting a player cascades to referencing rows', () => {
+		const db = openDb(join(dir, 'cascade.db'));
+		migrate(db);
+		db.exec(
+			'CREATE TABLE seen (player_id INTEGER NOT NULL REFERENCES players(id) ON DELETE CASCADE)'
+		);
+		const id = Number(db.prepare("INSERT INTO players (name) VALUES ('Alex')").run().lastInsertRowid);
+		db.prepare('INSERT INTO seen (player_id) VALUES (?)').run(id);
+
+		db.prepare('DELETE FROM players WHERE id = ?').run(id);
+
+		expect(db.prepare('SELECT count(*) AS n FROM seen').get()?.n).toBe(0);
+		expect(db.prepare('PRAGMA foreign_keys').get()?.foreign_keys).toBe(1);
+		db.close();
+	});
+
 	it('loads migrations in name order', () => {
 		const names = loadMigrations().map((m) => m.name);
 		expect(names).toEqual([...names].sort());
