@@ -1,0 +1,8 @@
+track: feature
+triage: "feature — escalated from tweak (set) at explore with Rue's consent: 6 demo scripts rewritten, Most Likely rebuilt as team game, explanation capability removed; > 5 S-items. One PR. Appetite: one flow run."
+base: main
+gate0: 2026-10-07
+gate1: 2026-10-07  # approved as planned; 5th demo player for ML (partial match) not taken — tip-only
+learnings:
+  - "Explore on a game port where Rue states rules → compare with the archive first and show the deviation (team size, team count, scoring) as a choice. Rue's stated rule wins over the archive. (weil: Rue's ML description differed from the archive on 3 points; Rue chose own rules on each)"
+  - "Track set to tweak but the request names several games → escalate at explore with a count (games × items), and ask. (weil: 3 bullets turned out to be 12 S-items across 6 games)"
