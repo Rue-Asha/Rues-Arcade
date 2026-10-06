@@ -1,37 +1,37 @@
-verified-at: b04eb7a
+verified-at: bd3f21e
 
 # Verification: family-feud
 
 ## Layer 1: proof:full
 
-Result: green (EXIT=0). Unit: 31 files, 268 tests passed. e2e: 380 passed, 2 skipped (project-specific: `No horizontal scroll on phone` on desktop, `Desktop uses the width` on phone).
+Result: green (EXIT=0). Unit: 31 files, 269 tests passed. e2e: 380 passed, 2 skipped (project-specific: `No horizontal scroll on phone` on desktop, `Desktop uses the width` on phone).
 
 ```
-  ✓  371 [desktop] › e2e/look.test.ts:298:1 › Scenario: Press Start 2P stays limited to logo and scores (59.8s)
+  ✓  371 [desktop] › e2e/look.test.ts:298:1 › Scenario: Press Start 2P stays limited to logo and scores (58.8s)
   ✓  370 [phone] › e2e/look.test.ts:327:1 › Scenario: Decoration loads no external assets (1.2m)
+  ✓  373 [phone] › e2e/look.test.ts:346:1 › Scenario: New copy has no exclamation marks (1.1m)
   ✓  372 [desktop] › e2e/look.test.ts:327:1 › Scenario: Decoration loads no external assets (1.2m)
-  ✓  373 [phone] › e2e/look.test.ts:344:1 › Scenario: New copy has no exclamation marks (1.1m)
-  ✓  374 [desktop] › e2e/look.test.ts:344:1 › Scenario: New copy has no exclamation marks (1.0m)
-  -  376 [desktop] › e2e/look.test.ts:359:1 › Scenario: No horizontal scroll on phone
-  ✓  375 [phone] › e2e/look.test.ts:359:1 › Scenario: No horizontal scroll on phone (1.2m)
-  -  378 [phone] › e2e/look.test.ts:364:1 › Scenario: Desktop uses the width
-  ✓  379 [phone] › e2e/look.test.ts:482:2 › reduced motion › Scenario: Reduced motion makes transitions instant (240ms)
-  ✓  380 [phone] › e2e/look.test.ts:494:1 › Scenario: Motion never blocks input (294ms)
-  ✓  377 [desktop] › e2e/look.test.ts:364:1 › Scenario: Desktop uses the width (1.3m)
-  ✓  381 [desktop] › e2e/look.test.ts:482:2 › reduced motion › Scenario: Reduced motion makes transitions instant (241ms)
-  ✓  382 [desktop] › e2e/look.test.ts:494:1 › Scenario: Motion never blocks input (268ms)
+  ✓  375 [desktop] › e2e/look.test.ts:346:1 › Scenario: New copy has no exclamation marks (1.1m)
+  -  376 [desktop] › e2e/look.test.ts:361:1 › Scenario: No horizontal scroll on phone
+  ✓  374 [phone] › e2e/look.test.ts:361:1 › Scenario: No horizontal scroll on phone (1.3m)
+  -  378 [phone] › e2e/look.test.ts:366:1 › Scenario: Desktop uses the width
+  ✓  379 [phone] › e2e/look.test.ts:484:2 › reduced motion › Scenario: Reduced motion makes transitions instant (234ms)
+  ✓  380 [phone] › e2e/look.test.ts:496:1 › Scenario: Motion never blocks input (254ms)
+  ✓  377 [desktop] › e2e/look.test.ts:366:1 › Scenario: Desktop uses the width (1.2m)
+  ✓  381 [desktop] › e2e/look.test.ts:484:2 › reduced motion › Scenario: Reduced motion makes transitions instant (241ms)
+  ✓  382 [desktop] › e2e/look.test.ts:496:1 › Scenario: Motion never blocks input (273ms)
 
-  Slow test file: [phone] › e2e/look.test.ts (7.1m)
+  Slow test file: [phone] › e2e/look.test.ts (7.0m)
   Slow test file: [desktop] › e2e/look.test.ts (6.9m)
   Consider running tests from slow files in parallel. See: https://playwright.dev/docs/test-parallel
   2 skipped
-  380 passed (8.5m)
+  380 passed (8.4m)
 EXIT=0
 ```
 
 ## Layer 2: spec coverage
 
-Gaps: none. 113 scenarios: 111 with a passing test, 2 manual.
+Gaps: none. 115 scenarios: 112 with a passing test, 3 manual.
 
 | Scenario | proof | Evidence |
 |---|---|---|
@@ -52,10 +52,10 @@ Gaps: none. 113 scenarios: 111 with a passing test, 2 manual.
 | Add, edit and delete a survey | e2e | `e2e/feud-content.test.ts:12` › "Add, edit and delete a survey" ✓ (desktop+phone) |
 | Survey board order by points | unit | `src/lib/server/surveys.test.ts` › "Survey board order by points" ✓ |
 | Duplicate survey question rejected | unit | `src/lib/server/surveys.test.ts` › "Duplicate survey question rejected" ✓ |
-| Duplicate answer within a survey rejected | unit | `src/lib/content/survey.test.ts` › "Duplicate answer within a survey rejected" ✓ |
-| Survey points must be whole numbers above zero | unit | `src/lib/content/survey.test.ts` › "Survey points must be whole numbers above zero" ✓ |
-| Survey points sum at most 100 | unit | `src/lib/content/survey.test.ts` › "Survey points sum at most 100" ✓ |
-| Survey needs three to eight answers | unit | `src/lib/content/survey.test.ts` › "Survey needs three to eight answers" ✓ |
+| Duplicate answer within a survey rejected | unit | `src/lib/server/surveys.test.ts` › "Duplicate answer within a survey rejected" ✓ |
+| Survey points must be whole numbers above zero | unit | `src/lib/server/surveys.test.ts` › "Survey points must be whole numbers above zero" ✓ |
+| Survey points sum at most 100 | unit | `src/lib/server/surveys.test.ts` › "Survey points sum at most 100" ✓ |
+| Survey needs three to eight answers | unit | `src/lib/server/surveys.test.ts` › "Survey needs three to eight answers" ✓ |
 | Overlong survey text rejected | unit | `src/lib/content/survey.test.ts` › "Overlong survey text rejected" ✓ |
 | Survey bulk import reports per line | unit | `src/lib/server/surveys.test.ts` › "Survey bulk import reports per line" ✓ |
 | Bulk import of surveys on the Inhalte page | e2e | `e2e/feud-content.test.ts:48` › "Bulk import of surveys on the Inhalte page" ✓ (desktop+phone) |
@@ -145,161 +145,126 @@ Gaps: none. 113 scenarios: 111 with a passing test, 2 manual.
 | Feud motion never blocks input | e2e | `e2e/feud.test.ts:505` › "Feud motion never blocks input" ✓ (desktop+phone) |
 | Feud reduced motion is instant | e2e | `e2e/feud.test.ts:536` › "Feud reduced motion is instant" ✓ (desktop+phone) |
 | Feud copy reads neutral | e2e | `e2e/feud.test.ts:233` › "Feud copy reads neutral" ✓ (desktop+phone) |
-| Feud screens meet the look rules | e2e ("Scenario: Text contrast meets 4.5:1", "Scenario: Touch targets are at least 44px", "Scenario: No horizontal scroll on phone") | `e2e/look.test.ts:228` › "Scenario: Text contrast meets 4.5:1" ✓ (desktop+phone); `e2e/look.test.ts:205` › "Scenario: Touch targets are at least 44px" ✓ (desktop+phone); `e2e/look.test.ts:359` › "Scenario: No horizontal scroll on phone" ✓ (phone) |
+| Feud screens meet the look rules | e2e ("Scenario: Text contrast meets 4.5:1", "Scenario: Touch targets are at least 44px", "Scenario: No horizontal scroll on phone") | `e2e/look.test.ts:228` › "Scenario: Text contrast meets 4.5:1" ✓ (desktop+phone); `e2e/look.test.ts:205` › "Scenario: Touch targets are at least 44px" ✓ (desktop+phone); `e2e/look.test.ts:361` › "Scenario: No horizontal scroll on phone" ✓ (phone) |
 | Feud cues sound right | manual (audio judgement on a real device at Gate 2) | manual: judged at Gate 2 (see checklist) |
 | Feud screens approved on screenshots | manual (visual and tone judgement at Gate 2) | manual: judged at Gate 2 (see checklist) |
+| Package and lockfile carry 0.3.0 | unit | `scripts/version.test.ts` › "Scenario: Package and lockfile carry 0.3.0" ✓ |
+| Release v0.3.0 published | manual (runs on GitHub after the ship-time tag push) | manual: after merge, tag `v0.3.0` on main and push it; see checklist |
 
 ## Manual checklist (Gate 2)
 
-- Run `npm run dev`, open http://localhost:5173, start Family Feud with four saved players, and listen to the cues (face-off buzz, correct reveal, strike, steal, winner) on a real device: Feud cues sound right.
-- Look through `shots/` (phone and desktop) and judge look and tone of every Feud screen: Feud screens approved on screenshots.
+1. `npm run dev`, open http://localhost:5173/spiele/family-feud/lobby, play one round with sound on: strike buzzer, reveal ding, steal and winner cues sound right (Feud cues sound right).
+2. Look through `shots/*-look-feud-*.png` (phone and desktop) for layout, tone and team colours (Feud screens approved on screenshots).
+3. After merge: tag `v0.3.0` on the merge commit on main and push the tag; check the release workflow passes `check-tag` and the GitHub release holds `rues-arcade-0.3.0.tgz` and `.sha256` (Release v0.3.0 published).
 
-## Diffstat
+## Diffstat (git diff --stat origin/main...flow/family-feud)
 
 ```
- CLAUDE.md                                          |   4 +-
- e2e/deco.test.ts                                   |  49 +-
- e2e/feud-content.test.ts                           |  81 +++
- e2e/feud-demo.test.ts                              | 111 ++++
- e2e/feud-history.test.ts                           | 120 ++++
- e2e/feud-prep.test.ts                              | 228 ++++++++
- e2e/feud-setup.test.ts                             | 220 ++++++++
- e2e/feud.test.ts                                   | 613 +++++++++++++++++++++
- e2e/helpers.ts                                     |  66 ++-
- e2e/home.test.ts                                   |  17 +-
- e2e/look.test.ts                                   |   8 +-
- e2e/players-api.test.ts                            |  47 ++
- e2e/players.test.ts                                | 265 +++++++++
- e2e/roster.test.ts                                 |  18 +-
- e2e/start.test.ts                                  |  42 +-
- e2e/walks/feud.ts                                  | 100 ++++
- migrations/0004_players.sql                        |   5 +
- migrations/0005_feud.sql                           |  12 +
- migrations/0006_seed_surveys.sql                   |  28 +
- .../2026-10-06-player-database/.openspec.yaml      |   2 +
- .../archive/2026-10-06-player-database/design.md   | 158 ++++++
- .../archive/2026-10-06-player-database/flow.yaml   |  11 +
- .../archive/2026-10-06-player-database/proposal.md |  59 ++
- .../archive/2026-10-06-player-database/scope.md    |  65 +++
- .../shots/desktop-look-lobby-pick.png              | Bin 0 -> 104804 bytes
- .../shots/desktop-look-spieler.png                 | Bin 0 -> 70118 bytes
- .../shots/desktop-spieler-gast.png                 | Bin 0 -> 60220 bytes
- .../shots/desktop-spieler-gespeichert-leer.png     | Bin 0 -> 59974 bytes
- .../shots/desktop-spieler-gespeichert.png          | Bin 0 -> 57082 bytes
- .../shots/desktop-spieler-leer.png                 | Bin 0 -> 59974 bytes
- .../shots/desktop-spieler.png                      | Bin 0 -> 60339 bytes
- .../shots/phone-look-lobby-pick.png                | Bin 0 -> 60655 bytes
- .../shots/phone-look-spieler.png                   | Bin 0 -> 71844 bytes
- .../shots/phone-spieler-gast.png                   | Bin 0 -> 53441 bytes
- .../shots/phone-spieler-gespeichert-leer.png       | Bin 0 -> 51588 bytes
- .../shots/phone-spieler-gespeichert.png            | Bin 0 -> 51254 bytes
- .../shots/phone-spieler-leer.png                   | Bin 0 -> 51588 bytes
- .../shots/phone-spieler.png                        | Bin 0 -> 57736 bytes
- .../specs/players/spec.md                          |  88 +++
- .../specs/roster/spec.md                           | 158 ++++++
- .../archive/2026-10-06-player-database/tasks.md    |  32 ++
- .../2026-10-06-player-database/verification.md     | 139 +++++
- openspec/changes/family-feud/.openspec.yaml        |   2 +
- openspec/changes/family-feud/design.md             | 247 +++++++++
- openspec/changes/family-feud/flow.yaml             |  11 +
- openspec/changes/family-feud/proposal.md           |  71 +++
- openspec/changes/family-feud/scope.md              |  99 ++++
- .../changes/family-feud/specs/catalogue/spec.md    |  99 ++++
- .../family-feud/specs/content-store/spec.md        |  87 +++
- .../family-feud/specs/design-system/spec.md        |  28 +
- openspec/changes/family-feud/specs/feud/spec.md    | 502 +++++++++++++++++
- openspec/changes/family-feud/tasks.md              |  66 +++
- openspec/specs/players/spec.md                     |  92 ++++
- openspec/specs/roster/spec.md                      | 123 ++++-
- package-lock.json                                  |   4 +-
- package.json                                       |   2 +-
- scripts/version.test.ts                            |   2 +-
- src/app.css                                        |   3 +
- src/lib/content/survey.test.ts                     | 103 ++++
- src/lib/content/survey.ts                          |  63 +++
- src/lib/content/types.ts                           |  26 +-
- src/lib/deco/Art.svelte                            |   3 +
- src/lib/deco/Feud.svelte                           |  91 +++
- src/lib/deco/motifs.test.ts                        |  20 +-
- src/lib/deco/motifs.ts                             |   6 +-
- src/lib/games/feud/Board.svelte                    | 149 +++++
- src/lib/games/feud/Handoff.svelte                  |  85 +++
- src/lib/games/feud/Prep.svelte                     | 340 ++++++++++++
- src/lib/games/feud/Screen.svelte                   | 513 +++++++++++++++++
- src/lib/games/feud/Setup.svelte                    | 233 ++++++++
- src/lib/games/feud/demo.test.ts                    |  42 ++
- src/lib/games/feud/demo.ts                         |  52 ++
- src/lib/games/feud/engine.test.ts                  | 355 ++++++++++++
- src/lib/games/feud/engine.ts                       | 249 +++++++++
- src/lib/games/feud/index.ts                        |  16 +
- src/lib/games/feud/prep.test.ts                    |  84 +++
- src/lib/games/feud/prep.ts                         |  49 ++
- src/lib/games/feud/record.ts                       |  12 +
- src/lib/games/registry.test.ts                     |  29 +-
- src/lib/games/registry.ts                          |   9 +-
- src/lib/players.ts                                 |  52 ++
- src/lib/roster.svelte.ts                           | 138 ++++-
- src/lib/roster.test.ts                             | 384 +++++++++++++
- src/lib/server/content.ts                          |  31 +-
- src/lib/server/db.test.ts                          |  51 ++
- src/lib/server/db.ts                               |   5 +-
- src/lib/server/played.test.ts                      |  63 +++
- src/lib/server/played.ts                           |  27 +
- src/lib/server/players.test.ts                     | 111 ++++
- src/lib/server/players.ts                          |  45 ++
- src/lib/server/surveys.test.ts                     | 183 ++++++
- src/lib/server/surveys.ts                          |  67 +++
- src/lib/ui/Card.svelte                             |   3 +-
- src/lib/ui/CoachTip.svelte                         |   2 +-
- src/lib/ui/GameTile.svelte                         |   4 +
- src/lib/ui/HoldToView.svelte                       |  52 +-
- src/lib/ui/Lives.svelte                            |  45 +-
- src/lib/ui/tokens.test.ts                          |  13 +
- src/lib/ui/tokens.ts                               |  12 +-
- src/routes/+layout.svelte                          |   6 +-
- src/routes/api/content/[type]/+server.ts           |  13 +-
- src/routes/api/content/[type]/[id]/+server.ts      |  12 +-
- src/routes/api/content/[type]/import/+server.ts    |   7 +-
- src/routes/api/feud/played/+server.ts              |  15 +
- .../api/feud/played/[survey]/[player]/+server.ts   |  14 +
- src/routes/api/players/+server.ts                  |  13 +
- src/routes/api/players/[id]/+server.ts             |  23 +
- src/routes/spiele/[slug]/+page.server.ts           |   4 +-
- src/routes/spiele/[slug]/+page.svelte              |   8 +-
- src/routes/spiele/[slug]/inhalte/+page.server.ts   |   7 +-
- src/routes/spiele/[slug]/inhalte/+page.svelte      | 257 ++++-----
- .../spiele/[slug]/inhalte/SurveyEditor.svelte      | 587 ++++++++++++++++++++
- src/routes/spiele/[slug]/lobby/+page.svelte        |  15 +-
- src/routes/spiele/[slug]/spielen/+page.svelte      |   2 +
- src/routes/spieler/+page.svelte                    | 212 ++++++-
- 115 files changed, 8990 insertions(+), 206 deletions(-)
+ e2e/deco.test.ts                                                |  49 ++-
+ e2e/feud-content.test.ts                                        |  81 ++++
+ e2e/feud-demo.test.ts                                           | 111 +++++
+ e2e/feud-history.test.ts                                        | 120 ++++++
+ e2e/feud-prep.test.ts                                           | 228 +++++++++++
+ e2e/feud-setup.test.ts                                          | 220 ++++++++++
+ e2e/feud.test.ts                                                | 613 ++++++++++++++++++++++++++++
+ e2e/helpers.ts                                                  |  42 +-
+ e2e/home.test.ts                                                |  17 +-
+ e2e/look.test.ts                                                |   8 +-
+ e2e/start.test.ts                                               |  42 +-
+ e2e/walks/feud.ts                                               | 100 +++++
+ migrations/0005_feud.sql                                        |  12 +
+ migrations/0006_seed_surveys.sql                                |  28 ++
+ openspec/changes/family-feud/.openspec.yaml                     |   2 +
+ openspec/changes/family-feud/design.md                          | 247 +++++++++++
+ openspec/changes/family-feud/flow.yaml                          |  11 +
+ openspec/changes/family-feud/proposal.md                        |  71 ++++
+ openspec/changes/family-feud/scope.md                           |  99 +++++
+ openspec/changes/family-feud/shots/desktop-look-feud-board.png  | Bin 0 -> 75731 bytes
+ .../family-feud/shots/desktop-look-feud-faceoff-double.png      | Bin 0 -> 85842 bytes
+ .../changes/family-feud/shots/desktop-look-feud-faceoff.png     | Bin 0 -> 70989 bytes
+ .../changes/family-feud/shots/desktop-look-feud-handoff.png     | Bin 0 -> 22153 bytes
+ .../changes/family-feud/shots/desktop-look-feud-peek-held.png   | Bin 0 -> 93801 bytes
+ openspec/changes/family-feud/shots/desktop-look-feud-prep.png   | Bin 0 -> 422219 bytes
+ .../family-feud/shots/desktop-look-feud-result-double.png       | Bin 0 -> 70375 bytes
+ openspec/changes/family-feud/shots/desktop-look-feud-result.png | Bin 0 -> 76331 bytes
+ .../family-feud/shots/desktop-look-feud-steal-handoff.png       | Bin 0 -> 19698 bytes
+ openspec/changes/family-feud/shots/desktop-look-feud-steal.png  | Bin 0 -> 74386 bytes
+ openspec/changes/family-feud/shots/desktop-look-feud-winner.png | Bin 0 -> 59189 bytes
+ .../family-feud/shots/desktop-look-lobby-family-feud.png        | Bin 0 -> 122169 bytes
+ .../family-feud/shots/desktop-look-start-family-feud.png        | Bin 0 -> 128686 bytes
+ openspec/changes/family-feud/shots/phone-look-feud-board.png    | Bin 0 -> 56748 bytes
+ .../family-feud/shots/phone-look-feud-faceoff-double.png        | Bin 0 -> 53559 bytes
+ openspec/changes/family-feud/shots/phone-look-feud-faceoff.png  | Bin 0 -> 58346 bytes
+ openspec/changes/family-feud/shots/phone-look-feud-handoff.png  | Bin 0 -> 17681 bytes
+ .../changes/family-feud/shots/phone-look-feud-peek-held.png     | Bin 0 -> 53721 bytes
+ openspec/changes/family-feud/shots/phone-look-feud-prep.png     | Bin 0 -> 341482 bytes
+ .../changes/family-feud/shots/phone-look-feud-result-double.png | Bin 0 -> 54505 bytes
+ openspec/changes/family-feud/shots/phone-look-feud-result.png   | Bin 0 -> 58537 bytes
+ .../changes/family-feud/shots/phone-look-feud-steal-handoff.png | Bin 0 -> 14830 bytes
+ openspec/changes/family-feud/shots/phone-look-feud-steal.png    | Bin 0 -> 58537 bytes
+ openspec/changes/family-feud/shots/phone-look-feud-winner.png   | Bin 0 -> 44955 bytes
+ .../changes/family-feud/shots/phone-look-lobby-family-feud.png  | Bin 0 -> 64712 bytes
+ .../changes/family-feud/shots/phone-look-start-family-feud.png  | Bin 0 -> 88137 bytes
+ openspec/changes/family-feud/specs/catalogue/spec.md            |  99 +++++
+ openspec/changes/family-feud/specs/content-store/spec.md        |  87 ++++
+ openspec/changes/family-feud/specs/design-system/spec.md        |  28 ++
+ openspec/changes/family-feud/specs/feud/spec.md                 | 502 +++++++++++++++++++++++
+ openspec/changes/family-feud/specs/release/spec.md              |  20 +
+ openspec/changes/family-feud/tasks.md                           |  66 +++
+ openspec/changes/family-feud/verification.md                    | 305 ++++++++++++++
+ package-lock.json                                               |   4 +-
+ package.json                                                    |   2 +-
+ scripts/version.test.ts                                         |   4 +-
+ src/app.css                                                     |   3 +
+ src/lib/content/survey.test.ts                                  |  63 +++
+ src/lib/content/survey.ts                                       |  63 +++
+ src/lib/content/types.ts                                        |  26 +-
+ src/lib/deco/Art.svelte                                         |   3 +
+ src/lib/deco/Feud.svelte                                        |  91 +++++
+ src/lib/deco/motifs.test.ts                                     |  20 +-
+ src/lib/deco/motifs.ts                                          |   6 +-
+ src/lib/games/feud/Board.svelte                                 | 149 +++++++
+ src/lib/games/feud/Handoff.svelte                               |  85 ++++
+ src/lib/games/feud/Prep.svelte                                  | 340 +++++++++++++++
+ src/lib/games/feud/Screen.svelte                                | 513 +++++++++++++++++++++++
+ src/lib/games/feud/Setup.svelte                                 | 233 +++++++++++
+ src/lib/games/feud/demo.test.ts                                 |  42 ++
+ src/lib/games/feud/demo.ts                                      |  52 +++
+ src/lib/games/feud/engine.test.ts                               | 355 ++++++++++++++++
+ src/lib/games/feud/engine.ts                                    | 249 +++++++++++
+ src/lib/games/feud/index.ts                                     |  16 +
+ src/lib/games/feud/prep.test.ts                                 |  85 ++++
+ src/lib/games/feud/prep.ts                                      |  49 +++
+ src/lib/games/feud/record.ts                                    |  12 +
+ src/lib/games/registry.test.ts                                  |  29 +-
+ src/lib/games/registry.ts                                       |   9 +-
+ src/lib/server/content.ts                                       |  31 +-
+ src/lib/server/played.test.ts                                   |  63 +++
+ src/lib/server/played.ts                                        |  27 ++
+ src/lib/server/surveys.test.ts                                  | 267 ++++++++++++
+ src/lib/server/surveys.ts                                       |  81 ++++
+ src/lib/ui/Card.svelte                                          |   3 +-
+ src/lib/ui/CoachTip.svelte                                      |   2 +-
+ src/lib/ui/GameTile.svelte                                      |   4 +
+ src/lib/ui/HoldToView.svelte                                    |  52 ++-
+ src/lib/ui/Lives.svelte                                         |  45 +-
+ src/lib/ui/tokens.test.ts                                       |  13 +
+ src/lib/ui/tokens.ts                                            |  12 +-
+ src/routes/api/content/[type]/+server.ts                        |  13 +-
+ src/routes/api/content/[type]/[id]/+server.ts                   |  12 +-
+ src/routes/api/content/[type]/import/+server.ts                 |   7 +-
+ src/routes/api/feud/played/+server.ts                           |  15 +
+ src/routes/api/feud/played/[survey]/[player]/+server.ts         |  14 +
+ src/routes/spiele/[slug]/+page.server.ts                        |   4 +-
+ src/routes/spiele/[slug]/+page.svelte                           |   8 +-
+ src/routes/spiele/[slug]/inhalte/+page.server.ts                |   7 +-
+ src/routes/spiele/[slug]/inhalte/+page.svelte                   | 257 ++++++------
+ src/routes/spiele/[slug]/inhalte/SurveyEditor.svelte            | 587 ++++++++++++++++++++++++++
+ src/routes/spiele/[slug]/lobby/+page.svelte                     |  12 +
+ src/routes/spiele/[slug]/spielen/+page.svelte                   |   2 +
+ 102 files changed, 7062 insertions(+), 187 deletions(-)
 ```
 
 ## Screenshots
 
-- `openspec/changes/family-feud/shots/desktop-look-feud-board.png`
-- `openspec/changes/family-feud/shots/desktop-look-feud-faceoff-double.png`
-- `openspec/changes/family-feud/shots/desktop-look-feud-faceoff.png`
-- `openspec/changes/family-feud/shots/desktop-look-feud-handoff.png`
-- `openspec/changes/family-feud/shots/desktop-look-feud-peek-held.png`
-- `openspec/changes/family-feud/shots/desktop-look-feud-prep.png`
-- `openspec/changes/family-feud/shots/desktop-look-feud-result-double.png`
-- `openspec/changes/family-feud/shots/desktop-look-feud-result.png`
-- `openspec/changes/family-feud/shots/desktop-look-feud-steal-handoff.png`
-- `openspec/changes/family-feud/shots/desktop-look-feud-steal.png`
-- `openspec/changes/family-feud/shots/desktop-look-feud-winner.png`
-- `openspec/changes/family-feud/shots/desktop-look-lobby-family-feud.png`
-- `openspec/changes/family-feud/shots/desktop-look-start-family-feud.png`
-- `openspec/changes/family-feud/shots/phone-look-feud-board.png`
-- `openspec/changes/family-feud/shots/phone-look-feud-faceoff-double.png`
-- `openspec/changes/family-feud/shots/phone-look-feud-faceoff.png`
-- `openspec/changes/family-feud/shots/phone-look-feud-handoff.png`
-- `openspec/changes/family-feud/shots/phone-look-feud-peek-held.png`
-- `openspec/changes/family-feud/shots/phone-look-feud-prep.png`
-- `openspec/changes/family-feud/shots/phone-look-feud-result-double.png`
-- `openspec/changes/family-feud/shots/phone-look-feud-result.png`
-- `openspec/changes/family-feud/shots/phone-look-feud-steal-handoff.png`
-- `openspec/changes/family-feud/shots/phone-look-feud-steal.png`
-- `openspec/changes/family-feud/shots/phone-look-feud-winner.png`
-- `openspec/changes/family-feud/shots/phone-look-lobby-family-feud.png`
-- `openspec/changes/family-feud/shots/phone-look-start-family-feud.png`
+`openspec/changes/family-feud/shots/{phone,desktop}-look-<slug>.png`, slugs: feud-board, feud-faceoff, feud-faceoff-double, feud-handoff, feud-peek-held, feud-prep, feud-result, feud-result-double, feud-steal, feud-steal-handoff, feud-winner, lobby-family-feud, start-family-feud. Refreshed this round (7 differ from round 1): phone feud-faceoff-double, feud-result-double, feud-result, feud-steal, feud-winner; desktop feud-faceoff-double, feud-steal.
