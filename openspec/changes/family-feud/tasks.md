@@ -56,11 +56,11 @@ German, no "!" and no emoji. Shared e2e data rules: design.md → E2E data isola
 
 > unit: depends=2,4,5 · scope=S7 · files=src/lib/games/feud/record.ts, src/lib/games/feud/index.ts, src/routes/spiele/[slug]/spielen/+page.svelte, e2e/feud-history.test.ts
 
-- [ ] 6.1 Play route calls `entry.onchange?.(prev, next)` after each dispatch (demo route untouched); `record.ts` POSTs newly closed survey ids with `config.saved`; wire it in `index.ts` (Scenario: Feud closed rounds are recorded · Feud early end records only closed rounds · Feud tiebreak survey is recorded)
+- [x] 6.1 Play route calls `entry.onchange?.(prev, next)` after each dispatch (demo route untouched); `record.ts` POSTs newly closed survey ids with `config.saved`; wire it in `index.ts` (Scenario: Feud closed rounds are recorded · Feud early end records only closed rounds · Feud tiebreak survey is recorded)
 
 ## 7. Demo
 
 > unit: depends=2,4,5 · scope=S16 · files=src/lib/games/feud/demo.ts, src/lib/games/feud/demo.test.ts, e2e/feud-demo.test.ts
 
-- [ ] 7.1 Demo fixture and script: Alex & Bo vs Cleo & Dani, one round with face-off, Spielen, a reveal, three strikes, a steal and the result, neutral coach tips (Scenario: Feud demo script plays to the end)
-- [ ] 7.2 Demo e2e on `emptyServer` with the survey table emptied, data-untouched check against real state, reduced motion (Scenario: Feud demo by tapping highlighted controls · Feud demo leaves data untouched · Feud demo completes with reduced motion)
+- [x] 7.1 Demo fixture and script: Alex & Bo vs Cleo & Dani, one round with face-off, Spielen, a reveal, three strikes, a steal and the result, neutral coach tips (Scenario: Feud demo script plays to the end)
+- [x] 7.2 Demo e2e on `emptyServer` with the survey table emptied, data-untouched check against real state, reduced motion (Scenario: Feud demo by tapping highlighted controls · Feud demo leaves data untouched · Feud demo completes with reduced motion)
