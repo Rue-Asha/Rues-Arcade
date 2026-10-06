@@ -2,5 +2,7 @@ triage: "feature — global saved-player database for the roster, foundation for
 track: feature
 base: main
 worktree: /home/Rue/Repos/Rues-Arcade-player-database
-learnings: []
+learnings:
+  - "planner: phone+desktop Playwright projects write the shared e2e DB concurrently and layout sync links any guest whose name is saved → UI tests writing saved players use emptyServer, shared-DB API writes use per-project names"
 gate0: 2026-10-06
+gate1: 2026-10-06
