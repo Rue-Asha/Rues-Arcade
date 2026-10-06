@@ -65,7 +65,7 @@ jobs:
     uses: Rue-Asha/ci/.github/workflows/bump-pin.yml@7b49f3dcf37c61aea3722e68917bc06db507f386 # v1.1.0
     with:
       app: rues-arcade
-      host_vars_path: ansible/inventory/host_vars/arcade01/vars.yml
+      host_vars_path: ansible/inventory/host_vars/rues-arcade01/vars.yml
       variable: rues_arcade_version
       tag: ${{ github.ref_name }}
     secrets:
