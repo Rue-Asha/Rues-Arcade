@@ -3,6 +3,7 @@ import { expect, test, type Page, type Route, type TestInfo } from '@playwright/
 import { seedRoster, shot } from './helpers.ts';
 import { walk as walkCodes } from './walks/codes.ts';
 import { walk as walkDuck } from './walks/duck.ts';
+import { walk as walkFeud } from './walks/feud.ts';
 import { walk as walkMostLikely } from './walks/most-likely.ts';
 
 type Check = (slug: string) => Promise<void>;
@@ -151,6 +152,7 @@ async function walk(page: Page, info: TestInfo, check: Check) {
 	await walkCodes(page, check);
 	await walkDuck(page, check);
 	await walkMostLikely(page, check);
+	await walkFeud(page, check);
 
 	await seedRoster(page, Array.from({ length: 13 }, (_, i) => `Spieler ${i + 1}`));
 	await page.goto('/spiele/imposter/lobby');

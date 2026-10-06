@@ -2,8 +2,8 @@ import { expect, type APIRequestContext, type Page, type TestInfo } from '@playw
 import { spawn } from 'node:child_process';
 import { rmSync } from 'node:fs';
 import { resolve } from 'node:path';
-import type { SavedPlayer } from '../src/lib/players.ts';
-import type { ContentType } from '../src/lib/content/types.ts';
+import { playerId, type SavedPlayer } from '../src/lib/players.ts';
+import type { ContentType, Survey } from '../src/lib/content/types.ts';
 
 export async function seedRoster(page: Page, names: string[]) {
 	if (page.url() === 'about:blank') await page.goto('/');
@@ -45,6 +45,39 @@ export async function seedPlayers(request: APIRequestContext, origin: string, na
 		saved.push(await res.json());
 	}
 	return saved;
+}
+
+// Kit's CSRF check rejects writes without an origin header, so every content and played-with write sends one
+export function writeHeaders(origin: string): { origin: string } {
+	return { origin };
+}
+
+const sharedOrigin = () => `http://localhost:${process.env.PORT ?? 4173}`;
+
+// saved players first, as player-<id> entries, then guests with guest ids; no test relies on name linking
+export async function seedSavedRoster(page: Page, saved: SavedPlayer[], guests: string[] = []) {
+	const players = [
+		...saved.map((p) => ({ id: playerId(p.id), name: p.name })),
+		...guests.map((name, i) => ({ id: `p${i + 1}`, name }))
+	];
+	await page.evaluate((list) => localStorage.setItem('arcade:roster', JSON.stringify(list)), players);
+}
+
+export async function surveyByQuestion(
+	request: APIRequestContext,
+	question: string,
+	origin?: string
+): Promise<Survey> {
+	const res = await request.get(`${origin ?? ''}/api/content/feud_surveys`);
+	expect(res.ok()).toBe(true);
+	const found = ((await res.json()) as Survey[]).find((s) => s.question === question);
+	expect(found, question).toBeDefined();
+	return found!;
+}
+
+export async function deleteSurvey(request: APIRequestContext, id: number, origin = sharedOrigin()) {
+	const res = await request.delete(`${origin}/api/content/feud_surveys/${id}`, { headers: writeHeaders(origin) });
+	expect(res.status()).toBe(204);
 }
 
 export async function shot(page: Page, info: TestInfo, slug: string) {
