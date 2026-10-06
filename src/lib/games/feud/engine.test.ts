@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Survey } from '#lib/content/types.ts';
-import { due, feud, multiplier, named, pot, survey as current, type FeudAction, type FeudState, type FeudTeam } from './engine.ts';
+import { canUndo, due, feud, multiplier, named, pot, survey as current, type FeudAction, type FeudState, type FeudTeam } from './engine.ts';
 
 const survey = (id: number, points: number[]): Survey => ({
 	id,
@@ -267,5 +267,89 @@ describe('feud engine: end and sudden death', () => {
 			['a2', 'b1'],
 			['a3', 'b2']
 		]);
+	});
+});
+
+function freeze<T>(v: T): T {
+	if (v && typeof v === 'object') {
+		Object.values(v).forEach(freeze);
+		Object.freeze(v);
+	}
+	return v;
+}
+
+const undo: FeudAction = { type: 'undo' };
+
+describe('feud engine: undo and purity', () => {
+	it('Scenario: Feud undo steps back through the round', () => {
+		const actions: FeudAction[] = [
+			{ type: 'answer', tile: 0 },
+			{ type: 'play' },
+			{ type: 'reveal', tile: 2 },
+			{ type: 'strike' }
+		];
+		const seen = [start()];
+		for (const a of actions) seen.push(step(seen.at(-1)!, a));
+		expect(canUndo(seen[0])).toBe(false);
+		expect(canUndo(seen[4])).toBe(true);
+
+		let s = seen[4];
+		for (let i = 3; i >= 0; i--) {
+			s = step(s, undo);
+			expect(s).toEqual(seen[i]);
+		}
+		expect(s.phase).toBe('faceoff');
+		expect(canUndo(s)).toBe(false);
+		expect(step(s, undo)).toBe(s);
+	});
+
+	it('Scenario: Feud undo stops at the round start', () => {
+		const result = bank40(start(3, [A3, B2], forty));
+		const back = step(result, undo);
+		expect(back.phase).toBe('steal');
+		expect(back.scores).toEqual([0, 0]);
+
+		const s = step(result, { type: 'next' });
+		expect(canUndo(s)).toBe(false);
+		expect(step(s, undo)).toBe(s);
+		expect(s.scores).toEqual([40, 0]);
+		expect(s.closed).toEqual([1]);
+	});
+
+	it('Scenario: Feud undo of the third strike returns to the board', () => {
+		const steal = step(board40(start()), ...strikes);
+		expect(steal.phase).toBe('steal');
+		const s = step(steal, undo);
+		expect(s.phase).toBe('board');
+		expect(s.strikes).toBe(2);
+	});
+
+	it('Scenario: Feud engine is deterministic and pure', () => {
+		const actions: FeudAction[] = [
+			{ type: 'answer', tile: null },
+			{ type: 'answer', tile: null },
+			{ type: 'answer', tile: 3 },
+			{ type: 'answer', tile: 1 },
+			{ type: 'pass' },
+			undo,
+			{ type: 'play' },
+			{ type: 'reveal', tile: 0 },
+			...strikes,
+			{ type: 'steal', tile: 4 },
+			{ type: 'next' },
+			{ type: 'answer', tile: 0 },
+			{ type: 'play' },
+			...[0, 1, 2, 3, 4].map((tile): FeudAction => ({ type: 'reveal', tile })),
+			{ type: 'next' }
+		];
+		const init = () => start(2, [A3, B2], [30, 25, 18, 12, 8], 42);
+		const a = step(init(), ...actions);
+		const b = step(init(), ...actions);
+		expect(a).toEqual(b);
+		expect(a.phase).toBe('gameOver');
+
+		let s = freeze(init());
+		for (const action of actions) s = freeze(feud.reduce(s, action));
+		expect(s).toEqual(a);
 	});
 });

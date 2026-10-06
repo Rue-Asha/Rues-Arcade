@@ -31,7 +31,7 @@ export interface FeudState {
 	// survey ids of rounds closed by `next`, sudden death included
 	closed: number[];
 	// undo stack of the current round
-	past: unknown[];
+	past: FeudSnapshot[];
 	// rotation index of the named player per team
 	cursors: [number, number];
 	// face-off answers of the named pair so far, first team's first; null = miss
@@ -48,6 +48,9 @@ export interface FeudState {
 	// set on game over
 	winner: number | null;
 }
+
+// the fields an action within a round can change
+export type FeudSnapshot = Omit<FeudState, 'rng' | 'config' | 'round' | 'closed' | 'past'>;
 
 export interface FeudGain {
 	team: number;
@@ -98,6 +101,8 @@ function advance(s: FeudState): [number, number] {
 	return [(s.cursors[0] + 1) % a.players.length, (s.cursors[1] + 1) % b.players.length];
 }
 
+const hidden = (s: FeudState, tile: number) => s.revealed[tile] === false;
+
 function reveal(s: FeudState, tile: number): boolean[] {
 	return s.revealed.map((r, i) => r || i === tile);
 }
@@ -119,8 +124,6 @@ function bank(s: FeudState, team: number, stolen = false): FeudState {
 	scores[team] += points;
 	return { ...s, phase: 'result', scores, gain: { team, points, stolen } };
 }
-
-const hidden = (s: FeudState, tile: number) => s.revealed[tile] === false;
 
 function fresh(s: FeudState, round: number): FeudState {
 	const next = { ...s, round };
@@ -167,6 +170,45 @@ function close(s: FeudState): FeudState {
 	return { ...next, phase: 'gameOver', winner: a > b ? 0 : 1 };
 }
 
+export function canUndo(s: FeudState): boolean {
+	return s.past.length > 0;
+}
+
+function snapshot(s: FeudState): FeudSnapshot {
+	const { phase, scores, cursors, answers, control, playing, revealed, strikes, gain, winner } = s;
+	return { phase, scores, cursors, answers, control, playing, revealed, strikes, gain, winner };
+}
+
+function undo(s: FeudState): FeudState {
+	if (!canUndo(s)) return s;
+	return { ...s, ...s.past.at(-1)!, past: s.past.slice(0, -1) };
+}
+
+function act(s: FeudState, action: FeudAction): FeudState {
+	switch (action.type) {
+		case 'answer':
+			return s.phase === 'faceoff' ? answer(s, action.tile) : s;
+		case 'play':
+		case 'pass':
+			if (s.phase !== 'choose') return s;
+			return { ...s, phase: 'board', playing: action.type === 'play' ? s.control : 1 - s.control! };
+		case 'reveal': {
+			if (s.phase !== 'board' || !hidden(s, action.tile)) return s;
+			const next = { ...s, revealed: reveal(s, action.tile) };
+			return next.revealed.every(Boolean) ? bank(next, s.playing!) : next;
+		}
+		case 'strike':
+			if (s.phase !== 'board') return s;
+			return { ...s, strikes: s.strikes + 1, phase: s.strikes + 1 === STRIKES ? 'steal' : 'board' };
+		case 'steal':
+			if (s.phase !== 'steal') return s;
+			if (action.tile === null) return bank(s, s.playing!);
+			if (!hidden(s, action.tile)) return s;
+			return bank({ ...s, revealed: reveal(s, action.tile) }, 1 - s.playing!, true);
+	}
+	return s;
+}
+
 export const feud: GameDef<FeudState, FeudAction, FeudConfig> = {
 	slug: 'family-feud',
 	name: 'Family Feud',
@@ -196,30 +238,10 @@ export const feud: GameDef<FeudState, FeudAction, FeudConfig> = {
 		};
 	},
 	reduce(s, action) {
-		switch (action.type) {
-			case 'answer':
-				return s.phase === 'faceoff' ? answer(s, action.tile) : s;
-			case 'play':
-			case 'pass':
-				if (s.phase !== 'choose') return s;
-				return { ...s, phase: 'board', playing: action.type === 'play' ? s.control : 1 - s.control! };
-			case 'reveal': {
-				if (s.phase !== 'board' || !hidden(s, action.tile)) return s;
-				const next = { ...s, revealed: reveal(s, action.tile) };
-				return next.revealed.every(Boolean) ? bank(next, s.playing!) : next;
-			}
-			case 'strike':
-				if (s.phase !== 'board') return s;
-				return { ...s, strikes: s.strikes + 1, phase: s.strikes + 1 === STRIKES ? 'steal' : 'board' };
-			case 'steal':
-				if (s.phase !== 'steal') return s;
-				if (action.tile === null) return bank(s, s.playing!);
-				if (!hidden(s, action.tile)) return s;
-				return bank({ ...s, revealed: reveal(s, action.tile) }, 1 - s.playing!, true);
-			case 'next':
-				return s.phase === 'result' ? close(s) : s;
-		}
-		return s;
+		if (action.type === 'undo') return undo(s);
+		if (action.type === 'next') return s.phase === 'result' ? { ...close(s), past: [] } : s;
+		const next = act(s, action);
+		return next === s ? s : { ...next, past: [...s.past, snapshot(s)] };
 	},
 	phase(state) {
 		return state.phase;
