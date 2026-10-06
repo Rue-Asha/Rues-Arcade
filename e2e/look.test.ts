@@ -47,7 +47,8 @@ async function holding(page: Page, check: () => Promise<void>) {
 // Home, Spieler, every start screen, lobbies, every game phase (Wavelength as Versus and Koop), Inhalte and Erklärung.
 // Codes, Duck and Most Likely To walk their own screens from e2e/walks/.
 async function walk(page: Page, info: TestInfo, check: Check) {
-	test.slow();
+	// The walk covers every screen of every game, ~1.5m on the check runner since the Feud walk joined it.
+	test.setTimeout(240_000);
 	await content(page, info);
 	await seedRoster(page, names);
 
