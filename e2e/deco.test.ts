@@ -218,3 +218,45 @@ test.describe('reduced motion', () => {
 		}
 	});
 });
+
+test('Scenario: Family Feud tile carries its own badge', async ({ page }) => {
+	await page.goto('/');
+	const badge = (name: string) => page.getByRole('link', { name: new RegExp(name) }).locator('.badge svg');
+	const markup = async (name: string) => (await badge(name).innerHTML()).replace(/<!--.*?-->/g, '');
+	const fallback = '<rect x="3" y="7" width="18" height="11" rx="3">';
+
+	await expect(badge('Family Feud')).toHaveCount(1);
+	const feud = await markup('Family Feud');
+	expect(feud).not.toContain(fallback);
+	for (const other of ['Imposter', 'Wavelength', 'Codes', 'What Rhymes with Duck', 'Most Likely To'])
+		expect(feud, other).not.toBe(await markup(other));
+});
+
+test('Scenario: Family Feud art on tile and start screen', async ({ page }) => {
+	const art = (scope: ReturnType<typeof page.locator>) => scope.locator('[data-deco][data-motif="feud"]');
+	// the shapes' paint, compared with what --c resolves to
+	const drawn = (loc: ReturnType<typeof page.locator>) =>
+		loc.evaluate((root) => {
+			const probe = document.createElement('span');
+			probe.style.color = 'var(--feud)';
+			document.body.append(probe);
+			const colour = getComputedStyle(probe).color;
+			probe.remove();
+			const shapes = [...root.querySelectorAll('svg *')].filter((el) => 'getBBox' in el);
+			return { shapes: shapes.length, coloured: shapes.some((el) => getComputedStyle(el).fill === colour) };
+		});
+
+	await page.goto('/');
+	const tile = art(page.getByRole('link', { name: /Family Feud/ }));
+	await expect(tile).toHaveCount(1);
+	expect((await drawn(tile)).shapes).toBeGreaterThan(0);
+	expect((await drawn(tile)).coloured).toBe(true);
+	expect(await decoAudit(page)).toEqual([]);
+
+	await page.goto('/spiele/family-feud');
+	const banner = art(page.locator('header').filter({ has: page.getByRole('heading', { level: 1 }) }));
+	await expect(banner).toHaveCount(1);
+	expect((await drawn(banner)).shapes).toBeGreaterThan(0);
+	expect((await drawn(banner)).coloured).toBe(true);
+	expect(await decoAudit(page)).toEqual([]);
+});

@@ -34,7 +34,10 @@ export const tokens = {
 	'duck-tint': '#2e2336',
 	'most-likely': '#f27bc4',
 	'most-likely-ledge': '#663452',
-	'most-likely-tint': '#2c1f45'
+	'most-likely-tint': '#2c1f45',
+	feud: '#5b9dff',
+	'feud-ledge': '#1d4a8f',
+	'feud-tint': '#1d2a55'
 } as const;
 
 export type Token = keyof typeof tokens;
@@ -48,7 +51,8 @@ const grounds: Token[] = [
 	'wavelength-tint',
 	'codes-tint',
 	'duck-tint',
-	'most-likely-tint'
+	'most-likely-tint',
+	'feud-tint'
 ];
 
 export const textPairs: [Token, Token][] = [
@@ -67,6 +71,7 @@ export const textPairs: [Token, Token][] = [
 	['ink', 'codes'],
 	['ink', 'duck'],
 	['ink', 'most-likely'],
+	['ink', 'feud'],
 	['on-reveal', 'reveal'],
 	['primary', 'on-primary'],
 	['primary', 'surface'],
@@ -74,7 +79,8 @@ export const textPairs: [Token, Token][] = [
 	['wavelength', 'surface'],
 	['codes', 'surface'],
 	['duck', 'surface'],
-	['most-likely', 'surface']
+	['most-likely', 'surface'],
+	['feud', 'surface']
 ];
 
 function luminance(hex: string): number {

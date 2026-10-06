@@ -16,13 +16,16 @@ const draws: [string | undefined, Place][] = [
 	['codes', 'tile'],
 	['duck', 'tile'],
 	['most-likely', 'tile'],
+	['family-feud', 'tile'],
 	['codes', 'start'],
 	['duck', 'start'],
 	['most-likely', 'start'],
+	['family-feud', 'start'],
 	['charade', 'start'],
 	['wavelength', 'lobby'],
 	['imposter', 'play'],
 	['duck', 'play'],
+	['family-feud', 'play'],
 	['charade', 'play']
 ];
 
@@ -32,7 +35,6 @@ describe('motifFor', () => {
 	it('Scenario: Game without its own art gets the neutral fallback', () => {
 		for (const place of ['tile', 'start', 'play'] as const) {
 			expect(motifFor('charade', place), place).toBe('neutral');
-			expect(motifFor('family-feud', place), place).toBe('neutral');
 		}
 		expect(motifFor('imposter', 'tile')).toBe('masks');
 		expect(motifFor('wavelength', 'tile')).toBe('dial');
@@ -49,6 +51,14 @@ describe('motifFor', () => {
 			expect(motifFor(slug, 'lobby'), slug).toBe('crew');
 			expect(motifFor(slug, 'play'), slug).toBe('rings');
 		}
+	});
+
+	it('Scenario: Family Feud gets its own motif', () => {
+		expect(motifFor('family-feud', 'tile')).toBe('feud');
+		expect(motifFor('family-feud', 'start')).toBe('feud');
+		expect(motifFor('family-feud', 'lobby')).toBe('crew');
+		expect(motifFor('family-feud', 'play')).toBe('rings');
+		for (const place of ['tile', 'start', 'play'] as const) expect(motifFor('charade', place)).toBe('neutral');
 	});
 
 	it('home, lobby and the locked tile have their own motifs', () => {
@@ -78,6 +88,14 @@ describe('Art', () => {
 		expect(body).toContain('class="needle');
 		expect(body).toContain('class="card');
 		expect(body.match(/class="lock/g)?.length).toBeGreaterThanOrEqual(2);
+	});
+
+	it('the Feud art draws a board of ledge tiles in the game colour', () => {
+		for (const place of ['tile', 'start'] as const) {
+			const body = html('family-feud', place);
+			expect(body.match(/<rect/g)?.length, place).toBeGreaterThanOrEqual(1);
+			expect(body, place).toContain('var(--c)');
+		}
 	});
 
 	it('the Imposter masks have one odd mask, the start dial is labelled Kalt and Heiß', () => {
