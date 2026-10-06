@@ -109,7 +109,7 @@ remove its roster entry. Running sessions SHALL keep their copied players.
 ### Requirement: Link existing roster entries on load
 On every app load the roster SHALL fetch the saved players, refresh the names of linked entries, and link unlinked
 entries whose trimmed name matches a saved player case-insensitively; at most one entry links to a saved player, the
-rest stay guests. If the server cannot be reached nothing SHALL change and the next load tries again. The lobby SHALL
+rest stay guests; a linked entry whose saved player no longer exists becomes a guest (and may link to a saved player of the same name). If the server cannot be reached nothing SHALL change and the next load tries again. The lobby SHALL
 wait for this first sync before taking its player selection.
 
 #### Scenario: Matching guests become linked on load
@@ -120,6 +120,11 @@ wait for this first sync before taking its player selection.
 #### Scenario: Two entries matching one saved player
 - **WHEN** the stored roster holds guests "Alex" and "alex " and "Alex" is saved
 - **THEN** the first entry links, the second stays a guest
+- **proof:** unit
+
+#### Scenario: Linked entry whose saved player is gone becomes a guest
+- **WHEN** the stored roster holds linked "Rita" and guest "Bo", "Rita" was deleted elsewhere and another player was saved since
+- **THEN** after the sync "Rita" is a guest with its name unchanged (not the new player), and "Bo" is untouched
 - **proof:** unit
 
 #### Scenario: Server unreachable leaves the roster unchanged

@@ -5,7 +5,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { MAX_TEXT } from '#lib/content/types.ts';
 import { closeDb, getDb, loadMigrations, migrate, openDb } from './db.ts';
-import { deletePlayer } from './players.ts';
+import { addPlayer, deletePlayer } from './players.ts';
 
 let dir: string;
 
@@ -219,6 +219,19 @@ describe('db', () => {
 
 		expect(db.prepare('SELECT count(*) AS n FROM seen').get()?.n).toBe(0);
 		expect(db.prepare('PRAGMA foreign_keys').get()?.foreign_keys).toBe(1);
+		db.close();
+	});
+
+	it('never hands the id of a deleted player to a new one', () => {
+		const db = openDb(join(dir, 'ids.db'));
+		migrate(db);
+		const first = addPlayer(db, 'Rita');
+		const gone = first.ok ? first.player.id : 0;
+		deletePlayer(db, gone);
+
+		const next = addPlayer(db, 'Tom');
+
+		expect(next.ok && next.player.id).toBeGreaterThan(gone);
 		db.close();
 	});
 

@@ -50,15 +50,27 @@ async function sync() {
 	}
 	saved = list;
 	savedError = '';
-	const linked = new Set(players.map((p) => savedId(p.id)));
-	const next = players.map((p) => {
+	const live = new Set(list.map((s) => s.id));
+	const linked = new Set(players.map((p) => savedId(p.id)).filter((id) => id !== null && live.has(id)));
+	const next: Player[] = [];
+	for (const p of players) {
 		const id = savedId(p.id);
-		if (id !== null) return { ...p, name: list.find((s) => s.id === id)?.name ?? p.name };
-		const match = list.find((s) => !linked.has(s.id) && key(s.name) === key(p.name));
-		if (!match) return p;
+		if (id !== null && live.has(id)) {
+			const name = list.find((s) => s.id === id)!.name;
+			// a name another entry already holds is not taken over, or names stop being unique
+			const clash = players.some((q) => q !== p && key(q.name) === key(name));
+			next.push(clash ? p : { ...p, name });
+			continue;
+		}
+		const guest = id === null ? p : { id: newId(), name: p.name };
+		const match = list.find((s) => !linked.has(s.id) && key(s.name) === key(guest.name));
+		if (!match) {
+			next.push(guest);
+			continue;
+		}
 		linked.add(match.id);
-		return { id: playerId(match.id), name: match.name };
-	});
+		next.push({ id: playerId(match.id), name: match.name });
+	}
 	// an unchanged roster is not rewritten: a fresh device would gain an "[]" key on every page load
 	if (next.some((p, i) => p.id !== players[i].id || p.name !== players[i].name)) save(next);
 }
@@ -141,6 +153,8 @@ export const roster: {
 		const guest = players.find((p) => p.id === id);
 		if (!guest || savedId(id) !== null) return { ok: false, message: 'Das ist schon ein gespeicherter Spieler.' };
 		let match = saved.find((s) => key(s.name) === key(guest.name));
+		if (match && players.some((p) => p.id === playerId(match!.id)))
+			return { ok: false, message: `„${match.name}“ ist schon dabei.` };
 		if (!match) {
 			const res = await call(() => playersApi.add(guest.name));
 			if (!res) return offline;
@@ -160,11 +174,13 @@ export const roster: {
 		return { ok: true };
 	},
 	async renameSaved(dbId, name) {
+		const id = playerId(dbId);
+		const taken = players.find((p) => p.id !== id && key(p.name) === key(name));
+		if (taken) return { ok: false, message: `„${taken.name}“ ist schon dabei.` };
 		const res = await call(() => playersApi.rename(dbId, name));
 		if (!res) return offline;
 		if (!res.ok) return res;
 		saved = sorted(saved.map((s) => (s.id === dbId ? res.player : s)));
-		const id = playerId(dbId);
 		save(players.map((p) => (p.id === id ? { ...p, name: res.player.name } : p)));
 		return { ok: true };
 	},

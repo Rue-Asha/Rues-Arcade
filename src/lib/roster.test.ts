@@ -178,6 +178,51 @@ describe('roster', () => {
 		]);
 	});
 
+	it('refuses to save a guest whose saved player is already in the roster', async () => {
+		stored('Alex', 'alex ');
+		addPlayer(db, 'Alex');
+		const roster = await fresh();
+		await roster.ready();
+		const before = roster.players;
+
+		const result = await roster.promote(before[1].id);
+
+		expect(result).toEqual({ ok: false, message: '„Alex“ ist schon dabei.' });
+		expect(roster.players).toEqual(before);
+		expect(new Set(roster.players.map((p) => p.id)).size).toBe(2);
+	});
+
+	it('Scenario: Linked entry whose saved player is gone becomes a guest', async () => {
+		const rita = addPlayer(db, 'Rita');
+		const id = rita.ok ? rita.player.id : 0;
+		storage.setItem('arcade:roster', JSON.stringify([{ id: playerId(id), name: 'Rita' }, { id: 'p2', name: 'Bo' }]));
+		deletePlayer(db, id);
+		addPlayer(db, 'Tom');
+		const roster = await fresh();
+
+		await roster.ready();
+
+		expect(names(roster.players)).toEqual(['Rita', 'Bo']);
+		expect(roster.players.every((p) => roster.isGuest(p))).toBe(true);
+		expect(roster.players[1].id).toBe('p2');
+		expect(roster.rename(roster.players[0].id, 'Rita B')).toEqual({ ok: true });
+	});
+
+	it('refuses to rename a saved player to the name of a roster guest', async () => {
+		addPlayer(db, 'Alex');
+		const roster = await fresh();
+		await roster.ready();
+		roster.add('Alex');
+		roster.add('Gustav');
+
+		const result = await roster.renameSaved(dbId('Alex'), 'gustav');
+
+		expect(result).toEqual({ ok: false, message: '„Gustav“ ist schon dabei.' });
+		expect(names(roster.players)).toEqual(['Alex', 'Gustav']);
+		expect(roster.saved.map((s) => s.name)).toEqual(['Alex']);
+		expect(listPlayers(db).map((p) => p.name)).toEqual(['Alex']);
+	});
+
 	it('Scenario: Server unreachable leaves the roster unchanged', async () => {
 		stored('alex', 'Bo');
 		const alex = addPlayer(db, 'Alex');

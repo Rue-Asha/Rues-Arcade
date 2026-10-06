@@ -87,7 +87,7 @@ Duplicate message: `„<name>“ ist schon gespeichert.`; unknown id: `Diesen Sp
 `migrations/0004_players.sql` (U1):
 ```sql
 CREATE TABLE players (
-	id INTEGER PRIMARY KEY,
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	name TEXT NOT NULL UNIQUE COLLATE NOCASE,
 	created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -121,7 +121,7 @@ export const roster: {
   `roster.players` and in any `Player` a game receives. `roster.isGuest(p)` is the same check.
 - **Read the roster only after linking:** `await roster.ready()` (`#lib/roster.svelte.ts`) in `onMount` before using
   ids, as the lobby does.
-- **Table:** `players(id INTEGER PRIMARY KEY, name TEXT NOT NULL UNIQUE COLLATE NOCASE, created_at TEXT)`, from
+- **Table:** `players(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE COLLATE NOCASE, created_at TEXT)`, from
   `migrations/0004_players.sql`; family-feud's migrations start at `0005_`. Reference it as
   `player_id INTEGER NOT NULL REFERENCES players(id) ON DELETE CASCADE`.
 - **Foreign keys:** on for every connection from `openDb`/`getDb` (`#lib/server/db.ts`); nothing to do in a migration.
