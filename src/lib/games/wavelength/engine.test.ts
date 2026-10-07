@@ -325,14 +325,14 @@ describe('wavelength demo', () => {
 	it('Scenario: Wavelength demo script plays to the end', () => {
 		expect(demo.players).toEqual(['Alex', 'Bo', 'Cleo', 'Dani']);
 		expect(demo.config.teams).toHaveLength(2);
-		expect(demo.config.rounds).toBe(1);
+		expect(demo.config.rounds).toBe(2);
 		const a = play();
 		const b = play();
 		expect(a).toEqual(b);
-		const end = a[a.length - 1];
-		expect(wavelength.phase(end)).toBe('gameOver');
-		expect(a.filter((s) => s.phase === 'result').map((s) => s.lastScore)).toEqual([4, 3]);
-		expect(winners(end).map((t) => t.name)).toEqual(['Team 1']);
+		const over = a.find((s) => s.phase === 'gameOver')!;
+		expect(a.filter((s) => s.phase === 'result').map((s) => s.lastScore)).toEqual([4, 3, 2, 0]);
+		expect(winners(over).map((t) => t.name)).toEqual(['Team 1']);
+		expect(a.at(-1)!.teams.map((t) => t.score)).toEqual([0, 0]);
 		expect(demo.steps.every((st) => st.tip.length > 0)).toBe(true);
 	});
 });

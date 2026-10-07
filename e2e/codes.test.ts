@@ -1,4 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
+import { demo } from '../src/lib/games/codes/demo.ts';
 import { ambient, decoAudit, emptyServer, seedRoster, shot } from './helpers.ts';
 
 const crew = (n: number) => Array.from({ length: n }, (_, i) => `Spieler ${i + 1}`);
@@ -305,16 +306,21 @@ test('Scenario: Codes demo by tapping highlighted controls', async ({ page }, in
 		await expect(page).toHaveURL(/\/spiele\/codes\/demo\?from=/);
 
 		await expect(page.getByText('[Demo]', { exact: true })).toBeVisible();
-		await expect(page.getByText('Leuchtturm', { exact: true })).toBeVisible();
-		const total = 4;
+		await expect(page.locator('.word')).toHaveText(new RegExp(`^(${demo.content.map((w) => w.a).join('|')})$`));
+		const total = demo.steps.length;
+		test.setTimeout(Math.max(30_000, total * 1500 + 15_000));
 		for (let n = 1; n <= total; n++) {
 			await expect(page.getByText(/^Demo · Schritt \d+\/\d+$/)).toHaveText(`Demo · Schritt ${n}/${total}`);
 			const expected = page.locator('[data-demo="expected"]');
 			await expect(expected).toHaveCount(1);
+			if (n === total) {
+				await expect(page.getByText('Gewinner', { exact: true })).toBeVisible();
+				await expect(page.getByRole('heading', { name: 'Team 2', exact: true })).toBeVisible();
+				await expect(expected).toHaveAttribute('data-action', 'rematch');
+			}
 			await expected.click();
 		}
 		await expect(page.getByText('Demo beendet', { exact: true })).toBeVisible();
-		await expect(page.getByRole('heading', { name: 'Team 1', exact: true })).toBeVisible();
 	} finally {
 		server.close();
 	}

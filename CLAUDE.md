@@ -24,7 +24,6 @@ code as `src/**/*.test.ts` (plus `scripts/*.test.ts`); e2e in `e2e/`.
 - Before changing demo, read openspec/specs/demo/spec.md.
 - Before changing design-system, read openspec/specs/design-system/spec.md.
 - Before changing duck, read openspec/specs/duck/spec.md.
-- Before changing explanation, read openspec/specs/explanation/spec.md.
 - Before changing feud, read openspec/specs/feud/spec.md.
 - Before changing game-engine, read openspec/specs/game-engine/spec.md.
 - Before changing harness, read openspec/specs/harness/spec.md.
@@ -46,3 +45,6 @@ code as `src/**/*.test.ts` (plus `scripts/*.test.ts`); e2e in `e2e/`.
 - **Layout/load sync** → write to localStorage only on change, never call save() unconditionally. (weil: sync() wrote arcade:roster="[]" on first load and broke the demo "Exiting returns to the starting screen" snapshot test) [2026-10-06 · player-database]
 - **Unique German text in SQLite** → keep the `COLLATE NOCASE` column and also fold in JS with `toLocaleLowerCase('de')`. (weil: NOCASE folds ASCII only, so umlauts like Ä/ä slipped past the uniqueness check) [2026-10-06 · family-feud]
 - **Generic runner tests and the demo script** → a game needs a non-empty demo script, and its board controls must carry `data-demo=expected`. (weil: runner.test.ts failed on an empty script; U1 and U7 each hit it) [2026-10-06 · family-feud]
+- **Long demo tap-throughs in e2e** → set `test.setTimeout` per demo test from the step count (~0.8s/step on phone), not the 30s default. (weil: the 27-step Imposter demo timed out on phone) [2026-10-07 · revise-demos-most-likely]
+- **`proof:full` from an agent** → run it with `run_in_background`; it takes ~9 min. (weil: Bash's 2-min timeout backgrounded it mid-run) [2026-10-07 · revise-demos-most-likely]
+- **Scoped e2e (`npx playwright test <file>`)** → run `npm run build` first; playwright serves the existing build/. (weil: a stale build gave misleading failures) [2026-10-07 · revise-demos-most-likely]

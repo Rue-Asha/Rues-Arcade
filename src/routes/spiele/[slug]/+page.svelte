@@ -31,9 +31,9 @@
 			'Wer keinen Reim findet, verliert einen Buchstaben von DUCKY. Das Spiel endet bei den Zielpunkten oder ohne Leben.'
 		],
 		'most-likely': [
-			'Pro Runde ein Spruch: Wer würde am ehesten …?',
-			'Auf drei zeigen alle gleichzeitig auf die Person, die am besten passt.',
-			'Wer die meisten Finger auf sich hat, bekommt den Titel. Am Ende gewinnt, wer die meisten Titel hat.'
+			'Reihum ist ein Team dran und bekommt einen Spruch: Wer würde am ehesten …?',
+			'Das Team zählt bis drei, und alle zeigen gleichzeitig auf die Person, die am besten passt.',
+			'Zeigen mehrere auf dieselbe Person, bekommt das Team so viele Punkte, wie es Finger sind. Am Ende gewinnt das Team mit den meisten Punkten.'
 		],
 		'family-feud': [
 			'Zwei Teams, eine Umfrage: gesucht sind die häufigsten Antworten.',
@@ -72,8 +72,7 @@
 	const noun = $derived((nouns[def.slug] ?? ['Eintrag', 'Einträge'])[data.count === 1 ? 0 : 1]);
 
 	const cards = $derived([
-		{ id: 'erklaerung', title: 'Erklärung', line: 'Die Regeln Schritt für Schritt', href: `${base}/erklaerung` },
-		{ id: 'demo', title: 'Demo', line: 'Eine Runde zum Mittippen', href: `${base}/demo?from=${base}` },
+		{ id: 'demo', title: 'Demo', line: 'Spiel per Demo lernen, mehrere Runden zum Mittippen', href: `${base}/demo?from=${base}` },
 		{ id: 'inhalte', title: 'Inhalte', line: `${data.count} ${noun} ansehen und bearbeiten`, href: `${base}/inhalte` }
 	]);
 </script>
@@ -155,10 +154,7 @@
 				<a class="card" href={card.href} aria-labelledby="{card.id}-title" aria-describedby="{card.id}-line">
 					<span class="icon" aria-hidden="true">
 						<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-							{#if card.id === 'erklaerung'}
-								<path d="M12 6.5C10.5 5 8 4.5 4 4.5v13c4 0 6.5.5 8 2 1.5-1.5 4-2 8-2v-13c-4 0-6.5.5-8 2z"></path>
-								<path d="M12 6.5v13"></path>
-							{:else if card.id === 'demo'}
+							{#if card.id === 'demo'}
 								<circle cx="12" cy="12" r="8.5"></circle>
 								<path d="M10 8.8v6.4l5.2-3.2z"></path>
 							{:else}
@@ -410,7 +406,7 @@
 		}
 
 		.cards {
-			grid-template-columns: repeat(3, minmax(0, 1fr));
+			grid-template-columns: repeat(2, minmax(0, 1fr));
 		}
 	}
 </style>
