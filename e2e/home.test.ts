@@ -11,7 +11,7 @@ test('Scenario: Tiles for registered games', async ({ page }) => {
 		['Wavelength', 'wavelength', '2–18 Spieler'],
 		['Codes', 'codes', '4–20 Spieler'],
 		['What Rhymes with Duck', 'duck', '4–16 Spieler'],
-		['Most Likely To', 'most-likely', '3–20 Spieler'],
+		['Most Likely To', 'most-likely', '4–20 Spieler'],
 		['Family Feud', 'family-feud', '4–20 Spieler']
 	]) {
 		const tile = page.getByRole('link', { name: new RegExp(name) });

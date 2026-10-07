@@ -98,7 +98,7 @@ test('Scenario: New start banners carry title, badge and range', async ({ page }
 	for (const [slug, name, badge, range, pitch] of [
 		['codes', 'Codes', 'C', '4–20 Spieler', 'Teams erraten ein geheimes Wort aus Ein-Wort-Hinweisen, reihum.'],
 		['duck', 'What Rhymes with Duck', 'W', '4–16 Spieler', 'Alle suchen gleichzeitig einen Reim auf dasselbe Wort.'],
-		['most-likely', 'Most Likely To', 'M', '3–20 Spieler', 'Ein Spruch, und alle zeigen auf die Person, die am besten passt.']
+		['most-likely', 'Most Likely To', 'M', '4–20 Spieler', 'Ein Spruch, alle zeigen auf eine Person, und ein Team punktet, wenn es sich einig ist.']
 	]) {
 		await page.goto(`/spiele/${slug}`);
 		const banner = page.locator('header').filter({ has: page.getByRole('heading', { level: 1 }) });
@@ -114,7 +114,7 @@ test("Scenario: So geht's for the new games", async ({ page }) => {
 	for (const [slug, first] of [
 		['codes', 'In Teams: pro Runde kennen alle Erklärer dasselbe geheime Wort.'],
 		['duck', 'Ein Wort wird für alle aufgedeckt, alle suchen gleichzeitig einen Reim darauf.'],
-		['most-likely', 'Pro Runde ein Spruch: Wer würde am ehesten …?'],
+		['most-likely', 'Reihum ist ein Team dran und bekommt einen Spruch: Wer würde am ehesten …?'],
 		['family-feud', 'Zwei Teams, eine Umfrage: gesucht sind die häufigsten Antworten.']
 	]) {
 		await page.goto(`/spiele/${slug}`);
@@ -122,6 +122,7 @@ test("Scenario: So geht's for the new games", async ({ page }) => {
 
 		await expect(rules, slug).toHaveCount(3);
 		await expect(rules.first(), slug).toHaveText(first);
+		if (slug === 'most-likely') await expect(rules.nth(2), slug).toHaveText(/so viele Punkte.*Am Ende gewinnt das Team mit den meisten Punkten\.$/);
 		for (const rule of await rules.allTextContents()) expect(rule, slug).not.toContain('!');
 	}
 });

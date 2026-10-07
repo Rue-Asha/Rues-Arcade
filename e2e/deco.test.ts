@@ -6,7 +6,7 @@ const PITCH = {
 	Wavelength: 'Einen Punkt auf einer Skala zwischen zwei Begriffen finden, gemeinsam oder in Teams.',
 	Codes: 'Teams erraten ein geheimes Wort aus Ein-Wort-Hinweisen, reihum.',
 	'What Rhymes with Duck': 'Alle suchen gleichzeitig einen Reim auf dasselbe Wort.',
-	'Most Likely To': 'Ein Spruch, und alle zeigen auf die Person, die am besten passt.',
+	'Most Likely To': 'Ein Spruch, alle zeigen auf eine Person, und ein Team punktet, wenn es sich einig ist.',
 	'Family Feud': 'Zwei Teams suchen die häufigsten Antworten einer Umfrage.'
 };
 

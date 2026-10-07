@@ -7,7 +7,7 @@ const press = (page: Page, name: string) => page.getByRole('button', { name, exa
 const frames = (page: Page) =>
 	page.evaluate(() => new Promise((ok) => requestAnimationFrame(() => requestAnimationFrame(ok))));
 
-// Start, lobby and every phase on the seeded prompts; round 1 is a tie so the reveal names two holders.
+// Start, lobby with two teams and every phase on the seeded prompts; turn 1 scores 2, turn 2 "Alle verschieden".
 export async function walk(page: Page, check: (slug: string) => Promise<void>) {
 	await seedRoster(page, ['Alex', 'Bo', 'Cleo', 'Dani']);
 	await page.goto('/spiele/most-likely');
@@ -15,30 +15,24 @@ export async function walk(page: Page, check: (slug: string) => Promise<void>) {
 
 	await press(page, "Los geht's");
 	await expect(page).toHaveURL(/\/spiele\/most-likely\/lobby$/);
+	await expect(page.getByRole('group', { name: 'Team 2', exact: true })).toBeVisible();
 	await press(page, '5');
 	await check('lobby-most-likely');
 	await press(page, "Los geht's");
 	await expect(page).toHaveURL(/\/spiele\/most-likely\/spielen$/);
 
-	const pick = (name: string) =>
-		page.getByRole('group', { name: 'Wer hat den Titel?' }).getByRole('button', { name, exact: true }).click();
-	for (let round = 1; round <= 5; round++) {
-		const first = round === 1;
-		await expect(page.getByText(`Runde ${round} / 5`, { exact: true })).toBeVisible();
+	for (let k = 0; k < 10; k++) {
+		const first = k === 0;
+		await expect(page.getByText(`Runde ${Math.floor(k / 2) + 1} / 5`, { exact: true })).toBeVisible();
 		await expect(page.getByTestId('prompt')).toBeVisible();
 		if (first) await frames(page).then(() => check('most-likely-prompt'));
 		await press(page, 'Alle haben gezeigt');
-		await expect(page.getByRole('button', { name: 'Titel vergeben', exact: true })).toBeDisabled();
-		if (first) await frames(page).then(() => check('most-likely-pick'));
-		await pick('Alex');
-		if (first) {
-			await pick('Cleo');
-			await check('most-likely-pick-chosen');
-		}
-		await press(page, 'Titel vergeben');
-		await expect(page.getByTestId('holders')).toBeVisible();
-		if (first) await frames(page).then(() => check('most-likely-reveal'));
-		await press(page, round === 5 ? 'Zum Endstand' : 'Nächste Runde');
+		await expect(page.getByRole('button', { name: 'Alle verschieden', exact: true })).toBeVisible();
+		if (first) await frames(page).then(() => check('most-likely-count'));
+		await press(page, k % 2 ? 'Alle verschieden' : '2');
+		await expect(page.getByTestId('points')).toHaveText(k % 2 ? '+0' : '+2');
+		if (k < 2) await frames(page).then(() => check(first ? 'most-likely-result' : 'most-likely-result-none'));
+		await press(page, k === 9 ? 'Zum Ergebnis' : k % 2 ? 'Nächste Runde' : 'Nächstes Team');
 	}
 	await expect(page.getByRole('button', { name: 'Nochmal spielen', exact: true })).toBeVisible();
 	await frames(page);

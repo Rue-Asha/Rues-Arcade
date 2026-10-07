@@ -9,5 +9,5 @@ export const entry: GameEntry = {
 	Screen,
 	Setup,
 	demo,
-	pitch: 'Ein Spruch, und alle zeigen auf die Person, die am besten passt.'
+	pitch: 'Ein Spruch, alle zeigen auf eine Person, und ein Team punktet, wenn es sich einig ist.'
 };
