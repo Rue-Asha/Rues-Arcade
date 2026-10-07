@@ -1,17 +1,18 @@
-verified-at: b152d08
+verified-at: e688375
 
 ## Layer 1 — proof:full (green)
 ```
-  ✓  396 [desktop] › e2e/look.test.ts:483:1 › Scenario: Motion never blocks input (268ms)
-  Slow test file: [phone] › e2e/look.test.ts (8.0m)
-  Slow test file: [desktop] › e2e/look.test.ts (7.9m)
+  ✓  398 [desktop] › e2e/look.test.ts:483:1 › Scenario: Motion never blocks input (266ms)
+
+  Slow test file: [phone] › e2e/look.test.ts (8.2m)
+  Slow test file: [desktop] › e2e/look.test.ts (8.2m)
   Consider running tests from slow files in parallel. See: https://playwright.dev/docs/test-parallel
   2 skipped
-  394 passed (10.0m)
-EXIT=0
+  396 passed (10.1m)
+EXIT 0
 ```
 
-Unit: 32 files, 292 tests passed. e2e: 394 passed, 2 skipped (look.test.ts viewport-conditional: Desktop uses the width on phone, No horizontal scroll on phone on desktop; neither is a gap).
+Unit: 32 files, 292 tests passed. e2e: 396 passed, 2 skipped (look.test.ts viewport-conditional: Desktop uses the width on phone, No horizontal scroll on phone on desktop; neither is a gap).
 
 ## Layer 2 — spec coverage
 
@@ -141,9 +142,9 @@ Unit: 32 files, 292 tests passed. e2e: 394 passed, 2 skipped (look.test.ts viewp
 ## Diffstat
 ```
  CLAUDE.md                                          |   1 -
- e2e/codes.test.ts                                  |   6 +-
+ e2e/codes.test.ts                                  |  12 +-
  e2e/deco.test.ts                                   |   2 +-
- e2e/demo.test.ts                                   |  44 ++-
+ e2e/demo.test.ts                                   |  46 ++-
  e2e/duck.test.ts                                   |  17 +-
  e2e/explain.test.ts                                |  65 ----
  e2e/feud-demo.test.ts                              |   2 +
@@ -151,23 +152,24 @@ Unit: 32 files, 292 tests passed. e2e: 394 passed, 2 skipped (look.test.ts viewp
  e2e/fixtures/explain/pixel.png                     | Bin 74 -> 0 bytes
  e2e/home.test.ts                                   |   2 +-
  e2e/look.test.ts                                   |  17 +-
- e2e/most-likely.test.ts                            | 376 ++++++++++++++++-----
+ e2e/most-likely.test.ts                            | 394 ++++++++++++++++-----
  e2e/start.test.ts                                  |  24 +-
  e2e/walks/most-likely.ts                           |  28 +-
  .../revise-demos-most-likely/.openspec.yaml        |   2 +
- .../changes/revise-demos-most-likely/design.md     | 151 +++++++++
- .../changes/revise-demos-most-likely/flow.yaml     |  14 +
+ .../changes/revise-demos-most-likely/design.md     | 151 ++++++++
+ .../changes/revise-demos-most-likely/flow.yaml     |  15 +
  .../changes/revise-demos-most-likely/proposal.md   |  70 ++++
  openspec/changes/revise-demos-most-likely/scope.md |  73 ++++
- .../specs/catalogue/spec.md                        | 116 +++++++
+ .../specs/catalogue/spec.md                        | 116 ++++++
  .../revise-demos-most-likely/specs/codes/spec.md   |  62 ++++
  .../revise-demos-most-likely/specs/demo/spec.md    |  63 ++++
  .../revise-demos-most-likely/specs/duck/spec.md    |  68 ++++
  .../revise-demos-most-likely/specs/feud/spec.md    |  70 ++++
- .../specs/imposter/spec.md                         |  39 +++
- .../specs/most-likely/spec.md                      | 267 +++++++++++++++
+ .../specs/imposter/spec.md                         |  39 ++
+ .../specs/most-likely/spec.md                      | 267 ++++++++++++++
  .../specs/wavelength/spec.md                       |  64 ++++
  openspec/changes/revise-demos-most-likely/tasks.md |  69 ++++
+ .../revise-demos-most-likely/verification.md       | 202 +++++++++++
  openspec/specs/explanation/spec.md                 |  28 --
  src/lib/games/codes/demo.test.ts                   |  80 ++++-
  src/lib/games/codes/demo.ts                        |  90 ++++-
@@ -176,16 +178,16 @@ Unit: 32 files, 292 tests passed. e2e: 394 passed, 2 skipped (look.test.ts viewp
  src/lib/games/duck/demo.ts                         |  66 +++-
  src/lib/games/feud/Screen.svelte                   |   9 +-
  src/lib/games/feud/demo.test.ts                    | 103 +++++-
- src/lib/games/feud/demo.ts                         | 173 +++++++++-
+ src/lib/games/feud/demo.ts                         | 173 ++++++++-
  src/lib/games/imposter/Screen.svelte               |   9 +-
- src/lib/games/imposter/demo.test.ts                |  83 +++++
- src/lib/games/imposter/demo.ts                     |  57 ++--
+ src/lib/games/imposter/demo.test.ts                |  89 +++++
+ src/lib/games/imposter/demo.ts                     |  57 +--
  src/lib/games/imposter/engine.test.ts              |  34 --
- src/lib/games/most-likely/Screen.svelte            | 260 ++++++++------
- src/lib/games/most-likely/Setup.svelte             | 225 +++++++++---
- src/lib/games/most-likely/demo.test.ts             | 114 +++++--
+ src/lib/games/most-likely/Screen.svelte            | 260 +++++++++-----
+ src/lib/games/most-likely/Setup.svelte             | 225 ++++++++++--
+ src/lib/games/most-likely/demo.test.ts             | 114 ++++--
  src/lib/games/most-likely/demo.ts                  |  63 +++-
- src/lib/games/most-likely/engine.test.ts           | 273 ++++++++++-----
+ src/lib/games/most-likely/engine.test.ts           | 273 +++++++++-----
  src/lib/games/most-likely/engine.ts                | 146 +++++---
  src/lib/games/most-likely/index.ts                 |   2 +-
  src/lib/games/registry.test.ts                     |   6 +-
@@ -193,10 +195,12 @@ Unit: 32 files, 292 tests passed. e2e: 394 passed, 2 skipped (look.test.ts viewp
  src/lib/games/wavelength/demo.ts                   | 103 +++++-
  src/lib/games/wavelength/engine.test.ts            |  10 +-
  src/routes/spiele/[slug]/+page.svelte              |  16 +-
- src/routes/spiele/[slug]/erklaerung/+page.svelte   | 157 ---------
+ src/routes/spiele/[slug]/erklaerung/+page.svelte   | 157 --------
  static/explain/README.md                           |  35 --
- 55 files changed, 3104 insertions(+), 973 deletions(-)
+ 56 files changed, 3339 insertions(+), 973 deletions(-)
 ```
 
 ## Screenshots
-204 files in `openspec/changes/revise-demos-most-likely/shots/` (phone-* and desktop-*, e.g. `shots/desktop-look-duck-scoring.png`).
+none (Rue: not needed)
+
+Round 2: table unchanged since round 1 (delta specs untouched); every unit and e2e scenario name re-checked against the round-2 green output and test sources, no gaps.
