@@ -3,7 +3,7 @@
 
 	interface Props {
 		verdict: string;
-		points: number;
+		points?: number;
 	}
 
 	let { verdict, points }: Props = $props();
@@ -11,7 +11,9 @@
 
 <div class="outcome">
 	<h2 data-testid="verdict">{verdict}</h2>
-	<p class="chip data" class:miss={points === 0} data-testid="points" in:pop|global><span>+</span><span use:countUp={points}></span></p>
+	{#if points !== undefined}
+		<p class="chip data" class:miss={points === 0} data-testid="points" in:pop|global><span>+</span><span use:countUp={points}></span></p>
+	{/if}
 </div>
 
 <style>

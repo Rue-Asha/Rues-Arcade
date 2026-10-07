@@ -194,8 +194,8 @@
 			{@const g = s.gain!}
 			{#if suddenDeath(s)}
 				<div class="stack tight">
-					<p class="label">Stichfrage entschieden</p>
-					<h2>{teams[g.team].name} gewinnt das Duell</h2>
+					<Outcome verdict="Stichfrage entschieden" />
+					<p class="decided">{teams[g.team].name} gewinnt das Duell</p>
 				</div>
 			{:else}
 				<Outcome verdict={g.stolen ? 'Gestohlen' : 'Topf gesichert'} points={g.points} />
@@ -387,6 +387,12 @@
 
 	.tight {
 		gap: 8px;
+	}
+
+	.decided {
+		font-weight: 700;
+		font-size: 17px;
+		text-align: center;
 	}
 
 	.versus {

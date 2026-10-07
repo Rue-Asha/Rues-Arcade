@@ -109,7 +109,8 @@ test('Scenario: Feud tiebreak survey is recorded', async ({ page, request }, inf
 		await expect(page.getByText('Gewinner', { exact: true })).toHaveCount(0);
 		await openFaceoff(page);
 		await pick(page, 0).click();
-		await expect(page.getByText('Stichfrage entschieden', { exact: true })).toBeVisible();
+		await expect(page.getByTestId('verdict')).toHaveText('Stichfrage entschieden');
+		await expect(page.getByTestId('points')).toHaveCount(0);
 		await press(page, 'Zum Ergebnis');
 		await expect(page.getByText('Gewinner', { exact: true })).toBeVisible();
 
