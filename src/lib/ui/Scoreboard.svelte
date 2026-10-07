@@ -110,6 +110,9 @@
 	}
 
 	.pts {
+		display: flex;
+		justify-content: flex-end;
+		min-width: 64px;
 		font-size: 13px;
 		font-variant-numeric: tabular-nums;
 	}
