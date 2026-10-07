@@ -5,6 +5,8 @@ import {
 	chooseSurveys,
 	deleteSurvey,
 	emptyServer,
+	expectFrame,
+	expectInstant,
 	live,
 	openFaceoff,
 	seedPlayed,
@@ -44,15 +46,15 @@ async function begin(page: Page, request: APIRequestContext, server: Server, que
 const tile = (page: Page, i: number) => live(page).locator(`[data-tile="${i}"]`);
 const pick = (page: Page, i: number) => tile(page, i).getByRole('button');
 const press = (page: Page, name: string) => page.getByRole('button', { name, exact: true }).click();
-const versus = (page: Page) => page.getByRole('region', { name: 'Spielstand' });
-const handoff = (page: Page) => page.getByTestId('handoff');
+const versus = (page: Page) => live(page).getByRole('region', { name: 'Spielstand' });
+const handoff = (page: Page) => live(page).getByTestId('handoff');
 
 // the buzzing team's first face-off answer is #1, so that team chooses at once
 async function toBoard(page: Page, choice: 'Spielen' | 'Passen' = 'Spielen', team = 'Team A') {
 	await openFaceoff(page, team);
 	await pick(page, 0).click();
 	await expect(handoff(page)).toBeVisible();
-	await handoff(page).getByRole('button', { name: choice, exact: true }).click();
+	await live(page).getByRole('button', { name: choice, exact: true }).click();
 	await expect(handoff(page)).toHaveCount(0);
 }
 
@@ -89,6 +91,7 @@ test('Scenario: Feud versus header shows both teams', async ({ page, request }, 
 		await begin(page, request, server, [PARTY, GHOST]);
 		await toBoard(page);
 
+		await expect(live(page).locator('[data-frame="rail"]').getByRole('region', { name: 'Spielstand' })).toHaveCount(1);
 		await expect(versus(page).getByText('Team A', { exact: true })).toBeVisible();
 		await expect(versus(page).getByText('Team B', { exact: true })).toBeVisible();
 		await expect(versus(page).getByTestId('score-0')).toHaveText('0');
@@ -98,26 +101,89 @@ test('Scenario: Feud versus header shows both teams', async ({ page, request }, 
 	}
 });
 
+test('Scenario: Feud screens use the stage and rail frame', async ({ page, request }, info) => {
+	const server = await emptyServer(info, 'feud-frame');
+	try {
+		const { surveys } = await begin(page, request, server, [PARTY, GHOST]);
+		await expectFrame(page);
+		await press(page, 'Frage aufdecken');
+		await expectFrame(page);
+		await live(page).getByRole('group', { name: 'Buzzer', exact: true }).getByRole('button', { name: 'Team A', exact: true }).click();
+		await expectFrame(page);
+		await pick(page, 0).click();
+		await expect(handoff(page)).toBeVisible();
+		await expectFrame(page);
+		await press(page, 'Spielen');
+		await expect(pick(page, 1)).toBeVisible();
+		await expectFrame(page);
+		for (let i = 0; i < 3; i++) await press(page, 'Fehler');
+		await expect(handoff(page)).toBeVisible();
+		await expectFrame(page);
+		await press(page, 'Weiter');
+		await expect(live(page).getByRole('button', { name: 'Nicht auf der Tafel', exact: true })).toBeVisible();
+		await expectFrame(page);
+		await pick(page, 1).click();
+		await expect(live(page).getByTestId('points')).toBeVisible();
+		await expectFrame(page);
+		await press(page, 'Nächste Runde');
+		await openFaceoff(page, 'Team B');
+		await pick(page, 0).click();
+		await press(page, 'Spielen');
+		for (let i = 1; i < board(surveys[1]).length; i++) await pick(page, i).click();
+		await press(page, 'Zum Ergebnis');
+		await expect(page.getByText('Gewinner', { exact: true })).toBeVisible();
+		await expectFrame(page);
+	} finally {
+		server.close();
+	}
+});
+
 test('Scenario: Feud handoff in team colour', async ({ page, request }, info) => {
 	const server = await emptyServer(info, 'feud-handoff');
 	try {
 		await begin(page, request, server, [PARTY, GHOST]);
-		const full = async (team: string, colour: string) => {
+		const inline = async (team: string, colour: string) => {
 			const box = handoff(page);
 			await expect(box).toBeVisible();
 			await expect(box.getByRole('heading', { name: team, exact: true })).toBeVisible();
-			await expect(box).toHaveCSS('background-color', rgb(await token(page, colour)));
-			const view = page.viewportSize()!;
-			await expect.poll(async () => (await box.boundingBox())!.width).toBe(view.width);
-			await expect.poll(async () => (await box.boundingBox())!.height).toBe(view.height);
+			await expect(live(page).locator('[data-frame="stage"] [data-hero]').getByTestId('handoff')).toHaveCount(1);
+			await expect(box.locator('.band')).toHaveCSS('background-color', rgb(await token(page, colour)));
+			expect(
+				await page.evaluate(() =>
+					[...document.querySelectorAll('*')].some(
+						(el) => getComputedStyle(el).position === 'fixed' && el.querySelector('[data-testid="handoff"]')
+					)
+				)
+			).toBe(false);
+			if (page.viewportSize()!.width >= 1024) await expect(live(page).locator('[data-frame="rail"]')).toBeVisible();
 		};
 
 		await openFaceoff(page);
 		await pick(page, 0).click();
-		await full('Team A', 'feud');
+		await inline('Team A', 'feud');
 		await press(page, 'Spielen');
 		for (let i = 0; i < 3; i++) await press(page, 'Fehler');
-		await full('Team B', 'gold');
+		await inline('Team B', 'gold');
+	} finally {
+		server.close();
+	}
+});
+
+test('Scenario: Feud game over uses the winner frame', async ({ page, request }, info) => {
+	const server = await emptyServer(info, 'feud-over');
+	try {
+		const { surveys } = await begin(page, request, server, [PARTY, GHOST]);
+		await fullGame(page, surveys);
+		await expectFrame(page);
+		const stage = live(page).locator('[data-frame="stage"]');
+		await expect(stage.getByText('Gewinner', { exact: true })).toBeVisible();
+		await expect(stage.getByRole('heading', { name: 'Team A', exact: true })).toBeVisible();
+		await expect(stage.getByRole('button')).toHaveCount(0);
+		await expect(page.getByRole('region', { name: 'Punktestand' })).toHaveCount(1);
+		await expect(live(page).locator('[data-frame="rail"]').getByRole('region', { name: 'Punktestand' })).toHaveCount(1);
+		const pieces = await page.locator('[data-piece]').count();
+		expect(pieces).toBeGreaterThanOrEqual(10);
+		expect(pieces).toBeLessThanOrEqual(14);
 	} finally {
 		server.close();
 	}
@@ -152,7 +218,7 @@ const total = (s: Survey, upto = Infinity) => board(s).slice(0, upto).reduce((su
 async function strikeOut(page: Page) {
 	for (let i = 0; i < 3; i++) await press(page, 'Fehler');
 	await expect(handoff(page)).toBeVisible();
-	await handoff(page).getByRole('button', { name: 'Weiter', exact: true }).click();
+	await live(page).getByRole('button', { name: 'Weiter', exact: true }).click();
 }
 
 // Round 1: Alex hits #1 for Team A, who play and clear the board. Round 2: Dani hits #1 for Team B, who play and
@@ -292,7 +358,9 @@ test('Scenario: Feud undo disabled with nothing to undo', async ({ page, request
 });
 
 async function hold(page: Page) {
-	const box = (await page.getByRole('button', { name: 'Umfrage ansehen', exact: true }).boundingBox())!;
+	const peek = page.getByRole('button', { name: 'Umfrage ansehen', exact: true });
+	await peek.scrollIntoViewIfNeeded();
+	const box = (await peek.boundingBox())!;
 	await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
 	await page.mouse.down();
 }
@@ -501,14 +569,14 @@ test('Scenario: Feud motion uses transform and opacity only', async ({ page, req
 		await pick(page, 2).click();
 		await press(page, 'Fehler');
 		await press(page, 'Fehler');
-		await handoff(page).getByRole('button', { name: 'Weiter', exact: true }).click();
+		await live(page).getByRole('button', { name: 'Weiter', exact: true }).click();
 		await press(page, 'Nicht auf der Tafel');
 		await expect(page.getByTestId('points')).toBeVisible();
 		await page.waitForTimeout(1500);
 
 		const seen = await page.evaluate(() => [...(window as unknown as { animated: Set<string> }).animated]);
 		expect(seen).toContain('transform');
-		expect(seen.filter((p) => !['transform', 'opacity', 'offset', 'computedOffset', 'easing', 'composite'].includes(p))).toEqual([]);
+		expect(seen.filter((p) => !['transform', 'opacity', 'offset', 'computedOffset', 'easing', 'composite', 'transformOrigin'].includes(p))).toEqual([]);
 	} finally {
 		server.close();
 	}
@@ -523,9 +591,9 @@ test('Scenario: Feud motion never blocks input', async ({ page, request }, info)
 		// one task, so the flip can't have finished between the two taps
 		const seen = await page.evaluate(async () => {
 			const frame = () => new Promise((ok) => requestAnimationFrame(ok));
-			document.querySelector<HTMLElement>('[data-tile="1"] button')!.click();
+			document.querySelector<HTMLElement>('[data-stage]:not([data-leaving]) [data-tile="1"] button')!.click();
 			await frame();
-			const flip = () => document.querySelector('[data-tile="1"] .face')!.getAnimations().length;
+			const flip = () => document.querySelector('[data-stage]:not([data-leaving]) [data-tile="1"] .face')!.getAnimations().length;
 			const before = flip();
 			[...document.querySelectorAll('button')].find((b) => b.textContent?.trim() === 'Fehler')!.click();
 			await frame();
@@ -550,7 +618,17 @@ test('Scenario: Feud reduced motion is instant', async ({ page, request }, info)
 	const server = await emptyServer(info, 'feud-reduced');
 	try {
 		const { surveys } = await begin(page, request, server, [PARTY, GHOST]);
-		await toBoard(page);
+		const tap = (name: string) => live(page).getByRole('button', { name, exact: true }).evaluate((b: HTMLElement) => b.click());
+		await expect(live(page).getByTestId('covered')).toBeVisible();
+		await tap('Frage aufdecken');
+		await expect(live(page).getByTestId('reveal')).toBeVisible();
+		await expectInstant(page);
+		await live(page).getByRole('group', { name: 'Buzzer', exact: true }).getByRole('button', { name: 'Team A', exact: true }).click();
+		await pick(page, 0).click();
+		await expect(handoff(page)).toBeVisible();
+		await expectInstant(page);
+		await press(page, 'Spielen');
+		await expect(pick(page, 1)).toBeVisible();
 		expect(await running(page)).toBe(0);
 
 		await pick(page, 1).click();
@@ -563,13 +641,23 @@ test('Scenario: Feud reduced motion is instant', async ({ page, request }, info)
 
 		await press(page, 'Fehler');
 		await press(page, 'Fehler');
-		await handoff(page).getByRole('button', { name: 'Weiter', exact: true }).click();
-		await press(page, 'Nicht auf der Tafel');
+		await tap('Weiter');
+		await tap('Nicht auf der Tafel');
 		await expect(page.getByTestId('points')).toBeVisible();
-		expect(await running(page)).toBe(0);
+		await expectInstant(page);
 		const gained = total(surveys[0], 2);
 		await expect(page.getByTestId('points')).toHaveText(`+${gained}`, { timeout: 500 });
 		await expect(score(page, 0)).toHaveText(String(gained), { timeout: 500 });
+
+		await tap('Nächste Runde');
+		await openFaceoff(page, 'Team B');
+		await pick(page, 0).click();
+		await press(page, 'Spielen');
+		for (let i = 1; i < board(surveys[1]).length; i++) await pick(page, i).click();
+		await tap('Zum Ergebnis');
+		await expect(page.getByText('Gewinner', { exact: true })).toBeVisible();
+		await expectInstant(page);
+		await expect(page.locator('[data-piece]')).toHaveCount(0);
 	} finally {
 		server.close();
 	}
@@ -586,7 +674,7 @@ test('Scenario: Feud peek does not block a tile flip', async ({ page, request },
 		// the peek floats over the tiles, so the tap goes straight to the tile's button
 		await tile(page, 1).getByRole('button').dispatchEvent('click');
 		const flips = await page.evaluate(() => {
-			const list = document.querySelector('[data-tile="1"] .face')!.getAnimations();
+			const list = document.querySelector('[data-stage]:not([data-leaving]) [data-tile="1"] .face')!.getAnimations();
 			(window as unknown as { flips: Animation[] }).flips = list;
 			return list.length;
 		});

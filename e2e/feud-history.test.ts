@@ -1,7 +1,7 @@
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
 import { board } from '../src/lib/content/survey.ts';
 import type { Survey } from '../src/lib/content/types.ts';
-import { chooseSurveys, emptyServer, openFaceoff, seedPlayers, seedSavedRoster, surveyByQuestion } from './helpers.ts';
+import { chooseSurveys, emptyServer, live, openFaceoff, seedPlayers, seedSavedRoster, surveyByQuestion } from './helpers.ts';
 
 const GHOST = 'Was würdest du tun, wenn du einen Geist siehst?';
 const CREW = ['Alex', 'Bo', 'Cleo', 'Dani'];
@@ -27,23 +27,23 @@ async function begin(page: Page, request: APIRequestContext, server: Server, que
 	return { crew, surveys };
 }
 
-const pick = (page: Page, i: number) => page.locator(`[data-tile="${i}"]`).getByRole('button');
+const pick = (page: Page, i: number) => live(page).locator(`[data-tile="${i}"]`).getByRole('button');
 const press = (page: Page, name: string) => page.getByRole('button', { name, exact: true }).click();
-const handoff = (page: Page) => page.getByTestId('handoff');
+const handoff = (page: Page) => live(page).getByTestId('handoff');
 
 // the buzzing team's #1 wins the face-off at once
 async function toBoard(page: Page, team = 'Team A') {
 	await openFaceoff(page, team);
 	await pick(page, 0).click();
 	await expect(handoff(page)).toBeVisible();
-	await handoff(page).getByRole('button', { name: 'Spielen', exact: true }).click();
+	await live(page).getByRole('button', { name: 'Spielen', exact: true }).click();
 	await expect(handoff(page)).toHaveCount(0);
 }
 
 async function strikeOut(page: Page) {
 	for (let i = 0; i < 3; i++) await press(page, 'Fehler');
 	await expect(handoff(page)).toBeVisible();
-	await handoff(page).getByRole('button', { name: 'Weiter', exact: true }).click();
+	await live(page).getByRole('button', { name: 'Weiter', exact: true }).click();
 	await press(page, 'Nicht auf der Tafel');
 }
 
