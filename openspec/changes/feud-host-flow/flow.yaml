@@ -1,0 +1,5 @@
+track: feature
+triage: "feature — Feud host flow: buzzer team per face-off, hidden question, fault/undo buttons, prep survey cards with answers + pagination, rounds picker layout. 8 S-items, one game, no schema. Appetite: one session."
+base: main
+gate0: 2026-10-07
+gate1: 2026-10-07
