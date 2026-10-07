@@ -1,12 +1,16 @@
 <script lang="ts">
 	import { onMount, tick } from 'svelte';
+	import { MediaQuery } from 'svelte/reactivity';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import type { Player } from '#lib/engine/types.ts';
 	import { roster } from '#lib/roster.svelte.ts';
 	import { playerId, type SavedPlayer } from '#lib/players.ts';
 	import Button from '#lib/ui/Button.svelte';
+	import { rise } from '#lib/motion.ts';
 	import Modal from '#lib/ui/Modal.svelte';
+	import Pager from '#lib/ui/Pager.svelte';
+	import { PAGE, pageItems, pageOf } from '#lib/ui/pager.ts';
 
 	let ready = $state(false);
 	onMount(() => (ready = true));
@@ -25,6 +29,11 @@
 	let renaming = $state<number | null>(null);
 	let savedDraft = $state('');
 	let doomed = $state<SavedPlayer | null>(null);
+
+	let savedPage = $state(0);
+	const wide = new MediaQuery(PAGE.query);
+	const size = $derived(wide.current ? PAGE.wide : PAGE.narrow);
+	const visible = $derived(pageItems(roster.saved, savedPage, size));
 
 	const inCrew = $derived(new Set(players.map((p) => p.id)));
 
@@ -61,9 +70,13 @@
 
 	async function create(e?: SubmitEvent) {
 		e?.preventDefault();
+		const typed = savedName.trim();
 		const result = await roster.createSaved(savedName);
 		savedMessage = result.ok ? '' : result.message;
-		if (result.ok) savedName = '';
+		if (!result.ok) return;
+		savedName = '';
+		const at = roster.saved.findIndex((s) => s.name.localeCompare(typed, 'de', { sensitivity: 'base' }) === 0);
+		if (at >= 0) savedPage = pageOf(at, size);
 	}
 
 	function pick(s: SavedPlayer) {
@@ -214,8 +227,9 @@
 			{/if}
 
 			{#if roster.saved.length}
-				<ul class="rows">
-					{#each roster.saved as s (s.id)}
+				{#key savedPage}
+				<ul class="rows" in:rise>
+					{#each visible as s (s.id)}
 						<li class="row">
 							{#if renaming === s.id}
 								<form class="rename" onsubmit={renameSaved}>
@@ -250,6 +264,8 @@
 						</li>
 					{/each}
 				</ul>
+				{/key}
+				<Pager bind:page={savedPage} total={roster.saved.length} {size} />
 			{:else if !roster.savedError}
 				<div class="empty panel">
 					<p class="muted">Gespeicherte Spieler behalten ihren Namen in allen Spielen.</p>
