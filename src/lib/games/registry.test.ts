@@ -61,7 +61,7 @@ describe('registry', () => {
 				colour: 'feud',
 				contentType: 'feud_surveys',
 				minContent: 2,
-				stateVersion: 1
+				stateVersion: 2
 			}
 		]);
 	});

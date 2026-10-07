@@ -93,6 +93,13 @@ export async function chooseSurveys(page: Page, ids: number[]) {
 		await (await surveyCard(page, id)).getByRole('button', { name: 'Wählen', exact: true }).click();
 }
 
+// every Feud round starts with the question covered and no team chosen
+export async function openFaceoff(page: Page, team = 'Team A') {
+	await page.getByRole('button', { name: 'Frage aufdecken', exact: true }).click();
+	await page.getByRole('group', { name: 'Buzzer', exact: true }).getByRole('button', { name: team, exact: true }).click();
+	await expect(page.getByRole('group', { name: 'Buzzer', exact: true })).toHaveCount(0);
+}
+
 export async function deleteSurvey(request: APIRequestContext, id: number, origin = sharedOrigin()) {
 	const res = await request.delete(`${origin}/api/content/feud_surveys/${id}`, { headers: writeHeaders(origin) });
 	expect(res.status()).toBe(204);

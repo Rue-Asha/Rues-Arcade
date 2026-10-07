@@ -53,10 +53,18 @@ export const demo: DemoScript<FeudAction, FeudConfig> = {
 	seed: 1,
 	// Team B banks 100 (cleared board) + 88 (steal), Team A 94 x 2 in the last round: 188 each, so sudden death decides
 	steps: [
-		// round 1, Team A opens: both first answers miss, the next pair answers, Team B plays and clears the board
+		// round 1, Team A buzzes: both first answers miss, the next pair answers, Team B plays and clears the board
+		{
+			action: { type: 'ask' },
+			tip: 'Runde 1: Die Frage ist verdeckt. Lies sie zuerst laut vor und decke sie dann auf, so hören alle sie gleichzeitig.'
+		},
+		{
+			action: { type: 'buzz', team: 0 },
+			tip: 'Jetzt wird gebuzzert. Team A war schneller, und wer zuerst buzzert, antwortet im Duell zuerst.'
+		},
 		{
 			action: { type: 'answer', tile: null },
-			tip: 'Runde 1: Jede Runde beginnt mit einem Duell. Alex nennt eine Antwort, die nicht auf der Tafel steht, und tippt auf Nicht auf der Tafel.'
+			tip: 'Jede Runde beginnt mit einem Duell. Alex nennt eine Antwort, die nicht auf der Tafel steht, und tippt auf Nicht auf der Tafel.'
 		},
 		{
 			action: { type: 'answer', tile: null },
@@ -88,12 +96,20 @@ export const demo: DemoScript<FeudAction, FeudConfig> = {
 		},
 		{
 			action: { type: 'next' },
-			tip: 'Der Topf geht an Team B. Mit der nächsten Runde beginnt das andere Team das Duell, damit der Vorteil wechselt.'
+			tip: 'Der Topf geht an Team B. In der nächsten Runde ist die Frage wieder verdeckt, und es wird neu gebuzzert.'
 		},
-		// round 2, Team B opens: number one at once, Team B passes, Team A strikes out, Team B steals successfully
+		// round 2, Team B buzzes: number one at once, Team B passes, Team A strikes out, Team B steals successfully
+		{
+			action: { type: 'ask' },
+			tip: 'Runde 2: Wieder erst vorlesen, dann aufdecken.'
+		},
+		{
+			action: { type: 'buzz', team: 1 },
+			tip: 'Diesmal buzzert Team B zuerst, also beginnt Cleo das Duell.'
+		},
 		{
 			action: { type: 'answer', tile: 0 },
-			tip: 'Runde 2: Cleo nennt gleich Löwe, die Nummer 1. Dann ist das Duell sofort entschieden, Alex muss nicht mehr antworten.'
+			tip: 'Cleo nennt gleich Löwe, die Nummer 1. Dann ist das Duell sofort entschieden, Alex muss nicht mehr antworten.'
 		},
 		{
 			action: { type: 'pass' },
@@ -127,10 +143,18 @@ export const demo: DemoScript<FeudAction, FeudConfig> = {
 			action: { type: 'next' },
 			tip: 'Team B hat jetzt 188 Punkte, Team A noch keinen. Die letzte Runde bringt die Entscheidung.'
 		},
-		// round 3 (last, double), Team A opens: first answer misses, Team B passes, Team A strikes out, the steal misses
+		// round 3 (last, double), Team A buzzes: first answer misses, Team B passes, Team A strikes out, the steal misses
+		{
+			action: { type: 'ask' },
+			tip: 'Runde 3 ist die letzte, ihre Punkte zählen doppelt. Erst vorlesen, dann aufdecken.'
+		},
+		{
+			action: { type: 'buzz', team: 0 },
+			tip: 'Team A buzzert zuerst, also antwortet Bo vor Dani.'
+		},
 		{
 			action: { type: 'answer', tile: null },
-			tip: 'Runde 3 ist die letzte, ihre Punkte zählen doppelt. Bo liegt daneben, deshalb kann Dani das Duell mit jedem Treffer gewinnen.'
+			tip: 'Bo liegt daneben, deshalb kann Dani das Duell mit jedem Treffer gewinnen.'
 		},
 		{
 			action: { type: 'answer', tile: 1 },
@@ -172,10 +196,18 @@ export const demo: DemoScript<FeudAction, FeudConfig> = {
 			action: { type: 'next' },
 			tip: 'Beide Teams haben 188 Punkte. Bei Gleichstand entscheidet eine Stichfrage, damit es einen Gewinner gibt.'
 		},
-		// sudden death on the tiebreak survey: one face-off decides
+		// sudden death on the tiebreak survey, Team B buzzes: one face-off decides
+		{
+			action: { type: 'ask' },
+			tip: 'Stichfrage: Nur das Duell zählt. Auch sie wird erst vorgelesen und dann aufgedeckt.'
+		},
+		{
+			action: { type: 'buzz', team: 1 },
+			tip: 'Team B buzzert zuerst, also antwortet Cleo vor Alex.'
+		},
 		{
 			action: { type: 'answer', tile: 2 },
-			tip: 'Stichfrage: Nur das Duell zählt. Cleo nennt Wandern, Platz 3.'
+			tip: 'Cleo nennt Wandern, Platz 3.'
 		},
 		{
 			action: { type: 'answer', tile: 0 },

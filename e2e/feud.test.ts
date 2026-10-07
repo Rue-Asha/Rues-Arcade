@@ -5,6 +5,7 @@ import {
 	chooseSurveys,
 	deleteSurvey,
 	emptyServer,
+	openFaceoff,
 	seedPlayed,
 	seedPlayers,
 	seedSavedRoster,
@@ -20,7 +21,7 @@ const HOLES = 'Nenne etwas, das voller Löcher sein kann';
 
 type Server = Awaited<ReturnType<typeof emptyServer>>;
 
-// teams are dealt alternately: Team A = Alex, Cleo; Team B = Bo, Dani. Round 1 opens with Team A, round 2 with Team B.
+// teams are dealt alternately: Team A = Alex, Cleo; Team B = Bo, Dani. Team A buzzes first in round 1, Team B in round 2.
 async function begin(page: Page, request: APIRequestContext, server: Server, questions: string[], extra: string[] = []) {
 	const everyone = await seedPlayers(request, server.origin, [...CREW, ...extra]);
 	const crew = everyone.slice(0, CREW.length);
@@ -45,8 +46,9 @@ const press = (page: Page, name: string) => page.getByRole('button', { name, exa
 const versus = (page: Page) => page.getByRole('region', { name: 'Spielstand' });
 const handoff = (page: Page) => page.getByTestId('handoff');
 
-// the first face-off answer is #1, so that team chooses at once
-async function toBoard(page: Page, choice: 'Spielen' | 'Passen' = 'Spielen') {
+// the buzzing team's first face-off answer is #1, so that team chooses at once
+async function toBoard(page: Page, choice: 'Spielen' | 'Passen' = 'Spielen', team = 'Team A') {
+	await openFaceoff(page, team);
 	await pick(page, 0).click();
 	await expect(handoff(page)).toBeVisible();
 	await handoff(page).getByRole('button', { name: choice, exact: true }).click();
@@ -65,6 +67,7 @@ test('Scenario: Feud face-off screen names both players', async ({ page, request
 	try {
 		const { surveys } = await begin(page, request, server, [PARTY, GHOST]);
 		const tiles = board(surveys[0]);
+		await openFaceoff(page);
 
 		await expect(page.getByRole('heading', { name: PARTY, exact: true })).toBeVisible();
 		await expect(page.getByText('Alex', { exact: true })).toBeVisible();
@@ -108,6 +111,7 @@ test('Scenario: Feud handoff in team colour', async ({ page, request }, info) =>
 			await expect.poll(async () => (await box.boundingBox())!.height).toBe(view.height);
 		};
 
+		await openFaceoff(page);
 		await pick(page, 0).click();
 		await full('Team A', 'feud');
 		await press(page, 'Spielen');
@@ -128,6 +132,7 @@ test('Scenario: Feud double round marked before it starts', async ({ page, reque
 		await toBoard(page);
 		for (let i = 1; i < board(surveys[0]).length; i++) await pick(page, i).click();
 		await press(page, 'Nächste Runde');
+		await openFaceoff(page, 'Team B');
 
 		await expect(page.getByRole('heading', { name: GHOST, exact: true })).toBeVisible();
 		await expect(double).toBeVisible();
@@ -160,7 +165,7 @@ async function fullGame(page: Page, [first, second]: Survey[], snap: () => Promi
 	await snap();
 	await press(page, 'Nächste Runde');
 	await snap();
-	await toBoard(page);
+	await toBoard(page, 'Spielen', 'Team B');
 	await pick(page, 1).click();
 	await strikeOut(page);
 	await snap();
@@ -276,8 +281,9 @@ test('Scenario: Feud undo disabled with nothing to undo', async ({ page, request
 	try {
 		await begin(page, request, server, [PARTY, GHOST]);
 
+		await expect(page.getByRole('button', { name: 'Frage aufdecken', exact: true })).toBeVisible();
 		await expect(page.getByRole('button', { name: 'Rückgängig', exact: true })).toBeDisabled();
-		await page.getByRole('button', { name: 'Nicht auf der Tafel', exact: true }).click();
+		await page.getByRole('button', { name: 'Frage aufdecken', exact: true }).click();
 		await expect(page.getByRole('button', { name: 'Rückgängig', exact: true })).toBeEnabled();
 	} finally {
 		server.close();
@@ -315,6 +321,7 @@ test('Scenario: Feud played-with list hidden outside prep', async ({ page, reque
 	const server = await emptyServer(info, 'feud-hidden');
 	try {
 		const { crew, others, surveys } = await begin(page, request, server, [PARTY, GHOST], ['Extra']);
+		await openFaceoff(page);
 		await seedPlayed(request, surveys[0].id, [crew[0].id, others[0].id], server.origin);
 		await page.reload();
 		const hidden = async () => {
@@ -391,7 +398,7 @@ test('Scenario: Feud game keeps its survey copy', async ({ page, request }, info
 		await expect(tile(page, 0)).toContainText(String(top.points));
 		for (let i = 1; i < board(first).length; i++) await pick(page, i).click();
 		await press(page, 'Nächste Runde');
-		await toBoard(page);
+		await toBoard(page, 'Spielen', 'Team B');
 		const lion = board(second)[0];
 		await expect(page.getByRole('heading', { name: GHOST, exact: true })).toBeVisible();
 		await expect(tile(page, 0)).toContainText(lion.text);
@@ -424,6 +431,7 @@ test('Scenario: Leaving Feud clears the session', async ({ page, request }, info
 	const server = await emptyServer(info, 'feud-leave');
 	try {
 		await begin(page, request, server, [PARTY, GHOST]);
+		await openFaceoff(page);
 		await expect(page.getByRole('heading', { name: PARTY, exact: true })).toBeVisible();
 
 		await page.getByRole('button', { name: 'Spiel beenden' }).click();

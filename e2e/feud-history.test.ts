@@ -1,7 +1,7 @@
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
 import { board } from '../src/lib/content/survey.ts';
 import type { Survey } from '../src/lib/content/types.ts';
-import { chooseSurveys, emptyServer, seedPlayers, seedSavedRoster, surveyByQuestion } from './helpers.ts';
+import { chooseSurveys, emptyServer, openFaceoff, seedPlayers, seedSavedRoster, surveyByQuestion } from './helpers.ts';
 
 const GHOST = 'Was würdest du tun, wenn du einen Geist siehst?';
 const CREW = ['Alex', 'Bo', 'Cleo', 'Dani'];
@@ -31,7 +31,9 @@ const pick = (page: Page, i: number) => page.locator(`[data-tile="${i}"]`).getBy
 const press = (page: Page, name: string) => page.getByRole('button', { name, exact: true }).click();
 const handoff = (page: Page) => page.getByTestId('handoff');
 
-async function toBoard(page: Page) {
+// the buzzing team's #1 wins the face-off at once
+async function toBoard(page: Page, team = 'Team A') {
+	await openFaceoff(page, team);
 	await pick(page, 0).click();
 	await expect(handoff(page)).toBeVisible();
 	await handoff(page).getByRole('button', { name: 'Spielen', exact: true }).click();
@@ -100,11 +102,12 @@ test('Scenario: Feud tiebreak survey is recorded', async ({ page, request }, inf
 		await pick(page, 1).click();
 		await strikeOut(page);
 		await press(page, 'Nächste Runde');
-		await toBoard(page);
+		await toBoard(page, 'Team B');
 		await strikeOut(page);
 		await press(page, 'Zum Ergebnis');
 
 		await expect(page.getByText('Gewinner', { exact: true })).toHaveCount(0);
+		await openFaceoff(page);
 		await pick(page, 0).click();
 		await expect(page.getByText('Stichfrage entschieden', { exact: true })).toBeVisible();
 		await press(page, 'Zum Ergebnis');

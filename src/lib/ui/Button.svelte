@@ -4,15 +4,18 @@
 	import { play } from '#lib/sound.ts';
 
 	interface Props {
-		variant: 'primary' | 'secondary' | 'ghost';
+		variant: 'primary' | 'secondary' | 'ghost' | 'danger' | 'warning';
 		size?: 'md' | 'sm';
+		// icon only: as wide as it is high, children = an SVG, `label` names it
+		square?: boolean;
+		label?: string;
 		action?: string;
 		disabled?: boolean;
 		onclick?: () => void;
 		children: Snippet;
 	}
 
-	let { variant, size = 'md', action, disabled = false, onclick, children }: Props = $props();
+	let { variant, size = 'md', square = false, label, action, disabled = false, onclick, children }: Props = $props();
 
 	const demo = $derived(action === undefined ? null : getDemo());
 	const expected = $derived(demo !== null && demo.expected === action);
@@ -27,6 +30,8 @@
 	type="button"
 	class="btn {variant} {size}"
 	class:expected
+	class:square
+	aria-label={label}
 	disabled={disabled || (demo !== null && !expected)}
 	data-action={action}
 	data-demo={expected ? 'expected' : undefined}
@@ -65,6 +70,17 @@
 		font-size: 15px;
 	}
 
+	.square {
+		width: 54px;
+		min-width: 54px;
+		padding: 0;
+	}
+
+	.sm.square {
+		width: 46px;
+		min-width: 46px;
+	}
+
 	.primary {
 		background: var(--primary);
 		color: var(--on-primary);
@@ -76,6 +92,18 @@
 		color: var(--text);
 		border: 1px solid var(--line);
 		box-shadow: 0 var(--ledge) 0 var(--shadow);
+	}
+
+	.danger {
+		background: var(--imposter);
+		color: var(--ink);
+		box-shadow: 0 var(--ledge) 0 var(--imposter-ledge);
+	}
+
+	.warning {
+		background: var(--duck);
+		color: var(--ink);
+		box-shadow: 0 var(--ledge) 0 var(--duck-ledge);
 	}
 
 	.ghost {
@@ -106,6 +134,10 @@
 		.secondary:hover:not(:disabled),
 		.ghost:hover:not(:disabled) {
 			background: var(--line);
+		}
+		.danger:hover:not(:disabled),
+		.warning:hover:not(:disabled) {
+			filter: brightness(1.08);
 		}
 	}
 
