@@ -12,10 +12,10 @@ import {
 } from './helpers.ts';
 
 const CREW = ['Alex', 'Bo', 'Cleo', 'Dani'];
-// seeded surveys: six answers (Milch 30 ... ), six answers, eight answers
-const FRIDGE = 'Nenne etwas, das man in einem Kühlschrank findet';
-const ZOO = 'Nenne ein Tier, das man im Zoo sieht';
-const HOLES = 'Nenne etwas, das voller Löcher ist';
+// seeded surveys: six answers (Getränke 45 ... ), six answers, eight answers
+const PARTY = 'Nenne etwas, das auf Partys immer ausgeht';
+const GHOST = 'Was würdest du tun, wenn du einen Geist siehst?';
+const HOLES = 'Nenne etwas, das voller Löcher sein kann';
 
 type Server = Awaited<ReturnType<typeof emptyServer>>;
 
@@ -62,10 +62,10 @@ const token = (page: Page, name: string) =>
 test('Scenario: Feud face-off screen names both players', async ({ page, request }, info) => {
 	const server = await emptyServer(info, 'feud-faceoff');
 	try {
-		const { surveys } = await begin(page, request, server, [FRIDGE, ZOO]);
+		const { surveys } = await begin(page, request, server, [PARTY, GHOST]);
 		const tiles = board(surveys[0]);
 
-		await expect(page.getByRole('heading', { name: FRIDGE, exact: true })).toBeVisible();
+		await expect(page.getByRole('heading', { name: PARTY, exact: true })).toBeVisible();
 		await expect(page.getByText('Alex', { exact: true })).toBeVisible();
 		await expect(page.getByText('Bo', { exact: true })).toBeVisible();
 		for (let i = 0; i < tiles.length; i++) {
@@ -81,7 +81,7 @@ test('Scenario: Feud face-off screen names both players', async ({ page, request
 test('Scenario: Feud versus header shows both teams', async ({ page, request }, info) => {
 	const server = await emptyServer(info, 'feud-versus');
 	try {
-		await begin(page, request, server, [FRIDGE, ZOO]);
+		await begin(page, request, server, [PARTY, GHOST]);
 		await toBoard(page);
 
 		await expect(versus(page).getByText('Team A', { exact: true })).toBeVisible();
@@ -96,7 +96,7 @@ test('Scenario: Feud versus header shows both teams', async ({ page, request }, 
 test('Scenario: Feud handoff in team colour', async ({ page, request }, info) => {
 	const server = await emptyServer(info, 'feud-handoff');
 	try {
-		await begin(page, request, server, [FRIDGE, ZOO]);
+		await begin(page, request, server, [PARTY, GHOST]);
 		const full = async (team: string, colour: string) => {
 			const box = handoff(page);
 			await expect(box).toBeVisible();
@@ -120,7 +120,7 @@ test('Scenario: Feud handoff in team colour', async ({ page, request }, info) =>
 test('Scenario: Feud double round marked before it starts', async ({ page, request }, info) => {
 	const server = await emptyServer(info, 'feud-double');
 	try {
-		const { surveys } = await begin(page, request, server, [FRIDGE, ZOO]);
+		const { surveys } = await begin(page, request, server, [PARTY, GHOST]);
 		const double = page.getByText('Doppelte Punkte', { exact: true });
 
 		await expect(double).toHaveCount(0);
@@ -128,7 +128,7 @@ test('Scenario: Feud double round marked before it starts', async ({ page, reque
 		for (let i = 1; i < board(surveys[0]).length; i++) await pick(page, i).click();
 		await press(page, 'Nächste Runde');
 
-		await expect(page.getByRole('heading', { name: ZOO, exact: true })).toBeVisible();
+		await expect(page.getByRole('heading', { name: GHOST, exact: true })).toBeVisible();
 		await expect(double).toBeVisible();
 	} finally {
 		server.close();
@@ -176,7 +176,7 @@ async function fullGame(page: Page, [first, second]: Survey[], snap: () => Promi
 test('Scenario: Feud strikes fill the pods', async ({ page, request }, info) => {
 	const server = await emptyServer(info, 'feud-pods');
 	try {
-		await begin(page, request, server, [FRIDGE, ZOO]);
+		await begin(page, request, server, [PARTY, GHOST]);
 		await toBoard(page);
 		await expect(pods(page, 0)).toBeVisible();
 
@@ -194,7 +194,7 @@ test('Scenario: Feud strikes fill the pods', async ({ page, request }, info) => 
 test('Scenario: Feud result shows the remaining answers muted', async ({ page, request }, info) => {
 	const server = await emptyServer(info, 'feud-muted');
 	try {
-		const { surveys } = await begin(page, request, server, [FRIDGE, ZOO]);
+		const { surveys } = await begin(page, request, server, [PARTY, GHOST]);
 		const tiles = board(surveys[0]);
 		await toBoard(page);
 		for (const i of [1, 2, 3]) await pick(page, i).click();
@@ -216,7 +216,7 @@ test('Scenario: Feud result shows the remaining answers muted', async ({ page, r
 test('Scenario: Full Feud game', async ({ page, request }, info) => {
 	const server = await emptyServer(info, 'feud-full');
 	try {
-		const { surveys } = await begin(page, request, server, [FRIDGE, ZOO]);
+		const { surveys } = await begin(page, request, server, [PARTY, GHOST]);
 		const { a, b } = await fullGame(page, surveys);
 
 		await expect(page.getByRole('heading', { name: 'Team A', exact: true })).toBeVisible();
@@ -233,7 +233,7 @@ test('Scenario: Full Feud game', async ({ page, request }, info) => {
 test('Scenario: Feud copy reads neutral', async ({ page, request }, info) => {
 	const server = await emptyServer(info, 'feud-copy');
 	try {
-		const { surveys } = await begin(page, request, server, [FRIDGE, ZOO]);
+		const { surveys } = await begin(page, request, server, [PARTY, GHOST]);
 		const seen: string[] = [];
 		await fullGame(page, surveys, async () => {
 			await page.waitForTimeout(100);
@@ -253,7 +253,7 @@ test('Scenario: Feud copy reads neutral', async ({ page, request }, info) => {
 test('Scenario: Feud undo fixes a mistap', async ({ page, request }, info) => {
 	const server = await emptyServer(info, 'feud-undo');
 	try {
-		const { surveys } = await begin(page, request, server, [FRIDGE, ZOO]);
+		const { surveys } = await begin(page, request, server, [PARTY, GHOST]);
 		const tiles = board(surveys[0]);
 		await toBoard(page);
 		await expect(pot(page)).toHaveText(String(tiles[0].points));
@@ -273,7 +273,7 @@ test('Scenario: Feud undo fixes a mistap', async ({ page, request }, info) => {
 test('Scenario: Feud undo disabled with nothing to undo', async ({ page, request }, info) => {
 	const server = await emptyServer(info, 'feud-undo-off');
 	try {
-		await begin(page, request, server, [FRIDGE, ZOO]);
+		await begin(page, request, server, [PARTY, GHOST]);
 
 		await expect(page.getByRole('button', { name: 'Rückgängig', exact: true })).toBeDisabled();
 		await page.getByRole('button', { name: 'Nicht auf der Tafel', exact: true }).click();
@@ -292,14 +292,14 @@ async function hold(page: Page) {
 test('Scenario: Feud peek shows the survey while held', async ({ page, request }, info) => {
 	const server = await emptyServer(info, 'feud-peek');
 	try {
-		const { surveys } = await begin(page, request, server, [FRIDGE, ZOO]);
+		const { surveys } = await begin(page, request, server, [PARTY, GHOST]);
 		const tiles = board(surveys[0]);
 		await toBoard(page);
 		const peek = page.getByTestId('peek');
 		await expect(peek).toHaveCount(0);
 
 		await hold(page);
-		await expect(peek.getByRole('heading', { name: FRIDGE, exact: true })).toBeVisible();
+		await expect(peek.getByRole('heading', { name: PARTY, exact: true })).toBeVisible();
 		for (const [i, t] of tiles.entries())
 			await expect(peek.getByRole('listitem').nth(i)).toHaveText(new RegExp(`${t.text}\\s*${t.points}`));
 		await page.mouse.up();
@@ -313,7 +313,7 @@ test('Scenario: Feud peek shows the survey while held', async ({ page, request }
 test('Scenario: Feud played-with list hidden outside prep', async ({ page, request }, info) => {
 	const server = await emptyServer(info, 'feud-hidden');
 	try {
-		const { crew, others, surveys } = await begin(page, request, server, [FRIDGE, ZOO], ['Extra']);
+		const { crew, others, surveys } = await begin(page, request, server, [PARTY, GHOST], ['Extra']);
 		await seedPlayed(request, surveys[0].id, [crew[0].id, others[0].id], server.origin);
 		await page.reload();
 		const hidden = async () => {
@@ -323,10 +323,12 @@ test('Scenario: Feud played-with list hidden outside prep', async ({ page, reque
 			expect(text).not.toContain('gespielt mit');
 		};
 
-		await expect(page.getByRole('heading', { name: FRIDGE, exact: true })).toBeVisible();
+		await expect(page.getByRole('heading', { name: PARTY, exact: true })).toBeVisible();
 		await hidden();
 		await page.goto(`${server.origin}/spiele/family-feud/inhalte`);
-		await expect(page.getByText(FRIDGE).first()).toBeVisible();
+		while (!(await page.getByText(PARTY, { exact: true }).count()))
+			await page.getByRole('button', { name: /^Mehr anzeigen/ }).click();
+		await expect(page.getByText(PARTY).first()).toBeVisible();
 		await hidden();
 	} finally {
 		server.close();
@@ -338,7 +340,7 @@ const notice = (page: Page) => page.getByRole('alert').filter({ hasText: 'Spiels
 test('Scenario: Feud session resumes after reload', async ({ page, request }, info) => {
 	const server = await emptyServer(info, 'feud-resume');
 	try {
-		const { surveys } = await begin(page, request, server, [FRIDGE, ZOO]);
+		const { surveys } = await begin(page, request, server, [PARTY, GHOST]);
 		const tiles = board(surveys[0]);
 		await toBoard(page);
 		await pick(page, 1).click();
@@ -363,14 +365,14 @@ test('Scenario: Feud session resumes after reload', async ({ page, request }, in
 test('Scenario: Feud game keeps its survey copy', async ({ page, request }, info) => {
 	const server = await emptyServer(info, 'feud-copy-kept');
 	try {
-		const { surveys } = await begin(page, request, server, [FRIDGE, ZOO]);
+		const { surveys } = await begin(page, request, server, [PARTY, GHOST]);
 		const [first, second] = surveys;
 		await toBoard(page);
 		await deleteSurvey(request, first.id, server.origin);
 		const edit = await request.put(`${server.origin}/api/content/feud_surveys/${second.id}`, {
 			headers: writeHeaders(server.origin),
 			data: {
-				question: ZOO,
+				question: GHOST,
 				answers: [
 					{ text: 'Pinguin', points: 60 },
 					{ text: 'Bär', points: 20 },
@@ -382,7 +384,7 @@ test('Scenario: Feud game keeps its survey copy', async ({ page, request }, info
 
 		await page.reload();
 
-		await expect(page.getByRole('heading', { name: FRIDGE, exact: true })).toBeVisible();
+		await expect(page.getByRole('heading', { name: PARTY, exact: true })).toBeVisible();
 		const top = board(first)[0];
 		await expect(tile(page, 0)).toContainText(top.text);
 		await expect(tile(page, 0)).toContainText(String(top.points));
@@ -390,7 +392,7 @@ test('Scenario: Feud game keeps its survey copy', async ({ page, request }, info
 		await press(page, 'Nächste Runde');
 		await toBoard(page);
 		const lion = board(second)[0];
-		await expect(page.getByRole('heading', { name: ZOO, exact: true })).toBeVisible();
+		await expect(page.getByRole('heading', { name: GHOST, exact: true })).toBeVisible();
 		await expect(tile(page, 0)).toContainText(lion.text);
 		await expect(tile(page, 0)).toContainText(String(lion.points));
 		await expect(page.getByText('Pinguin')).toHaveCount(0);
@@ -402,7 +404,7 @@ test('Scenario: Feud game keeps its survey copy', async ({ page, request }, info
 test('Scenario: Feud old or corrupt save discarded', async ({ page, request }, info) => {
 	const server = await emptyServer(info, 'feud-discard');
 	try {
-		await begin(page, request, server, [FRIDGE, ZOO]);
+		await begin(page, request, server, [PARTY, GHOST]);
 		const raw = await page.evaluate(() => localStorage.getItem('arcade:session:family-feud')!);
 
 		await page.evaluate(() => localStorage.setItem('arcade:session:family-feud', 'not json{'));
@@ -420,8 +422,8 @@ test('Scenario: Feud old or corrupt save discarded', async ({ page, request }, i
 test('Scenario: Leaving Feud clears the session', async ({ page, request }, info) => {
 	const server = await emptyServer(info, 'feud-leave');
 	try {
-		await begin(page, request, server, [FRIDGE, ZOO]);
-		await expect(page.getByRole('heading', { name: FRIDGE, exact: true })).toBeVisible();
+		await begin(page, request, server, [PARTY, GHOST]);
+		await expect(page.getByRole('heading', { name: PARTY, exact: true })).toBeVisible();
 
 		await page.getByRole('button', { name: 'Spiel beenden' }).click();
 		await page.getByRole('dialog').getByRole('button', { name: 'Beenden' }).click();
@@ -447,7 +449,7 @@ test('Scenario: Feud board fits a phone', async ({ page, request }, info) => {
 	await page.setViewportSize({ width: 390, height: 844 });
 	const server = await emptyServer(info, 'feud-phone');
 	try {
-		const { surveys } = await begin(page, request, server, [HOLES, ZOO]);
+		const { surveys } = await begin(page, request, server, [HOLES, GHOST]);
 		expect(surveys[0].answers).toHaveLength(8);
 		await toBoard(page);
 
@@ -480,7 +482,7 @@ test('Scenario: Feud motion uses transform and opacity only', async ({ page, req
 	});
 	const server = await emptyServer(info, 'feud-motion');
 	try {
-		await begin(page, request, server, [FRIDGE, ZOO]);
+		await begin(page, request, server, [PARTY, GHOST]);
 		await toBoard(page);
 		await pick(page, 1).click();
 		await press(page, 'Fehler');
@@ -505,7 +507,7 @@ test('Scenario: Feud motion uses transform and opacity only', async ({ page, req
 test('Scenario: Feud motion never blocks input', async ({ page, request }, info) => {
 	const server = await emptyServer(info, 'feud-input');
 	try {
-		await begin(page, request, server, [FRIDGE, ZOO]);
+		await begin(page, request, server, [PARTY, GHOST]);
 		await toBoard(page);
 
 		// one task, so the flip can't have finished between the two taps
@@ -537,7 +539,7 @@ test('Scenario: Feud reduced motion is instant', async ({ page, request }, info)
 	await page.emulateMedia({ reducedMotion: 'reduce' });
 	const server = await emptyServer(info, 'feud-reduced');
 	try {
-		const { surveys } = await begin(page, request, server, [FRIDGE, ZOO]);
+		const { surveys } = await begin(page, request, server, [PARTY, GHOST]);
 		await toBoard(page);
 		expect(await running(page)).toBe(0);
 
@@ -566,7 +568,7 @@ test('Scenario: Feud reduced motion is instant', async ({ page, request }, info)
 test('Scenario: Feud peek does not block a tile flip', async ({ page, request }, info) => {
 	const server = await emptyServer(info, 'feud-peek-flip');
 	try {
-		const { surveys } = await begin(page, request, server, [FRIDGE, ZOO]);
+		const { surveys } = await begin(page, request, server, [PARTY, GHOST]);
 		const second = board(surveys[0])[1];
 		await toBoard(page);
 
@@ -597,7 +599,7 @@ test('Scenario: Feud peek instant under reduced motion', async ({ page, request 
 	await page.emulateMedia({ reducedMotion: 'reduce' });
 	const server = await emptyServer(info, 'feud-peek-reduced');
 	try {
-		await begin(page, request, server, [FRIDGE, ZOO]);
+		await begin(page, request, server, [PARTY, GHOST]);
 		await toBoard(page);
 
 		await hold(page);

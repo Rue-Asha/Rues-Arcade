@@ -3,11 +3,11 @@ import { board } from '../src/lib/content/survey.ts';
 import type { Survey } from '../src/lib/content/types.ts';
 import { emptyServer, seedPlayers, seedSavedRoster, surveyByQuestion } from './helpers.ts';
 
-const ZOO = 'Nenne ein Tier, das man im Zoo sieht';
+const GHOST = 'Was würdest du tun, wenn du einen Geist siehst?';
 const CREW = ['Alex', 'Bo', 'Cleo', 'Dani'];
-const FRIDGE = 'Nenne etwas, das man in einem Kühlschrank findet';
-// Milch + Eier = 52 in round 1 and Geldbeutel 26 doubled in the last round tie the game
-const BAG = 'Nenne etwas, das in einer Handtasche ist';
+const PARTY = 'Nenne etwas, das auf Partys immer ausgeht';
+// Getränke + Eiswürfel = 76 in round 1 and Affe 38 doubled in the last round tie the game
+const HAIRY = 'Nenne etwas, das richtig, richtig haarig ist';
 
 type Server = Awaited<ReturnType<typeof emptyServer>>;
 
@@ -53,7 +53,7 @@ const players = (list: Played, id: number) => list.find((p) => p.surveyId === id
 test('Scenario: Feud closed rounds are recorded', async ({ page, request }, info) => {
 	const server = await emptyServer(info, 'history-closed');
 	try {
-		const { crew, surveys } = await begin(page, request, server, [FRIDGE, ZOO]);
+		const { crew, surveys } = await begin(page, request, server, [PARTY, GHOST]);
 		await toBoard(page);
 		for (let i = 1; i < board(surveys[0]).length; i++) await pick(page, i).click();
 		await press(page, 'Nächste Runde');
@@ -74,7 +74,7 @@ test('Scenario: Feud closed rounds are recorded', async ({ page, request }, info
 test('Scenario: Feud early end records only closed rounds', async ({ page, request }, info) => {
 	const server = await emptyServer(info, 'history-early');
 	try {
-		const { crew, surveys } = await begin(page, request, server, [FRIDGE, ZOO]);
+		const { crew, surveys } = await begin(page, request, server, [PARTY, GHOST]);
 		await toBoard(page);
 		for (let i = 1; i < board(surveys[0]).length; i++) await pick(page, i).click();
 		await press(page, 'Nächste Runde');
@@ -95,7 +95,7 @@ test('Scenario: Feud early end records only closed rounds', async ({ page, reque
 test('Scenario: Feud tiebreak survey is recorded', async ({ page, request }, info) => {
 	const server = await emptyServer(info, 'history-tiebreak');
 	try {
-		const { crew, surveys } = await begin(page, request, server, [FRIDGE, BAG]);
+		const { crew, surveys } = await begin(page, request, server, [PARTY, HAIRY]);
 		await toBoard(page);
 		await pick(page, 1).click();
 		await strikeOut(page);

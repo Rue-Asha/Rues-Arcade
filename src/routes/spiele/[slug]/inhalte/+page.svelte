@@ -62,6 +62,11 @@
 	let bulkLines = $state<string[]>([]);
 	let report = $state<ImportReport | null>(null);
 
+	const PAGE = 50;
+	let shown = $state(PAGE);
+	// newest first, so whatever was just added or imported is on the first page
+	const visible = $derived(items.toReversed().slice(0, shown));
+
 	const name = (item: { a: string; b: string }) => (single ? item.a : `${item.a} | ${item.b}`);
 
 	async function send(url: string, method: string, body?: unknown): Promise<string> {
@@ -209,7 +214,7 @@
 
 				{#if items.length}
 					<ul class="rows" aria-labelledby="entries">
-						{#each items as item (item.id)}
+						{#each visible as item (item.id)}
 							<li class="row">
 								{#if editing === item.id}
 									<form class="edit" aria-label="{name(item)} bearbeiten" onsubmit={save}>
@@ -252,6 +257,9 @@
 							</li>
 						{/each}
 					</ul>
+					{#if items.length > shown}
+						<Button variant="secondary" onclick={() => (shown += PAGE)}>Mehr anzeigen ({items.length - shown} weitere)</Button>
+					{/if}
 				{:else}
 					<div class="empty panel">
 						<p class="empty-title">Noch keine Einträge</p>
@@ -546,6 +554,9 @@
 			grid-row: 1;
 			position: sticky;
 			top: 24px;
+			/* taller than the viewport, a sticky side hides the import button until the end of a long list */
+			max-height: calc(100dvh - 48px);
+			overflow-y: auto;
 		}
 
 		.list {

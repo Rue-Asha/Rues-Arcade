@@ -40,6 +40,11 @@
 	let bulkLines = $state<string[]>([]);
 	let report = $state<ImportReport | null>(null);
 
+	const PAGE = 30;
+	let shown = $state(PAGE);
+	// newest first, so whatever was just added or imported is on the first page
+	const visible = $derived(surveys.toReversed().slice(0, shown));
+
 	function body(d: Draft) {
 		return {
 			question: d.question,
@@ -206,7 +211,7 @@
 
 			{#if surveys.length}
 				<ul class="rows" aria-labelledby="entries">
-					{#each surveys as survey (survey.id)}
+					{#each visible as survey (survey.id)}
 						<li class="card">
 							{#if editing === survey.id}
 								<form class="edit stack" aria-label="{survey.question} bearbeiten" onsubmit={save}>
@@ -241,6 +246,9 @@
 						</li>
 					{/each}
 				</ul>
+				{#if surveys.length > shown}
+					<Button variant="secondary" onclick={() => (shown += PAGE)}>Mehr anzeigen ({surveys.length - shown} weitere)</Button>
+				{/if}
 			{:else}
 				<div class="empty panel">
 					<p class="empty-title">Noch keine Umfragen</p>
@@ -572,6 +580,9 @@
 			grid-row: 1;
 			position: sticky;
 			top: 24px;
+			/* taller than the viewport, a sticky side hides the import button until the end of a long list */
+			max-height: calc(100dvh - 48px);
+			overflow-y: auto;
 		}
 
 		.list {

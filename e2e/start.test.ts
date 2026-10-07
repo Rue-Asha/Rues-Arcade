@@ -155,7 +155,7 @@ test('Scenario: Family Feud Inhalte card counts the seeded surveys', async ({ pa
 
 		for (const name of ['Erklärung', 'Demo']) await expect(more.getByRole('link', { name, exact: true })).toBeVisible();
 		await expect(more.getByRole('link', { name: 'Inhalte', exact: true })).toHaveAccessibleDescription(
-			'26 Umfragen ansehen und bearbeiten'
+			'247 Umfragen ansehen und bearbeiten'
 		);
 	} finally {
 		server.close();
