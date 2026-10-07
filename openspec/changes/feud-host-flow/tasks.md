@@ -10,7 +10,7 @@ Waves: Wave 1: U1 · Wave 2: U2 ∥ U3.
 
 > unit: depends=none · scope=none · files=e2e/helpers.ts, e2e/feud.test.ts, e2e/feud-history.test.ts, e2e/walks/feud.ts
 
-- [ ] 1.1 Add `surveyCard(page, id)` and `chooseSurveys(page, ids)` to `e2e/helpers.ts` exactly as in design.md → Contracts (pager `nav[aria-label="Seiten"]`, buttons "Zurück"/"Weiter", cards `[data-survey]` with "Wählen"); they must work on today's prep, which has no pager. Switch the survey picking in `begin()` of `e2e/feud.test.ts` and `e2e/feud-history.test.ts` and in `e2e/walks/feud.ts` to `chooseSurveys`; change nothing else in those files. No behaviour change, so no new scenario; `proof:full` green (unchanged and green: every test in those three files and the look walk)
+- [x] 1.1 Add `surveyCard(page, id)` and `chooseSurveys(page, ids)` to `e2e/helpers.ts` exactly as in design.md → Contracts (pager `nav[aria-label="Seiten"]`, buttons "Zurück"/"Weiter", cards `[data-survey]` with "Wählen"); they must work on today's prep, which has no pager. Switch the survey picking in `begin()` of `e2e/feud.test.ts` and `e2e/feud-history.test.ts` and in `e2e/walks/feud.ts` to `chooseSurveys`; change nothing else in those files. No behaviour change, so no new scenario; `proof:full` green (unchanged and green: every test in those three files and the look walk)
 
 ## 2. Prep cards, pages and rounds picker
 
