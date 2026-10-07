@@ -35,7 +35,6 @@
 			.sort((a, b) => b.score - a.score)
 			.map((t) => ({ name: t.name, score: t.score, lead: t.score > 0 && best.includes(t) }))
 	);
-	const step: Record<string, string> = { reveal: 'Aufdecken', play: 'Spiel', result: 'Rundenergebnis' };
 	const verdict: Record<number, string> = {
 		3: 'Im ersten Versuch erraten.',
 		2: 'Im zweiten Versuch erraten.',
@@ -68,10 +67,6 @@
 
 <div class="split">
 	<div class="stack main">
-		{#if s.phase !== 'gameOver'}
-			<p class="label turn">Runde {s.roundIndex + 1} / {s.rounds} · {step[s.phase]}</p>
-		{/if}
-
 		{#if s.phase === 'reveal'}
 			<Card tone="codes_words">
 				<p class="label">Nur die Erklärer schauen hin</p>
@@ -172,10 +167,6 @@
 </div>
 
 <style>
-	.turn {
-		color: var(--codes);
-	}
-
 	.tight {
 		gap: 8px;
 	}

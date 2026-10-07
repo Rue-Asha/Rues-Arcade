@@ -50,7 +50,6 @@
 	const acting = $derived(
 		s.phase === 'faceoff' ? (ready ? due(s) : null) : s.phase === 'board' ? s.playing : s.phase === 'steal' ? 1 - s.playing! : null
 	);
-	const round = $derived(suddenDeath(s) ? 'Stichfrage' : `Runde ${s.round + 1} / ${s.config.surveys.length}`);
 
 	// the tiles aren't Buttons: in the demo only the one the script names may be tapped
 	const demo = $derived(getDemo());
@@ -213,9 +212,6 @@
 {:else}
 	<div class="stack">
 		<div class="topline">
-			<p class="label turn">
-				{round} · {s.phase === 'faceoff' ? 'Duell' : s.phase === 'board' ? 'Tafel' : s.phase === 'steal' ? 'Stehlen' : 'Ergebnis'}
-			</p>
 			{#if double}
 				<span class="tag">Doppelte Punkte</span>
 			{/if}
@@ -367,10 +363,6 @@
 		flex-wrap: wrap;
 		align-items: center;
 		gap: 8px 12px;
-	}
-
-	.turn {
-		color: var(--feud);
 	}
 
 	.tag {
