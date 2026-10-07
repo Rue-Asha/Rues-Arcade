@@ -11,3 +11,4 @@ learnings:
   - "Per-game demo tests outside demo.test.ts (e.g. imposter engine.test.ts 'imposter demo' block) → list them in the demo unit's files. (weil: U2 had to edit engine.test.ts outside its file list)"
   - "Engine contract change in a unit with Screen/Setup tasks → planner orders tasks so each commit typechecks (engine + minimal Screen/Setup adapt in one task), or states that intermediate commits run vitest only. (weil: U1's 1.1/1.2 commits fail svelte-check on their own)"
   - "Old demo assertions living in engine.test.ts (imposter, wavelength) → move them to demo.test.ts or list them in the demo unit's files; duplicated 'Scenario:' names across files confuse coverage. (weil: U2 and U5 both had to edit engine.test.ts; U5 left duplicate scenario names)"
+  - "Scoped e2e runs in a builder (npx playwright test <file>) → run `npm run build` first; playwright serves the existing build/. (weil: U8 got misleading failures from a stale build)"
