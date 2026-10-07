@@ -251,6 +251,8 @@ test('Scenario: Old Erklärung link is not found', async ({ page }) => {
 
 	expect(res!.status()).toBe(404);
 	expect(new URL(page.url()).pathname).toBe('/spiele/imposter/erklaerung');
+	await expect(page.getByText('Not Found', { exact: true })).toBeVisible();
+	await expect(page.getByRole('heading', { name: 'Imposter', level: 1 })).toHaveCount(0);
 });
 
 test('Scenario: Inhalte card shows the real content count', async ({ page }, info) => {
