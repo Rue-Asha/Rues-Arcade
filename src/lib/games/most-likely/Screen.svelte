@@ -5,40 +5,45 @@
 	import { play } from '#lib/sound.ts';
 	import Button from '#lib/ui/Button.svelte';
 	import Card from '#lib/ui/Card.svelte';
+	import Scoreboard from '#lib/ui/Scoreboard.svelte';
 	import { demo as script } from './demo.ts';
-	import { leaders, ranking, type MostLikelyAction, type MostLikelyState } from './engine.ts';
+	import { choices, current, leaders, ranking, type MostLikelyAction, type MostLikelyState } from './engine.ts';
 
 	let { state: game, dispatch }: ScreenProps = $props();
 
 	const s = $derived(game as MostLikelyState);
-	const last = $derived(s.round + 1 >= s.rounds);
 	const list = (names: string[]) => new Intl.ListFormat('de').format(names);
-	const holders = $derived(list(s.chosen.map((i) => s.players[i].name)));
-	const best = $derived(leaders(s));
-	const top = $derived(Math.max(...s.titles));
-	const rows = $derived(ranking(s));
 
-	// in the demo only the scripted player's toggle is live, like Button does for its action
+	const team = $derived(s.teams[current(s)]);
+	const lastTurn = $derived(s.turn + 1 >= s.teams.length);
+	const lastGame = $derived(lastTurn && s.round + 1 >= s.rounds);
+	const best = $derived(leaders(s));
+	const top = $derived(Math.max(...s.teams.map((t) => t.score)));
+	const rows = $derived(ranking(s).map(({ team: t }) => ({ name: t.name, score: t.score, lead: top > 0 && t.score === top })));
+	const verdict = $derived(
+		s.lastPoints === 0
+			? 'Alle verschieden'
+			: s.lastPoints === team.players.length
+				? 'Alle auf dieselbe Person'
+				: `${s.lastPoints} auf dieselbe Person`
+	);
+
+	// the choices aren't Buttons: in the demo only the count the script names may be tapped
 	const demo = $derived(getDemo());
 	const scripted = $derived.by(() => {
-		const action = demo && demo.expected === 'toggle' ? script.steps[demo.step - 1]?.action : undefined;
-		return action?.type === 'toggle' ? action.player : null;
+		const action = demo && demo.expected === 'score' ? script.steps[demo.step - 1]?.action : undefined;
+		return action?.type === 'score' ? action.matched : null;
 	});
 
 	const act = (a: MostLikelyAction) => dispatch(a);
 
-	function toggle(player: number) {
-		play('press');
-		act({ type: 'toggle', player });
-	}
-
-	function confirm() {
+	function score(matched: number) {
 		play('reveal');
-		act({ type: 'confirm' });
+		act({ type: 'score', matched });
 	}
 
 	function next() {
-		if (last) play('win');
+		if (lastGame) play('win');
 		act({ type: 'next' });
 	}
 </script>
@@ -46,14 +51,18 @@
 <div class="split">
 	<section class="stack main" aria-live="polite">
 		{#if s.phase !== 'gameOver'}
-			<p class="label turn">Runde {s.round + 1} / {s.rounds}</p>
+			<p class="label turn"><span>Runde {s.round + 1} / {s.rounds}</span> · <span>Team {s.turn + 1} / {s.teams.length}</span></p>
 		{/if}
 
 		{#if s.phase === 'prompt'}
+			<div class="stack tight">
+				<h2>{team.name} ist dran</h2>
+				<p class="names" data-testid="players">{list(team.players.map((p) => p.name))}</p>
+			</div>
 			<Card tone="most_likely_prompts">
 				<p class="label">Vorlesen</p>
 				<p class="prompt" data-testid="prompt">{s.prompt.a}</p>
-				<p class="muted">Auf drei zeigen alle gleichzeitig auf die Person, die am besten passt.</p>
+				<p class="muted">Zählt bis drei und zeigt gleichzeitig auf die Person, die am besten passt.</p>
 			</Card>
 			<div class="row">
 				<Button variant="primary" action="point" onclick={() => act({ type: 'point' })}>Alle haben gezeigt</Button>
@@ -61,71 +70,86 @@
 					Anderer Spruch
 				</Button>
 			</div>
-		{:else if s.phase === 'pick'}
+		{:else if s.phase === 'count'}
 			<div class="stack tight">
-				<p class="muted small" data-testid="pick-prompt">{s.prompt.a}</p>
-				<h2 id="pick">Wer hat den Titel?</h2>
-				<p class="muted">Tippe an, auf wen die meisten gezeigt haben. Bei Gleichstand alle, die vorne liegen.</p>
+				<p class="muted small" data-testid="count-prompt">{s.prompt.a}</p>
+				<h2 id="count">Wie viele aus {team.name} haben auf dieselbe Person gezeigt?</h2>
+				<p class="muted">Zählt die größte Gruppe, die auf dieselbe Person zeigt. Jeder Finger darin ist ein Punkt.</p>
 			</div>
-			<div class="picks" role="group" aria-labelledby="pick">
-				{#each s.players as p, i (p.id)}
-					{@const expected = scripted === i}
+			<div class="picks" role="group" aria-labelledby="count">
+				{#each choices(team.players.length) as n (n)}
+					{@const expected = scripted === n}
 					<button
 						type="button"
 						class="pick"
 						class:expected
-						aria-pressed={s.chosen.includes(i)}
 						disabled={demo !== null && !expected}
-						data-action="toggle"
+						data-action="score"
 						data-demo={expected ? 'expected' : undefined}
-						onclick={() => toggle(i)}
+						onclick={() => score(n)}
 					>
-						<span class="box" aria-hidden="true">
-							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>
-						</span>
-						<span>{p.name}</span>
+						{n === 0 ? 'Alle verschieden' : n}
 					</button>
 				{/each}
 			</div>
-			<div class="row">
-				<Button variant="primary" action="confirm" disabled={s.chosen.length === 0} onclick={confirm}>Titel vergeben</Button>
+		{:else if s.phase === 'result'}
+			<div class="outcome" class:miss={s.lastPoints === 0} use:pulse>
+				<p class="score data" data-testid="points">+{s.lastPoints}</p>
+				<div class="stack tight">
+					<p class="label">{s.lastPoints === 1 ? 'Punkt' : 'Punkte'} für {team.name}</p>
+					<h2>{verdict}</h2>
+				</div>
 			</div>
-		{:else if s.phase === 'reveal'}
-			<div class="reveal" use:pulse>
-				<p class="label" data-testid="reveal-prompt">{s.prompt.a}</p>
-				<p class="reveal-word" data-testid="holders">{holders}</p>
-				<p class="gain">{s.chosen.length > 1 ? 'Je +1 Titel' : '+1 Titel'}</p>
-			</div>
+			<Card tone="most_likely_prompts">
+				<p class="label">Der Spruch war</p>
+				<p class="prompt small-prompt" data-testid="result-prompt">{s.prompt.a}</p>
+			</Card>
 			<div class="row">
-				<Button variant="primary" action="next" onclick={next}>{last ? 'Zum Endstand' : 'Nächste Runde'}</Button>
+				<Button variant="primary" action="next" onclick={next}>
+					{lastGame ? 'Zum Ergebnis' : lastTurn ? 'Nächste Runde' : 'Nächstes Team'}
+				</Button>
 			</div>
 		{:else}
 			<div class="reveal">
 				<p class="label">{best.length > 1 ? 'Unentschieden' : 'Gewinner'}</p>
-				<h2 class="reveal-word winner">{best.map((p) => p.name).join(' & ')}</h2>
-				<p>{top} Titel · {s.rounds} Runden gespielt</p>
+				<h2 class="reveal-word winner">{best.map((t) => t.name).join(' & ')}</h2>
+				<p>{s.rounds} Runden gespielt.</p>
 			</div>
+			<section class="board" aria-labelledby="final">
+				<h2 class="label" id="final">Endstand</h2>
+				<ol class="rows rise">
+					{#each ranking(s) as row (row.team.name)}
+						{@const lead = top > 0 && row.team.score === top}
+						<li class="entry" class:lead>
+							<span class="rank">{row.rank}</span>
+							<span class="who">
+								<span class="name">{row.team.name}</span>
+								<span class="members">{list(row.team.players.map((p) => p.name))}</span>
+							</span>
+							<span class="pts data">{row.team.score}</span>
+						</li>
+					{/each}
+				</ol>
+			</section>
 			<div class="row">
 				<Button variant="primary" action="rematch" onclick={() => act({ type: 'rematch' })}>Nochmal spielen</Button>
 			</div>
 		{/if}
 	</section>
 
-	<aside>
-		<section class="board" aria-label="Titel">
-			<h2 class="label">Titel</h2>
-			<ol class="rows">
-				{#each rows as row (row.player.id)}
-					{@const lead = top > 0 && row.titles === top}
-					<li class="entry" class:lead>
-						<span class="rank">{row.rank}</span>
-						<span class="who">{row.player.name}</span>
-						<span class="pts data">{row.titles}</span>
+	{#if s.phase !== 'gameOver'}
+		<aside class="stack">
+			<Scoreboard {rows} />
+			<ul class="teams" aria-label="Teams">
+				{#each s.teams as t, i (t.name)}
+					<li class:now={i === current(s)}>
+						<span class="label">{t.name}</span>
+						<span>{list(t.players.map((p) => p.name))}</span>
 					</li>
 				{/each}
-			</ol>
-		</section>
-	</aside>
+			</ul>
+		</aside>
+	{/if}
 </div>
 
 <style>
@@ -142,12 +166,22 @@
 		overflow-wrap: anywhere;
 	}
 
+	.names {
+		font-weight: 700;
+		font-size: 18px;
+		overflow-wrap: anywhere;
+	}
+
 	.prompt {
 		font-weight: 800;
 		font-size: clamp(24px, 5vw, 34px);
 		line-height: 1.2;
 		letter-spacing: -0.01em;
 		overflow-wrap: anywhere;
+	}
+
+	.small-prompt {
+		font-size: clamp(20px, 4vw, 26px);
 	}
 
 	.picks {
@@ -158,9 +192,8 @@
 
 	.pick {
 		position: relative;
-		display: flex;
-		align-items: center;
-		gap: 12px;
+		display: grid;
+		place-items: center;
 		min-height: 56px;
 		padding: 0 14px;
 		border: 2px solid transparent;
@@ -169,15 +202,13 @@
 		box-shadow: 0 4px 0 var(--shadow);
 		color: var(--text);
 		font: 700 17px/1.2 var(--font-ui);
-		text-align: left;
 		cursor: pointer;
 		overflow-wrap: anywhere;
 		user-select: none;
 		touch-action: manipulation;
 		transition:
 			transform 0.07s ease-out,
-			box-shadow 0.07s ease-out,
-			border-color 0.1s;
+			box-shadow 0.07s ease-out;
 	}
 
 	.pick:active:not(:disabled) {
@@ -188,29 +219,6 @@
 	.pick:disabled {
 		cursor: not-allowed;
 		opacity: 0.45;
-	}
-
-	.pick[aria-pressed='true'] {
-		border-color: var(--most-likely);
-		background: var(--most-likely-tint);
-		box-shadow: 0 4px 0 var(--most-likely-ledge);
-	}
-
-	.box {
-		display: grid;
-		place-items: center;
-		flex: none;
-		width: 26px;
-		height: 26px;
-		border-radius: 8px;
-		border: 2px solid var(--line);
-		color: transparent;
-	}
-
-	[aria-pressed='true'] .box {
-		border-color: var(--most-likely);
-		background: var(--most-likely);
-		color: var(--ink);
 	}
 
 	.expected::after {
@@ -235,18 +243,35 @@
 		}
 	}
 
-	.reveal .label {
-		max-width: 40ch;
-		letter-spacing: 0.06em;
-		overflow-wrap: anywhere;
+	.outcome {
+		display: flex;
+		align-items: center;
+		gap: 20px;
+		padding: 20px;
+		border-radius: var(--radius-xl);
+		background: var(--most-likely);
+		color: var(--ink);
+		box-shadow: 0 var(--ledge) 0 var(--most-likely-ledge);
 	}
 
-	.reveal-word {
+	.outcome .label {
+		color: inherit;
+	}
+
+	.outcome.miss {
+		background: var(--surface);
+		color: var(--text);
+		box-shadow: 0 var(--ledge) 0 var(--shadow);
+	}
+
+	.score {
+		flex: none;
+		font-size: clamp(34px, 9vw, 52px);
+		line-height: 1;
+	}
+
+	.winner {
 		font-size: clamp(40px, 11vw, 84px);
-	}
-
-	.gain {
-		font-weight: 700;
 	}
 
 	.board {
@@ -272,8 +297,8 @@
 		display: flex;
 		align-items: center;
 		gap: 12px;
-		min-height: 46px;
-		padding: 0 14px;
+		min-height: 54px;
+		padding: 8px 14px;
 		border-radius: var(--radius-sm);
 		background: var(--raised);
 	}
@@ -286,11 +311,21 @@
 	}
 
 	.who {
+		display: flex;
 		flex: 1;
+		flex-direction: column;
+		gap: 2px;
 		min-width: 0;
+		overflow-wrap: anywhere;
+	}
+
+	.name {
 		font-weight: 700;
 		font-size: 17px;
-		overflow-wrap: anywhere;
+	}
+
+	.members {
+		font-size: 14px;
 	}
 
 	.pts {
@@ -302,5 +337,36 @@
 	.lead {
 		background: var(--primary);
 		color: var(--on-primary);
+	}
+
+	.teams {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.teams li {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+		padding: 10px 14px;
+		border-radius: var(--radius-sm);
+		background: var(--surface);
+		overflow-wrap: anywhere;
+	}
+
+	.teams li .label {
+		color: var(--muted);
+	}
+
+	.teams li.now {
+		box-shadow: inset 3px 0 0 var(--most-likely);
+	}
+
+	.teams li.now .label {
+		color: var(--most-likely);
 	}
 </style>
