@@ -18,7 +18,7 @@ EXIT 0
 |---|---|---|
 | Touch targets are at least 44px | e2e | `e2e/look.test.ts` › "Scenario: Touch targets are at least 44px" ✓ (phone+desktop for e2e) |
 | Hold-to-view reveals only while held | e2e | `e2e/imposter.test.ts` › "Scenario: Hold-to-view reveals only while held" ✓ (phone+desktop for e2e) |
-| Danger and warning buttons | e2e ("Scenario: Feud fault and undo read as what they are") | `` › "Scenario: Scenario: Feud fault and undo read as what they are" ✓ (phone+desktop for e2e) |
+| Danger and warning buttons | e2e ("Scenario: Feud fault and undo read as what they are") | `e2e/feud-controls.test.ts` › "Scenario: Feud fault and undo read as what they are" ✓ (phone+desktop for e2e) |
 | Feud teams dealt from the roster | e2e | `e2e/feud-setup.test.ts` › "Scenario: Feud teams dealt from the roster" ✓ (phone+desktop for e2e) |
 | Feud rounds picker in one row on desktop | e2e | `e2e/feud-setup.test.ts` › "Scenario: Feud rounds picker in one row on desktop" ✓ (phone+desktop for e2e) |
 | Feud rounds picker wraps on a phone | e2e | `e2e/feud-setup.test.ts` › "Scenario: Feud rounds picker wraps on a phone" ✓ (phone+desktop for e2e) |
@@ -40,36 +40,36 @@ EXIT 0
 | Feud picking keeps the grid in place | e2e | `e2e/feud-prep-cards.test.ts` › "Scenario: Feud picking keeps the grid in place" ✓ (phone+desktop for e2e) |
 | Feud prep removes a pick | e2e | `e2e/feud-prep.test.ts` › "Scenario: Feud prep removes a pick" ✓ (phone+desktop for e2e) |
 | Feud Start hands over the picked surveys | e2e | `e2e/feud-prep.test.ts` › "Scenario: Feud Start hands over the picked surveys" ✓ (phone+desktop for e2e) |
-| Feud face-off names players in rotation | unit | `src/lib/games/feud/engine.test.ts` › "Scenario: Feud face-off names players in rotation" ✓ (phone+desktop for e2e) |
-| Feud face-off rotation wraps for a team of two | unit | `src/lib/games/feud/engine.test.ts` › "Scenario: Feud face-off rotation wraps for a team of two" ✓ (phone+desktop for e2e) |
-| Feud buzzing team answers first | unit | `src/lib/games/feud/engine.test.ts` › "Scenario: Feud buzzing team answers first" ✓ (phone+desktop for e2e) |
-| Feud every round asks for the buzz | unit | `src/lib/games/feud/engine.test.ts` › "Scenario: Feud every round asks for the buzz" ✓ (phone+desktop for e2e) |
-| Feud number one answer wins at once | unit | `src/lib/games/feud/engine.test.ts` › "Scenario: Feud number one answer wins at once" ✓ (phone+desktop for e2e) |
-| Feud higher answer wins the face-off | unit | `src/lib/games/feud/engine.test.ts` › "Scenario: Feud higher answer wins the face-off" ✓ (phone+desktop for e2e) |
-| Feud one miss loses the face-off | unit | `src/lib/games/feud/engine.test.ts` › "Scenario: Feud one miss loses the face-off" ✓ (phone+desktop for e2e) |
-| Feud both miss names the next pair | unit | `src/lib/games/feud/engine.test.ts` › "Scenario: Feud both miss names the next pair" ✓ (phone+desktop for e2e) |
-| Feud winner chooses Spielen or Passen | unit | `src/lib/games/feud/engine.test.ts` › "Scenario: Feud winner chooses Spielen or Passen" ✓ (phone+desktop for e2e) |
+| Feud face-off names players in rotation | unit | `src/lib/games/feud/engine.test.ts` › "Scenario: Feud face-off names players in rotation" ✓ |
+| Feud face-off rotation wraps for a team of two | unit | `src/lib/games/feud/engine.test.ts` › "Scenario: Feud face-off rotation wraps for a team of two" ✓ |
+| Feud buzzing team answers first | unit | `src/lib/games/feud/engine.test.ts` › "Scenario: Feud buzzing team answers first" ✓ |
+| Feud every round asks for the buzz | unit | `src/lib/games/feud/engine.test.ts` › "Scenario: Feud every round asks for the buzz" ✓ |
+| Feud number one answer wins at once | unit | `src/lib/games/feud/engine.test.ts` › "Scenario: Feud number one answer wins at once" ✓ |
+| Feud higher answer wins the face-off | unit | `src/lib/games/feud/engine.test.ts` › "Scenario: Feud higher answer wins the face-off" ✓ |
+| Feud one miss loses the face-off | unit | `src/lib/games/feud/engine.test.ts` › "Scenario: Feud one miss loses the face-off" ✓ |
+| Feud both miss names the next pair | unit | `src/lib/games/feud/engine.test.ts` › "Scenario: Feud both miss names the next pair" ✓ |
+| Feud winner chooses Spielen or Passen | unit | `src/lib/games/feud/engine.test.ts` › "Scenario: Feud winner chooses Spielen or Passen" ✓ |
 | Feud face-off screen names both players | e2e | `e2e/feud.test.ts` › "Scenario: Feud face-off screen names both players" ✓ (phone+desktop for e2e) |
 | Feud team choice shows both teams | e2e | `e2e/feud-round.test.ts` › "Scenario: Feud team choice shows both teams" ✓ (phone+desktop for e2e) |
-| Feud undo steps back through the round | unit | `src/lib/games/feud/engine.test.ts` › "Scenario: Feud undo steps back through the round" ✓ (phone+desktop for e2e) |
-| Feud undo of the reveal covers the question again | unit | `src/lib/games/feud/engine.test.ts` › "Scenario: Feud undo of the reveal covers the question again" ✓ (phone+desktop for e2e) |
-| Feud undo of the buzz returns to the choice | unit | `src/lib/games/feud/engine.test.ts` › "Scenario: Feud undo of the buzz returns to the choice" ✓ (phone+desktop for e2e) |
-| Feud undo stops at the round start | unit | `src/lib/games/feud/engine.test.ts` › "Scenario: Feud undo stops at the round start" ✓ (phone+desktop for e2e) |
-| Feud undo of the third strike returns to the board | unit | `src/lib/games/feud/engine.test.ts` › "Scenario: Feud undo of the third strike returns to the board" ✓ (phone+desktop for e2e) |
+| Feud undo steps back through the round | unit | `src/lib/games/feud/engine.test.ts` › "Scenario: Feud undo steps back through the round" ✓ |
+| Feud undo of the reveal covers the question again | unit | `src/lib/games/feud/engine.test.ts` › "Scenario: Feud undo of the reveal covers the question again" ✓ |
+| Feud undo of the buzz returns to the choice | unit | `src/lib/games/feud/engine.test.ts` › "Scenario: Feud undo of the buzz returns to the choice" ✓ |
+| Feud undo stops at the round start | unit | `src/lib/games/feud/engine.test.ts` › "Scenario: Feud undo stops at the round start" ✓ |
+| Feud undo of the third strike returns to the board | unit | `src/lib/games/feud/engine.test.ts` › "Scenario: Feud undo of the third strike returns to the board" ✓ |
 | Feud undo fixes a mistap | e2e | `e2e/feud.test.ts` › "Scenario: Feud undo fixes a mistap" ✓ (phone+desktop for e2e) |
 | Feud undo disabled with nothing to undo | e2e | `e2e/feud.test.ts` › "Scenario: Feud undo disabled with nothing to undo" ✓ (phone+desktop for e2e) |
 | Feud fault and undo read as what they are | e2e | `e2e/feud-controls.test.ts` › "Scenario: Feud fault and undo read as what they are" ✓ (phone+desktop for e2e) |
 | Feud disabled undo keeps its place | e2e | `e2e/feud-controls.test.ts` › "Scenario: Feud disabled undo keeps its place" ✓ (phone+desktop for e2e) |
 | Feud fault row fits a phone | e2e | `e2e/feud-controls.test.ts` › "Scenario: Feud fault row fits a phone" ✓ (phone+desktop for e2e) |
-| Feud demo script plays to the end | unit | `src/lib/games/feud/demo.test.ts` › "Scenario: Feud demo script plays to the end" ✓ (phone+desktop for e2e) |
-| Feud demo reveals and picks the buzzer | unit ("Scenario: Feud demo covers every outcome branch") | `` › "Scenario: Scenario: Feud demo covers every outcome branch" ✓ (phone+desktop for e2e) |
-| Feud demo face-off branches | unit ("Scenario: Feud demo covers every outcome branch") | `` › "Scenario: Scenario: Feud demo covers every outcome branch" ✓ (phone+desktop for e2e) |
-| Feud demo plays and passes | unit ("Scenario: Feud demo covers every outcome branch") | `` › "Scenario: Scenario: Feud demo covers every outcome branch" ✓ (phone+desktop for e2e) |
-| Feud demo clears a board | unit ("Scenario: Feud demo covers every outcome branch") | `` › "Scenario: Scenario: Feud demo covers every outcome branch" ✓ (phone+desktop for e2e) |
-| Feud demo steals once and misses once | unit ("Scenario: Feud demo covers every outcome branch") | `` › "Scenario: Scenario: Feud demo covers every outcome branch" ✓ (phone+desktop for e2e) |
-| Feud demo last round counts double | unit ("Scenario: Feud demo covers every outcome branch") | `` › "Scenario: Scenario: Feud demo covers every outcome branch" ✓ (phone+desktop for e2e) |
-| Feud demo ends in sudden death | unit ("Scenario: Feud demo covers every outcome branch") | `` › "Scenario: Scenario: Feud demo covers every outcome branch" ✓ (phone+desktop for e2e) |
-| Feud demo names undo | unit ("Scenario: Feud demo covers every outcome branch") | `` › "Scenario: Scenario: Feud demo covers every outcome branch" ✓ (phone+desktop for e2e) |
+| Feud demo script plays to the end | unit | `src/lib/games/feud/demo.test.ts` › "Scenario: Feud demo script plays to the end" ✓ |
+| Feud demo reveals and picks the buzzer | unit ("Scenario: Feud demo covers every outcome branch") | `src/lib/games/feud/demo.test.ts` › "Scenario: Feud demo covers every outcome branch" ✓ |
+| Feud demo face-off branches | unit ("Scenario: Feud demo covers every outcome branch") | `src/lib/games/feud/demo.test.ts` › "Scenario: Feud demo covers every outcome branch" ✓ |
+| Feud demo plays and passes | unit ("Scenario: Feud demo covers every outcome branch") | `src/lib/games/feud/demo.test.ts` › "Scenario: Feud demo covers every outcome branch" ✓ |
+| Feud demo clears a board | unit ("Scenario: Feud demo covers every outcome branch") | `src/lib/games/feud/demo.test.ts` › "Scenario: Feud demo covers every outcome branch" ✓ |
+| Feud demo steals once and misses once | unit ("Scenario: Feud demo covers every outcome branch") | `src/lib/games/feud/demo.test.ts` › "Scenario: Feud demo covers every outcome branch" ✓ |
+| Feud demo last round counts double | unit ("Scenario: Feud demo covers every outcome branch") | `src/lib/games/feud/demo.test.ts` › "Scenario: Feud demo covers every outcome branch" ✓ |
+| Feud demo ends in sudden death | unit ("Scenario: Feud demo covers every outcome branch") | `src/lib/games/feud/demo.test.ts` › "Scenario: Feud demo covers every outcome branch" ✓ |
+| Feud demo names undo | unit ("Scenario: Feud demo covers every outcome branch") | `src/lib/games/feud/demo.test.ts` › "Scenario: Feud demo covers every outcome branch" ✓ |
 | Feud demo by tapping highlighted controls | e2e | `e2e/feud-demo.test.ts` › "Scenario: Feud demo by tapping highlighted controls" ✓ (phone+desktop for e2e) |
 | Feud demo leaves data untouched | e2e | `e2e/feud-demo.test.ts` › "Scenario: Feud demo leaves data untouched" ✓ (phone+desktop for e2e) |
 | Feud demo completes with reduced motion | e2e | `e2e/feud-demo.test.ts` › "Scenario: Feud demo completes with reduced motion" ✓ (phone+desktop for e2e) |
@@ -77,13 +77,13 @@ EXIT 0
 | Feud prep without pager for one page | e2e | `e2e/feud-prep-pages.test.ts` › "Scenario: Feud prep without pager for one page" ✓ (phone+desktop for e2e) |
 | Feud sort goes to page 1 | e2e | `e2e/feud-prep-pages.test.ts` › "Scenario: Feud sort goes to page 1" ✓ (phone+desktop for e2e) |
 | Feud picks stay across pages | e2e | `e2e/feud-prep-pages.test.ts` › "Scenario: Feud picks stay across pages" ✓ (phone+desktop for e2e) |
-| Feud prep page clamps to the last page | unit | `src/lib/games/feud/prep.test.ts` › "Scenario: Feud prep page clamps to the last page" ✓ (phone+desktop for e2e) |
-| Feud prep page count | unit | `src/lib/games/feud/prep.test.ts` › "Scenario: Feud prep page count" ✓ (phone+desktop for e2e) |
+| Feud prep page clamps to the last page | unit | `src/lib/games/feud/prep.test.ts` › "Scenario: Feud prep page clamps to the last page" ✓ |
+| Feud prep page count | unit | `src/lib/games/feud/prep.test.ts` › "Scenario: Feud prep page count" ✓ |
 | Feud question covered at round start | e2e | `e2e/feud-round.test.ts` › "Scenario: Feud question covered at round start" ✓ (phone+desktop for e2e) |
 | Feud reveal shows the question | e2e | `e2e/feud-round.test.ts` › "Scenario: Feud reveal shows the question" ✓ (phone+desktop for e2e) |
 | Feud peek works before the reveal | e2e | `e2e/feud-round.test.ts` › "Scenario: Feud peek works before the reveal" ✓ (phone+desktop for e2e) |
-| Feud next round starts covered | unit | `src/lib/games/feud/engine.test.ts` › "Scenario: Feud next round starts covered" ✓ (phone+desktop for e2e) |
-| Feud nothing counts before the reveal | unit | `src/lib/games/feud/engine.test.ts` › "Scenario: Feud nothing counts before the reveal" ✓ (phone+desktop for e2e) |
+| Feud next round starts covered | unit | `src/lib/games/feud/engine.test.ts` › "Scenario: Feud next round starts covered" ✓ |
+| Feud nothing counts before the reveal | unit | `src/lib/games/feud/engine.test.ts` › "Scenario: Feud nothing counts before the reveal" ✓ |
 
 All 73 scenarios have a passing test. 2 skipped tests in the run (`look.test.ts` "Desktop uses the width" on phone, "No horizontal scroll on phone" on desktop) are project-conditional skips, not Feud scenarios.
 
