@@ -7,3 +7,4 @@ learnings:
   - "U2: spec scenarios assume a fresh DB of 26 surveys but the seed holds 247; tests delete down to 26. Planner should derive data counts from the seed, not assume them. Fix spec wording in Verify."
   - "U2: card order depends on GET /api/feud/played; tests needed a toPrep() helper waiting for that response (race)."
   - "U3: fault row drops ~12px when a late animation ends; separate boundingBox() calls straddle the move. Wait for finite animations, then measure both buttons in one evaluate."
+gate2: 2026-10-07
