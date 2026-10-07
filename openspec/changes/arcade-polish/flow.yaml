@@ -13,3 +13,4 @@ explore_notes:
 learnings:
   - "planner: scenarios for shared components with no consumer before later waves were written as one design-system scenario each whose proof lines name per-game tests (friction, arcade-polish planner)"
   - "Gate 1: games without a round count (Duck) still want a progress line — Rue chose leading score / target over no line"
+ship_note: "2026-10-07 Rue: PR creation approved as soon as testing (Verify) is over; afterwards release v0.5.0 like 0.4.0 (chore bump: package.json, lockfile, release spec 'Version 0.5.0', scripts/version.test.ts), then push tag v0.5.0 on merged main"
