@@ -1,13 +1,15 @@
 <script lang="ts">
 	import { getDemo } from '#lib/demo/context.ts';
 	import type { ScreenProps } from '#lib/games/registry.ts';
-	import { pulse } from '#lib/motion.ts';
 	import { play } from '#lib/sound.ts';
 	import Button from '#lib/ui/Button.svelte';
-	import Card from '#lib/ui/Card.svelte';
+	import GameFrame from '#lib/ui/GameFrame.svelte';
+	import Handoff from '#lib/ui/Handoff.svelte';
+	import Outcome from '#lib/ui/Outcome.svelte';
 	import Scoreboard from '#lib/ui/Scoreboard.svelte';
+	import Winner from '#lib/ui/Winner.svelte';
 	import { demo as script } from './demo.ts';
-	import { choices, current, leaders, ranking, type MostLikelyAction, type MostLikelyState } from './engine.ts';
+	import { choices, current, leaders, type MostLikelyAction, type MostLikelyState } from './engine.ts';
 
 	let { state: game, dispatch }: ScreenProps = $props();
 
@@ -19,7 +21,16 @@
 	const lastGame = $derived(lastTurn && s.round + 1 >= s.rounds);
 	const best = $derived(leaders(s));
 	const top = $derived(Math.max(...s.teams.map((t) => t.score)));
-	const rows = $derived(ranking(s).map(({ team: t }) => ({ name: t.name, score: t.score, lead: top > 0 && t.score === top })));
+	const rows = $derived(
+		s.teams.map((t, i) => ({
+			name: t.name,
+			score: t.score,
+			before: s.phase === 'result' && i === current(s) ? t.score - (s.lastPoints ?? 0) : undefined,
+			lead: s.phase === 'gameOver' ? t.score === top : top > 0 && t.score === top,
+			acting: s.phase !== 'gameOver' && i === current(s)
+		}))
+	);
+	const members = $derived(Object.fromEntries(s.teams.map((t) => [t.name, list(t.players.map((p) => p.name))])));
 	const verdict = $derived(
 		s.lastPoints === 0
 			? 'Alle verschieden'
@@ -48,30 +59,46 @@
 	}
 </script>
 
-<div class="split">
-	<section class="stack main" aria-live="polite">
+<GameFrame>
+	{#snippet hero()}
 		{#if s.phase === 'prompt'}
-			<div class="stack tight">
-				<h2>{team.name} ist dran</h2>
-				<p class="names" data-testid="players">{list(team.players.map((p) => p.name))}</p>
-			</div>
-			<Card tone="most_likely_prompts">
-				<p class="label">Vorlesen</p>
-				<p class="prompt" data-testid="prompt">{s.prompt.a}</p>
-				<p class="muted">Zählt bis drei und zeigt gleichzeitig auf die Person, die am besten passt.</p>
-			</Card>
-			<div class="row">
-				<Button variant="primary" action="point" onclick={() => act({ type: 'point' })}>Alle haben gezeigt</Button>
-				<Button variant="secondary" action="redraw" disabled={s.pool.length < 2} onclick={() => act({ type: 'redraw' })}>
-					Anderer Spruch
-				</Button>
-			</div>
+			<Handoff heading="{team.name} ist dran" />
 		{:else if s.phase === 'count'}
-			<div class="stack tight">
-				<p class="muted small" data-testid="count-prompt">{s.prompt.a}</p>
-				<h2 id="count">Wie viele aus {team.name} haben auf dieselbe Person gezeigt?</h2>
-				<p class="muted">Zählt die größte Gruppe, die auf dieselbe Person zeigt. Jeder Finger darin ist ein Punkt.</p>
-			</div>
+			<h2 id="count">Wie viele aus {team.name} haben auf dieselbe Person gezeigt?</h2>
+		{:else if s.phase === 'result'}
+			<Outcome {verdict} points={s.lastPoints ?? 0} />
+		{:else}
+			<Winner
+				names={best.map((t) => t.name)}
+				label={best.length > 1 ? undefined : 'Gewinner'}
+				note="{s.rounds} Runden gespielt."
+			/>
+		{/if}
+	{/snippet}
+
+	{#snippet children()}
+		{#if s.phase === 'prompt'}
+			<p class="names" data-testid="players">{list(team.players.map((p) => p.name))}</p>
+			<p class="label">Vorlesen</p>
+			<p class="prompt" data-testid="prompt">{s.prompt.a}</p>
+			<p class="muted">Zählt bis drei und zeigt gleichzeitig auf die Person, die am besten passt.</p>
+		{:else if s.phase === 'count'}
+			<p class="muted small" data-testid="count-prompt">{s.prompt.a}</p>
+			<p class="muted">Zählt die größte Gruppe, die auf dieselbe Person zeigt. Jeder Finger darin ist ein Punkt.</p>
+		{:else if s.phase === 'result'}
+			<p class="label">{s.lastPoints === 1 ? 'Punkt' : 'Punkte'} für {team.name}</p>
+			<p class="label">Der Spruch war</p>
+			<p class="prompt small-prompt" data-testid="result-prompt">{s.prompt.a}</p>
+		{/if}
+	{/snippet}
+
+	{#snippet actions()}
+		{#if s.phase === 'prompt'}
+			<Button variant="primary" action="point" onclick={() => act({ type: 'point' })}>Alle haben gezeigt</Button>
+			<Button variant="secondary" action="redraw" disabled={s.pool.length < 2} onclick={() => act({ type: 'redraw' })}>
+				Anderer Spruch
+			</Button>
+		{:else if s.phase === 'count'}
 			<div class="picks" role="group" aria-labelledby="count">
 				{#each choices(team.players.length) as n (n)}
 					{@const expected = scripted === n}
@@ -89,70 +116,36 @@
 				{/each}
 			</div>
 		{:else if s.phase === 'result'}
-			<div class="outcome" class:miss={s.lastPoints === 0} use:pulse>
-				<p class="score data" data-testid="points">+{s.lastPoints}</p>
-				<div class="stack tight">
-					<p class="label">{s.lastPoints === 1 ? 'Punkt' : 'Punkte'} für {team.name}</p>
-					<h2>{verdict}</h2>
-				</div>
-			</div>
-			<Card tone="most_likely_prompts">
-				<p class="label">Der Spruch war</p>
-				<p class="prompt small-prompt" data-testid="result-prompt">{s.prompt.a}</p>
-			</Card>
-			<div class="row">
-				<Button variant="primary" action="next" onclick={next}>
-					{lastGame ? 'Zum Ergebnis' : lastTurn ? 'Nächste Runde' : 'Nächstes Team'}
-				</Button>
-			</div>
+			<Button variant="primary" action="next" onclick={next}>
+				{lastGame ? 'Zum Ergebnis' : lastTurn ? 'Nächste Runde' : 'Nächstes Team'}
+			</Button>
 		{:else}
-			<div class="reveal">
-				<p class="label">{best.length > 1 ? 'Unentschieden' : 'Gewinner'}</p>
-				<h2 class="reveal-word winner">{best.map((t) => t.name).join(' & ')}</h2>
-				<p>{s.rounds} Runden gespielt.</p>
-			</div>
-			<section class="board" aria-labelledby="final">
-				<h2 class="label" id="final">Endstand</h2>
-				<ol class="rows rise">
-					{#each ranking(s) as row (row.team.name)}
-						{@const lead = row.team.score === top}
-						<li class="entry" class:lead>
-							<span class="rank">{row.rank}</span>
-							<span class="who">
-								<span class="name">{row.team.name}</span>
-								<span class="members">{list(row.team.players.map((p) => p.name))}</span>
-							</span>
-							<span class="pts data">{row.team.score}</span>
+			<Button variant="primary" action="rematch" onclick={() => act({ type: 'rematch' })}>Nochmal spielen</Button>
+		{/if}
+	{/snippet}
+
+	{#snippet rail()}
+		<div class="stack">
+			<Scoreboard {rows}>
+				{#snippet detail(row)}
+					{#if s.phase === 'gameOver'}<p class="members">{members[row.name]}</p>{/if}
+				{/snippet}
+			</Scoreboard>
+			{#if s.phase !== 'gameOver'}
+				<ul class="teams" aria-label="Teams">
+					{#each s.teams as t, i (t.name)}
+						<li class:now={i === current(s)}>
+							<span class="label">{t.name}</span>
+							<span>{members[t.name]}</span>
 						</li>
 					{/each}
-				</ol>
-			</section>
-			<div class="row">
-				<Button variant="primary" action="rematch" onclick={() => act({ type: 'rematch' })}>Nochmal spielen</Button>
-			</div>
-		{/if}
-	</section>
-
-	{#if s.phase !== 'gameOver'}
-		<aside class="stack">
-			<Scoreboard {rows} />
-			<ul class="teams" aria-label="Teams">
-				{#each s.teams as t, i (t.name)}
-					<li class:now={i === current(s)}>
-						<span class="label">{t.name}</span>
-						<span>{list(t.players.map((p) => p.name))}</span>
-					</li>
-				{/each}
-			</ul>
-		</aside>
-	{/if}
-</div>
+				</ul>
+			{/if}
+		</div>
+	{/snippet}
+</GameFrame>
 
 <style>
-	.tight {
-		gap: 8px;
-	}
-
 	.small {
 		font-weight: 600;
 		overflow-wrap: anywhere;
@@ -177,6 +170,7 @@
 	}
 
 	.picks {
+		flex: 1 1 100%;
 		display: grid;
 		grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr));
 		gap: 10px;
@@ -235,100 +229,8 @@
 		}
 	}
 
-	.outcome {
-		display: flex;
-		align-items: center;
-		gap: 20px;
-		padding: 20px;
-		border-radius: var(--radius-xl);
-		background: var(--most-likely);
-		color: var(--ink);
-		box-shadow: 0 var(--ledge) 0 var(--most-likely-ledge);
-	}
-
-	.outcome .label {
-		color: inherit;
-	}
-
-	.outcome.miss {
-		background: var(--surface);
-		color: var(--text);
-		box-shadow: 0 var(--ledge) 0 var(--shadow);
-	}
-
-	.score {
-		flex: none;
-		font-size: clamp(34px, 9vw, 52px);
-		line-height: 1;
-	}
-
-	.winner {
-		font-size: clamp(40px, 11vw, 84px);
-	}
-
-	.board {
-		display: flex;
-		flex-direction: column;
-		gap: 10px;
-		padding: 16px;
-		border-radius: var(--radius-xl);
-		background: var(--surface);
-		box-shadow: 0 var(--ledge) 0 var(--shadow);
-	}
-
-	.rows {
-		display: flex;
-		flex-direction: column;
-		gap: 8px;
-		margin: 0;
-		padding: 0;
-		list-style: none;
-	}
-
-	.entry {
-		display: flex;
-		align-items: center;
-		gap: 12px;
-		min-height: 54px;
-		padding: 8px 14px;
-		border-radius: var(--radius-sm);
-		background: var(--raised);
-	}
-
-	.rank {
-		width: 20px;
-		font-weight: 800;
-		font-size: 15px;
-		font-variant-numeric: tabular-nums;
-	}
-
-	.who {
-		display: flex;
-		flex: 1;
-		flex-direction: column;
-		gap: 2px;
-		min-width: 0;
-		overflow-wrap: anywhere;
-	}
-
-	.name {
-		font-weight: 700;
-		font-size: 17px;
-	}
-
 	.members {
 		font-size: 14px;
-	}
-
-	.pts {
-		min-width: 40px;
-		font-size: 13px;
-		text-align: right;
-	}
-
-	.lead {
-		background: var(--primary);
-		color: var(--on-primary);
 	}
 
 	.teams {
