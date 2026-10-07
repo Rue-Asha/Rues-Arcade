@@ -57,6 +57,7 @@ Rue hosts Family Feud on one device. During prep she can't see survey answers wi
 ## Done when
 - Prep on phone and desktop: grid of cards with answers + points, pager appears with >6 / >12 surveys, "Gespielt mit" expands per card, rounds picker is one row.
 - A round: question hidden until tapped, then team choice, then the chosen team answers first; Fehler / nicht auf der Tafel are red with an orange square undo next to them.
+- The Feud demo plays the new round flow: it reveals the question, picks the buzzer team, and drives Fehler / nicht auf der Tafel and the square undo like a host (Rue, after Gate 1).
 - `npm run proof:full` green.
 
 ## Split off
