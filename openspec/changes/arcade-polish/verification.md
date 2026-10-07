@@ -1,17 +1,29 @@
-verified-at: b1c50f5
+verified-at: 8bb8b28
 
 ## Layer 1 — proof:full (PORT=4801)
 
-Green. 36 unit files / 319 tests passed; Playwright 561 passed, 3 skipped (viewport-conditional: frame 'Header wraps on a phone' desktop, look 'Desktop uses the width' phone, look 'No horizontal scroll on phone' desktop).
+Green. 36 unit files / 319 tests passed; Playwright 565 passed, 3 skipped (viewport-conditional: frame 'Header wraps on a phone' desktop, look 'Desktop uses the width' phone, look 'No horizontal scroll on phone' desktop).
 
 ```
-  ✓  564 [desktop] › e2e/look.test.ts:347:1 › Scenario: Motion never blocks input (255ms)
+  ✓  547 [phone] › e2e/look.test.ts:177:1 › Scenario: Decoration loads no external assets (1.2m)
+  ✓  557 [desktop] › e2e/look.test.ts:148:1 › Scenario: Press Start 2P stays limited to logo and scores (36.6s)
+  ✓  558 [phone] › e2e/look.test.ts:197:1 › Scenario: New copy has no exclamation marks (43.0s)
+  ✓  559 [desktop] › e2e/look.test.ts:177:1 › Scenario: Decoration loads no external assets (1.2m)
+  ✓  560 [phone] › e2e/look.test.ts:212:1 › Scenario: No horizontal scroll on phone (1.2m)
+  -  562 [phone] › e2e/look.test.ts:217:1 › Scenario: Desktop uses the width
+  ✓  563 [phone] › e2e/look.test.ts:335:2 › reduced motion › Scenario: Reduced motion makes transitions instant (253ms)
+  ✓  564 [phone] › e2e/look.test.ts:347:1 › Scenario: Motion never blocks input (315ms)
+  ✓  561 [desktop] › e2e/look.test.ts:197:1 › Scenario: New copy has no exclamation marks (37.5s)
+  -  565 [desktop] › e2e/look.test.ts:212:1 › Scenario: No horizontal scroll on phone
+  ✓  566 [desktop] › e2e/look.test.ts:217:1 › Scenario: Desktop uses the width (1.2m)
+  ✓  567 [desktop] › e2e/look.test.ts:335:2 › reduced motion › Scenario: Reduced motion makes transitions instant (232ms)
+  ✓  568 [desktop] › e2e/look.test.ts:347:1 › Scenario: Motion never blocks input (251ms)
 
-  Slow test file: [phone] › e2e/look.test.ts (5.9m)
-  Slow test file: [desktop] › e2e/look.test.ts (5.8m)
+  Slow test file: [phone] › e2e/look.test.ts (6.2m)
+  Slow test file: [desktop] › e2e/look.test.ts (5.9m)
   Consider running tests from slow files in parallel. See: https://playwright.dev/docs/test-parallel
   3 skipped
-  561 passed (8.2m)
+  565 passed (8.4m)
 EXIT 0
 ```
 
@@ -149,11 +161,11 @@ EXIT 0
 
 ## Diffstat
 
-git diff --stat origin/main...flow/arcade-polish: 79 files changed, 5388 insertions(+), 1475 deletions(-)
+git diff --stat origin/main...flow/arcade-polish: 80 files changed, 5448 insertions(+), 1476 deletions(-)
 
 ## Screenshots (not committed)
 
-Directory: /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/e9c24136-e1ba-417f-9a0c-d28a07cc61c5/scratchpad/arcade-polish-shots/ (208 PNGs, phone-* and desktop-*)
+Directory: /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/e9c24136-e1ba-417f-9a0c-d28a07cc61c5/scratchpad/arcade-polish-shots/ (208 PNGs, round 3 run, phone-* and desktop-*)
 
 - Duck Wertung (phone): phone-look-duck-scoring.png, phone-look-duck-scoring-locked.png, phone-duck-demo-scoring.png
 - Feud play (phone): phone-look-feud-{prep,handoff,question,peek-held,faceoff,faceoff-double,buzz,board,result,result-double,steal-handoff,steal}.png
