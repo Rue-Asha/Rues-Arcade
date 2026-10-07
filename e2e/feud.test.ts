@@ -326,6 +326,8 @@ test('Scenario: Feud played-with list hidden outside prep', async ({ page, reque
 		await expect(page.getByRole('heading', { name: PARTY, exact: true })).toBeVisible();
 		await hidden();
 		await page.goto(`${server.origin}/spiele/family-feud/inhalte`);
+		while (!(await page.getByText(PARTY, { exact: true }).count()))
+			await page.getByRole('button', { name: /^Mehr anzeigen/ }).click();
 		await expect(page.getByText(PARTY).first()).toBeVisible();
 		await hidden();
 	} finally {

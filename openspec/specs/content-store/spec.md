@@ -29,6 +29,16 @@ Each game's start screen SHALL link to "Inhalte" (a card in its "Mehr zu <Spiel>
 content and lets the user add, edit, delete and bulk import entries: `a | b` per line for pair types, one entry per
 line for single-value types.
 
+The list SHALL show the newest entries first, 50 at a time (30 survey cards for Family Feud), with a button
+"Mehr anzeigen (N weitere)" that shows the next batch while entries remain. On desktop the side column with the add
+form and bulk import SHALL stay within the viewport and scroll on its own.
+
+#### Scenario: Long lists show more on demand
+- **WHEN** a fresh database's Codes Inhalte page (91 words) and Family Feud Inhalte page (247 surveys) are opened
+- **THEN** Codes lists 50 entries and "Mehr anzeigen (41 weitere)", which shows all 91 and disappears; Family Feud
+  lists 30 survey cards and "Mehr anzeigen (217 weitere)"
+- **proof:** e2e
+
 #### Scenario: Add, edit and delete an entry
 - **WHEN** the user adds "Hund | Katze", edits it to "Hund | Maus", then deletes it and confirms
 - **THEN** the list shows the entry, then the edited entry, then no entry
