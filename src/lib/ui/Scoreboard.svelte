@@ -2,8 +2,7 @@
 	import type { Snippet } from 'svelte';
 	import { onMount } from 'svelte';
 	import { flip } from 'svelte/animate';
-	import { cubicOut } from 'svelte/easing';
-	import { countUp, reducedMotion } from '#lib/motion.ts';
+	import { countUp, outCurve, reducedMotion } from '#lib/motion.ts';
 	import { moved, places, ranked, type ScoreRow } from './scoreboard.ts';
 	import { motion } from './tokens.ts';
 
@@ -34,7 +33,7 @@
 	<h2 class="label">Punktestand</h2>
 	<ol class="rows rise">
 		{#each order as row, i (row.name)}
-			<li class="row" class:lead={row.lead} data-acting={row.acting ? '' : undefined} animate:flip={{ duration: reducedMotion() || !shifted.includes(row.name) ? 0 : motion['dur-in'], easing: cubicOut }}>
+			<li class="row" class:lead={row.lead} data-acting={row.acting ? '' : undefined} animate:flip={{ duration: reducedMotion() || !shifted.includes(row.name) ? 0 : motion['dur-in'], easing: outCurve }}>
 				<span class="rank">{place[i]}</span>
 				<span class="who">
 					{row.name}

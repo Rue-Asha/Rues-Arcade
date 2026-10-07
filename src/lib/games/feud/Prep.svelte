@@ -4,6 +4,7 @@
 	import { board } from '#lib/content/survey.ts';
 	import type { Survey } from '#lib/content/types.ts';
 	import type { Player } from '#lib/engine/types.ts';
+	import { rise } from '#lib/motion.ts';
 	import { savedId } from '#lib/players.ts';
 	import { roster } from '#lib/roster.svelte.ts';
 	import Button from '#lib/ui/Button.svelte';
@@ -143,7 +144,8 @@
 				<button type="button" class="opt" aria-pressed={sort === 'played'} onclick={() => sortBy('played')}>Gespielt</button>
 			</div>
 		</div>
-		<ul class="list" aria-label="Alle Umfragen">
+		{#key page}
+		<ul class="list" aria-label="Alle Umfragen" in:rise>
 			{#each shown as { survey, k, played: x } (survey.id)}
 				{@const chosen = slots.includes(survey.id)}
 				{@const on = listOf(survey.id)}
@@ -195,6 +197,7 @@
 				</li>
 			{/each}
 		</ul>
+		{/key}
 		<Pager bind:page total={list.length} {size} />
 	</section>
 

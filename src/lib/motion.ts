@@ -22,7 +22,7 @@ function bezier(css: string): (t: number) => number {
 	};
 }
 
-const outCurve = bezier(motion['ease-out']);
+export const outCurve = bezier(motion['ease-out']);
 const inCurve = bezier(motion['ease-in']);
 const popCurve = bezier(motion['ease-pop']);
 const fmt = new Intl.NumberFormat('de-DE');

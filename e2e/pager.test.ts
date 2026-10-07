@@ -116,6 +116,21 @@ test('Scenario: Pager page clamps across 1024px', async ({ page }, info) => {
 	}
 });
 
+test('Scenario: Pager clamped page stays after widening back and forth', async ({ page }, info) => {
+	const server = await emptyServer(info, 'pager-writeback');
+	try {
+		await page.setViewportSize(PHONE);
+		await page.goto(`${server.origin}/spiele/codes/inhalte`);
+		await toPage(page, 10);
+		await page.setViewportSize(DESKTOP);
+		await expect(pager(page)).toContainText('Seite 8 von 8');
+		await page.setViewportSize(PHONE);
+		await expect(pager(page)).toContainText('Seite 8 von 16');
+	} finally {
+		server.close();
+	}
+});
+
 test('Scenario: Pager page change is instant under reduced motion', async ({ page }, info) => {
 	const server = await emptyServer(info, 'pager-instant');
 	try {

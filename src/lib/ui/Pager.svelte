@@ -12,6 +12,10 @@
 
 	const pages = $derived(pageCount(total, size));
 	const current = $derived(clampPage(page, total, size));
+
+	$effect(() => {
+		if (page !== current) page = current;
+	});
 </script>
 
 {#if pages > 1}
