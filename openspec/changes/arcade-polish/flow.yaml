@@ -2,6 +2,7 @@ track: feature
 triage: "feature — cross-game polish: play header without Demo, shared pager, in-game redesign within Arcade-Abend, in/out phase motion. 16 S-items, 6 games, no schema. Appetite: 2-3 sessions."
 base: main
 gate0: 2026-10-07
+gate1: 2026-10-07
 explore_notes:
   - "2026-10-07 Rue: all four threads stay in one change (no split)"
   - "2026-10-07 Rue: Demo removed from the play header entirely; Demo only from the start screen card"
@@ -9,3 +10,6 @@ explore_notes:
   - "2026-10-07 Rue: motion stance = every phase/screen change transitions in and out, plus a bit of game-show flair"
   - "2026-10-07 Rue: redesign consults Mobbin but must blend with the existing Arcade-Abend design"
   - "2026-10-07 Rue delegated: appetite 2-3 sessions; pager on Gespeicherte Spieler only (roster stays unpaged, capped by player max); adding an entry jumps to page 1, deleting the last entry on a page clamps back one page"
+learnings:
+  - "planner: scenarios for shared components with no consumer before later waves were written as one design-system scenario each whose proof lines name per-game tests (friction, arcade-polish planner)"
+  - "Gate 1: games without a round count (Duck) still want a progress line — Rue chose leading score / target over no line"
