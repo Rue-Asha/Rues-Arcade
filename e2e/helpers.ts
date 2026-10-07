@@ -110,18 +110,138 @@ export async function seedPlayed(request: APIRequestContext, surveyId: number, p
 	expect(res.status()).toBe(204);
 }
 
-export async function shot(page: Page, info: TestInfo, slug: string) {
-	await page.evaluate(() =>
-		Promise.all(
+// The stage node the player sees; an outgoing one stays in the DOM for --dur-out after a phase change.
+export function live(page: Page): Locator {
+	return page.locator('[data-stage]:not([data-leaving])');
+}
+
+// Waits until no finite animation runs (stage out/in, reveals, winner pieces), no outgoing stage is left and no
+// count-up is ticking. countUp is a requestAnimationFrame loop, not WAAPI, so the frame callbacks are counted.
+export async function settled(page: Page) {
+	await page.evaluate(async () => {
+		const own = window.requestAnimationFrame;
+		const drop = window.cancelAnimationFrame;
+		const queued = new Set<number>();
+		window.requestAnimationFrame = (cb) => {
+			const id = own((t) => {
+				queued.delete(id);
+				cb(t);
+			});
+			queued.add(id);
+			return id;
+		};
+		window.cancelAnimationFrame = (id) => {
+			queued.delete(id);
+			drop(id);
+		};
+		const frame = () => new Promise((ok) => own(ok));
+		const finite = () =>
 			document
 				.getAnimations()
-				.filter((a) => a.effect?.getTiming().iterations !== Infinity)
-				.map((a) => a.finished.catch(() => {}))
-		)
-	);
+				.filter((a) => a.playState !== 'finished' && a.effect?.getTiming().iterations !== Infinity);
+		// a loop that never ends must not hang the walk; the slowest finite motion is well under this
+		const end = performance.now() + 5000;
+		try {
+			await frame();
+			await frame();
+			while (performance.now() < end) {
+				const running = finite();
+				if (!running.length && !queued.size && !document.querySelector('[data-leaving]')) break;
+				await Promise.all(running.map((a) => a.finished.catch(() => {})));
+				await frame();
+			}
+		} finally {
+			window.requestAnimationFrame = own;
+			window.cancelAnimationFrame = drop;
+		}
+	});
+}
+
+export async function shot(page: Page, info: TestInfo, slug: string) {
+	await settled(page);
 	const width = await page.evaluate(() => document.documentElement.scrollWidth);
 	expect(width).toBeLessThanOrEqual(page.viewportSize()!.width);
 	await page.screenshot({ path: `test-results/shots/${info.project.name}-${slug}.png`, fullPage: true });
+}
+
+// On the next frame after a phase change under reduced motion: one stage node and no finite animation running.
+export async function expectInstant(page: Page) {
+	const seen = await page.evaluate(
+		() =>
+			new Promise<{ stages: number; running: number }>((ok) =>
+				requestAnimationFrame(() =>
+					ok({
+						stages: document.querySelectorAll('[data-stage]').length,
+						running: document
+							.getAnimations()
+							.filter((a) => a.playState === 'running' && a.effect?.getTiming().iterations !== Infinity).length
+					})
+				)
+			)
+	);
+	expect(seen).toEqual({ stages: 1, running: 0 });
+}
+
+// The design-system "In-game frame" for the screen on show: one stage card with one hero and the action row as
+// its last part, the rail beside it from 1024px (top-aligned) and below it on a phone, the primary action inside
+// the first viewport, the frame across 75% of the content width at 1280px, and text outside the hero left-aligned.
+export async function expectFrame(page: Page) {
+	await settled(page);
+	const found = await page.evaluate(() => {
+		const out: string[] = [];
+		const root = document.querySelector('[data-stage]:not([data-leaving])');
+		const frame = root?.querySelector<HTMLElement>('[data-frame=""]');
+		if (!frame) return ['no [data-frame] in the live stage'];
+		const stages = frame.querySelectorAll<HTMLElement>('[data-frame="stage"]');
+		const rails = frame.querySelectorAll<HTMLElement>('[data-frame="rail"]');
+		if (stages.length !== 1) out.push(`${stages.length} stage cards`);
+		if (rails.length !== 1) out.push(`${rails.length} rails`);
+		const stage = stages[0];
+		const rail = rails[0];
+		if (!stage) return out;
+		const heroes = stage.querySelectorAll<HTMLElement>('[data-hero]');
+		if (heroes.length !== 1) out.push(`${heroes.length} heroes`);
+		const actions = stage.querySelector<HTMLElement>('[data-frame="actions"]');
+		if (!actions) out.push('no action row');
+		else if (stage.lastElementChild !== actions) out.push('action row is not the last part of the stage card');
+
+		const box = (el: Element) => el.getBoundingClientRect();
+		if (rail) {
+			const [s, r] = [box(stage), box(rail)];
+			if (innerWidth >= 1024) {
+				if (r.left < s.right - 1) out.push('rail not beside the stage card');
+				if (Math.abs(r.top - s.top) > 1) out.push(`rail top ${Math.round(r.top)} vs stage ${Math.round(s.top)}`);
+			} else if (r.top < s.bottom - 1) out.push('rail not below the stage card');
+		}
+
+		const primary = actions?.querySelector<HTMLElement>('button, a[href]');
+		if (primary) {
+			const p = box(primary);
+			const top = p.top + scrollY;
+			if (top < 0 || top + p.height > innerHeight || p.left < 0 || p.right > innerWidth)
+				out.push(`primary action "${primary.textContent?.trim()}" outside the first viewport`);
+			const row = box(actions!);
+			const pad = parseFloat(getComputedStyle(actions!).paddingLeft) || 0;
+			if (Math.abs(p.left - row.left - pad) > 1) out.push('actions not left-aligned');
+		}
+
+		if (innerWidth >= 1280) {
+			const used = box(frame).width / box(document.querySelector('main')!).width;
+			if (used < 0.75) out.push(`frame spans ${Math.round(used * 100)}% of the content width`);
+		}
+
+		const walker = document.createTreeWalker(frame, NodeFilter.SHOW_TEXT);
+		for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+			const el = node.parentElement!;
+			if (!(node as Text).data.trim() || !el.checkVisibility()) continue;
+			if (el.closest('[data-hero], button, a, svg, [role="slider"]')) continue;
+			const align = getComputedStyle(el).textAlign;
+			if (!/^(start|left|justify)$/.test(align))
+				out.push(`"${(node as Text).data.trim().slice(0, 30)}" aligned ${align}`);
+		}
+		return out;
+	});
+	expect(found).toEqual([]);
 }
 
 // The shared e2e DB is never empty for long, so tests that need it empty run their own server on a DB file

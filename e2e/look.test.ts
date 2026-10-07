@@ -1,42 +1,26 @@
-import { expect, test, type Page, type Route, type TestInfo } from '@playwright/test';
-import { seedRoster, shot } from './helpers.ts';
+import { expect, test, type Page, type TestInfo } from '@playwright/test';
+import { seedRoster, settled, shot } from './helpers.ts';
 import { walk as walkCodes } from './walks/codes.ts';
 import { walk as walkDuck } from './walks/duck.ts';
 import { walk as walkFeud } from './walks/feud.ts';
+import { seed as seedImposter, walk as walkImposter } from './walks/imposter.ts';
 import { walk as walkMostLikely } from './walks/most-likely.ts';
+import { seed as seedWavelength, walk as walkWavelength } from './walks/wavelength.ts';
 
 type Check = (slug: string) => Promise<void>;
 
 const names = ['Alex', 'Bo', 'Cleo', 'Dani'];
-const CREW = 'Was isst du am liebsten zum Frühstück?';
-const IMPOSTER = 'Was isst du am liebsten zu Mittag?';
 
 // The start screens need content in the shared e2e database, so each walk adds its own entries; the
 // lobby's content fetch is pinned to readable ones for the screenshots.
 async function content(page: Page, info: TestInfo) {
 	const tag = `${info.project.name}-${info.title.length}-${Date.now()}`;
-	await page.request.post('/api/content/imposter_pairs', { data: { a: `Look ${tag}?`, b: `Look ${tag}!` } });
-	await page.request.post('/api/content/wavelength_spectra', { data: { a: `Look ${tag}`, b: `Look ${tag}!` } });
-	const pinned = (a: string, b: string) => (route: Route) =>
-		route.request().method() === 'GET' ? route.fulfill({ json: [{ id: 1, a, b }] }) : route.fallback();
-	await page.route('**/api/content/imposter_pairs', pinned(CREW, IMPOSTER));
-	await page.route('**/api/content/wavelength_spectra', pinned('Kalt', 'Heiß'));
-}
-
-async function press(page: Page, name: string) {
-	await page.getByRole('button', { name, exact: true }).click();
-}
-
-async function holding(page: Page, check: () => Promise<void>) {
-	const box = (await page.getByRole('button', { name: 'Gedrückt halten' }).boundingBox())!;
-	await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-	await page.mouse.down();
-	await check();
-	await page.mouse.up();
+	await seedImposter(page, tag);
+	await seedWavelength(page, tag);
 }
 
 // Home, Spieler, every start screen, lobbies, every game phase (Wavelength as Versus and Koop), Inhalte.
-// Codes, Duck and Most Likely To walk their own screens from e2e/walks/.
+// Every game walks its own screens from e2e/walks/.
 async function walk(page: Page, info: TestInfo, check: Check) {
 	// The walk covers every screen of every game, ~1.5m on the check runner since the Feud walk joined it.
 	test.setTimeout(240_000);
@@ -50,97 +34,8 @@ async function walk(page: Page, info: TestInfo, check: Check) {
 	await expect(page.getByText('Gast', { exact: true })).toHaveCount(names.length);
 	await check('spieler');
 
-	await page.goto('/spiele/imposter');
-	await check('start-imposter');
-	await press(page, "Los geht's");
-	await expect(page).toHaveURL(/\/lobby$/);
-	await check('lobby-imposter');
-	await press(page, "Los geht's");
-	await expect(page).toHaveURL(/\/spielen$/);
-	for (const [i, name] of names.entries()) {
-		await expect(page.getByText(`Gib das Handy an ${name}`, { exact: true })).toBeVisible();
-		if (i === 0) await check('imposter-handover');
-		await press(page, `${name} ist bereit`);
-		if (i === 0) await check('imposter-view');
-		await holding(page, async () => {
-			await expect(page.getByTestId('question')).toBeVisible();
-			if (i === 0) await check('imposter-view-held');
-		});
-	}
-	await check('imposter-crew');
-	await press(page, 'Crew-Frage aufdecken');
-	await check('imposter-crew-shown');
-	await press(page, 'Weiter zum Imposter');
-	await check('imposter-unmask');
-	await press(page, 'Imposter aufdecken');
-	await expect(page.getByTestId('unmasked')).toBeVisible();
-	await check('imposter-unmask-shown');
-
-	await page.goto('/spiele/wavelength');
-	await check('start-wavelength');
-	await press(page, "Los geht's");
-	await expect(page).toHaveURL(/\/lobby$/);
-	await press(page, '1');
-	await check('lobby-wavelength');
-	await page.getByRole('button', { name: 'Alex', exact: true }).click();
-	await expect(page.getByText('1 / 3', { exact: true })).toBeVisible();
-	await check('lobby-wavelength-short');
-	await page.getByRole('button', { name: 'Alex', exact: true }).click();
-	await expect(page.getByText('1 / 3', { exact: true })).toHaveCount(0);
-	await press(page, "Los geht's");
-	await expect(page).toHaveURL(/\/spielen$/);
-	for (const [i, psychic] of ['Alex', 'Bo'].entries()) {
-		await expect(page.getByRole('heading', { name: `Gib das Handy an ${psychic}` })).toBeVisible();
-		if (i === 0) await check('wavelength-prep');
-		await press(page, 'Ziel anzeigen');
-		if (i === 0) await check('wavelength-reveal');
-		await holding(page, async () => {
-			await expect(page.getByRole('img', { name: /Ziel bei/ })).toBeVisible();
-			if (i === 0) await check('wavelength-reveal-held');
-		});
-		await page.getByRole('button', { name: /^Verdecken/ }).click();
-		if (i === 0) {
-			await check('wavelength-guess');
-			await aim(page);
-		}
-		await press(page, 'Einloggen');
-		await expect(page.getByTestId('points')).toBeVisible();
-		if (i === 0) {
-			await counted(page);
-			await check('wavelength-result');
-		}
-		await page.getByRole('button', { name: /^(Weiter|Zum Endstand)$/ }).click();
-	}
-	await expect(page.getByRole('button', { name: 'Nochmal spielen' })).toBeVisible();
-	await counted(page);
-	await check('wavelength-gameover');
-
-	await seedRoster(page, ['Alex', 'Bo']);
-	await page.goto('/spiele/wavelength/lobby');
-	await expect(page.getByRole('button', { name: 'Koop', exact: true })).toHaveAttribute('aria-pressed', 'true');
-	await press(page, '1');
-	await check('lobby-wavelength-koop');
-	await press(page, "Los geht's");
-	await expect(page).toHaveURL(/\/spielen$/);
-	for (const [i, psychic] of ['Alex', 'Bo'].entries()) {
-		await expect(page.getByText(`Runde 1 / 1 · Zug ${i + 1} / 2`, { exact: true })).toBeVisible();
-		await expect(page.getByRole('heading', { name: `Gib das Handy an ${psychic}` })).toBeVisible();
-		if (i === 0) await check('wavelength-koop-prep');
-		await press(page, 'Ziel anzeigen');
-		await page.getByRole('button', { name: /^Verdecken/ }).click();
-		await aim(page);
-		await press(page, 'Einloggen');
-		await expect(page.getByTestId('points')).toHaveText('+4');
-		if (i === 0) {
-			await counted(page);
-			await check('wavelength-koop-result');
-		}
-		await page.getByRole('button', { name: /^(Weiter|Zum Endstand)$/ }).click();
-	}
-	await expect(page.getByText('8 Punkte', { exact: true })).toBeVisible();
-	await counted(page);
-	await check('wavelength-koop-gameover');
-
+	await walkImposter(page, check);
+	await walkWavelength(page, check);
 	await walkCodes(page, check);
 	await walkDuck(page, check);
 	await walkMostLikely(page, check);
@@ -157,41 +52,10 @@ async function walk(page: Page, info: TestInfo, check: Check) {
 	await check('inhalte-wavelength');
 }
 
-async function aim(page: Page) {
-	const target = await page.evaluate(
-		() => JSON.parse(localStorage.getItem('arcade:session:wavelength')!).state.target as number
-	);
-	const dial = page.getByRole('slider', { name: 'Zeiger' });
-	await dial.focus();
-	const steps = Math.round(target) - Number(await dial.getAttribute('aria-valuenow'));
-	for (let i = 0; i < Math.abs(steps); i++) await dial.press(steps > 0 ? 'ArrowRight' : 'ArrowLeft');
-}
-
-// countUp writes text frame by frame, outside the animations shot() waits for
-async function counted(page: Page) {
-	const { teams, phase, lastScore } = await page.evaluate(
-		() => JSON.parse(localStorage.getItem('arcade:session:wavelength')!).state
-	);
-	const scores = (teams as { score: number }[]).map((t) => String(t.score)).sort();
-	await expect.poll(async () => (await page.locator('.board .pts').allTextContents()).sort()).toEqual(scores);
-	if (phase === 'result') await expect(page.getByTestId('points')).toHaveText(lastScore > 0 ? `+${lastScore}` : '0');
-}
-
-async function settle(page: Page) {
-	await page.evaluate(() =>
-		Promise.all(
-			document
-				.getAnimations()
-				.filter((a) => a.effect?.getTiming().iterations !== Infinity)
-				.map((a) => a.finished.catch(() => {}))
-		)
-	);
-}
-
 test('Scenario: Touch targets are at least 44px', async ({ page }, info) => {
 	const small: string[] = [];
 	await walk(page, info, async (slug) => {
-		await settle(page);
+		await settled(page);
 		const found = await page.evaluate(() =>
 			[...document.querySelectorAll<HTMLElement>('a[href], button, input, select, textarea, [role="slider"]')]
 				.filter((el) => el.checkVisibility())
@@ -214,7 +78,7 @@ test('Scenario: Touch targets are at least 44px', async ({ page }, info) => {
 test('Scenario: Text contrast meets 4.5:1', async ({ page }, info) => {
 	const low: string[] = [];
 	await walk(page, info, async (slug) => {
-		await settle(page);
+		await settled(page);
 		const found = await page.evaluate(contrastFailures);
 		low.push(...found.map((f) => `${slug}: ${f}`));
 	});
@@ -323,7 +187,7 @@ test('Scenario: Decoration loads no external assets', async ({ page, baseURL }, 
 	});
 	const screens: string[] = [];
 	await walk(page, info, async (slug) => {
-		await settle(page);
+		await settled(page);
 		screens.push(slug);
 	});
 	expect(screens.length).toBeGreaterThan(20);
