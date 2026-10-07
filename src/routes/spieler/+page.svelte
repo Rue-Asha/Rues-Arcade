@@ -70,12 +70,12 @@
 
 	async function create(e?: SubmitEvent) {
 		e?.preventDefault();
-		const typed = savedName.trim();
+		const known = new Set(roster.saved.map((s) => s.id));
 		const result = await roster.createSaved(savedName);
 		savedMessage = result.ok ? '' : result.message;
 		if (!result.ok) return;
 		savedName = '';
-		const at = roster.saved.findIndex((s) => s.name.localeCompare(typed, 'de', { sensitivity: 'base' }) === 0);
+		const at = roster.saved.findIndex((s) => !known.has(s.id));
 		if (at >= 0) savedPage = pageOf(at, size);
 	}
 

@@ -328,6 +328,21 @@ test('Scenario: Saving a player shows its page', async ({ page, request }, info)
 	}
 });
 
+test('Scenario: Saving a player shows its page when a name differs only by a diacritic', async ({ page, request }, info) => {
+	const server = await emptyServer(info, 'players-pages-diacritic');
+	try {
+		await seedPlayers(request, server.origin, [...names(11), 'Müller']);
+		await page.setViewportSize(PHONE);
+		await page.goto(`${server.origin}/spieler`);
+		await expect(pager(page)).toContainText('Seite 1 von 2');
+		await create(page, 'Muller');
+		await expect(pager(page)).toContainText('Seite 3 von 3');
+		await expect(saved(page).getByText('Muller', { exact: true })).toBeVisible();
+	} finally {
+		server.close();
+	}
+});
+
 test('Scenario: Roster stays unpaged', async ({ page }, info) => {
 	const server = await emptyServer(info, 'players-roster-unpaged');
 	try {
