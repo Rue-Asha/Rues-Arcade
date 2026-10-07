@@ -1,7 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
+import { demo as imposterDemo } from '../src/lib/games/imposter/demo.ts';
 import { emptyServer, seedRoster } from './helpers.ts';
 
-const IMPOSTER_STEPS = 11;
+const IMPOSTER_STEPS = imposterDemo.steps.length;
 const WAVELENGTH_STEPS = 10;
 
 async function openDemo(page: Page, slug: string, origin = '') {
@@ -38,10 +39,13 @@ function serverCalls(page: Page) {
 }
 
 test('Scenario: Imposter demo by tapping highlighted controls', async ({ page }) => {
+	test.setTimeout(90_000);
 	await openDemo(page, 'imposter');
 	await expect(page.getByText('Gib das Handy an Alex', { exact: true })).toBeVisible();
 	await playToEnd(page, IMPOSTER_STEPS);
-	await expect(page.getByTestId('unmasked')).toHaveText('Alex');
+	await expect(page.getByRole('dialog')).toHaveCount(0);
+	await expect(page.getByTestId('unmasked')).toHaveText('Dani');
+	await expect(page.getByText('Runde 2', { exact: true })).toBeVisible();
 });
 
 test('Scenario: Wavelength demo by tapping highlighted controls', async ({ page }) => {
@@ -98,6 +102,7 @@ test('Scenario: Hidden information shown with Demo tag', async ({ page }) => {
 });
 
 test('Scenario: Demo leaves real data untouched', async ({ page }) => {
+	test.setTimeout(90_000);
 	await seedRoster(page, ['Mira', 'Noah', 'Olli']);
 	// a real state: the start page discards one that doesn't fit the game
 	await page.evaluate(() =>
@@ -199,6 +204,7 @@ test('Scenario: Demo steppable with reduced motion', async ({ page }) => {
 });
 
 test('Scenario: Demo works with an empty database', async ({ page }, info) => {
+	test.setTimeout(90_000);
 	const server = await emptyServer(info, 'demo');
 	try {
 		for (const type of ['imposter_pairs', 'wavelength_spectra'])

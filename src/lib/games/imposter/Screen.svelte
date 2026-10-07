@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { getDemo } from '#lib/demo/context.ts';
 	import type { ScreenProps } from '#lib/games/registry.ts';
 	import { pulse } from '#lib/motion.ts';
 	import { play } from '#lib/sound.ts';
@@ -28,6 +29,12 @@
 	function skip() {
 		skipping = false;
 		act('skip');
+	}
+
+	// the Modal's button carries the same action, so a demo would have two expected controls
+	function askSkip() {
+		if (getDemo() !== null) skip();
+		else skipping = true;
 	}
 </script>
 
@@ -99,7 +106,7 @@
 		<div class="head">
 			<p class="label">Runde {s.round}</p>
 			{#if revealing}
-				<Button variant="ghost" size="sm" action="skip" onclick={() => (skipping = true)}>Überspringen</Button>
+				<Button variant="ghost" size="sm" action="skip" onclick={askSkip}>Überspringen</Button>
 			{/if}
 		</div>
 		<ol class="order" aria-label="Reihenfolge">
