@@ -198,7 +198,7 @@ test('Scenario: New copy has no exclamation marks', async ({ page }, info) => {
 	const loud: string[] = [];
 	const seen = new Set<string>();
 	await walk(page, info, async (slug) => {
-		const parts = { ...NEW_COPY, ...(slug === 'wavelength-koop-gameover' ? { gameover: 'main .reveal' } : {}) };
+		const parts = { ...NEW_COPY, ...(slug === 'wavelength-koop-gameover' ? { gameover: 'main [data-frame="stage"]' } : {}) };
 		for (const [kind, sel] of Object.entries(parts))
 			for (const text of await page.locator(sel).allInnerTexts()) {
 				seen.add(kind);

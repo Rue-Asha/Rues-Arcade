@@ -1,11 +1,14 @@
 <script lang="ts">
 	import type { ScreenProps } from '#lib/games/registry.ts';
-	import { countUp } from '#lib/motion.ts';
 	import { play } from '#lib/sound.ts';
 	import Button from '#lib/ui/Button.svelte';
-	import Card from '#lib/ui/Card.svelte';
+	import GameFrame from '#lib/ui/GameFrame.svelte';
+	import Handoff from '#lib/ui/Handoff.svelte';
 	import HoldToView from '#lib/ui/HoldToView.svelte';
+	import Outcome from '#lib/ui/Outcome.svelte';
+	import Reveal from '#lib/ui/Reveal.svelte';
 	import Scoreboard from '#lib/ui/Scoreboard.svelte';
+	import Winner from '#lib/ui/Winner.svelte';
 	import Dial from './Dial.svelte';
 	import {
 		formatAverage,
@@ -32,10 +35,15 @@
 		(koop ? s.turn === team.players.length - 1 : s.teamIndex === s.teams.length - 1) && s.roundIndex + 1 >= s.rounds
 	);
 	const best = $derived(winners(s));
+	const points = $derived(s.lastScore ?? 0);
 	const rows = $derived(
-		[...s.teams]
-			.sort((a, b) => b.score - a.score)
-			.map((t) => ({ name: t.name, score: t.score, lead: !koop && t.score > 0 && best.includes(t) }))
+		s.teams.map((t, i) => ({
+			name: t.name,
+			score: t.score,
+			before: s.phase === 'result' && i === s.teamIndex ? t.score - points : undefined,
+			lead: !koop && t.score > 0 && best.includes(t),
+			acting: !koop && s.phase !== 'gameOver' && i === s.teamIndex
+		}))
 	);
 	const verdict: Record<number, string> = {
 		4: 'Genau getroffen.',
@@ -57,138 +65,105 @@
 	}
 </script>
 
-<div class="split">
-	<div class="stack main">
+<GameFrame>
+	{#snippet hero()}
 		{#if s.phase === 'prep'}
-			<Card tone="wavelength_spectra">
-				<p class="label">{koop ? clue.name : team.name} ist dran</p>
-				<h2>Gib das Handy an {clue.name}</h2>
-				<p class="muted">{others} {many ? 'schauen' : 'schaut'} weg. Nur {clue.name} sieht gleich das Ziel.</p>
-			</Card>
+			<Handoff
+				heading="Gib das Handy an {clue.name}"
+				label="{koop ? clue.name : team.name} ist dran"
+				note="{others} {many ? 'schauen' : 'schaut'} weg. Nur {clue.name} sieht gleich das Ziel."
+			/>
 			<Dial value={90} left={s.spectrum.a} right={s.spectrum.b} />
-			<div class="row">
-				<Button variant="primary" action="show" onclick={() => act({ type: 'show' })}>Ziel anzeigen</Button>
-				<Button variant="secondary" action="redraw" onclick={() => act({ type: 'redraw' })}>Anderes Spektrum</Button>
-			</div>
 		{:else if s.phase === 'reveal'}
-			<p class="lead">Nur {clue.name} schaut hin.</p>
 			<HoldToView label="Gedrückt halten" onrelease={() => {}}>
-				<Dial value={s.dial} target={s.target} left={s.spectrum.a} right={s.spectrum.b} />
+				<Reveal shown>
+					{#snippet covered()}{/snippet}
+					<Dial value={s.dial} target={s.target} left={s.spectrum.a} right={s.spectrum.b} />
+				</Reveal>
 			</HoldToView>
-			<p class="muted">Merk dir das Ziel und überleg dir einen Hinweis zwischen den beiden Begriffen.</p>
-			<div class="row">
-				<Button variant="primary" action="guess" onclick={() => act({ type: 'guess' })}>Verdecken & Hinweis geben</Button>
-				<Button variant="secondary" action="redraw" onclick={() => act({ type: 'redraw' })}>Anderes Spektrum</Button>
-			</div>
 		{:else if s.phase === 'guess'}
-			<div class="stack tight">
-				<h2>{clue.name} gibt den Hinweis</h2>
-				<p class="muted">{others} {many ? 'drehen' : 'dreht'} den Zeiger dorthin, wo das Ziel liegt.</p>
-			</div>
 			<Dial value={s.dial} needle left={s.spectrum.a} right={s.spectrum.b} ondial={(value) => act({ type: 'dial', value })} />
-			<div class="row">
-				<Button variant="primary" action="lockIn" onclick={lockIn}>Einloggen</Button>
-			</div>
 		{:else if s.phase === 'result'}
-			{@const points = s.lastScore ?? 0}
-			<div class="outcome" class:miss={points === 0}>
-				<p class="score data" data-testid="points">{#if points > 0}+{/if}<span use:countUp={points}></span></p>
-				<div class="stack tight">
-					<p class="label">{points === 1 ? 'Punkt' : 'Punkte'} für {koop ? 'euch' : team.name}</p>
-					<h2 data-testid="verdict">{verdict[points]}</h2>
-				</div>
-			</div>
+			<Outcome verdict={verdict[points]} {points} />
 			<Dial value={s.dial} needle target={s.target} left={s.spectrum.a} right={s.spectrum.b} />
-			<div class="row">
-				<Button variant="primary" action="next" onclick={next}>{last ? 'Zum Endstand' : 'Weiter'}</Button>
-			</div>
 		{:else if koop}
 			{@const result = koopResult(s)}
-			<div class="reveal">
-				<p class="label">Ergebnis</p>
-				<h2 class="reveal-word winner">{result.tier}</h2>
-				<p class="total data">{result.total} {result.total === 1 ? 'Punkt' : 'Punkte'}</p>
-				<p>Ø {formatAverage(result.average)} Punkte pro Zug · {result.turns} Züge</p>
-			</div>
-			<div class="row">
-				<Button variant="primary" action="again" onclick={() => act({ type: 'again' })}>Nochmal spielen</Button>
-			</div>
+			<Winner
+				names={[result.tier]}
+				label="Ergebnis"
+				note="{result.total} {result.total === 1 ? 'Punkt' : 'Punkte'}"
+			/>
 		{:else}
-			<div class="reveal">
-				<p class="label">{best.length > 1 ? 'Unentschieden' : 'Gewinner'}</p>
-				<h2 class="reveal-word winner">{best.map((t) => t.name).join(' & ')}</h2>
-				<p>{s.rounds} {s.rounds === 1 ? 'Runde' : 'Runden'} gespielt.</p>
-			</div>
-			<div class="row">
-				<Button variant="primary" action="again" onclick={() => act({ type: 'again' })}>Nochmal spielen</Button>
-			</div>
+			<Winner
+				names={best.map((t) => t.name)}
+				label={best.length > 1 ? undefined : 'Gewinner'}
+				note="{s.rounds} {s.rounds === 1 ? 'Runde' : 'Runden'} gespielt."
+			/>
 		{/if}
-	</div>
+	{/snippet}
 
-	<aside class="stack">
-		<Scoreboard {rows} />
-		{#if koop}
-			<ol class="teams" aria-label="Reihenfolge">
-				{#each team.players as p, i (p.id)}
-					{@const now = s.phase !== 'gameOver' && i === s.turn}
-					<li class="player" class:now aria-current={now || undefined}>
-						<span class="label">{i + 1}</span>
-						<span>{p.name}</span>
-					</li>
-				{/each}
-			</ol>
-		{:else}
-			<ul class="teams">
-				{#each s.teams as t, i (t.name)}
-					<li class:now={s.phase !== 'gameOver' && i === s.teamIndex}>
-						<span class="label">{t.name}</span>
-						<span>{t.players.map((p) => p.name).join(', ')}</span>
-					</li>
-				{/each}
-			</ul>
+	{#snippet children()}
+		{#if s.phase === 'reveal'}
+			<p class="lead">Nur {clue.name} schaut hin.</p>
+			<p class="muted">Merk dir das Ziel und überleg dir einen Hinweis zwischen den beiden Begriffen.</p>
+		{:else if s.phase === 'guess'}
+			<h2>{clue.name} gibt den Hinweis</h2>
+			<p class="muted">{others} {many ? 'drehen' : 'dreht'} den Zeiger dorthin, wo das Ziel liegt.</p>
+		{:else if s.phase === 'result'}
+			<p class="label">{points === 1 ? 'Punkt' : 'Punkte'} für {koop ? 'euch' : team.name}</p>
+		{:else if s.phase === 'gameOver' && koop}
+			{@const result = koopResult(s)}
+			<p>Ø {formatAverage(result.average)} Punkte pro Zug · {result.turns} Züge</p>
 		{/if}
-	</aside>
-</div>
+	{/snippet}
+
+	{#snippet actions()}
+		{#if s.phase === 'prep'}
+			<Button variant="primary" action="show" onclick={() => act({ type: 'show' })}>Ziel anzeigen</Button>
+			<Button variant="secondary" action="redraw" onclick={() => act({ type: 'redraw' })}>Anderes Spektrum</Button>
+		{:else if s.phase === 'reveal'}
+			<Button variant="primary" action="guess" onclick={() => act({ type: 'guess' })}>Verdecken & Hinweis geben</Button>
+			<Button variant="secondary" action="redraw" onclick={() => act({ type: 'redraw' })}>Anderes Spektrum</Button>
+		{:else if s.phase === 'guess'}
+			<Button variant="primary" action="lockIn" onclick={lockIn}>Einloggen</Button>
+		{:else if s.phase === 'result'}
+			<Button variant="primary" action="next" onclick={next}>{last ? 'Zum Endstand' : 'Weiter'}</Button>
+		{:else}
+			<Button variant="primary" action="again" onclick={() => act({ type: 'again' })}>Nochmal spielen</Button>
+		{/if}
+	{/snippet}
+
+	{#snippet rail()}
+		<div class="stack">
+			<Scoreboard {rows} />
+			{#if koop}
+				<ol class="teams" aria-label="Reihenfolge">
+					{#each team.players as p, i (p.id)}
+						{@const now = s.phase !== 'gameOver' && i === s.turn}
+						<li class="player" class:now aria-current={now || undefined}>
+							<span class="label">{i + 1}</span>
+							<span>{p.name}</span>
+						</li>
+					{/each}
+				</ol>
+			{:else}
+				<ul class="teams">
+					{#each s.teams as t, i (t.name)}
+						<li class:now={s.phase !== 'gameOver' && i === s.teamIndex}>
+							<span class="label">{t.name}</span>
+							<span>{t.players.map((p) => p.name).join(', ')}</span>
+						</li>
+					{/each}
+				</ul>
+			{/if}
+		</div>
+	{/snippet}
+</GameFrame>
 
 <style>
-	.tight {
-		gap: 8px;
-	}
-
 	.lead {
 		font-weight: 700;
 		font-size: 20px;
-	}
-
-	.outcome {
-		display: flex;
-		align-items: center;
-		gap: 20px;
-		padding: 20px;
-		border-radius: var(--radius-xl);
-		background: var(--wavelength);
-		color: var(--ink);
-		box-shadow: 0 var(--ledge) 0 var(--wavelength-ledge);
-	}
-
-	.outcome .label {
-		color: inherit;
-	}
-
-	.outcome.miss {
-		background: var(--surface);
-		color: var(--text);
-		box-shadow: 0 var(--ledge) 0 var(--shadow);
-	}
-
-	.score {
-		flex: none;
-		font-size: clamp(34px, 9vw, 52px);
-		line-height: 1;
-	}
-
-	.winner {
-		font-size: clamp(40px, 11vw, 84px);
 	}
 
 	.teams {
@@ -214,10 +189,6 @@
 		flex-direction: row;
 		align-items: baseline;
 		gap: 12px;
-	}
-
-	.total {
-		font-size: 24px;
 	}
 
 	.teams li .label {
