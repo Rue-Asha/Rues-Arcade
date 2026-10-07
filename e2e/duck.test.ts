@@ -266,6 +266,7 @@ test('Scenario: Duck copy reads neutral', async ({ page }) => {
 });
 
 test('Scenario: Duck demo by tapping highlighted controls', async ({ page }, info) => {
+	test.setTimeout(90_000);
 	const server = await emptyServer(info, 'duck-demo');
 	try {
 		// a fresh database holds the seeded words, the demo must not need any of them; Kit's CSRF check wants
@@ -280,20 +281,24 @@ test('Scenario: Duck demo by tapping highlighted controls', async ({ page }, inf
 
 		const progress = page.getByText(/^Demo · Schritt \d+\/\d+$/);
 		const total = Number((await progress.textContent())!.split('/').at(-1));
-		expect(total).toBeGreaterThanOrEqual(5);
+		expect(total).toBeGreaterThan(20);
 		for (let n = 1; n <= total; n++) {
 			await expect(progress).toHaveText(`Demo · Schritt ${n}/${total}`);
 			const expected = page.locator('[data-demo="expected"]');
 			await expect(expected).toHaveCount(1);
-			if (n === 3) await shot(page, info, 'duck-demo-scoring');
+			if (n === 9) await shot(page, info, 'duck-demo-scoring');
+			if (n === total) {
+				await expect(page.getByText('Gewinner', { exact: true })).toBeVisible();
+				await expect(page.getByText('Zielpunktzahl von 10 erreicht.', { exact: true })).toBeVisible();
+				await expect(expected).toHaveText('Neue Runde');
+			}
 			await expected.click();
 		}
 		await expect(page.getByText('Demo beendet', { exact: true })).toBeVisible();
 		await expect(page.locator('[data-demo="expected"]')).toHaveCount(0);
-		const rows = page.getByRole('list', { name: 'Punktestand' }).getByRole('listitem');
-		await expect(rows.locator('.who')).toHaveText(['Alex', 'Cleo', 'Bo', 'Dani']);
-		await expect(rows.locator('.pts')).toHaveText(['5', '3', '0', '0']);
-		await expect(page.getByText('Als Nächstes bekommt Dani Chuck the Duck.', { exact: true })).toBeVisible();
+		const rows = page.getByRole('list', { name: 'Spielstand' }).getByRole('listitem');
+		await expect(rows.locator('.who')).toHaveText(['Alex', 'Bo', 'Cleo', 'Dani']);
+		await expect(rows.locator('.pts')).toHaveText(['0', '0', '0', '0']);
 	} finally {
 		server.close();
 	}
