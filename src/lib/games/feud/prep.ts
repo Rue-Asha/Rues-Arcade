@@ -47,3 +47,11 @@ export function fill(list: Row[], slots: (number | null)[], random = Math.random
 export function drawTiebreak(list: Row[], picked: number[], random = Math.random): Survey {
 	return leastKnown(list, picked, random)[0].survey;
 }
+
+export function pageCount(total: number, size: number): number {
+	return Math.max(1, Math.ceil(total / size));
+}
+
+export function clampPage(page: number, total: number, size: number): number {
+	return Math.min(Math.max(page, 0), pageCount(total, size) - 1);
+}

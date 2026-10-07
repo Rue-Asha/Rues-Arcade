@@ -1,7 +1,7 @@
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
 import type { Survey } from '../src/lib/content/types.ts';
 import type { SavedPlayer } from '../src/lib/players.ts';
-import { emptyServer, seedPlayed, seedPlayers, seedSavedRoster } from './helpers.ts';
+import { chooseSurveys, emptyServer, seedPlayed, seedPlayers, seedSavedRoster, surveyCard } from './helpers.ts';
 
 const CREW = ['Alex', 'Bo', 'Cleo', 'Dani'];
 
@@ -15,23 +15,46 @@ async function setup(page: Page, request: APIRequestContext, server: Server, ext
 	return { crew, others, surveys };
 }
 
+// the order of the cards depends on the played-with lists, so wait until they are in
+async function toPrep(page: Page) {
+	const loaded = page.waitForResponse((r) => r.url().endsWith('/api/feud/played') && r.request().method() === 'GET');
+	await page.getByRole('button', { name: 'Weiter', exact: true }).click();
+	await expect(page.getByRole('heading', { name: 'Umfragen', exact: true })).toBeVisible();
+	await (await loaded).finished();
+}
+
 async function prep(page: Page, server: Server, crew: SavedPlayer[], rounds = 3) {
 	await page.goto(`${server.origin}/`);
 	await seedSavedRoster(page, crew);
 	await page.goto(`${server.origin}/spiele/family-feud/lobby`);
 	await page.getByRole('button', { name: String(rounds), exact: true }).click();
-	await page.getByRole('button', { name: 'Weiter' }).click();
-	await expect(page.getByRole('heading', { name: 'Umfragen', exact: true })).toBeVisible();
+	await toPrep(page);
 }
 
-const row = (page: Page, id: number) => page.locator(`[data-survey="${id}"]`);
-const slots = (page: Page) => page.getByRole('list', { name: 'Gewählte Umfragen' }).getByRole('listitem');
-const pickBtn = (page: Page, id: number) => row(page, id).getByRole('button', { name: 'Wählen', exact: true });
-const order = (page: Page) =>
+const slots = (page: Page) => page.getByRole('list', { name: 'Gewählte Umfragen' }).locator('> li');
+const ids = (page: Page) =>
 	page
 		.getByRole('list', { name: 'Alle Umfragen' })
 		.locator('[data-survey]')
 		.evaluateAll((els) => els.map((e) => Number(e.getAttribute('data-survey'))));
+
+// the whole list in order, read page by page
+async function order(page: Page) {
+	const pager = page.getByRole('navigation', { name: 'Seiten', exact: true });
+	const seen: number[] = [];
+	if (await pager.count()) {
+		const back = pager.getByRole('button', { name: 'Zurück', exact: true });
+		while (await back.isEnabled()) await back.click();
+		const next = pager.getByRole('button', { name: 'Weiter', exact: true });
+		for (;;) {
+			seen.push(...(await ids(page)));
+			if (await next.isDisabled()) break;
+			await next.click();
+		}
+		return seen;
+	}
+	return ids(page);
+}
 
 test('Scenario: Feud prep shows who knows a survey', async ({ page, request }, info) => {
 	const server = await emptyServer(info, 'prep-known');
@@ -41,9 +64,13 @@ test('Scenario: Feud prep shows who knows a survey', async ({ page, request }, i
 		await seedPlayed(request, x.id, [crew[0].id, crew[1].id, others[0].id], server.origin);
 		await prep(page, server, crew);
 
-		await expect(row(page, x.id).getByText('2 von 4 kennen sie', { exact: true })).toBeVisible();
-		await expect(row(page, x.id).getByText('gespielt mit 3', { exact: true })).toBeVisible();
-		await expect(row(page, y.id).getByText('neu', { exact: true })).toBeVisible();
+		const cardX = await surveyCard(page, x.id);
+		await expect(cardX.getByText('2 von 4 kennen sie', { exact: true })).toBeVisible();
+		await expect(cardX.getByText('gespielt mit 3', { exact: true })).toBeVisible();
+		await expect(cardX.getByRole('button', { name: 'Gespielt mit', exact: true })).toHaveAttribute('aria-expanded', 'false');
+		const cardY = await surveyCard(page, y.id);
+		await expect(cardY.getByText('neu', { exact: true })).toBeVisible();
+		await expect(cardY.getByRole('button', { name: 'Gespielt mit', exact: true })).toHaveAttribute('aria-expanded', 'false');
 	} finally {
 		server.close();
 	}
@@ -76,14 +103,13 @@ test('Scenario: Feud prep refuses an extra pick', async ({ page, request }, info
 		await prep(page, server, crew, 2);
 		const [a, b, c] = surveys;
 
-		await pickBtn(page, a.id).click();
-		await pickBtn(page, b.id).click();
-		await pickBtn(page, c.id).click();
+		await chooseSurveys(page, [a.id, b.id, c.id]);
 
 		await expect(page.getByText('Schon 2 Umfragen gewählt.', { exact: true })).toBeVisible();
 		await expect(slots(page)).toHaveText([new RegExp(a.question), new RegExp(b.question)].map((r) => r));
-		await expect(pickBtn(page, c.id)).toBeVisible();
-		await expect(row(page, c.id)).not.toHaveClass(/chosen/);
+		const cardC = await surveyCard(page, c.id);
+		await expect(cardC.getByRole('button', { name: 'Wählen', exact: true })).toBeVisible();
+		await expect(cardC).not.toHaveClass(/chosen/);
 	} finally {
 		server.close();
 	}
@@ -97,29 +123,9 @@ test('Scenario: Feud survey everyone knows stays pickable', async ({ page, reque
 		await seedPlayed(request, a.id, crew.map((p) => p.id), server.origin);
 		await prep(page, server, crew, 1);
 
-		await expect(row(page, a.id).getByText('alle kennen sie', { exact: true })).toBeVisible();
-		await pickBtn(page, a.id).click();
+		await expect((await surveyCard(page, a.id)).getByText('alle kennen sie', { exact: true })).toBeVisible();
+		await chooseSurveys(page, [a.id]);
 		await expect(slots(page).first()).toContainText(a.question);
-	} finally {
-		server.close();
-	}
-});
-
-test('Scenario: Feud prep opens a survey\'s answers', async ({ page, request }, info) => {
-	const server = await emptyServer(info, 'prep-open');
-	try {
-		const { crew, surveys } = await setup(page, request, server);
-		const [a] = surveys;
-		await prep(page, server, crew);
-
-		await row(page, a.id).getByRole('button', { name: 'Öffnen' }).click();
-
-		const expected = a.answers
-			.map((x, i) => ({ ...x, i }))
-			.sort((p, q) => q.points - p.points || p.i - q.i)
-			.map((x) => `${x.text}${x.points}`);
-		await expect(row(page, a.id).getByText(a.question, { exact: true })).toBeVisible();
-		await expect(row(page, a.id).getByRole('list', { name: 'Antworten' }).getByRole('listitem')).toHaveText(expected);
 	} finally {
 		server.close();
 	}
@@ -132,12 +138,12 @@ test('Scenario: Feud prep removes a pick', async ({ page, request }, info) => {
 		await prep(page, server, crew, 2);
 		const [a] = surveys;
 
-		await pickBtn(page, a.id).click();
+		await chooseSurveys(page, [a.id]);
 		await expect(slots(page).first()).toContainText(a.question);
 		await slots(page).first().getByRole('button', { name: 'Entfernen' }).click();
 
 		await expect(slots(page).first()).toContainText('Noch frei');
-		await pickBtn(page, a.id).click();
+		await chooseSurveys(page, [a.id]);
 		await expect(slots(page).first()).toContainText(a.question);
 	} finally {
 		server.close();
@@ -152,9 +158,9 @@ test('Scenario: Feud Start hands over the picked surveys', async ({ page, reques
 		const [a, b] = surveys;
 		const start = page.getByRole('button', { name: 'Start', exact: true });
 
-		await pickBtn(page, b.id).click();
+		await chooseSurveys(page, [b.id]);
 		await expect(start).toBeDisabled();
-		await pickBtn(page, a.id).click();
+		await chooseSurveys(page, [a.id]);
 		await expect(start).toBeEnabled();
 		await start.click();
 		await page.waitForURL('**/spielen');
@@ -195,7 +201,7 @@ test('Scenario: Feud fill disabled when all slots are picked', async ({ page, re
 		const fill = page.getByRole('button', { name: 'Zufällig auffüllen' });
 
 		await expect(fill).toBeEnabled();
-		await pickBtn(page, surveys[0].id).click();
+		await chooseSurveys(page, [surveys[0].id]);
 		await expect(fill).toBeDisabled();
 	} finally {
 		server.close();
@@ -210,18 +216,19 @@ test('Scenario: Feud prep edits a survey\'s played-with list', async ({ page, re
 		await seedPlayed(request, a.id, [crew[0].id], server.origin);
 		await prep(page, server, crew);
 
-		const list = () => row(page, a.id).getByRole('group', { name: 'Spielerliste' });
-		await row(page, a.id).getByRole('button', { name: 'Öffnen' }).click();
-		await list().getByRole('button', { name: '+ Extra' }).click();
-		await expect(list().getByRole('listitem')).toHaveText([/Alex/, /Extra/]);
-		await list().getByRole('button', { name: 'Entfernen Alex' }).click();
-		await expect(list().getByRole('listitem')).toHaveText([/Extra/]);
+		const card = () => surveyCard(page, a.id);
+		const list = async () => (await card()).getByRole('group', { name: 'Spielerliste' });
+		await (await card()).getByRole('button', { name: 'Gespielt mit', exact: true }).click();
+		await (await list()).getByRole('button', { name: '+ Extra' }).click();
+		await expect((await list()).getByRole('listitem')).toHaveText([/Alex/, /Extra/]);
+		await (await list()).getByRole('button', { name: 'Entfernen Alex' }).click();
+		await expect((await list()).getByRole('listitem')).toHaveText([/Extra/]);
 
 		await page.reload();
-		await page.getByRole('button', { name: 'Weiter' }).click();
-		await row(page, a.id).getByRole('button', { name: 'Öffnen' }).click();
-		await expect(list().getByRole('listitem')).toHaveText([/Extra/]);
-		await expect(list().getByRole('button', { name: 'Entfernen Alex' })).toHaveCount(0);
+		await toPrep(page);
+		await (await card()).getByRole('button', { name: 'Gespielt mit', exact: true }).click();
+		await expect((await list()).getByRole('listitem')).toHaveText([/Extra/]);
+		await expect((await list()).getByRole('button', { name: 'Entfernen Alex' })).toHaveCount(0);
 	} finally {
 		server.close();
 	}

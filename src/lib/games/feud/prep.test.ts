@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Survey } from '#lib/content/types.ts';
-import { drawTiebreak, fill, rows, sortRows, type Row } from './prep.ts';
+import { clampPage, drawTiebreak, fill, pageCount, rows, sortRows, type Row } from './prep.ts';
 
 const survey = (id: number): Survey => ({
 	id,
@@ -81,5 +81,18 @@ describe('prep', () => {
 
 	it('a full set of slots is left alone', () => {
 		expect(fill(table([0, 0, 0]), [1, 2], () => 0)).toEqual([1, 2]);
+	});
+
+	it('Scenario: Feud prep page count', () => {
+		const totals = [0, 6, 7, 12, 13, 26];
+		expect(totals.map((n) => pageCount(n, 6))).toEqual([1, 1, 2, 2, 3, 5]);
+		expect(totals.map((n) => pageCount(n, 12))).toEqual([1, 1, 1, 1, 2, 3]);
+	});
+
+	it('Scenario: Feud prep page clamps to the last page', () => {
+		expect(clampPage(2, 13, 6)).toBe(2);
+		expect(clampPage(2, 12, 6)).toBe(1);
+		expect(clampPage(5, 0, 6)).toBe(0);
+		expect(clampPage(-1, 13, 6)).toBe(0);
 	});
 });
