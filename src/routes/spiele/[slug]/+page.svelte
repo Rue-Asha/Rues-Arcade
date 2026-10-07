@@ -31,9 +31,9 @@
 			'Wer keinen Reim findet, verliert einen Buchstaben von DUCKY. Das Spiel endet bei den Zielpunkten oder ohne Leben.'
 		],
 		'most-likely': [
-			'Pro Runde ein Spruch: Wer würde am ehesten …?',
-			'Auf drei zeigen alle gleichzeitig auf die Person, die am besten passt.',
-			'Wer die meisten Finger auf sich hat, bekommt den Titel. Am Ende gewinnt, wer die meisten Titel hat.'
+			'Reihum ist ein Team dran und bekommt einen Spruch: Wer würde am ehesten …?',
+			'Das Team zählt bis drei, und alle zeigen gleichzeitig auf die Person, die am besten passt.',
+			'Zeigen mehrere auf dieselbe Person, bekommt das Team so viele Punkte, wie es Finger sind. Am Ende gewinnt das Team mit den meisten Punkten.'
 		],
 		'family-feud': [
 			'Zwei Teams, eine Umfrage: gesucht sind die häufigsten Antworten.',
