@@ -119,7 +119,7 @@
 				<h2 class="label" id="final">Endstand</h2>
 				<ol class="rows rise">
 					{#each ranking(s) as row (row.team.name)}
-						{@const lead = top > 0 && row.team.score === top}
+						{@const lead = row.team.score === top}
 						<li class="entry" class:lead>
 							<span class="rank">{row.rank}</span>
 							<span class="who">

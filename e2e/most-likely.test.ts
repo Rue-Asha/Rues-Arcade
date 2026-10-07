@@ -314,6 +314,16 @@ test('Scenario: Most Likely tie at the top reads Unentschieden', async ({ page }
 	await still(page, info, 'most-likely-tie');
 });
 
+test('Endstand with every team at 0 highlights all of them', async ({ page }) => {
+	test.setTimeout(60_000);
+	await start(page);
+	for (let k = 0; k < 10; k++) await playTurn(page, 0);
+
+	await expect(page.getByText('Unentschieden', { exact: true })).toBeVisible();
+	await expect(final(page)).toHaveText([/^1\s*Team \d.*0$/, /^1\s*Team \d.*0$/]);
+	await expect(final(page).and(page.locator('.lead'))).toHaveCount(2);
+});
+
 test('Scenario: Most Likely session resumes after reload', async ({ page }) => {
 	await start(page);
 	await playTurn(page, 2);
