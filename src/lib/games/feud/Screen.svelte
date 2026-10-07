@@ -179,8 +179,15 @@
 	</HoldToView>
 {/snippet}
 
-{#snippet undo(variant: 'secondary' | 'ghost' = 'ghost')}
-	<Button {variant} action="undo" disabled={!canUndo(s)} onclick={() => act({ type: 'undo' })}>Rückgängig</Button>
+{#snippet undo()}
+	<Button variant="secondary" action="undo" disabled={!canUndo(s)} onclick={() => act({ type: 'undo' })}>Rückgängig</Button>
+{/snippet}
+
+<!-- always rendered next to Fehler / Nicht auf der Tafel, so the row doesn't shift when it turns disabled -->
+{#snippet back()}
+	<Button variant="warning" square label="Rückgängig" action="undo" disabled={!canUndo(s)} onclick={() => act({ type: 'undo' })}>
+		<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"></path><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"></path></svg>
+	</Button>
 {/snippet}
 
 {#if s.phase === 'gameOver'}
@@ -196,12 +203,12 @@
 	<Handoff colour={colours[s.control!]} label="Duell gewonnen" team={teams[s.control!].name} note="Spielen oder passen?">
 		<Button variant="primary" action="play" onclick={() => act({ type: 'play' })}>Spielen</Button>
 		<Button variant="secondary" action="pass" onclick={() => act({ type: 'pass' })}>Passen</Button>
-		{@render undo('secondary')}
+		{@render undo()}
 	</Handoff>
 {:else if s.phase === 'steal' && !stealing}
 	<Handoff colour={colours[1 - s.playing!]} label="Dritter Fehler" team={teams[1 - s.playing!].name} note="Eine Antwort zum Stehlen.">
 		<Button variant="primary" onclick={() => (stealing = true)}>Weiter</Button>
-		{@render undo('secondary')}
+		{@render undo()}
 	</Handoff>
 {:else}
 	<div class="stack">
@@ -323,32 +330,32 @@
 		</div>
 
 		{#if s.phase === 'faceoff'}
-			<div class="row">
-				<Button variant="secondary" action={missing} disabled={!ready} onclick={() => answer(null)}>Nicht auf der Tafel</Button>
-				{@render undo()}
+			<div class="row fix">
+				<Button variant="danger" action={missing} disabled={!ready} onclick={() => answer(null)}>Nicht auf der Tafel</Button>
+				{@render back()}
 			</div>
 		{:else if s.phase === 'board'}
 			<div class="strikes">
 				<Lives icon="strike" total={STRIKES} left={s.strikes} size={30} />
 				<p class="pot">Im Topf <strong data-testid="pot">{pot(s)}</strong>{#if double} <span class="muted">× {multiplier(s)}</span>{/if}</p>
 			</div>
-			<div class="row">
-				<Button variant="primary" action="strike" onclick={strike}>Fehler</Button>
-				{@render undo()}
+			<div class="row fix">
+				<Button variant="danger" action="strike" onclick={strike}>Fehler</Button>
+				{@render back()}
 			</div>
 		{:else if s.phase === 'steal'}
 			<div class="strikes">
 				<Lives icon="strike" total={STRIKES} left={s.strikes} size={30} />
 				<p class="pot">Im Topf <strong data-testid="pot">{pot(s)}</strong>{#if double} <span class="muted">× {multiplier(s)}</span>{/if}</p>
 			</div>
-			<div class="row">
-				<Button variant="secondary" action={missing} onclick={() => steal(null)}>Nicht auf der Tafel</Button>
-				{@render undo()}
+			<div class="row fix">
+				<Button variant="danger" action={missing} onclick={() => steal(null)}>Nicht auf der Tafel</Button>
+				{@render back()}
 			</div>
 		{:else}
 			<div class="row">
 				<Button variant="primary" action="next" onclick={() => act({ type: 'next' })}>{last || suddenDeath(s) ? 'Zum Ergebnis' : 'Nächste Runde'}</Button>
-				{@render undo('secondary')}
+				{@render undo()}
 			</div>
 		{/if}
 	</div>
@@ -421,6 +428,10 @@
 		font-size: clamp(28px, 6vw, 44px);
 		line-height: 1;
 		font-variant-numeric: tabular-nums;
+	}
+
+	.fix {
+		flex-wrap: nowrap;
 	}
 
 	.covered {
