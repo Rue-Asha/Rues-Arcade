@@ -8,7 +8,7 @@
 	import { roster } from '#lib/roster.svelte.ts';
 	import Button from '#lib/ui/Button.svelte';
 	import type { FeudConfig, FeudTeam } from './engine.ts';
-	import { clampPage, drawTiebreak, fill, pageCount, rows, sortRows, type Played, type Sort } from './prep.ts';
+	import { clampPage, drawTiebreak, fill, pageCount, pageItems, rows, sortRows, type Played, type Sort } from './prep.ts';
 
 	interface Props {
 		teams: FeudTeam[];
@@ -41,7 +41,7 @@
 	const size = $derived(wide.current ? 12 : 6);
 	const pages = $derived(pageCount(list.length, size));
 	const current = $derived(clampPage(page, list.length, size));
-	const shown = $derived(list.slice(current * size, (current + 1) * size));
+	const shown = $derived(pageItems(list, page, size));
 	const byId = $derived(new Map(surveys.map((s) => [s.id, s])));
 	const full = $derived(slots.every((s) => s !== null));
 	const names = $derived(new Map(roster.saved.map((p) => [p.id, p.name])));

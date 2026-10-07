@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Survey } from '#lib/content/types.ts';
-import { clampPage, drawTiebreak, fill, pageCount, rows, sortRows, type Row } from './prep.ts';
+import { clampPage, drawTiebreak, fill, pageCount, pageItems, rows, sortRows, type Row } from './prep.ts';
 
 const survey = (id: number): Survey => ({
 	id,
@@ -94,5 +94,8 @@ describe('prep', () => {
 		expect(clampPage(2, 12, 6)).toBe(1);
 		expect(clampPage(5, 0, 6)).toBe(0);
 		expect(clampPage(-1, 13, 6)).toBe(0);
+		const twelve = Array.from({ length: 12 }, (_, i) => i);
+		expect(pageItems(twelve, 2, 6)).toEqual([6, 7, 8, 9, 10, 11]);
+		expect(pageItems(twelve, 0, 6)).toEqual([0, 1, 2, 3, 4, 5]);
 	});
 });
