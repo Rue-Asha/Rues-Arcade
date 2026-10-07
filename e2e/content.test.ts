@@ -156,21 +156,3 @@ test('Scenario: Bulk import of single entries on the Inhalte page', async ({ pag
 		server.close();
 	}
 });
-
-test('Scenario: Long lists show more on demand', async ({ page }, info) => {
-	const server = await emptyServer(info, 'inhalte-more');
-	try {
-		await page.goto(`${server.origin}/spiele/codes/inhalte`);
-		const entries = page.getByRole('list', { name: 'Einträge' }).getByRole('listitem');
-		await expect(entries).toHaveCount(50);
-		await page.getByRole('button', { name: 'Mehr anzeigen (41 weitere)', exact: true }).click();
-		await expect(entries).toHaveCount(91);
-		await expect(page.getByRole('button', { name: /^Mehr anzeigen/ })).toHaveCount(0);
-
-		await page.goto(`${server.origin}/spiele/family-feud/inhalte`);
-		await expect(page.getByRole('list', { name: 'Umfragen' }).locator(':scope > li')).toHaveCount(30);
-		await expect(page.getByRole('button', { name: 'Mehr anzeigen (217 weitere)', exact: true })).toBeVisible();
-	} finally {
-		server.close();
-	}
-});

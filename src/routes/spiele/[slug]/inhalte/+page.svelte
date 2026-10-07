@@ -1,10 +1,14 @@
 <script lang="ts">
 	import { tick } from 'svelte';
+	import { MediaQuery } from 'svelte/reactivity';
 	import { invalidateAll } from '$app/navigation';
 	import { isSingle, isSurvey, type ContentItem, type ImportReport, type ItemType } from '#lib/content/types.ts';
 	import { games } from '#lib/games/registry.ts';
 	import Button from '#lib/ui/Button.svelte';
+	import { rise } from '#lib/motion.ts';
 	import Modal from '#lib/ui/Modal.svelte';
+	import Pager from '#lib/ui/Pager.svelte';
+	import { PAGE, pageItems } from '#lib/ui/pager.ts';
 	import SurveyEditor from './SurveyEditor.svelte';
 	import type { PageProps } from './$types';
 
@@ -62,10 +66,11 @@
 	let bulkLines = $state<string[]>([]);
 	let report = $state<ImportReport | null>(null);
 
-	const PAGE = 50;
-	let shown = $state(PAGE);
+	let page = $state(0);
+	const wide = new MediaQuery(PAGE.query);
+	const size = $derived(wide.current ? PAGE.wide : PAGE.narrow);
 	// newest first, so whatever was just added or imported is on the first page
-	const visible = $derived(items.toReversed().slice(0, shown));
+	const visible = $derived(pageItems(items.toReversed(), page, size));
 
 	const name = (item: { a: string; b: string }) => (single ? item.a : `${item.a} | ${item.b}`);
 
@@ -84,6 +89,7 @@
 		message = await send(api, 'POST', { a, b });
 		if (message) return;
 		a = b = '';
+		page = 0;
 		await invalidateAll();
 		document.getElementById('new-a')?.focus();
 	}
@@ -124,6 +130,7 @@
 		report = await res.json();
 		bulkLines = bulk.split(/\r?\n/);
 		bulk = '';
+		page = 0;
 		await invalidateAll();
 	}
 
@@ -213,7 +220,8 @@
 				</div>
 
 				{#if items.length}
-					<ul class="rows" aria-labelledby="entries">
+					{#key page}
+					<ul class="rows" aria-labelledby="entries" in:rise>
 						{#each visible as item (item.id)}
 							<li class="row">
 								{#if editing === item.id}
@@ -257,9 +265,8 @@
 							</li>
 						{/each}
 					</ul>
-					{#if items.length > shown}
-						<Button variant="secondary" onclick={() => (shown += PAGE)}>Mehr anzeigen ({items.length - shown} weitere)</Button>
-					{/if}
+					{/key}
+					<Pager bind:page total={items.length} {size} />
 				{:else}
 					<div class="empty panel">
 						<p class="empty-title">Noch keine Einträge</p>
