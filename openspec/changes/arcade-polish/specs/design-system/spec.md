@@ -152,13 +152,19 @@ Every in-game screen of every game, from the first handover to game over, SHALL 
 exactly one hero and an action row at its bottom, and a rail (Scoreboard, order or teams) beside the stage card from
 1024px viewport width, top-aligned with it, and below it on a phone. Feud's board and Duck's scoring SHALL sit in this
 frame. Text and actions SHALL be left-aligned; only the hero is centred inside its card. The primary action SHALL lie
-fully inside the first viewport at 390×844 and at 1280×800, the frame SHALL span at least 75% of the content width at
+fully inside the first viewport at 390×844 and at 1280×800, except Duck's Wertung screen at 390×844, which MAY scroll to
+its primary action and otherwise keeps the frame, the frame SHALL span at least 75% of the content width at
 1280px, touch targets SHALL stay at least 44px, text contrast at least 4.5:1, and no screen SHALL scroll horizontally.
 
 #### Scenario: Every in-game screen uses the stage and rail frame
 - **WHEN** every phase screen of a game is rendered at 390×844 and at 1280×800
 - **THEN** each holds one stage card with one hero and its action row as the card's last part, a rail right of the stage card and top-aligned at 1280px and below it at 390px, the primary action inside the first viewport, the frame at least 75% of the content width at 1280px, and every text outside the hero left-aligned
 - **proof:** e2e ("Scenario: Imposter screens use the stage and rail frame", "Scenario: Wavelength screens use the stage and rail frame", "Scenario: Codes screens use the stage and rail frame", "Scenario: Duck screens use the stage and rail frame", "Scenario: Most Likely screens use the stage and rail frame", "Scenario: Feud screens use the stage and rail frame")
+
+#### Scenario: Duck Wertung may scroll to its action on a phone
+- **WHEN** Duck's Wertung screen is rendered at 390×844
+- **THEN** its primary action may lie below the first viewport, and the screen still holds one hero, the action row as the stage card's last part, the rail below the stage card and no horizontal scroll; at 1280×800 the primary action lies inside the first viewport
+- **proof:** e2e ("Scenario: Duck screens use the stage and rail frame")
 
 #### Scenario: Frame keeps the look rules
 - **WHEN** the look walk renders every in-game screen in the frame

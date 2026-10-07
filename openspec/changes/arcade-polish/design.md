@@ -46,6 +46,8 @@ slides, redesign before "Los geht's", new colours/fonts, rule changes, sound for
   `look.test.ts`, which would turn red for games not yet moved.
 - **Imposter and Wavelength walks move out of `look.test.ts`** into `e2e/walks/imposter.ts` and `e2e/walks/wavelength.ts`
   (U3, no behaviour change), so every game unit owns exactly its walk file.
+- **Duck Wertung on phone is exempt from the first-viewport check (Rue, 2026-10-07).** Four player cards with 44px point
+  boxes and DUCKY letters need ~850px, so Weiter lands at ~1213px at 390×844; every other screen keeps the check.
 - **Motion values** from research.md: tokens `--ease-in: cubic-bezier(0.5, 0, 0.75, 0)`, `--ease-pop: cubic-bezier(0.34,
   1.56, 0.64, 1)`, `--dur-out: 0.18s`, `--dur-in: 0.42s`, `--dur-hero: 0.56s`; phase-out 180ms y −8px; handoff band scaleX
   320ms `--ease-out`, name pop 300ms `--ease-pop`; reveal burst 560ms + one 20° sunburst turn over 1.2s; `+N` chip pop
