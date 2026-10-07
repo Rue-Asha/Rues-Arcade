@@ -40,6 +40,15 @@ export const tokens = {
 	'feud-tint': '#1d2a55'
 } as const;
 
+export const motion = {
+	'ease-in': 'cubic-bezier(0.5, 0, 0.75, 0)',
+	'ease-pop': 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+	'ease-out': 'cubic-bezier(0.22, 1, 0.36, 1)',
+	'dur-out': 180,
+	'dur-in': 420,
+	'dur-hero': 560
+} as const;
+
 export type Token = keyof typeof tokens;
 
 const grounds: Token[] = [
