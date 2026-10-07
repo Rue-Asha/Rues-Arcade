@@ -75,7 +75,9 @@ test('Scenario: Only the expected control is enabled', async ({ page }) => {
 	await expect(page.locator('[data-demo="expected"]')).toHaveAttribute('data-action', 'redraw');
 	const show = page.getByRole('button', { name: 'Ziel anzeigen' });
 	await expect(show).toBeDisabled();
+	const spectrum = await page.locator('figcaption').textContent();
 	await show.click({ force: true });
+	await expect(page.locator('figcaption')).toHaveText(spectrum!);
 	await expect(progress(page)).toHaveText(`Demo · Schritt 1/${WAVELENGTH_STEPS}`);
 	await page.locator('[data-demo="expected"]').click();
 	await expect(progress(page)).toHaveText(`Demo · Schritt 2/${WAVELENGTH_STEPS}`);
