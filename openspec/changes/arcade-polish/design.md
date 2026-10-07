@@ -24,8 +24,9 @@ slides, redesign before "Los geht's", new colours/fonts, rule changes, sound for
   `getByText('Runde 1 / 1 · Zug 1 / 2', { exact })` keep matching. U1 writes all six functions (pure, no UI); U3 renders
   them and, in the same unit, deletes the six in-Screen round labels, so no wave ends with the text twice on screen.
   Alternative: each game unit adds its own status — leaves the header empty for two waves and the frame untestable.
-- **Duck's status is "Ziel T Punkte" without progress.** Duck has no round count; its target is the one fixed number.
-- **The demo header shows the status too.** The demo route uses the same `PlayHeader` with label "Demo" and no "Spiel
+- **Duck's status is "Ziel T Punkte" with progress = leading score / target, clamped to 1** (Rue at Gate 1). Duck has
+  no round count; its target is the one fixed number, and the leader's distance to it is the game's progress.
+- **The demo header shows the status too** (Rue accepted at Gate 1). The demo route uses the same `PlayHeader` with label "Demo" and no "Spiel
   beenden"; otherwise removing Imposter's rail label would drop the round from the demo (`e2e/demo.test.ts:50`).
 - **Stage keeps the outgoing node in the same grid cell.** `{#key}` with `in:rise` (delay 60ms) and `out:phaseOut`;
   host is `display: grid` and both children sit in `grid-area: 1 / 1`. Stage marks the outgoing node at outro start
@@ -59,7 +60,7 @@ Shared between units; the owner is the unit that creates it.
 ```ts
 export interface Status {
 	parts: string[];          // joined with " · " by the header
-	progress: number | null;  // 0..1; null = no progress line (Imposter, Duck)
+	progress: number | null;  // 0..1; null = no progress line (Imposter); Duck = min(1, max(scores) / target)
 }
 export interface GameEntry { /* …existing… */ status(state: any): Status }
 ```

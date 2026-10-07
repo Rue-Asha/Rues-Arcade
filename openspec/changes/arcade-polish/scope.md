@@ -22,7 +22,7 @@ Hosts running a game on the shared device see a Demo button they can't use mid-g
 - **S1** On `/spielen` the header has no Demo control; "Spiel beenden" is the red `danger` Button with its full label; the confirm Modal's "Beenden" is `danger` too; confirming still clears the session and returns to the start screen.
   - edges: stale/discarded session notice → still no Demo; Demo stays on the start-screen card; demo "Demo beenden" returns to the start screen (spec scenario "Exiting returns to the starting screen" now starts there, `e2e/demo.test.ts:189` moves); Imposter demo tip mentioning "Spiel beenden" stays valid (label unchanged).
 - **S2** The play header shows the game's round status from a per-game `status(state)` (e.g. "Runde 2 / 5 · Team Blau") in Sora and a thin progress line in the game colour; no Screen renders its own round label any more.
-  - edges: game not loaded yet / discarded → no status line; games without a fixed round count (Imposter) → status without total, no progress line; last round → line full; phone 390px → header wraps without horizontal scroll; Press Start 2P never used for it.
+  - edges: the demo header shows the same status through the shared PlayHeader (label "Demo", no "Spiel beenden"); game not loaded yet / discarded → no status line; games without a fixed round count (Imposter) → status without total, no progress line; Duck → "Ziel T Punkte" with a progress line = leading score / target, clamped to 1; last round → line full; phone 390px → header wraps without horizontal scroll; Press Start 2P never used for it.
 - **S3** A shared `Pager` in `src/lib/ui` (Zurück / "Seite x von y" / Weiter), 6 items per page below 1024px and 12 from 1024px, hidden when everything fits on one page; Feud prep uses it with unchanged behaviour (sort → page 1, picks survive paging).
   - edges: resize across 1024px → current page clamped; exactly 6 / 12 items → no pager; Feud prep e2e (`feud-prep-pages.test.ts`) stays green.
 - **S4** Inhalte lists every content type (incl. Feud survey cards) through the Pager, newest first, replacing "Mehr anzeigen".
@@ -91,6 +91,8 @@ Hosts running a game on the shared device see a Demo button they can't use mid-g
 - Motion: every phase change transitions in and out, plus a bit of game-show flair — Rue.
 - Redesign consults Mobbin but blends with Arcade-Abend (research.md) — Rue.
 - Appetite 2–3 sessions; pager only on Gespeicherte Spieler; add → page 1, delete last on page → previous page — delegated by Rue.
+- Round status also in the demo header via the shared PlayHeader — Rue accepted at Gate 1.
+- Duck status "Ziel T Punkte" with progress line = leading score / target (clamped to 1) — Rue at Gate 1.
 - Taste calls, Rue took all of these picks: left alignment with centred hero; inline Handoff in the stage; deco-piece winner burst (no podium); vertical transitions; full-label red "Spiel beenden"; round status in the shared header; final Scoreboard in the rail at game over.
 
 ## Done when

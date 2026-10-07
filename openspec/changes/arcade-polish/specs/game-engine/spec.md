@@ -29,20 +29,26 @@ Each game SHALL supply `status(state)`: the parts of its round status and a prog
 and demo headers SHALL render the parts joined by " · " in Sora (never Press Start 2P) and, when progress is given, a
 thin line in the game colour filled to that fraction; no Screen SHALL render its own round label. The formats SHALL be:
 Imposter "Runde n" without progress; Wavelength Versus "Runde r / R · <Team>", Koop "Runde r / R · Zug t / T"; Codes
-"Runde r / R · <Aufdecken | Spiel | Rundenergebnis>"; What Rhymes with Duck "Ziel T Punkte" without progress; Most
+"Runde r / R · <Aufdecken | Spiel | Rundenergebnis>"; What Rhymes with Duck "Ziel T Punkte" with progress = the
+leading score / T, clamped to 1; Most
 Likely To "Runde r / R · Team k / n"; Family Feud "Runde r / R · <Duell | Tafel | Stehlen | Ergebnis>" and in sudden
 death "Stichfrage · <step>". At game over a game with rounds SHALL read "Runde R / R". Progress SHALL be r / R, and 1
 at game over and in sudden death. On a 390px phone the header SHALL wrap without horizontal scroll.
 
 #### Scenario: Round status per game
 - **WHEN** `status` is computed for each game in a mid-game state, at game over, for Wavelength in Versus and Koop, and for Feud in sudden death
-- **THEN** each returns the parts and progress of the formats above, Imposter and Duck with no progress
+- **THEN** each returns the parts and progress of the formats above, Imposter with no progress
 - **proof:** unit
 
 #### Scenario: Last round fills the progress line
 - **WHEN** `status` is computed in the last round of Wavelength, Codes, Most Likely To and Family Feud, and at their game over
 - **THEN** the progress is 1 in each case
 - **proof:** unit ("Scenario: Round status per game")
+
+#### Scenario: Duck progress follows the leading score
+- **WHEN** Duck `status` is computed with target 10 for top scores 0, 4 and 12 (a score past the target after the last word)
+- **THEN** the parts read "Ziel 10 Punkte" and the progress is 0, 0.4 and 1
+- **proof:** unit
 
 #### Scenario: Status and progress in the header
 - **WHEN** a Most Likely To session in round 2 of 5 with the first of two teams on turn is opened at `/spielen`
