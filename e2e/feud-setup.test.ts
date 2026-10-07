@@ -232,7 +232,7 @@ const roundBoxes = async (page: Page) => {
 	const boxes = await page.getByRole('group', { name: 'Runden' }).getByRole('button').evaluateAll((els) =>
 		els.map((e) => {
 			const r = e.getBoundingClientRect();
-			return { x: Math.round(r.x), y: Math.round(r.y) };
+			return { label: e.textContent?.trim(), x: Math.round(r.x), y: Math.round(r.y) };
 		})
 	);
 	return boxes;
@@ -248,6 +248,7 @@ test('Scenario: Feud rounds picker in one row on desktop', async ({ page, reques
 		const boxes = await roundBoxes(page);
 		expect(boxes).toHaveLength(8);
 		expect(new Set(boxes.map((b) => b.y)).size).toBe(1);
+		expect(boxes.map((b) => b.label)).toEqual(['1', '2', '3', '4', '5', '6', '7', '8']);
 		expect(boxes.map((b) => b.x)).toEqual([...boxes.map((b) => b.x)].sort((a, b) => a - b));
 	} finally {
 		server.close();
@@ -265,7 +266,8 @@ test('Scenario: Feud rounds picker wraps on a phone', async ({ page, request }, 
 		const rowsY = [...new Set(boxes.map((b) => b.y))];
 		expect(rowsY.length).toBeGreaterThan(0);
 		expect(rowsY.length).toBeLessThanOrEqual(2);
-		expect(boxes.length / rowsY.length).toBeGreaterThan(1);
+		for (const y of rowsY) expect(boxes.filter((b) => b.y === y).length).toBeGreaterThan(1);
+		expect(boxes.map((b) => b.label)).toEqual(['1', '2', '3', '4', '5', '6', '7', '8']);
 		const reading = [...boxes].sort((a, b) => a.y - b.y || a.x - b.x);
 		expect(reading).toEqual(boxes);
 		expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
