@@ -5,6 +5,7 @@ import {
 	chooseSurveys,
 	deleteSurvey,
 	emptyServer,
+	live,
 	openFaceoff,
 	seedPlayed,
 	seedPlayers,
@@ -40,7 +41,7 @@ async function begin(page: Page, request: APIRequestContext, server: Server, que
 	return { crew, others, surveys };
 }
 
-const tile = (page: Page, i: number) => page.locator(`[data-tile="${i}"]`);
+const tile = (page: Page, i: number) => live(page).locator(`[data-tile="${i}"]`);
 const pick = (page: Page, i: number) => tile(page, i).getByRole('button');
 const press = (page: Page, name: string) => page.getByRole('button', { name, exact: true }).click();
 const versus = (page: Page) => page.getByRole('region', { name: 'Spielstand' });

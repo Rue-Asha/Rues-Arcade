@@ -7,6 +7,7 @@
 	import { next, start, view, type DemoRun } from '#lib/demo/runner.ts';
 	import { games, type GameEntry } from '#lib/games/registry.ts';
 	import CoachTip from '#lib/ui/CoachTip.svelte';
+	import PlayHeader from '#lib/ui/PlayHeader.svelte';
 	import Stage from '#lib/ui/Stage.svelte';
 	import type { PageProps } from './$types';
 
@@ -46,12 +47,7 @@
 	{@const { def, Screen } = demo.entry}
 	<div class="stack scene" style="--c: var(--{def.colour})">
 		<Art slug={def.slug} place="play" />
-		<header class="bar">
-			<div class="who">
-				<span class="label">Demo</span>
-				<h1>{def.name}</h1>
-			</div>
-		</header>
+		<PlayHeader name={def.name} label="Demo" status={demo.entry.status(demo.run.state)} />
 
 		<Stage key={def.phase(demo.run.state)}>
 			<Screen state={demo.run.state} {dispatch} />
@@ -73,34 +69,5 @@
 	.scene > :global(:not([data-deco])) {
 		position: relative;
 		z-index: 1;
-	}
-
-	.bar {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		justify-content: space-between;
-		gap: 12px 16px;
-		padding: 12px 16px;
-		border-radius: var(--radius-xl);
-		background: var(--surface);
-		box-shadow:
-			inset 0 3px 0 var(--c),
-			0 var(--ledge) 0 var(--shadow);
-	}
-
-	.who {
-		display: flex;
-		flex-direction: column;
-		gap: 4px;
-	}
-
-	.who .label {
-		color: var(--c);
-	}
-
-	.who h1 {
-		font-size: 22px;
-		letter-spacing: -0.02em;
 	}
 </style>

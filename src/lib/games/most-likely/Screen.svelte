@@ -50,10 +50,6 @@
 
 <div class="split">
 	<section class="stack main" aria-live="polite">
-		{#if s.phase !== 'gameOver'}
-			<p class="label turn"><span>Runde {s.round + 1} / {s.rounds}</span> · <span>Team {s.turn + 1} / {s.teams.length}</span></p>
-		{/if}
-
 		{#if s.phase === 'prompt'}
 			<div class="stack tight">
 				<h2>{team.name} ist dran</h2>
@@ -153,10 +149,6 @@
 </div>
 
 <style>
-	.turn {
-		color: var(--most-likely);
-	}
-
 	.tight {
 		gap: 8px;
 	}

@@ -184,16 +184,12 @@ test('Scenario: Exiting returns to the starting screen', async ({ page }) => {
 		)
 	);
 	const before = await snapshot(page);
-	await page.goto('/spiele/wavelength/spielen');
-	await expect(page.getByText('Gib das Handy an Noah', { exact: true })).toBeVisible();
-	await page.getByRole('button', { name: 'Demo', exact: true }).click();
-	await expect(page).toHaveURL(/\/spiele\/wavelength\/demo\?from=/);
+	await openDemo(page, 'wavelength');
 	await page.locator('[data-demo="expected"]').click();
 	await expect(progress(page)).toHaveText(`Demo · Schritt 2/${WAVELENGTH_STEPS}`);
 	await page.getByRole('button', { name: 'Demo beenden' }).click();
-	await expect(page).toHaveURL(/\/spiele\/wavelength\/spielen$/);
-	await expect(page.getByText('Gib das Handy an Noah', { exact: true })).toBeVisible();
-	await expect(page.getByRole('button', { name: 'Ziel anzeigen' })).toBeEnabled();
+	await expect(page).toHaveURL(/\/spiele\/wavelength$/);
+	await expect(page.getByRole('button', { name: 'Weiterspielen', exact: true })).toBeVisible();
 	expect(await snapshot(page)).toEqual(before);
 });
 

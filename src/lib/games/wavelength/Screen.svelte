@@ -59,16 +59,6 @@
 
 <div class="split">
 	<div class="stack main">
-		{#if s.phase !== 'gameOver'}
-			<p class="label turn">
-				{#if koop}
-					Runde {s.roundIndex + 1} / {s.rounds} · Zug {s.turn! + 1} / {team.players.length}
-				{:else}
-					Runde {s.roundIndex + 1} / {s.rounds} · {team.name}
-				{/if}
-			</p>
-		{/if}
-
 		{#if s.phase === 'prep'}
 			<Card tone="wavelength_spectra">
 				<p class="label">{koop ? clue.name : team.name} ist dran</p>
@@ -161,10 +151,6 @@
 </div>
 
 <style>
-	.turn {
-		color: var(--wavelength);
-	}
-
 	.tight {
 		gap: 8px;
 	}

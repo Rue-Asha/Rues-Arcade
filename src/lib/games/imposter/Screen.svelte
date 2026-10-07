@@ -104,7 +104,6 @@
 
 	<aside class="panel stack tight">
 		<div class="head">
-			<p class="label">Runde {s.round}</p>
 			{#if revealing}
 				<Button variant="ghost" size="sm" action="skip" onclick={askSkip}>Überspringen</Button>
 			{/if}
