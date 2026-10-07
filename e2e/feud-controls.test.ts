@@ -1,6 +1,6 @@
 import { expect, test, type APIRequestContext, type Locator, type Page } from '@playwright/test';
 import type { Survey } from '../src/lib/content/types.ts';
-import { chooseSurveys, emptyServer, openFaceoff, seedPlayers, seedSavedRoster, surveyByQuestion } from './helpers.ts';
+import { chooseSurveys, emptyServer, live, openFaceoff, seedPlayers, seedSavedRoster, surveyByQuestion } from './helpers.ts';
 
 const CREW = ['Alex', 'Bo', 'Cleo', 'Dani'];
 const PARTY = 'Nenne etwas, das auf Partys immer ausgeht';
@@ -24,8 +24,8 @@ async function begin(page: Page, request: APIRequestContext, server: Server) {
 }
 
 const button = (page: Page, name: string) => page.getByRole('button', { name, exact: true });
-const pick = (page: Page, i: number) => page.locator(`[data-tile="${i}"]`).getByRole('button');
-const handoff = (page: Page) => page.getByTestId('handoff');
+const pick = (page: Page, i: number) => live(page).locator(`[data-tile="${i}"]`).getByRole('button');
+const handoff = (page: Page) => live(page).getByTestId('handoff');
 const rowOf = (page: Page, action: Locator) => page.locator('.row').filter({ has: action });
 // the undo that sits in the same row as the action
 const undoOf = (page: Page, action: Locator) => rowOf(page, action).getByRole('button', { name: 'Rückgängig', exact: true });
@@ -83,12 +83,12 @@ test('Scenario: Feud fault and undo read as what they are', async ({ page, reque
 		await readsAsFault(page, 'Nicht auf der Tafel');
 
 		await pick(page, 0).click();
-		await handoff(page).getByRole('button', { name: 'Spielen', exact: true }).click();
+		await live(page).getByRole('button', { name: 'Spielen', exact: true }).click();
 		await expect(handoff(page)).toHaveCount(0);
 		await readsAsFault(page, 'Fehler');
 
 		for (let i = 0; i < 3; i++) await button(page, 'Fehler').click();
-		await handoff(page).getByRole('button', { name: 'Weiter', exact: true }).click();
+		await live(page).getByRole('button', { name: 'Weiter', exact: true }).click();
 		await expect(handoff(page)).toHaveCount(0);
 		await readsAsFault(page, 'Nicht auf der Tafel');
 	} finally {
@@ -128,7 +128,7 @@ test('Scenario: Feud fault row fits a phone', async ({ page, request }, info) =>
 		await begin(page, request, server);
 		await openFaceoff(page);
 		await pick(page, 0).click();
-		await handoff(page).getByRole('button', { name: 'Spielen', exact: true }).click();
+		await live(page).getByRole('button', { name: 'Spielen', exact: true }).click();
 		await expect(handoff(page)).toHaveCount(0);
 
 		const { action: a, undo: u } = await boxes(page, 'Fehler');
