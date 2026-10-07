@@ -24,7 +24,6 @@ code as `src/**/*.test.ts` (plus `scripts/*.test.ts`); e2e in `e2e/`.
 - Before changing demo, read openspec/specs/demo/spec.md.
 - Before changing design-system, read openspec/specs/design-system/spec.md.
 - Before changing duck, read openspec/specs/duck/spec.md.
-- Before changing explanation, read openspec/specs/explanation/spec.md.
 - Before changing feud, read openspec/specs/feud/spec.md.
 - Before changing game-engine, read openspec/specs/game-engine/spec.md.
 - Before changing harness, read openspec/specs/harness/spec.md.
