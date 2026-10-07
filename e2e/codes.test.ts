@@ -306,12 +306,18 @@ test('Scenario: Codes demo by tapping highlighted controls', async ({ page }, in
 		await expect(page).toHaveURL(/\/spiele\/codes\/demo\?from=/);
 
 		await expect(page.getByText('[Demo]', { exact: true })).toBeVisible();
+		await expect(page.locator('.word')).toHaveText(new RegExp(`^(${demo.content.map((w) => w.a).join('|')})$`));
 		const total = demo.steps.length;
 		test.setTimeout(Math.max(30_000, total * 1500 + 15_000));
 		for (let n = 1; n <= total; n++) {
 			await expect(page.getByText(/^Demo · Schritt \d+\/\d+$/)).toHaveText(`Demo · Schritt ${n}/${total}`);
 			const expected = page.locator('[data-demo="expected"]');
 			await expect(expected).toHaveCount(1);
+			if (n === total) {
+				await expect(page.getByText('Gewinner', { exact: true })).toBeVisible();
+				await expect(page.getByRole('heading', { name: 'Team 2', exact: true })).toBeVisible();
+				await expect(expected).toHaveAttribute('data-action', 'rematch');
+			}
 			await expected.click();
 		}
 		await expect(page.getByText('Demo beendet', { exact: true })).toBeVisible();
