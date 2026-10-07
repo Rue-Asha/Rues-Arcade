@@ -78,6 +78,8 @@ test('Scenario: Only the expected control is enabled', async ({ page }) => {
 	const spectrum = await page.locator('figcaption').textContent();
 	await show.click({ force: true });
 	await expect(page.locator('figcaption')).toHaveText(spectrum!);
+	await expect(page.getByText('Verdeckt', { exact: true })).toHaveCount(0);
+	await expect(show).toBeVisible();
 	await expect(progress(page)).toHaveText(`Demo · Schritt 1/${WAVELENGTH_STEPS}`);
 	await page.locator('[data-demo="expected"]').click();
 	await expect(progress(page)).toHaveText(`Demo · Schritt 2/${WAVELENGTH_STEPS}`);
