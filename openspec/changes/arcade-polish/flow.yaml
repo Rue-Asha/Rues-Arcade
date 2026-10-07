@@ -10,6 +10,7 @@ explore_notes:
   - "2026-10-07 Rue: motion stance = every phase/screen change transitions in and out, plus a bit of game-show flair"
   - "2026-10-07 Rue: redesign consults Mobbin but must blend with the existing Arcade-Abend design"
   - "2026-10-07 Rue delegated: appetite 2-3 sessions; pager on Gespeicherte Spieler only (roster stays unpaged, capped by player max); adding an entry jumps to page 1, deleting the last entry on a page clamps back one page"
+  - "2026-10-07 Rue (wave 4): Duck Wertung on phone may scroll to Weiter; only that screen on phone is exempt from the primary-action-in-first-viewport check, everything else keeps it"
 learnings:
   - "planner: scenarios for shared components with no consumer before later waves were written as one design-system scenario each whose proof lines name per-game tests (friction, arcade-polish planner)"
   - "Gate 1: games without a round count (Duck) still want a progress line — Rue chose leading score / target over no line"
