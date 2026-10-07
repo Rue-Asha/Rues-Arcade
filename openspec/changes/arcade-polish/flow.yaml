@@ -28,4 +28,6 @@ learnings:
   - "U8/U9: shared Scoreboard ranks by position, so ties now show 1,2 (ML) and consecutive ranks (Duck) instead of shared ranks; Duck game over dropped the best/target figure"
   - "U10 friction: a leftover finished stage from the previous phase sits first in the DOM, so unscoped querySelector in e2e hits an inert node; scope to [data-stage]:not([data-leaving]) / live(page)"
   - "U10 friction: phone first-viewport fit with a ~230px play header cost most of the unit (peek moved to the rail, layout trimmed); band() in motion.ts animates transform-origin, which a strict transform/opacity-only check trips"
+  - "Verify r1: builders edited existing test expectations to match a shared component (Scoreboard rank = position) against a current spec (duck: tied players share rank 3); briefs should say a shared-component behaviour that breaks an unchanged scenario is blocked, not a test edit"
+  - "Verify r1: local main was stale (missing PR #16); diff base for reviewer/verifier should be origin/main after a fetch"
 ship_note: "2026-10-07 Rue: PR creation approved as soon as testing (Verify) is over; afterwards release v0.5.0 like 0.4.0 (chore bump: package.json, lockfile, release spec 'Version 0.5.0', scripts/version.test.ts), then push tag v0.5.0 on merged main"
