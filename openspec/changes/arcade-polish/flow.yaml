@@ -16,4 +16,6 @@ learnings:
   - "U3 friction: Svelte 5.57 transition internals (branch resume of a leaving {#key} branch keeps outro marks; detaching an outgoing node by hand breaks the anchor) took several rounds — fresh internal key per change + finish() the outgoing animations"
   - "U3 friction: a taller play header pushed the demo's last button under the fixed CoachTip on phone — header height changes need the demo tap-through e2e"
   - "U4 friction: an {#if} block on its own line in Scoreboard rows added a whitespace text node and broke an existing /2$/ text match"
+  - "U5 friction: Button.svelte is white-space: nowrap, so a long name in '<Name> ist bereit' overflowed phone width; patched locally in Imposter Screen, a shared Button fix would cover all games"
+  - "U5 friction: frame.test.ts 'Phase change fades out and rises in' (desktop) failed 3/5 reruns under parallel load from other units' proof runs"
 ship_note: "2026-10-07 Rue: PR creation approved as soon as testing (Verify) is over; afterwards release v0.5.0 like 0.4.0 (chore bump: package.json, lockfile, release spec 'Version 0.5.0', scripts/version.test.ts), then push tag v0.5.0 on merged main"
