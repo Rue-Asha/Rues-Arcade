@@ -55,6 +55,12 @@ describe('imposter demo', () => {
 			expect(states[i + 1].round).toBe(states[i].round + 1);
 			expect(states[i + 1].phase).toBe('handover');
 			expect(states[i + 1].revealIndex).toBe(0);
+			expect(states[i + 1].pairId).not.toBe(states[i].pairId);
+			expect(states[i + 1].rng).not.toEqual(states[i].rng);
+			const reseeded = Array.from({ length: 20 }, (_, k) =>
+				imposter.reduce({ ...states[i], rng: { state: k } }, demo.steps[i].action).imposterIndex
+			);
+			expect(new Set(reseeded).size).toBeGreaterThan(1);
 			expect(states.at(-1)!.round).toBe(2);
 			const after = demo.steps.slice(i + 1).filter((s) => s.action.type === 'seen');
 			expect(after).toHaveLength(demo.players.length);
