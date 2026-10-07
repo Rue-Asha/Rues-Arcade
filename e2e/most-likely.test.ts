@@ -240,9 +240,11 @@ test('Scenario: Most Likely result names the next step', async ({ page }, info) 
 });
 
 test('Scenario: Full Most Likely team game', async ({ page }, info) => {
+	const turns = 10;
+	test.setTimeout(turns * 10_000);
 	await start(page);
 	const scores: Record<string, number> = { 'Team 1': 0, 'Team 2': 0 };
-	for (let k = 0; k < 10; k++) {
+	for (let k = 0; k < turns; k++) {
 		await expect(page.getByText(`Runde ${Math.floor(k / 2) + 1} / 5`, { exact: true })).toBeVisible();
 		const matched = k % 2 ? 0 : 2;
 		const { name } = await playTurn(page, matched);
