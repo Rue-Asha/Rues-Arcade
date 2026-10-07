@@ -47,7 +47,7 @@ to the host and opens the host prep.
 - **proof:** e2e
 
 #### Scenario: Feud too few surveys block start
-- **WHEN** on a fresh database all but 3 surveys are deleted and the setup is opened with 3 rounds, then 2 rounds are chosen
+- **WHEN** on a database reduced to 3 surveys, the setup is opened with 3 rounds, then 2 rounds are chosen
 - **THEN** with 3 rounds "Weiter" is disabled, the message reads "Für 3 Runden braucht ihr mind. 4 Umfragen, es gibt 3." and a link leads to `/spiele/family-feud/inhalte`; with 2 rounds "Weiter" is enabled
 - **proof:** e2e
 
@@ -341,12 +341,12 @@ SHALL be shown. Changing the sort SHALL go to page 1. A current page that would 
 page. Picks SHALL stay picked across pages.
 
 #### Scenario: Feud prep pages by width
-- **WHEN** on a fresh database (26 surveys) the host prep is opened at 390px and at 1280px, and "Weiter" is tapped
+- **WHEN** on a database reduced to 26 surveys the host prep is opened at 390px and at 1280px, and "Weiter" is tapped
 - **THEN** at 390px page 1 holds 6 cards and the pager reads "Seite 1 von 5"; at 1280px page 1 holds 12 cards and the pager reads "Seite 1 von 3"; after "Weiter" the pager reads "Seite 2 von …" and page 2 holds other cards than page 1
 - **proof:** e2e
 
 #### Scenario: Feud prep without pager for one page
-- **WHEN** on a fresh database all but 6 surveys are deleted and the host prep is opened at 390px and at 1280px
+- **WHEN** on a database reduced to 6 surveys the host prep is opened at 390px and at 1280px
 - **THEN** all 6 cards are shown and no "Seiten" navigation exists
 - **proof:** e2e
 
