@@ -175,3 +175,40 @@ Directory: /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/e9c24136-e1ba-417f-9a0c-
 
 - Round-1 tied-rank question resolved: e2e/duck.test.ts now asserts `.rank` = 1,1,3,3 for "Duck tie at the top reads Unentschieden".
 - Duck game over without best/target figure: spec silent (duck/spec.md Spielende names winner, reason, ranking; no best/target figure). Target still shown in header status "Ziel T Punkte".
+
+## Review
+
+Three rounds (reviewer, fresh context each round). Diff base for rounds 2–3: `origin/main` (local `main` was stale).
+
+### Round 1 — 10 findings, all fixed (57031c5, a58b36c, 0ac7f68, 71d87b7, c0342d6)
+| Finding | Resolution |
+|---|---|
+| Duck tie ranks assertion deleted; duck spec requires shared rank 3 | fixed: Scoreboard uses competition ranking (`places()`), assertion restored as 1,1,3,3 |
+| Most Likely tie/all-zero ranks changed to sequential, `$` anchors dropped | fixed with the same Scoreboard change, anchors restored |
+| Most Likely demo end accepted Unentschieden | tightened to Gewinner only |
+| Feud motion test allowed `transformOrigin` | fixed at source: `band()` no longer animates transform-origin |
+| Scoreboard stability test exercised unused `moved()` | Scoreboard now uses `moved()` |
+| Codes skipped round didn't pin "+0" in miss style | assertion added |
+| Duck/Codes Reveal tests passed with zero animations | burst and turn animations asserted |
+| Motion helpers hard-coded durations/easing | derived from motion tokens; design.md updated |
+| Feud sudden-death result not on `Outcome` | `Outcome` with optional points; verdict only |
+| Saved-player page jump with ü/u base collation | new entry found by id |
+
+### Round 2 — 8 findings, all fixed (7618ffb, 8bb8b28)
+| Finding | Resolution |
+|---|---|
+| Feud reduced-motion test clicked via `evaluate` | back to Playwright clicks; passed without app change |
+| Imposter/Wavelength/Most Likely Handoff band colour not checked | `bandIs()` helper, colour asserted |
+| Transition tap test bypassed hit testing | real `mouse.click` at the live button |
+| Imposter Reveal test allowed translate/scale/rotate, first keyframe only | transform/opacity across all keyframes |
+| Feud prep pager didn't rise in a new page | `{#key page}` + `in:rise`, new test |
+| Scoreboard flip used `cubicOut` | token easing `outCurve` |
+| Pager clamp not written back | `$effect` writes back, new test |
+
+### Round 3 — open after the round limit (taken to Gate 2)
+| Finding | Status |
+|---|---|
+| Reduced-motion tests for Wavelength, Codes, Most Likely, Duck don't pin "scores show their final value" (Wavelength turn scores 0; Codes/ML retrying toHaveText; Duck doesn't check rail) | open — weak test, behaviour unverified by test |
+| Transition tap test doesn't prove the tap landed mid-transition | open — weak test, low |
+| Codes/Duck fault tests accept any transform, not a translateX shake | open — weak test, low |
+| Feud sudden-death result has no `+N`; design-system "Round outcome" has no carve-out, feud-history asserts no points chip | open — spec decision for Rue |
