@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { board } from '../../src/lib/content/survey.ts';
-import { emptyServer, seedPlayers, seedRoster, seedSavedRoster, surveyByQuestion } from '../helpers.ts';
+import { chooseSurveys, emptyServer, openFaceoff, seedPlayers, seedRoster, seedSavedRoster, surveyByQuestion } from '../helpers.ts';
 
 const CREW = ['Alex', 'Bo', 'Cleo', 'Dani'];
 // the eight-answer survey on the board, and a six-answer one for the double round
@@ -11,7 +11,7 @@ const press = (page: Page, name: string) => page.getByRole('button', { name, exa
 const tile = (page: Page, i: number) => page.locator(`[data-tile="${i}"] button`);
 const handoff = (page: Page) => page.getByTestId('handoff');
 
-// start screen on the shared server, then lobby, prep, face-off, handoff, board (8 answers, peek held), steal,
+// start screen on the shared server, then lobby, prep, covered question, buzzer choice, face-off, handoff, board (8 answers, peek held), steal,
 // result, the double round and the winner on their own server with real seeded surveys
 export async function walk(page: Page, check: (slug: string) => Promise<void>) {
 	await seedRoster(page, CREW);
@@ -33,12 +33,18 @@ export async function walk(page: Page, check: (slug: string) => Promise<void>) {
 
 		await press(page, 'Weiter');
 		await expect(page.getByRole('heading', { name: 'Umfragen', exact: true })).toBeVisible();
-		for (const s of [holes, ghost])
-			await page.locator(`[data-survey="${s.id}"]`).getByRole('button', { name: 'Wählen', exact: true }).click();
+		await chooseSurveys(page, [holes.id, ghost.id]);
 		await check('feud-prep');
 		await press(page, 'Start');
 		await page.waitForURL('**/spielen');
 
+		const buzzer = page.getByRole('group', { name: 'Buzzer', exact: true });
+		await expect(page.getByRole('button', { name: 'Frage aufdecken', exact: true })).toBeVisible();
+		await check('feud-question');
+		await press(page, 'Frage aufdecken');
+		await expect(buzzer.getByRole('button', { name: 'Team A', exact: true })).toBeEnabled();
+		await check('feud-buzz');
+		await buzzer.getByRole('button', { name: 'Team A', exact: true }).click();
 		await expect(page.getByRole('heading', { name: HOLES, exact: true })).toBeVisible();
 		await check('feud-faceoff');
 		await tile(page, 0).click();
@@ -77,6 +83,7 @@ export async function walk(page: Page, check: (slug: string) => Promise<void>) {
 		await check('feud-result');
 
 		await press(page, 'Nächste Runde');
+		await openFaceoff(page, 'Team B');
 		await expect(page.getByRole('heading', { name: GHOST, exact: true })).toBeVisible();
 		await expect(page.getByText('Doppelte Punkte', { exact: true })).toBeVisible();
 		await check('feud-faceoff-double');

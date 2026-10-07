@@ -218,3 +218,60 @@ test('Scenario: Feud too few surveys block start', async ({ page, request }, inf
 		server.close();
 	}
 });
+
+const roundBoxes = async (page: Page) => {
+	await expect(page.getByRole('group', { name: 'Runden' }).getByRole('button')).toHaveCount(8);
+	await page.evaluate(() =>
+		Promise.all(
+			document
+				.getAnimations()
+				.filter((a) => a.effect?.getTiming().iterations !== Infinity)
+				.map((a) => a.finished.catch(() => {}))
+		)
+	);
+	const boxes = await page.getByRole('group', { name: 'Runden' }).getByRole('button').evaluateAll((els) =>
+		els.map((e) => {
+			const r = e.getBoundingClientRect();
+			return { label: e.textContent?.trim(), x: Math.round(r.x), y: Math.round(r.y) };
+		})
+	);
+	return boxes;
+};
+
+test('Scenario: Feud rounds picker in one row on desktop', async ({ page, request }, info) => {
+	const server = await emptyServer(info, 'feud-seg-wide');
+	try {
+		const saved = await seedPlayers(request, server.origin, NAMES.slice(0, 4));
+		await page.setViewportSize({ width: 1280, height: 800 });
+		await lobby(page, server.origin, saved);
+
+		const boxes = await roundBoxes(page);
+		expect(boxes).toHaveLength(8);
+		expect(new Set(boxes.map((b) => b.y)).size).toBe(1);
+		expect(boxes.map((b) => b.label)).toEqual(['1', '2', '3', '4', '5', '6', '7', '8']);
+		expect(boxes.map((b) => b.x)).toEqual([...boxes.map((b) => b.x)].sort((a, b) => a - b));
+	} finally {
+		server.close();
+	}
+});
+
+test('Scenario: Feud rounds picker wraps on a phone', async ({ page, request }, info) => {
+	const server = await emptyServer(info, 'feud-seg-narrow');
+	try {
+		const saved = await seedPlayers(request, server.origin, NAMES.slice(0, 4));
+		await page.setViewportSize({ width: 390, height: 844 });
+		await lobby(page, server.origin, saved);
+
+		const boxes = await roundBoxes(page);
+		const rowsY = [...new Set(boxes.map((b) => b.y))];
+		expect(rowsY.length).toBeGreaterThan(0);
+		expect(rowsY.length).toBeLessThanOrEqual(2);
+		for (const y of rowsY) expect(boxes.filter((b) => b.y === y).length).toBeGreaterThan(1);
+		expect(boxes.map((b) => b.label)).toEqual(['1', '2', '3', '4', '5', '6', '7', '8']);
+		const reading = [...boxes].sort((a, b) => a.y - b.y || a.x - b.x);
+		expect(reading).toEqual(boxes);
+		expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+	} finally {
+		server.close();
+	}
+});

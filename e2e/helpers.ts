@@ -1,4 +1,4 @@
-import { expect, type APIRequestContext, type Page, type TestInfo } from '@playwright/test';
+import { expect, type APIRequestContext, type Locator, type Page, type TestInfo } from '@playwright/test';
 import { spawn } from 'node:child_process';
 import { rmSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -73,6 +73,31 @@ export async function surveyByQuestion(
 	const found = ((await res.json()) as Survey[]).find((s) => s.question === question);
 	expect(found, question).toBeDefined();
 	return found!;
+}
+
+export async function surveyCard(page: Page, id: number): Promise<Locator> {
+	const card = page.locator(`[data-survey="${id}"]`);
+	const pager = page.getByRole('navigation', { name: 'Seiten', exact: true });
+	if (await pager.count()) {
+		const back = pager.getByRole('button', { name: 'Zurück', exact: true });
+		while (await back.isEnabled()) await back.click();
+		const next = pager.getByRole('button', { name: 'Weiter', exact: true });
+		while ((await card.count()) === 0 && (await next.isEnabled())) await next.click();
+	}
+	await expect(card).toBeVisible();
+	return card;
+}
+
+export async function chooseSurveys(page: Page, ids: number[]) {
+	for (const id of ids)
+		await (await surveyCard(page, id)).getByRole('button', { name: 'Wählen', exact: true }).click();
+}
+
+// every Feud round starts with the question covered and no team chosen
+export async function openFaceoff(page: Page, team = 'Team A') {
+	await page.getByRole('button', { name: 'Frage aufdecken', exact: true }).click();
+	await page.getByRole('group', { name: 'Buzzer', exact: true }).getByRole('button', { name: team, exact: true }).click();
+	await expect(page.getByRole('group', { name: 'Buzzer', exact: true })).toHaveCount(0);
 }
 
 export async function deleteSurvey(request: APIRequestContext, id: number, origin = sharedOrigin()) {

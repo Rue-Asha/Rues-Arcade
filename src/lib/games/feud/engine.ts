@@ -34,6 +34,10 @@ export interface FeudState {
 	past: FeudSnapshot[];
 	// rotation index of the named player per team
 	cursors: [number, number];
+	// the question is uncovered
+	asked: boolean;
+	// team that buzzed first and answers first in the face-off; null = not chosen yet
+	first: number | null;
 	// face-off answers of the named pair so far, first team's first; null = miss
 	answers: (number | null)[];
 	// team that won the face-off
@@ -59,6 +63,8 @@ export interface FeudGain {
 }
 
 export type FeudAction =
+	| { type: 'ask' }
+	| { type: 'buzz'; team: number }
 	// face-off, for the player due; null = Nicht auf der Tafel
 	| { type: 'answer'; tile: number | null }
 	| { type: 'play' }
@@ -80,9 +86,9 @@ export function survey(s: FeudState): Survey {
 	return s.config.surveys[s.round] ?? s.config.tiebreak;
 }
 
-// the team that answers first in this round's face-off
+// the team that answers first in this round's face-off; meaningful once `first` is set
 export function opener(s: FeudState): number {
-	return s.round % 2;
+	return s.first ?? 0;
 }
 
 // the team whose named player answers next in the face-off
@@ -136,6 +142,8 @@ function fresh(s: FeudState, round: number): FeudState {
 		...next,
 		phase: 'faceoff',
 		cursors: advance(s),
+		asked: false,
+		first: null,
 		answers: [],
 		control: null,
 		playing: null,
@@ -180,8 +188,8 @@ export function canUndo(s: FeudState): boolean {
 }
 
 function snapshot(s: FeudState): FeudSnapshot {
-	const { phase, scores, cursors, answers, control, playing, revealed, strikes, gain, winner } = s;
-	return { phase, scores, cursors, answers, control, playing, revealed, strikes, gain, winner };
+	const { phase, scores, cursors, asked, first, answers, control, playing, revealed, strikes, gain, winner } = s;
+	return { phase, scores, cursors, asked, first, answers, control, playing, revealed, strikes, gain, winner };
 }
 
 function undo(s: FeudState): FeudState {
@@ -191,8 +199,13 @@ function undo(s: FeudState): FeudState {
 
 function act(s: FeudState, action: FeudAction): FeudState {
 	switch (action.type) {
+		case 'ask':
+			return s.phase === 'faceoff' && !s.asked ? { ...s, asked: true } : s;
+		case 'buzz':
+			if (s.phase !== 'faceoff' || !s.asked || s.first !== null || s.answers.length > 0) return s;
+			return action.team === 0 || action.team === 1 ? { ...s, first: action.team } : s;
 		case 'answer':
-			return s.phase === 'faceoff' ? answer(s, action.tile) : s;
+			return s.phase === 'faceoff' && s.asked && s.first !== null ? answer(s, action.tile) : s;
 		case 'play':
 		case 'pass':
 			if (s.phase !== 'choose') return s;
@@ -222,7 +235,7 @@ export const feud: GameDef<FeudState, FeudAction, FeudConfig> = {
 	maxPlayers: 20,
 	minContent: 2,
 	contentType: 'feud_surveys',
-	stateVersion: 1,
+	stateVersion: 2,
 	init({ config, seed }) {
 		return {
 			rng: { state: seed >>> 0 },
@@ -233,6 +246,8 @@ export const feud: GameDef<FeudState, FeudAction, FeudConfig> = {
 			closed: [],
 			past: [],
 			cursors: [0, 0],
+			asked: false,
+			first: null,
 			answers: [],
 			control: null,
 			playing: null,

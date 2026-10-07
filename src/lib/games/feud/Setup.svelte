@@ -132,6 +132,12 @@
 		gap: 8px 16px;
 	}
 
+	.seg {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+	}
+
 	.opt,
 	.chip {
 		border: 1px solid var(--line);
