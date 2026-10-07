@@ -42,6 +42,12 @@
 		act({ type: 'skip' });
 	}
 
+	// the Modal's button would be a second expected skip, so in a demo the first tap skips directly
+	function askSkip() {
+		if (demo !== null) skip();
+		else skipping = true;
+	}
+
 	function box(player: number, box: number) {
 		play('press');
 		act({ type: 'score', player, box });
@@ -173,7 +179,7 @@
 						<p class="muted">Deckt das Wort für alle gleichzeitig auf. Dann sucht jede Person still einen Reim darauf.</p>
 						<div class="row">
 							<Button variant="primary" action="show" onclick={reveal}>Wort aufdecken</Button>
-							<Button variant="secondary" action="skip" onclick={() => (skipping = true)}>Überspringen</Button>
+							<Button variant="secondary" action="skip" onclick={askSkip}>Überspringen</Button>
 						</div>
 					</Card>
 				{:else}
@@ -183,7 +189,7 @@
 					</div>
 					<div class="row">
 						<Button variant="primary" action="play" onclick={() => act({ type: 'play' })}>Wort spielen</Button>
-						<Button variant="secondary" action="skip" onclick={() => (skipping = true)}>Überspringen</Button>
+						<Button variant="secondary" action="skip" onclick={askSkip}>Überspringen</Button>
 					</div>
 				{/if}
 			{:else if s.phase === 'standings'}
