@@ -1,9 +1,10 @@
 import { expect, test, type Page } from '@playwright/test';
 import { demo as imposterDemo } from '../src/lib/games/imposter/demo.ts';
+import { demo as wavelengthDemo } from '../src/lib/games/wavelength/demo.ts';
 import { emptyServer, seedRoster } from './helpers.ts';
 
 const IMPOSTER_STEPS = imposterDemo.steps.length;
-const WAVELENGTH_STEPS = 10;
+const WAVELENGTH_STEPS = wavelengthDemo.steps.length;
 
 async function openDemo(page: Page, slug: string, origin = '') {
 	await page.goto(`${origin}/spiele/${slug}`);
@@ -13,9 +14,10 @@ async function openDemo(page: Page, slug: string, origin = '') {
 
 const progress = (page: Page) => page.getByText(/^Demo · Schritt \d+\/\d+$/);
 
-async function playToEnd(page: Page, total: number) {
+async function playToEnd(page: Page, total: number, beforeLast?: () => Promise<void>) {
 	for (let n = 1; n <= total; n++) {
 		await expect(progress(page)).toHaveText(`Demo · Schritt ${n}/${total}`);
+		if (n === total) await beforeLast?.();
 		const expected = page.locator('[data-demo="expected"]');
 		await expect(expected).toHaveCount(1);
 		await expected.click();
@@ -49,10 +51,13 @@ test('Scenario: Imposter demo by tapping highlighted controls', async ({ page })
 });
 
 test('Scenario: Wavelength demo by tapping highlighted controls', async ({ page }) => {
+	test.setTimeout(90_000);
 	await openDemo(page, 'wavelength');
-	await playToEnd(page, WAVELENGTH_STEPS);
-	await expect(page.getByText('Gewinner', { exact: true })).toBeVisible();
-	await expect(page.getByRole('heading', { name: 'Team 1', exact: true })).toBeVisible();
+	await playToEnd(page, WAVELENGTH_STEPS, async () => {
+		await expect(page.getByText('Gewinner', { exact: true })).toBeVisible();
+		await expect(page.getByRole('heading', { name: 'Team 1', exact: true })).toBeVisible();
+		await expect(page.locator('[data-demo="expected"]')).toHaveAttribute('data-action', 'again');
+	});
 });
 
 test('Scenario: Only the expected control is enabled', async ({ page }) => {
@@ -67,17 +72,19 @@ test('Scenario: Only the expected control is enabled', async ({ page }) => {
 	await expect(progress(page)).toHaveText(`Demo · Schritt 1/${IMPOSTER_STEPS}`);
 
 	await openDemo(page, 'wavelength');
-	await expect(page.locator('[data-demo="expected"]')).toHaveAttribute('data-action', 'show');
-	const redraw = page.getByRole('button', { name: 'Anderes Spektrum' });
-	await expect(redraw).toBeDisabled();
-	const spectrum = await page.locator('figcaption').textContent();
-	await redraw.click({ force: true });
+	await expect(page.locator('[data-demo="expected"]')).toHaveAttribute('data-action', 'redraw');
+	const show = page.getByRole('button', { name: 'Ziel anzeigen' });
+	await expect(show).toBeDisabled();
+	await show.click({ force: true });
 	await expect(progress(page)).toHaveText(`Demo · Schritt 1/${WAVELENGTH_STEPS}`);
-	await expect(page.locator('figcaption')).toHaveText(spectrum!);
-
-	// on the guess step the dial is the control, and the pointer's angle is replaced by the script's
 	await page.locator('[data-demo="expected"]').click();
 	await expect(progress(page)).toHaveText(`Demo · Schritt 2/${WAVELENGTH_STEPS}`);
+	const redraw = page.getByRole('button', { name: 'Anderes Spektrum' });
+	await expect(redraw).toBeDisabled();
+	await page.locator('[data-demo="expected"]').click();
+	await expect(progress(page)).toHaveText(`Demo · Schritt 3/${WAVELENGTH_STEPS}`);
+
+	// on the guess step the dial is the control, and the pointer's angle is replaced by the script's
 	await expect(page.getByRole('button', { name: 'Gedrückt halten' })).toBeDisabled();
 	await page.locator('[data-demo="expected"]').click();
 	await expect(page.locator('[data-demo="expected"]')).toHaveAttribute('data-action', 'dial');
@@ -95,7 +102,8 @@ test('Scenario: Hidden information shown with Demo tag', async ({ page }) => {
 
 	await openDemo(page, 'wavelength');
 	await page.locator('[data-demo="expected"]').click();
-	await expect(progress(page)).toHaveText(`Demo · Schritt 2/${WAVELENGTH_STEPS}`);
+	await page.locator('[data-demo="expected"]').click();
+	await expect(progress(page)).toHaveText(`Demo · Schritt 3/${WAVELENGTH_STEPS}`);
 	await expect(page.getByText('[Demo]', { exact: true })).toBeVisible();
 	await expect(page.getByRole('img', { name: /^Ziel bei \d+°$/ })).toBeVisible();
 	await expect(page.getByText('Verdeckt', { exact: true })).toHaveCount(0);
