@@ -247,7 +247,7 @@ and its undo SHALL fit one row.
 
 #### Scenario: Feud disabled undo keeps its place
 - **WHEN** a round starts with nothing to undo, then the question is uncovered and Team A is chosen
-- **THEN** before, the square "Rückgängig" next to "Nicht auf der Tafel" is shown and disabled; after, it is enabled; its box and the action's box are the same before and after
+- **THEN** before, the square "Rückgängig" next to "Nicht auf der Tafel" is shown and disabled; after, it is enabled; the undo box and the action box keep their x, width and height, and the undo keeps its offset to the action (the whole row moves down the page when the buzzer group above it unmounts, so absolute y is not comparable)
 - **proof:** e2e
 
 #### Scenario: Feud fault row fits a phone
