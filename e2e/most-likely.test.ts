@@ -405,6 +405,8 @@ test('Scenario: Most Likely copy reads neutral', async ({ page }) => {
 });
 
 test('Scenario: Most Likely demo by tapping highlighted controls', async ({ page }, info) => {
+	// ~0.8s per step on phone
+	test.setTimeout(Math.max(60_000, demo.steps.length * 2_000));
 	const server = await emptyServer(info, 'most-likely-demo');
 	try {
 		await page.goto(`${server.origin}/spiele/most-likely`);
