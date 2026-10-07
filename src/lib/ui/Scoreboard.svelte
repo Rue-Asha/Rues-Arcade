@@ -110,9 +110,7 @@
 	}
 
 	.pts {
-		min-width: 64px;
 		font-size: 13px;
-		text-align: right;
 		font-variant-numeric: tabular-nums;
 	}
 

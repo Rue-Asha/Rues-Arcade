@@ -84,7 +84,8 @@ export const countUp: Action<HTMLElement, number> = (node, value = 0) => {
 		}
 		const start = performance.now();
 		const tick = (now: number) => {
-			const t = Math.min(1, (now - start) / 1100);
+			// the frame timestamp can predate `start` by a few ms
+			const t = Math.min(1, Math.max(0, (now - start) / 1100));
 			shown = Math.round(from + (target - from) * easeOut(t));
 			node.textContent = fmt.format(shown);
 			if (t < 1) frame = requestAnimationFrame(tick);
