@@ -576,7 +576,7 @@ test('Scenario: Feud motion uses transform and opacity only', async ({ page, req
 
 		const seen = await page.evaluate(() => [...(window as unknown as { animated: Set<string> }).animated]);
 		expect(seen).toContain('transform');
-		expect(seen.filter((p) => !['transform', 'opacity', 'offset', 'computedOffset', 'easing', 'composite', 'transformOrigin'].includes(p))).toEqual([]);
+		expect(seen.filter((p) => !['transform', 'opacity', 'offset', 'computedOffset', 'easing', 'composite'].includes(p))).toEqual([]);
 	} finally {
 		server.close();
 	}

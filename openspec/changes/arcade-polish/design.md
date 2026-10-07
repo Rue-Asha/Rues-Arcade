@@ -50,8 +50,8 @@ slides, redesign before "Los geht's", new colours/fonts, rule changes, sound for
   boxes and DUCKY letters need ~850px, so Weiter lands at ~1213px at 390×844; every other screen keeps the check.
 - **Motion values** from research.md: tokens `--ease-in: cubic-bezier(0.5, 0, 0.75, 0)`, `--ease-pop: cubic-bezier(0.34,
   1.56, 0.64, 1)`, `--dur-out: 0.18s`, `--dur-in: 0.42s`, `--dur-hero: 0.56s`; phase-out 180ms y −8px; handoff band scaleX
-  320ms `--ease-out`, name pop 300ms `--ease-pop`; reveal burst 560ms + one 20° sunburst turn over 1.2s; `+N` chip pop
-  300ms; Scoreboard FLIP 400ms; fault = Feud shake 360ms + stamp 800ms; winner = 12 pieces, 900ms, 30ms stagger.
+  `--dur-in` `--ease-out`, name pop `--dur-in` `--ease-pop`; reveal burst 560ms + one 20° sunburst turn over 2 × `--dur-hero`; `+N` chip pop
+  `--dur-in`; Scoreboard FLIP `--dur-in`; fault = Feud shake 360ms + stamp 800ms; winner = 12 pieces, 2 × `--dur-in`, 30ms stagger.
 - **Feud's steal Handoff keeps its local "Weiter"** inline; the demo still skips it (feud delta).
 
 ## Contracts
@@ -74,12 +74,12 @@ Formats: game-engine delta → "Round status in the play header".
 ```ts
 export function rise(node: Element, o?: { delay?: number; y?: number }): TransitionConfig;  // dur-in, ease-out
 export function phaseOut(node: Element): TransitionConfig;   // dur-out, ease-in, opacity 1→0, translateY 0→-8px
-export function pop(node: Element, o?: { delay?: number }): TransitionConfig;  // scale .92→1, 300ms, ease-pop
-export function band(node: Element): TransitionConfig;       // scaleX 0→1 from the left, 320ms, ease-out
+export function pop(node: Element, o?: { delay?: number }): TransitionConfig;  // scale .92→1, dur-in, ease-pop
+export function band(node: Element): TransitionConfig;       // scaleX 0→1 from the left, dur-in, ease-out
 export function burst(node: HTMLElement): void;              // existing reveal burst, dur-hero
-export function turn(node: HTMLElement): void;               // one 20° rotate over 1200ms, iterations 1
+export function turn(node: HTMLElement): void;               // one 20° rotate over 2 × dur-hero, iterations 1
 export function fault(shake?: HTMLElement, stamp?: HTMLElement): void;  // Feud's shake 360ms + stamp 800ms
-export function scatter(pieces: HTMLElement[]): void;        // winner pieces fly out once, 900ms, 30ms stagger
+export function scatter(pieces: HTMLElement[]): void;        // winner pieces fly out once, 2 × dur-in, 30ms stagger
 // countUp, pulse, reducedMotion, ease: unchanged
 ```
 

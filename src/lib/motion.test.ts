@@ -26,8 +26,8 @@ describe('motion helpers', () => {
 		reduce(false);
 		expect(rise(node).duration).toBe(420);
 		expect(phaseOut(node).duration).toBe(180);
-		expect(pop(node).duration).toBe(300);
-		expect(band(node).duration).toBe(320);
+		expect(pop(node).duration).toBe(420);
+		expect(band(node).duration).toBe(420);
 		expect(rise(node, { delay: 60 }).delay).toBe(60);
 	});
 
@@ -38,7 +38,7 @@ describe('motion helpers', () => {
 		expect(pop(node).css!(0, 1)).toContain('scale(0.92)');
 		expect(pop(node).css!(1, 0)).toContain('scale(1)');
 		expect(band(node).css!(0, 1)).toContain('scaleX(0)');
-		expect(band(node).css!(1, 0)).toContain('transform-origin:left');
+		expect(band(node).css!(1, 0)).not.toContain('transform-origin');
 	});
 
 	it('pop overshoots and phase out starts slow', () => {
@@ -56,16 +56,16 @@ describe('motion helpers', () => {
 		turn(b);
 		fault(c, d);
 		expect(a.animate.mock.calls[0][1].duration).toBe(560);
-		expect(b.animate.mock.calls[0][1]).toMatchObject({ duration: 1200, iterations: 1 });
+		expect(b.animate.mock.calls[0][1]).toMatchObject({ duration: 1120, iterations: 1 });
 		expect(c.animate.mock.calls[0][1].duration).toBe(360);
 		expect(d.animate.mock.calls[0][1].duration).toBe(800);
 
 		const pieces = [fake(), fake(), fake()];
 		scatter(pieces);
 		expect(pieces.map((p) => p.animate.mock.calls[0][1])).toMatchObject([
-			{ duration: 900, delay: 0 },
-			{ duration: 900, delay: 30 },
-			{ duration: 900, delay: 60 }
+			{ duration: 840, delay: 0 },
+			{ duration: 840, delay: 30 },
+			{ duration: 840, delay: 60 }
 		]);
 	});
 

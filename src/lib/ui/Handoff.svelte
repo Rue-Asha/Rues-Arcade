@@ -35,6 +35,7 @@
 		padding: 24px 16px;
 		border-radius: var(--radius-lg);
 		background: var(--band);
+		transform-origin: left;
 		color: var(--ink);
 		text-align: center;
 	}

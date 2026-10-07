@@ -2,7 +2,7 @@ import type { Action } from 'svelte/action';
 import type { TransitionConfig } from 'svelte/transition';
 import { motion } from '#lib/ui/tokens.ts';
 
-export const ease = 'cubic-bezier(0.22, 1, 0.36, 1)';
+export const ease = motion['ease-out'];
 
 const easeOut = (t: number) => 1 - (1 - t) ** 3;
 
@@ -54,7 +54,7 @@ export function pop(_node: Element, { delay = 0 }: { delay?: number } = {}): Tra
 	if (reducedMotion()) return { duration: 0 };
 	return {
 		delay,
-		duration: 300,
+		duration: motion['dur-in'],
 		easing: popCurve,
 		css: (t) => `opacity:${Math.min(1, t * 3)};transform:scale(${0.92 + 0.08 * t})`
 	};
@@ -63,9 +63,9 @@ export function pop(_node: Element, { delay = 0 }: { delay?: number } = {}): Tra
 export function band(_node: Element): TransitionConfig {
 	if (reducedMotion()) return { duration: 0 };
 	return {
-		duration: 320,
+		duration: motion['dur-in'],
 		easing: outCurve,
-		css: (t) => `transform-origin:left;transform:scaleX(${t})`
+		css: (t) => `transform:scaleX(${t})`
 	};
 }
 
@@ -113,7 +113,7 @@ export function burst(node: HTMLElement) {
 export function turn(node: HTMLElement) {
 	if (reducedMotion() || typeof node.animate !== 'function') return;
 	node.animate([{ transform: 'rotate(0deg)' }, { transform: 'rotate(20deg)' }], {
-		duration: 1200,
+		duration: motion['dur-hero'] * 2,
 		easing: ease,
 		iterations: 1,
 		fill: 'forwards'
@@ -155,7 +155,7 @@ export function scatter(pieces: HTMLElement[]) {
 				{ transform: `translate(${x * 0.6}px, ${y * 0.6}px) scale(1.1) rotate(120deg)`, opacity: 1, offset: 0.4 },
 				{ transform: `translate(${x}px, ${y}px) scale(1) rotate(240deg)`, opacity: 0 }
 			],
-			{ duration: 900, delay: i * 30, easing: ease, fill: 'both' }
+			{ duration: motion['dur-in'] * 2, delay: i * 30, easing: ease, fill: 'both' }
 		);
 	});
 }
