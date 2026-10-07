@@ -1,5 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { seedContent, seedRoster, shot } from './helpers.ts';
+import { expectFrame, expectInstant, live, seedContent, seedRoster, settled, shot } from './helpers.ts';
 
 const players = [
 	{ id: 'a', name: 'Alex' },
@@ -112,7 +112,7 @@ test('Scenario: Full Wavelength game', async ({ page, request }, info) => {
 		await dial.focus();
 		await dial.press(t > 90 ? 'Home' : 'End');
 	});
-	await expect(page.getByTestId('points')).toHaveText('0');
+	await expect(page.getByTestId('points')).toHaveText('+0');
 	await expect(page.getByText('Kein Punkt.', { exact: true })).toBeVisible();
 	await page.getByRole('button', { name: 'Zum Endstand' }).click();
 
@@ -204,7 +204,7 @@ test('Scenario: Tie for first shown as tie', async ({ page }, info) => {
 
 	await expect(page.getByText('Unentschieden', { exact: true })).toBeVisible();
 	await expect(page.getByText('Gewinner', { exact: true })).toHaveCount(0);
-	await expect(page.getByRole('heading', { name: 'Team 1 & Team 2', exact: true })).toBeVisible();
+	await expect(page.getByText('Team 1 · Team 2', { exact: true })).toBeVisible();
 	await shot(page, info, 'wavelength-tie');
 });
 
@@ -285,7 +285,7 @@ test('Scenario: Full Wavelength Koop game', async ({ page, request }, info) => {
 
 	await expect(page.getByText('Runde 1 / 1 · Zug 2 / 2', { exact: true })).toBeVisible();
 	await turn(page, 'Bo', farOff);
-	await expect(page.getByTestId('points')).toHaveText('0');
+	await expect(page.getByTestId('points')).toHaveText('+0');
 	await page.getByRole('button', { name: 'Zum Endstand' }).click();
 
 	await expect(page.getByText('Ergebnis', { exact: true })).toBeVisible();
@@ -336,4 +336,239 @@ test('Scenario: Turn verdicts read neutral', async ({ page }) => {
 		await expect(verdict).toHaveText(text);
 		expect(await verdict.textContent()).not.toContain('!');
 	}
+});
+
+type Seed = { phase: string; koop?: boolean; teamIndex?: number; lastScore?: number | null; scores?: [number, number]; dial?: number };
+
+async function seedPhase(page: Page, { phase, koop = false, teamIndex = 0, lastScore = null, scores = [0, 0], dial = 90 }: Seed) {
+	await page.goto('/');
+	await page.evaluate(
+		({ players, phase, koop, teamIndex, lastScore, scores, dial }) => {
+			const team = (name: string, who: typeof players, score: number) => ({ name, players: who, score });
+			localStorage.setItem(
+				'arcade:session:wavelength',
+				JSON.stringify({
+					v: 1,
+					state: {
+						rng: { state: 1 },
+						pool: [{ id: 1, a: 'Kalt', b: 'Heiß' }],
+						used: [1],
+						teams: koop
+							? [team('Gemeinsam', players, scores[0])]
+							: [team('Team 1', [players[0], players[2]], scores[0]), team('Team 2', [players[1], players[3]], scores[1])],
+						rounds: 1,
+						roundIndex: 0,
+						teamIndex: koop ? 0 : teamIndex,
+						...(koop ? { mode: 'koop', turn: 0 } : {}),
+						spectrum: { id: 1, a: 'Kalt', b: 'Heiß' },
+						target: 60,
+						dial,
+						phase,
+						lastScore
+					}
+				})
+			);
+		},
+		{ players, phase, koop, teamIndex, lastScore, scores, dial }
+	);
+	await page.goto('/spiele/wavelength/spielen');
+	await live(page).locator('[data-frame="stage"]').waitFor();
+}
+
+const seen = (page: Page) => page.getByRole('region', { name: 'Punktestand' });
+
+test('Scenario: Wavelength screens use the stage and rail frame', async ({ page }) => {
+	const screens: Seed[] = [
+		{ phase: 'prep' },
+		{ phase: 'reveal' },
+		{ phase: 'guess' },
+		{ phase: 'result', lastScore: 4, scores: [4, 0] },
+		{ phase: 'result', lastScore: 0 },
+		{ phase: 'gameOver', scores: [4, 1] },
+		{ phase: 'prep', koop: true },
+		{ phase: 'result', koop: true, lastScore: 3, scores: [3, 0] },
+		{ phase: 'gameOver', koop: true, scores: [8, 0] }
+	];
+	for (const screen of screens) {
+		await seedPhase(page, screen);
+		await expectFrame(page);
+	}
+	await seedPhase(page, { phase: 'reveal' });
+	const hold = page.getByRole('button', { name: 'Gedrückt halten' });
+	const box = (await hold.boundingBox())!;
+	await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+	await page.mouse.down();
+	await expect(page.getByRole('img', { name: /Ziel bei/ })).toBeVisible();
+	await expectFrame(page);
+	await page.mouse.up();
+});
+
+test('Scenario: Wavelength prep uses the Handoff', async ({ page }) => {
+	await seedPhase(page, { phase: 'prep' });
+	const handoff = live(page).getByTestId('handoff');
+	await expect(handoff).toHaveCount(1);
+	await expect(handoff.getByRole('heading', { name: 'Gib das Handy an Alex', exact: true })).toBeVisible();
+	await expect(handoff).toContainText('Team 1 ist dran');
+	await expect(live(page).locator('[data-frame="stage"]').getByTestId('handoff')).toHaveCount(1);
+	expect(await page.evaluate(() => [...document.querySelectorAll('*')].some((el) => getComputedStyle(el).position === 'fixed' && el.querySelector('[data-testid="handoff"]')))).toBe(false);
+	if (page.viewportSize()!.width >= 1024) await expect(live(page).locator('[data-frame="rail"]')).toBeVisible();
+	await expect(live(page).getByRole('button', { name: 'Ziel anzeigen' })).toBeVisible();
+});
+
+test('Scenario: Wavelength target uses the Reveal', async ({ page }) => {
+	await seedPhase(page, { phase: 'reveal' });
+	await settled(page);
+	await expect(live(page).getByTestId('reveal')).toHaveCount(0);
+	const box = (await live(page).getByRole('button', { name: 'Gedrückt halten' }).boundingBox())!;
+	await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+	await page.mouse.down();
+	await expect(live(page).getByTestId('reveal')).toBeVisible();
+	await expect(live(page).getByRole('img', { name: /Ziel bei/ })).toBeVisible();
+	const found = await page.evaluate(() =>
+		document
+			.querySelector('[data-testid="reveal"]')!
+			.getAnimations({ subtree: true })
+			.map((a) => ({
+				iterations: a.effect!.getTiming().iterations,
+				props: (a.effect as KeyframeEffect)
+					.getKeyframes()
+					.flatMap((k) => Object.keys(k))
+					.filter((k) => !['offset', 'computedOffset', 'easing', 'composite'].includes(k))
+			}))
+	);
+	expect(found.length).toBeGreaterThan(0);
+	for (const a of found) {
+		expect(a.iterations).toBe(1);
+		for (const prop of a.props) expect(['transform', 'opacity']).toContain(prop);
+	}
+	await page.mouse.up();
+	await expect(live(page).getByTestId('reveal')).toHaveCount(0);
+	await expect(live(page).getByText('Verdeckt', { exact: true })).toBeVisible();
+});
+
+test('Scenario: Wavelength result uses the Outcome', async ({ page }) => {
+	await seedPhase(page, { phase: 'guess', dial: 60 });
+	await expect(live(page).getByRole('button', { name: 'Einloggen' })).toBeVisible();
+	await settled(page);
+	const mid = await page.evaluate(
+		() =>
+			new Promise<{ text: string; verdict: string }>((resolve) => {
+				[...document.querySelectorAll('button')].find((b) => b.textContent?.trim() === 'Einloggen')!.click();
+				requestAnimationFrame(() =>
+					requestAnimationFrame(() =>
+						resolve({
+							text: document.querySelector('[data-testid="points"]')!.textContent!.trim(),
+							verdict: document.querySelector('[data-testid="verdict"]')!.textContent!.trim()
+						})
+					)
+				);
+			})
+	);
+	expect(mid.verdict).toBe('Genau getroffen.');
+	expect(mid.text).toMatch(/^\+[0-3]$/);
+	await expect(live(page).getByTestId('points')).toHaveText('+4');
+	await expect(live(page).locator('h2[data-testid="verdict"]')).toHaveText('Genau getroffen.');
+	await expect(live(page).getByRole('img', { name: /Ziel bei/ })).toBeVisible();
+	await expect(seen(page).getByRole('listitem').first()).toContainText('Team 1');
+});
+
+test('Scenario: Wavelength miss shows +0', async ({ page }) => {
+	await seedPhase(page, { phase: 'guess', dial: 180 });
+	await live(page).getByRole('button', { name: 'Einloggen' }).click();
+	await expect(live(page).getByTestId('verdict')).toHaveText('Kein Punkt.');
+	const points = live(page).getByTestId('points');
+	await expect(points).toHaveText('+0');
+	const muted = await points.evaluate((el) => {
+		const probe = document.createElement('div');
+		probe.style.color = 'var(--muted)';
+		document.body.append(probe);
+		const want = getComputedStyle(probe).color;
+		probe.remove();
+		return getComputedStyle(el).color === want;
+	});
+	expect(muted).toBe(true);
+});
+
+test('Scenario: Wavelength game over uses the winner frame', async ({ page }) => {
+	await seedPhase(page, { phase: 'gameOver', scores: [4, 1] });
+	await expectFrame(page);
+	const stage = live(page).locator('[data-frame="stage"]');
+	await expect(stage.getByText('Gewinner', { exact: true })).toBeVisible();
+	await expect(stage.getByRole('heading', { name: 'Team 1', exact: true })).toBeVisible();
+	await expect(stage.getByRole('button', { name: 'Nochmal spielen' })).toBeVisible();
+	await expect(page.getByRole('region', { name: 'Punktestand' })).toHaveCount(1);
+	await expect(live(page).locator('[data-frame="rail"]').getByRole('region', { name: 'Punktestand' })).toHaveCount(1);
+
+	await seedPhase(page, { phase: 'gameOver', koop: true, scores: [8, 0] });
+	await expect(live(page).locator('[data-frame="stage"]').getByRole('heading', { name: 'Solide', exact: true })).toBeVisible();
+	await expect(live(page).locator('[data-frame="stage"]').getByText('8 Punkte', { exact: true })).toBeVisible();
+	await expect(page.getByRole('region', { name: 'Punktestand' })).toHaveCount(1);
+});
+
+test('Scenario: Winner burst flies once', async ({ page }) => {
+	await seedPhase(page, { phase: 'result', teamIndex: 1, lastScore: 2, scores: [0, 2] });
+	await live(page).getByRole('button', { name: 'Zum Endstand' }).click();
+	const again = live(page).getByRole('button', { name: 'Nochmal spielen' });
+	await expect(again).toBeVisible();
+	const pieces = live(page).locator('[data-piece]');
+	await expect(pieces).not.toHaveCount(0);
+	const count = await pieces.count();
+	expect(count).toBeGreaterThanOrEqual(10);
+	expect(count).toBeLessThanOrEqual(14);
+	const found = await page.evaluate(() =>
+		[...document.querySelectorAll<HTMLElement>('[data-stage]:not([data-leaving]) [data-piece]')].map((el) => ({
+			hidden: el.closest('[aria-hidden="true"]') !== null,
+			events: getComputedStyle(el).pointerEvents,
+			animations: el.getAnimations().map((a) => ({
+				iterations: a.effect!.getTiming().iterations,
+				props: (a.effect as KeyframeEffect)
+					.getKeyframes()
+					.flatMap((k) => Object.keys(k))
+					.filter((k) => !['offset', 'computedOffset', 'easing', 'composite'].includes(k))
+			}))
+		}))
+	);
+	for (const piece of found) {
+		expect(piece.hidden).toBe(true);
+		expect(piece.events).toBe('none');
+		expect(piece.animations.length).toBe(1);
+		expect(piece.animations[0].iterations).toBe(1);
+		for (const prop of piece.animations[0].props) expect(['transform', 'opacity']).toContain(prop);
+	}
+	await again.click({ timeout: 2000 });
+	await expect(live(page).getByRole('heading', { name: 'Gib das Handy an Alex' })).toBeVisible();
+});
+
+test.describe('reduced motion', () => {
+	test.use({ reducedMotion: 'reduce' });
+
+	test('Scenario: Winner burst off under reduced motion', async ({ page }) => {
+		await seedPhase(page, { phase: 'result', teamIndex: 1, lastScore: 2, scores: [0, 2] });
+		await live(page).getByRole('button', { name: 'Zum Endstand' }).evaluate((b: HTMLElement) => b.click());
+		await expect(live(page).getByRole('button', { name: 'Nochmal spielen' })).toBeVisible();
+		await expectInstant(page);
+		await expect(page.locator('[data-piece]')).toHaveCount(0);
+	});
+
+	test('Scenario: Wavelength reduced motion is instant', async ({ page }) => {
+		const click = (name: string) => live(page).getByRole('button', { name, exact: true }).evaluate((b: HTMLElement) => b.click());
+		await seedPhase(page, { phase: 'prep', teamIndex: 1 });
+		await settled(page);
+		await click('Ziel anzeigen');
+		await expectInstant(page);
+		await expect(live(page).getByRole('button', { name: 'Verdecken & Hinweis geben' })).toBeVisible();
+		await click('Verdecken & Hinweis geben');
+		await expectInstant(page);
+		await click('Einloggen');
+		await expectInstant(page);
+		await expect(live(page).getByTestId('points')).toHaveText(/^\+\d$/);
+		const points = (await live(page).getByTestId('points').textContent())!.trim();
+		const state = await page.evaluate(() => JSON.parse(localStorage.getItem('arcade:session:wavelength')!).state);
+		expect(points).toBe(`+${state.lastScore}`);
+		const rows = await seen(page).locator('.pts').allTextContents();
+		expect(rows.map((r) => r.trim())).toEqual(state.teams.map((t: { score: number }) => String(t.score)));
+		await click('Zum Endstand');
+		await expectInstant(page);
+		await expect(page.locator('[data-piece]')).toHaveCount(0);
+	});
 });

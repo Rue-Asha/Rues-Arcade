@@ -106,5 +106,5 @@ async function counted(page: Page) {
 	);
 	const scores = (teams as { score: number }[]).map((t) => String(t.score)).sort();
 	await expect.poll(async () => (await page.locator('.board .pts').allTextContents()).sort()).toEqual(scores);
-	if (phase === 'result') await expect(page.getByTestId('points')).toHaveText(lastScore > 0 ? `+${lastScore}` : '0');
+	if (phase === 'result') await expect(page.getByTestId('points')).toHaveText(`+${lastScore}`);
 }
