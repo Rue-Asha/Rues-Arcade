@@ -428,6 +428,14 @@ test('Scenario: Most Likely demo by tapping highlighted controls', async ({ page
 		for (let n = 1; n <= total; n++) {
 			await expect(page.getByText(`Demo · Schritt ${n}/${total}`, { exact: true })).toBeVisible();
 			await expect(expected).toHaveCount(1);
+			const { action } = demo.steps[n - 1];
+			if (action.type === 'score')
+				await expect(expected).toHaveText(action.matched === 0 ? 'Alle verschieden' : String(action.matched));
+			if (n === total) {
+				await expect(page.getByRole('region', { name: 'Endstand' })).toBeVisible();
+				await expect(page.getByText('Gewinner', { exact: true })).toBeVisible();
+				await expect(expected).toHaveAttribute('data-action', 'rematch');
+			}
 			await expected.click();
 		}
 		await expect(page.getByText('Demo beendet', { exact: true })).toBeVisible();
