@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { getDemo } from '#lib/demo/context.ts';
 	import type { ScreenProps } from '#lib/games/registry.ts';
-	import { pulse } from '#lib/motion.ts';
-	import { play } from '#lib/sound.ts';
+		import { play } from '#lib/sound.ts';
 	import Button from '#lib/ui/Button.svelte';
-	import Card from '#lib/ui/Card.svelte';
+	import GameFrame from '#lib/ui/GameFrame.svelte';
+	import Handoff from '#lib/ui/Handoff.svelte';
 	import HoldToView from '#lib/ui/HoldToView.svelte';
 	import Modal from '#lib/ui/Modal.svelte';
+	import Reveal from '#lib/ui/Reveal.svelte';
 	import type { ImposterAction, ImposterState } from './engine.ts';
 
 	let { state: game, dispatch }: ScreenProps = $props();
@@ -38,92 +39,103 @@
 	}
 </script>
 
-<div class="split">
-	<section class="stack" aria-live="polite">
-		{#if s.phase === 'handover'}
-			<Card tone="imposter_pairs">
-				<p class="label">Spieler {s.revealIndex + 1} / {s.players.length}</p>
-				<h2 class="big">Gib das Handy an {current.name}</h2>
-				<p class="muted">Nur {current.name} schaut hin, alle anderen wenden den Blick ab.</p>
-				<div class="row">
-					<Button variant="primary" action="handover" onclick={() => act('handover')}>
-						{current.name} ist bereit
-					</Button>
+<div aria-live="polite">
+	<GameFrame>
+		{#snippet hero()}
+			{#if s.phase === 'handover'}
+				<Handoff
+					heading="Gib das Handy an {current.name}"
+					label="Spieler {s.revealIndex + 1} / {s.players.length}"
+					note="Nur {current.name} schaut hin, alle anderen wenden den Blick ab."
+				/>
+			{:else if s.phase === 'view'}
+				<div class="stack tight">
+					<p class="label">{current.name}, deine Frage</p>
+					<HoldToView action="seen" label="Gedrückt halten" onrelease={() => act('seen')}>
+						<p class="question" data-testid="question">
+							{s.revealIndex === s.imposterIndex ? s.imposter : s.crew}
+						</p>
+					</HoldToView>
 				</div>
-			</Card>
-		{:else if s.phase === 'view'}
-			<div class="stack tight">
-				<p class="label">{current.name}, deine Frage</p>
-				<HoldToView action="seen" label="Gedrückt halten" onrelease={() => act('seen')}>
-					<p class="question" data-testid="question">
-						{s.revealIndex === s.imposterIndex ? s.imposter : s.crew}
-					</p>
-				</HoldToView>
-				<p class="muted">Merk dir die Frage. Beim Loslassen ist die nächste Person dran.</p>
-			</div>
-		{:else if s.phase === 'crew'}
-			<Card tone="imposter_pairs">
-				{#if !s.shown}
-					<p class="label">Alle haben ihre Frage gesehen</p>
-					<h2 class="big">Beantwortet sie reihum laut</h2>
-					<p class="muted">Danach deckt ihr gemeinsam die Frage der Crew auf.</p>
-					<div class="row">
-						<Button variant="primary" action="reveal" onclick={reveal}>Crew-Frage aufdecken</Button>
-					</div>
-				{:else}
-					<p class="label">Die Crew-Frage war …</p>
-					<p class="question" use:pulse>{s.crew}</p>
-					<p class="muted">Wessen Antwort passte nicht dazu? Diskutiert, dann kommt die Auflösung.</p>
-					<div class="row">
-						<Button variant="primary" action="unmask" onclick={() => act('unmask')}>
-							Weiter zum Imposter
-						</Button>
-					</div>
-				{/if}
-			</Card>
-		{:else if !s.shown}
-			<Card tone="imposter_pairs">
-				<p class="label">Auflösung</p>
-				<h2 class="big">Wer war der Imposter?</h2>
-				<p class="muted">Zeigt alle gleichzeitig auf euren Verdacht, dann deckt auf.</p>
-				<div class="row">
-					<Button variant="primary" action="reveal" onclick={reveal}>Imposter aufdecken</Button>
-				</div>
-			</Card>
-		{:else}
-			<div class="reveal" use:pulse>
-				<p class="label">Der Imposter war …</p>
-				<p class="reveal-word" data-testid="unmasked">{s.players[s.imposterIndex].name}</p>
-				<p class="secret">Die andere Frage: {s.imposter}</p>
-			</div>
-			<div class="row">
-				<Button variant="primary" action="nextRound" onclick={() => act('nextRound')}>Nächste Runde</Button>
-			</div>
-		{/if}
-	</section>
-
-	<aside class="panel stack tight">
-		<div class="head">
-			{#if revealing}
-				<Button variant="ghost" size="sm" action="skip" onclick={askSkip}>Überspringen</Button>
+			{:else if s.phase === 'crew'}
+				<Reveal shown={s.shown}>
+					{#snippet covered()}
+						<p class="label">Alle haben ihre Frage gesehen</p>
+						<h2 class="big">Beantwortet sie reihum laut</h2>
+					{/snippet}
+					<p class="label in-reveal">Die Crew-Frage war …</p>
+					<p class="question">{s.crew}</p>
+				</Reveal>
+			{:else}
+				<Reveal shown={s.shown}>
+					{#snippet covered()}
+						<p class="label">Auflösung</p>
+						<h2 class="big">Wer war der Imposter?</h2>
+					{/snippet}
+					<p class="label in-reveal">Der Imposter war …</p>
+					<p class="reveal-word" data-testid="unmasked">{s.players[s.imposterIndex].name}</p>
+					<p class="secret">Die andere Frage: {s.imposter}</p>
+				</Reveal>
 			{/if}
-		</div>
-		<ol class="order" aria-label="Reihenfolge">
-			{#each s.players as p, i (p.id)}
-				{@const done = !revealing || i < s.revealIndex}
-				<li class:done class:now={revealing && i === s.revealIndex}>
-					<span class="dot" aria-hidden="true">
-						{#if done}
-							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>
-						{:else}
-							{i + 1}
-						{/if}
-					</span>
-					<span>{p.name}</span>
-				</li>
-			{/each}
-		</ol>
-	</aside>
+		{/snippet}
+
+		{#if s.phase === 'view'}
+			<p class="muted">Merk dir die Frage. Beim Loslassen ist die nächste Person dran.</p>
+		{:else if s.phase === 'crew'}
+			<p class="muted">
+				{s.shown
+					? 'Wessen Antwort passte nicht dazu? Diskutiert, dann kommt die Auflösung.'
+					: 'Danach deckt ihr gemeinsam die Frage der Crew auf.'}
+			</p>
+		{:else if s.phase === 'unmask' && !s.shown}
+			<p class="muted">Zeigt alle gleichzeitig auf euren Verdacht, dann deckt auf.</p>
+		{/if}
+
+		{#snippet actions()}
+			{#if s.phase === 'handover'}
+				<Button variant="primary" action="handover" onclick={() => act('handover')}>
+					<span class="name">{current.name} ist bereit</span>
+				</Button>
+			{:else if s.phase === 'crew'}
+				{#if !s.shown}
+					<Button variant="primary" action="reveal" onclick={reveal}>Crew-Frage aufdecken</Button>
+				{:else}
+					<Button variant="primary" action="unmask" onclick={() => act('unmask')}>
+						Weiter zum Imposter
+					</Button>
+				{/if}
+			{:else if s.phase === 'unmask'}
+				{#if !s.shown}
+					<Button variant="primary" action="reveal" onclick={reveal}>Imposter aufdecken</Button>
+				{:else}
+					<Button variant="primary" action="nextRound" onclick={() => act('nextRound')}>Nächste Runde</Button>
+				{/if}
+			{/if}
+			{#if revealing}
+				<Button variant="ghost" action="skip" onclick={askSkip}>Überspringen</Button>
+			{/if}
+		{/snippet}
+
+		{#snippet rail()}
+			<div class="panel stack tight">
+				<ol class="order" aria-label="Reihenfolge">
+					{#each s.players as p, i (p.id)}
+						{@const done = !revealing || i < s.revealIndex}
+						<li class:done class:now={revealing && i === s.revealIndex}>
+							<span class="dot" aria-hidden="true">
+								{#if done}
+									<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>
+								{:else}
+									{i + 1}
+								{/if}
+							</span>
+							<span>{p.name}</span>
+						</li>
+					{/each}
+				</ol>
+			</div>
+		{/snippet}
+	</GameFrame>
 </div>
 
 <Modal open={skipping} title="Frage überspringen?" onclose={() => (skipping = false)}>
@@ -139,10 +151,16 @@
 
 <style>
 	.label {
-		color: var(--imposter);
+		color: var(--imposter-text);
 	}
 
-	.reveal .label {
+	.name {
+		white-space: normal;
+		overflow-wrap: anywhere;
+		padding: 14px 0;
+	}
+
+	.in-reveal {
 		color: inherit;
 	}
 
@@ -170,14 +188,6 @@
 	.secret {
 		max-width: 36ch;
 		font-weight: 600;
-	}
-
-	.head {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 12px;
-		min-height: 46px;
 	}
 
 	.order {
