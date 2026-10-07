@@ -130,3 +130,13 @@ Directory: /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/d7372d66-be04-4b48-86a3-
 - phone-look-feud-winner.png
 - phone-look-lobby-family-feud.png
 - phone-look-start-family-feud.png
+
+## Review
+
+Round 1 (fresh-context reviewer + verifier at 486941c):
+- [gap · spec wording] "fresh database (26 / all but 6 / all but 3)" while the seed holds 247 surveys → fe85601: scenarios say "a database reduced to N surveys".
+- [weak] Feud rounds picker wraps on a phone: average options per row, labels 1..8 unchecked → a00e4ee: labels asserted 1..8 in both picker tests, >1 option on every row; red against a reversed picker and a forced 7+1 wrap.
+- [weak] Feud disabled undo keeps its place: compared relative geometry only → f3b5da6: no state pair has undo disabled with the buzzer group already gone, so the scenario's THEN now states what is measurable (x, width, height and offset to the action stay; the row may move down when the buzzer group unmounts). Test unchanged; red against a 20px spacer while disabled.
+- [weak] Feud prep page clamps to the last page: last-6 content unchecked → 2d5b1dd: slicing moved into pure `pageItems` in prep.ts, test asserts last page [6..11] and page 0 [0..5]; red without the clamp.
+
+Round 2 (at 2d5b1dd): reviewer — no findings; verifier — 68/68 scenarios covered, proof:full green (436 passed, 2 skipped). A first run had 3 network failures outside this change (ERR_NETWORK_IO_SUSPENDED / ERR_SOCKET_NOT_CONNECTED, machine suspend); the unchanged rerun was green.
