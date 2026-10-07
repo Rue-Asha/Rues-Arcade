@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { seedRoster, shot } from './helpers.ts';
+import { live, seedRoster, shot } from './helpers.ts';
 
 const names = ['Alex', 'Bo', 'Cleo', 'Dani'];
 const CREW = 'Was isst du am liebsten zum Frühstück?';
@@ -46,7 +46,7 @@ test('Scenario: Full Imposter round', async ({ page }, info) => {
 	const imposter = names[saw.indexOf(IMPOSTER)];
 
 	await page.getByRole('button', { name: 'Crew-Frage aufdecken' }).click();
-	await expect(page.getByText(CREW)).toBeVisible();
+	await expect(live(page).getByText(CREW)).toBeVisible();
 	await shot(page, info, 'imposter-crew');
 	await page.getByRole('button', { name: 'Weiter zum Imposter' }).click();
 
@@ -122,7 +122,7 @@ test('Scenario: Reload mid-game resumes the same phase', async ({ page }) => {
 	await view(page, 'Cleo');
 	await view(page, 'Dani');
 	await page.getByRole('button', { name: 'Crew-Frage aufdecken' }).click();
-	await expect(page.getByText(CREW)).toBeVisible();
+	await expect(live(page).getByText(CREW)).toBeVisible();
 
 	await page.reload();
 	await expect(page.getByText(CREW)).toBeVisible();
