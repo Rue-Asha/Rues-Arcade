@@ -25,14 +25,6 @@ const still = (page: Page) =>
 		)
 		.toBe(0);
 
-// Stage's rise can start a frame after the new phase's text is visible, before the look checks look for it
-const risen = async (page: Page) => {
-	await expect
-		.poll(() => page.evaluate(() => [...document.querySelectorAll('.stage')].map((s) => getComputedStyle(s).opacity)))
-		.toEqual(['1']);
-	await still(page);
-};
-
 // Start, lobby, Aufdecken (hidden, shown, skip dialog), Wertung at T = 50 with and without locked boxes,
 // Punktestand and Spielende.
 export async function walk(page: Page, check: (slug: string) => Promise<void>) {
@@ -51,11 +43,9 @@ export async function walk(page: Page, check: (slug: string) => Promise<void>) {
 	await expect(page).toHaveURL(/\/spielen$/);
 
 	await expect(page.getByRole('button', { name: 'Wort aufdecken' })).toBeVisible();
-	await risen(page);
 	await check('duck-reveal');
 	await press(page, 'Wort aufdecken');
 	await expect(page.getByTestId('word')).toBeVisible();
-	await risen(page);
 	await check('duck-reveal-shown');
 	await press(page, 'Überspringen');
 	await expect(page.getByRole('dialog', { name: 'Wort überspringen?' })).toBeVisible();
@@ -68,11 +58,9 @@ export async function walk(page: Page, check: (slug: string) => Promise<void>) {
 	await card(page, 'Alex').getByRole('button', { name: '5 Punkte', exact: true }).click();
 	await card(page, 'Cleo').getByRole('button', { name: '3 Punkte', exact: true }).click();
 	await card(page, 'Bo').getByRole('button', { name: 'Y', exact: true }).click();
-	await risen(page);
 	await check('duck-scoring');
 	await press(page, 'Weiter');
 	await expect(page.getByText(/^Als Nächstes bekommt/)).toBeVisible();
-	await risen(page);
 	await check('duck-standings');
 
 	await press(page, 'Nächstes Wort');
@@ -80,12 +68,10 @@ export async function walk(page: Page, check: (slug: string) => Promise<void>) {
 	await press(page, 'Wort spielen');
 	await card(page, 'Alex').getByRole('button', { name: '8 Punkte', exact: true }).click();
 	await card(page, 'Bo').getByRole('button', { name: 'K', exact: true }).click();
-	await risen(page);
 	await check('duck-scoring-locked');
 	await card(page, 'Cleo').getByRole('button', { name: '50 Punkte', exact: true }).click();
 	await press(page, 'Weiter');
 	await expect(page.getByText('Gewinner', { exact: true })).toBeVisible();
-	await risen(page);
 	await check('duck-gameover');
 
 	await page.unroute('**/api/content/duck_words');
