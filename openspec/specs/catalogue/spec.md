@@ -10,12 +10,12 @@ registered games SHALL be Imposter, Wavelength, Codes, What Rhymes with Duck, Mo
 
 #### Scenario: Tiles for registered games
 - **WHEN** Home is opened
-- **THEN** Imposter, Wavelength, Codes, What Rhymes with Duck, Most Likely To and Family Feud tiles are shown, each linking to its start screen (`/spiele/imposter`, `/spiele/wavelength`, `/spiele/codes`, `/spiele/duck`, `/spiele/most-likely`, `/spiele/family-feud`)
+- **THEN** Imposter, Wavelength, Codes, What Rhymes with Duck, Most Likely To and Family Feud tiles are shown, each linking to its start screen (`/spiele/imposter`, `/spiele/wavelength`, `/spiele/codes`, `/spiele/duck`, `/spiele/most-likely`, `/spiele/family-feud`), and the Most Likely To tile reads "4–20 Spieler"
 - **proof:** e2e
 
 #### Scenario: Player range derived from engine limits
 - **WHEN** the tile label is computed for each registered game
-- **THEN** it equals the text formatted from that game's `minPlayers`/`maxPlayers` (Imposter "3–12 Spieler", Codes "4–20 Spieler", What Rhymes with Duck "4–16 Spieler", Most Likely To "3–20 Spieler", Family Feud "4–20 Spieler")
+- **THEN** it equals the text formatted from that game's `minPlayers`/`maxPlayers` (Imposter "3–12 Spieler", Codes "4–20 Spieler", What Rhymes with Duck "4–16 Spieler", Most Likely To "4–20 Spieler", Family Feud "4–20 Spieler")
 - **proof:** unit
 
 ### Requirement: Locked later games
@@ -32,7 +32,7 @@ its name and above its player range. Locked "Bald" tiles show no pitch.
 
 #### Scenario: Each tile shows a one-line pitch
 - **WHEN** Home is opened
-- **THEN** the Imposter tile shows "Alle bekommen dieselbe Frage, bis auf eine Person.", the Wavelength tile "Einen Punkt auf einer Skala zwischen zwei Begriffen finden, gemeinsam oder in Teams.", the Codes tile "Teams erraten ein geheimes Wort aus Ein-Wort-Hinweisen, reihum.", the Duck tile "Alle suchen gleichzeitig einen Reim auf dasselbe Wort.", the Most Likely To tile "Ein Spruch, und alle zeigen auf die Person, die am besten passt." and the Family Feud tile "Zwei Teams suchen die häufigsten Antworten einer Umfrage."
+- **THEN** the Imposter tile shows "Alle bekommen dieselbe Frage, bis auf eine Person.", the Wavelength tile "Einen Punkt auf einer Skala zwischen zwei Begriffen finden, gemeinsam oder in Teams.", the Codes tile "Teams erraten ein geheimes Wort aus Ein-Wort-Hinweisen, reihum.", the Duck tile "Alle suchen gleichzeitig einen Reim auf dasselbe Wort.", the Most Likely To tile "Ein Spruch, alle zeigen auf eine Person, und ein Team punktet, wenn es sich einig ist." and the Family Feud tile "Zwei Teams suchen die häufigsten Antworten einer Umfrage."
 - **proof:** e2e
 
 ### Requirement: Game start screen layout
@@ -40,8 +40,10 @@ Each game's start screen SHALL open with a banner in the game's colour carrying 
 the player range and the pitch. Below it, the start panel ("Weiterspielen" when a session is saved, the start
 button "Los geht's", player and content checks) SHALL come first on phone and sit in the right column on
 desktop (≥1024px), "So geht's" SHALL follow it on phone and fill the left column on desktop, and at the bottom a
-box "Mehr zu <Spiel>" SHALL hold three cards, Erklärung, Demo and Inhalte, each a link with a one-line
-description. All games SHALL use the same layout. The play header (Demo, Spiel beenden) is unchanged.
+box "Mehr zu <Spiel>" SHALL hold two cards, Demo and Inhalte, each a link with a one-line description. The Demo
+card SHALL be the way to learn the game, and its line SHALL say so. There SHALL be no Erklärung card and no
+`/spiele/<slug>/erklaerung` route; an old link to it gets the normal unknown-route 404, with no redirect. All games
+SHALL use the same layout. The play header (Demo, Spiel beenden) is unchanged.
 
 #### Scenario: Start banner carries title, badge and player range
 - **WHEN** the Imposter start screen is opened
@@ -60,7 +62,12 @@ description. All games SHALL use the same layout. The play header (Demo, Spiel b
 
 #### Scenario: Mehr-zu cards keep their targets
 - **WHEN** the Imposter start screen is opened
-- **THEN** the box "Mehr zu Imposter" holds the links "Erklärung" → `/spiele/imposter/erklaerung`, "Demo" → `/spiele/imposter/demo?from=/spiele/imposter` and "Inhalte" → `/spiele/imposter/inhalte`, each with its one-line description, and following "Demo" then "Demo beenden" returns to the start screen
+- **THEN** the box "Mehr zu Imposter" holds exactly two links, "Demo" → `/spiele/imposter/demo?from=/spiele/imposter` with the line "Spiel per Demo lernen, mehrere Runden zum Mittippen" and "Inhalte" → `/spiele/imposter/inhalte` with its count line, no "Erklärung" link exists, and following "Demo" then "Demo beenden" returns to the start screen
+- **proof:** e2e
+
+#### Scenario: Old Erklärung link is not found
+- **WHEN** `/spiele/imposter/erklaerung` is opened
+- **THEN** the response status is 404, the normal not-found page is shown, and the URL is not redirected to the demo
 - **proof:** e2e
 
 #### Scenario: Inhalte card shows the real content count
@@ -81,11 +88,12 @@ description. All games SHALL use the same layout. The play header (Demo, Spiel b
 ### Requirement: Start screens of the new games
 The Codes, What Rhymes with Duck and Most Likely To start screens SHALL carry their own "So geht's" rules (three
 lines each, neutral German) and count their content with their own nouns: Codes and Duck "Wort" / "Wörter", Most
-Likely To "Spruch" / "Sprüche".
+Likely To "Spruch" / "Sprüche". Most Likely To's rules SHALL describe the team game: a team per turn, pointing on
+three, points for the largest group that pointed at the same person, the team with the most points wins.
 
 #### Scenario: So geht's for the new games
 - **WHEN** the Codes, Duck and Most Likely To start screens are opened
-- **THEN** each "So geht's" holds three rules, the first reading "In Teams: pro Runde kennen alle Erklärer dasselbe geheime Wort.", "Ein Wort wird für alle aufgedeckt, alle suchen gleichzeitig einen Reim darauf." and "Pro Runde ein Spruch: Wer würde am ehesten …?" respectively, and none contains "!"
+- **THEN** each "So geht's" holds three rules, the first reading "In Teams: pro Runde kennen alle Erklärer dasselbe geheime Wort.", "Ein Wort wird für alle aufgedeckt, alle suchen gleichzeitig einen Reim darauf." and "Reihum ist ein Team dran und bekommt einen Spruch: Wer würde am ehesten …?" respectively, Most Likely To's rules name the team points and the winning team, and none contains "!"
 - **proof:** e2e
 
 #### Scenario: Inhalte card counts the seeded content
@@ -95,13 +103,13 @@ Likely To "Spruch" / "Sprüche".
 
 #### Scenario: New start banners carry title, badge and range
 - **WHEN** the Codes, Duck and Most Likely To start screens are opened
-- **THEN** the banners show "Codes" with badge "C" and "4–20 Spieler", "What Rhymes with Duck" with badge "W" and "4–16 Spieler", and "Most Likely To" with badge "M" and "3–20 Spieler", each with its pitch
+- **THEN** the banners show "Codes" with badge "C" and "4–20 Spieler", "What Rhymes with Duck" with badge "W" and "4–16 Spieler", and "Most Likely To" with badge "M" and "4–20 Spieler", each with its pitch
 - **proof:** e2e
 
 ### Requirement: Family Feud start screen
 The Family Feud start screen SHALL carry the banner "Family Feud" with badge "F", "4–20 Spieler" and its pitch,
 three neutral "So geht's" rules, and count its content as "Umfrage" / "Umfragen" in the Inhalte card of its "Mehr
-zu Family Feud" box, which holds the Erklärung, Demo and Inhalte cards like every game.
+zu Family Feud" box, which holds the Demo and Inhalte cards like every game.
 
 #### Scenario: Family Feud banner carries title, badge and range
 - **WHEN** the Family Feud start screen is opened
@@ -115,6 +123,6 @@ zu Family Feud" box, which holds the Erklärung, Demo and Inhalte cards like eve
 
 #### Scenario: Family Feud Inhalte card counts the seeded surveys
 - **WHEN** on a fresh database the Family Feud start screen is opened
-- **THEN** the box "Mehr zu Family Feud" holds Erklärung, Demo and Inhalte, and the Inhalte card reads "26 Umfragen ansehen und bearbeiten"
+- **THEN** the box "Mehr zu Family Feud" holds Demo and Inhalte and no Erklärung, and the Inhalte card reads "26 Umfragen ansehen und bearbeiten"
 - **proof:** e2e
 
