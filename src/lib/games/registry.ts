@@ -19,11 +19,19 @@ export interface SetupProps {
 	onstart(config: unknown): void;
 }
 
+export interface Status {
+	// joined with " · " by the header
+	parts: string[];
+	// 0..1; null = no progress line
+	progress: number | null;
+}
+
 export interface GameEntry {
 	def: GameDef<any, any, any>;
 	Screen: Component<ScreenProps>;
 	Setup: Component<SetupProps>;
 	demo: DemoScript<any, any>;
+	status(state: any): Status;
 	pitch: string;
 	// the lobby blocks guests
 	savedOnly?: true;
