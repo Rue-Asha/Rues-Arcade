@@ -312,7 +312,8 @@
 	}
 
 	.answers span {
-		overflow-wrap: anywhere;
+		overflow-wrap: break-word;
+		hyphens: auto;
 	}
 
 	.answers b {
