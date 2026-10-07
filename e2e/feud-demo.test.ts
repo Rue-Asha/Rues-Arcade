@@ -6,6 +6,8 @@ import type { Survey } from '../src/lib/content/types.ts';
 import { deleteSurvey, emptyServer, seedPlayed, seedPlayers, seedSavedRoster } from './helpers.ts';
 
 const TOTAL = demo.steps.length;
+// ~0.8s per tapped step on a phone, with headroom
+const TIMEOUT = Math.max(60_000, TOTAL * 2_000);
 
 type Server = Awaited<ReturnType<typeof emptyServer>>;
 
@@ -31,6 +33,8 @@ async function playToEnd(page: Page) {
 		await expect(expected).toHaveCount(1);
 		const { action } = demo.steps[n - 1];
 		if ('tile' in action && action.tile === null) await expect(expected).toHaveText('Nicht auf der Tafel');
+		if (action.type === 'ask') await expect(expected).toHaveText('Frage aufdecken');
+		if (action.type === 'buzz') await expect(expected).toHaveText(demo.config.teams[action.team].name);
 		await expected.click();
 	}
 	await expect(page.getByText('Demo beendet', { exact: true })).toBeVisible();
@@ -38,6 +42,7 @@ async function playToEnd(page: Page) {
 }
 
 test('Scenario: Feud demo by tapping highlighted controls', async ({ page, request }, info) => {
+	test.setTimeout(TIMEOUT);
 	const server = await emptyServer(info, 'feud-demo');
 	try {
 		await emptied(request, server);
@@ -54,6 +59,7 @@ test('Scenario: Feud demo by tapping highlighted controls', async ({ page, reque
 });
 
 test('Scenario: Feud demo leaves data untouched', async ({ page, request }, info) => {
+	test.setTimeout(TIMEOUT);
 	const server = await emptyServer(info, 'feud-demo-data');
 	try {
 		const surveys: Survey[] = await (await request.get(`${server.origin}/api/content/feud_surveys`)).json();
@@ -101,6 +107,7 @@ test('Scenario: Feud demo leaves data untouched', async ({ page, request }, info
 });
 
 test('Scenario: Feud demo completes with reduced motion', async ({ page, request }, info) => {
+	test.setTimeout(TIMEOUT);
 	const server = await emptyServer(info, 'feud-demo-motion');
 	try {
 		await page.emulateMedia({ reducedMotion: 'reduce' });

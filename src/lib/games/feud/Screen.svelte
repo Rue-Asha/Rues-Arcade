@@ -45,8 +45,10 @@
 	const pair = $derived(named(s).map(who));
 	const last = $derived(s.round + 1 >= s.config.surveys.length);
 	const double = $derived(multiplier(s) > 1);
+	// the face-off takes answers once the question is uncovered and a team has buzzed
+	const ready = $derived(s.asked && s.first !== null);
 	const acting = $derived(
-		s.phase === 'faceoff' ? due(s) : s.phase === 'board' ? s.playing : s.phase === 'steal' ? 1 - s.playing! : null
+		s.phase === 'faceoff' ? (ready ? due(s) : null) : s.phase === 'board' ? s.playing : s.phase === 'steal' ? 1 - s.playing! : null
 	);
 	const round = $derived(suddenDeath(s) ? 'Stichfrage' : `Runde ${s.round + 1} / ${s.config.surveys.length}`);
 
@@ -60,6 +62,11 @@
 	const missing = $derived.by(() => {
 		const action = demo?.expected ? script.steps[demo.step - 1]?.action : undefined;
 		return action && 'tile' in action && action.tile === null ? action.type : 'miss';
+	});
+	// on a buzz step only the scripted team's button carries the expected action
+	const buzzer = $derived.by(() => {
+		const action = demo?.expected ? script.steps[demo.step - 1]?.action : undefined;
+		return action?.type === 'buzz' ? action.team : null;
 	});
 
 	// Handoff for the steal is shown once per visit; Stage remounts this per phase, so it starts closed.
@@ -213,20 +220,41 @@
 		{@render versus()}
 
 		<Card tone="feud_surveys">
-			<h2>{survey(s).question}</h2>
+			{#if s.asked}
+				<h2>{survey(s).question}</h2>
+			{:else}
+				<div class="covered">
+					<p class="label">Frage verdeckt</p>
+					<Button variant="primary" action="ask" onclick={() => act({ type: 'ask' })}>Frage aufdecken</Button>
+				</div>
+			{/if}
 		</Card>
 
 		{#if s.phase === 'faceoff'}
+			{#if s.first === null}
+				<div class="buzz" role="group" aria-label="Buzzer">
+					{#each teams as t, i (i)}
+						<div class="pick" style="--team: var(--{colours[i]})">
+							<Button
+								variant="secondary"
+								action={buzzer === null || buzzer === i ? 'buzz' : 'buzz-other'}
+								disabled={!s.asked}
+								onclick={() => act({ type: 'buzz', team: i })}>{t.name}</Button
+							>
+						</div>
+					{/each}
+				</div>
+			{/if}
 			<section class="duel" aria-label="Duell">
 				{#each teams as t, i (i)}
 					{@const first = i === opener(s)}
 					{@const given = s.answers[first ? 0 : 1]}
-					<div class="duelist" class:on={due(s) === i} style="--team: var(--{colours[i]})">
+					<div class="duelist" class:on={acting === i} style="--team: var(--{colours[i]})">
 						<span class="label">{t.name}</span>
 						<strong>{pair[i]}</strong>
 						<span class="status">
 							{#if given === undefined}
-								{due(s) === i ? 'ist dran' : 'wartet'}
+								{acting === i ? 'ist dran' : 'wartet'}
 							{:else if given === null}
 								Daneben
 							{:else}
@@ -236,7 +264,15 @@
 					</div>
 				{/each}
 			</section>
-			<p class="muted">{pair[due(s)]} nennt eine Antwort. Tippe auf die genannte Antwort.</p>
+			<p class="muted">
+				{#if !s.asked}
+					Lies die Frage laut vor, dann decke sie auf.
+				{:else if !ready}
+					Tippe auf das Team, das zuerst gebuzzert hat.
+				{:else}
+					{pair[due(s)]} nennt eine Antwort. Tippe auf die genannte Antwort.
+				{/if}
+			</p>
 		{:else if s.phase === 'board'}
 			<p class="muted">{teams[s.playing!].name} antwortet gemeinsam. Tippe auf jede genannte Antwort.</p>
 		{:else if s.phase === 'steal'}
@@ -278,7 +314,7 @@
 							? (r) => `Antwort ${r} stehlen`
 							: null}
 				onpick={s.phase === 'faceoff' ? answer : s.phase === 'board' ? reveal : steal}
-				locked={demo !== null}
+				locked={demo !== null || (s.phase === 'faceoff' && !ready)}
 				expected={scripted}
 			/>
 			<div class="stamp" bind:this={stamp} aria-hidden="true">
@@ -288,7 +324,7 @@
 
 		{#if s.phase === 'faceoff'}
 			<div class="row">
-				<Button variant="secondary" action={missing} onclick={() => answer(null)}>Nicht auf der Tafel</Button>
+				<Button variant="secondary" action={missing} disabled={!ready} onclick={() => answer(null)}>Nicht auf der Tafel</Button>
 				{@render undo()}
 			</div>
 		{:else if s.phase === 'board'}
@@ -385,6 +421,29 @@
 		font-size: clamp(28px, 6vw, 44px);
 		line-height: 1;
 		font-variant-numeric: tabular-nums;
+	}
+
+	.covered {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: 12px 16px;
+	}
+
+	.buzz {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 12px;
+	}
+
+	.buzz .pick :global(.btn.secondary) {
+		width: 100%;
+		background: var(--team);
+		color: var(--ink);
+		border-color: transparent;
+		white-space: normal;
+		overflow-wrap: anywhere;
 	}
 
 	.duel {
