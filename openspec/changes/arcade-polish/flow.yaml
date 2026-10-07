@@ -20,4 +20,6 @@ learnings:
   - "U5 friction: frame.test.ts 'Phase change fades out and rises in' (desktop) failed 3/5 reruns under parallel load from other units' proof runs"
   - "U6 friction: wave-3 game units each hit shared-component checks (expectFrame flags right-aligned Scoreboard .pts, countUp showed +-0 from an early rAF timestamp, look.test.ts selector on .reveal) and U6 fixed them outside its file list; shared fixes surfaced by a new frame check belong in the contract unit"
   - "U6 friction: frame.test.ts and demo.test.ts timing flakes under three parallel proof:full runs (237ms vs 220ms budget)"
+  - "U7 friction: HoldToView exposes no held state, so Reveal's covered-to-reveal swap cannot be driven by it; an onhold prop would help units that need a covered card"
+  - "Wave 3 merge: U6 and U7 both edited Scoreboard .pts for the same expectFrame check, differently (orchestrator kept U7's flex end-alignment); a shared-component fix a new check forces should be pre-assigned to one unit"
 ship_note: "2026-10-07 Rue: PR creation approved as soon as testing (Verify) is over; afterwards release v0.5.0 like 0.4.0 (chore bump: package.json, lockfile, release spec 'Version 0.5.0', scripts/version.test.ts), then push tag v0.5.0 on merged main"
