@@ -72,7 +72,7 @@ test("Scenario: Los geht's opens the lobby", async ({ page, request }) => {
 	await page.goto('/spiele/imposter');
 
 	await expect(page.getByRole('link', { name: 'Demo', exact: true })).toBeVisible();
-	await expect(page.getByRole('link', { name: 'Erklärung', exact: true })).toBeVisible();
+	await expect(page.getByRole('link', { name: 'Erklärung', exact: true })).toHaveCount(0);
 	await page.getByRole('button', { name: "Los geht's" }).click();
 	await expect(page).toHaveURL(/\/spiele\/imposter\/lobby$/);
 });
@@ -154,7 +154,9 @@ test('Scenario: Family Feud Inhalte card counts the seeded surveys', async ({ pa
 		await page.goto(`${server.origin}/spiele/family-feud`);
 		const more = page.getByRole('region', { name: 'Mehr zu Family Feud' });
 
-		for (const name of ['Erklärung', 'Demo']) await expect(more.getByRole('link', { name, exact: true })).toBeVisible();
+		await expect(more.getByRole('link')).toHaveCount(2);
+		await expect(more.getByRole('link', { name: 'Demo', exact: true })).toBeVisible();
+		await expect(more.getByRole('link', { name: 'Erklärung', exact: true })).toHaveCount(0);
 		await expect(more.getByRole('link', { name: 'Inhalte', exact: true })).toHaveAccessibleDescription(
 			'26 Umfragen ansehen und bearbeiten'
 		);
@@ -226,8 +228,7 @@ test('Scenario: Mehr-zu cards keep their targets', async ({ page }) => {
 	const more = page.getByRole('region', { name: 'Mehr zu Imposter' });
 
 	for (const [name, href, line] of [
-		['Erklärung', '/spiele/imposter/erklaerung', 'Die Regeln Schritt für Schritt'],
-		['Demo', '/spiele/imposter/demo?from=/spiele/imposter', 'Eine Runde zum Mittippen'],
+		['Demo', '/spiele/imposter/demo?from=/spiele/imposter', 'Spiel per Demo lernen, mehrere Runden zum Mittippen'],
 		['Inhalte', '/spiele/imposter/inhalte', /^\d+ Fragenpaare? ansehen und bearbeiten$/]
 	] as const) {
 		const card = more.getByRole('link', { name, exact: true });
@@ -235,11 +236,21 @@ test('Scenario: Mehr-zu cards keep their targets', async ({ page }) => {
 		await expect(card).toHaveAccessibleDescription(line);
 	}
 
+	await expect(more.getByRole('link')).toHaveCount(2);
+	await expect(more.getByRole('link', { name: 'Erklärung', exact: true })).toHaveCount(0);
+
 	await more.getByRole('link', { name: 'Demo', exact: true }).click();
 	await expect(page).toHaveURL(/\/spiele\/imposter\/demo\?from=/);
 	await page.getByRole('button', { name: 'Demo beenden' }).click();
 	await expect(page).toHaveURL(/\/spiele\/imposter$/);
 	await expect(page.getByRole('heading', { name: 'Imposter', level: 1 })).toBeVisible();
+});
+
+test('Scenario: Old Erklärung link is not found', async ({ page }) => {
+	const res = await page.goto('/spiele/imposter/erklaerung');
+
+	expect(res!.status()).toBe(404);
+	expect(new URL(page.url()).pathname).toBe('/spiele/imposter/erklaerung');
 });
 
 test('Scenario: Inhalte card shows the real content count', async ({ page }, info) => {
