@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { moved, ranked } from './scoreboard.ts';
+import { moved, places, ranked } from './scoreboard.ts';
 
 describe('scoreboard', () => {
 	it('Scenario: Scoreboard order is stable', () => {
@@ -21,6 +21,12 @@ describe('scoreboard', () => {
 	it('ranks by a custom key', () => {
 		const rows = [{ n: 'A', s: { v: 1 } }, { n: 'B', s: { v: 2 } }];
 		expect(ranked(rows as any, (r: any) => r.s.v).map((r: any) => r.n)).toEqual(['B', 'A']);
+	});
+
+	it('ties share a rank and the next rank skips', () => {
+		expect(places([10, 10, 4, 4])).toEqual([1, 1, 3, 3]);
+		expect(places([0, 0])).toEqual([1, 1]);
+		expect(places([9, 5, 2])).toEqual([1, 2, 3]);
 	});
 
 	it('reports the names whose place changed', () => {

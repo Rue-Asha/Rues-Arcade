@@ -170,6 +170,7 @@ test('Scenario: Duck tie at the top reads Unentschieden', async ({ page }) => {
 	await expect(live(page).getByText('Alex · Bo', { exact: true })).toBeVisible();
 	const rows = live(page).getByRole('region', { name: 'Punktestand' }).getByRole('listitem');
 	await expect(rows.locator('.who')).toHaveText(['Alex', 'Bo', 'Cleo', 'Dani']);
+	await expect(rows.locator('.rank')).toHaveText(['1', '1', '3', '3']);
 });
 
 test('Scenario: Full Duck game', async ({ page }) => {

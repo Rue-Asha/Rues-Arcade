@@ -4,7 +4,7 @@
 	import { flip } from 'svelte/animate';
 	import { cubicOut } from 'svelte/easing';
 	import { countUp, reducedMotion } from '#lib/motion.ts';
-	import { ranked, type ScoreRow } from './scoreboard.ts';
+	import { moved, places, ranked, type ScoreRow } from './scoreboard.ts';
 	import { motion } from './tokens.ts';
 
 	interface Props {
@@ -16,6 +16,13 @@
 
 	let settled = $state(reducedMotion());
 	const order = $derived(settled ? ranked(rows) : ranked(rows, (r) => r.before ?? r.score));
+	const shifted = $derived(
+		moved(
+			ranked(rows, (r) => r.before ?? r.score).map((r) => r.name),
+			ranked(rows).map((r) => r.name)
+		)
+	);
+	const place = $derived(places(order.map((r) => (settled ? r.score : (r.before ?? r.score)))));
 
 	onMount(() => {
 		const frame = requestAnimationFrame(() => (settled = true));
@@ -27,8 +34,8 @@
 	<h2 class="label">Punktestand</h2>
 	<ol class="rows rise">
 		{#each order as row, i (row.name)}
-			<li class="row" class:lead={row.lead} data-acting={row.acting ? '' : undefined} animate:flip={{ duration: reducedMotion() ? 0 : motion['dur-in'], easing: cubicOut }}>
-				<span class="rank">{i + 1}</span>
+			<li class="row" class:lead={row.lead} data-acting={row.acting ? '' : undefined} animate:flip={{ duration: reducedMotion() || !shifted.includes(row.name) ? 0 : motion['dur-in'], easing: cubicOut }}>
+				<span class="rank">{place[i]}</span>
 				<span class="who">
 					{row.name}
 					{#if row.lead}

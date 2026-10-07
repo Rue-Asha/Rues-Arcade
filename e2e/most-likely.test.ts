@@ -395,7 +395,7 @@ test('Scenario: Most Likely tie at the top reads Unentschieden', async ({ page }
 	await expect(page.getByText('Gewinner', { exact: true })).toHaveCount(0);
 	await expect(live(page).getByRole('heading', { name: 'Unentschieden', exact: true })).toBeVisible();
 	await expect(live(page).getByText('Team 1 · Team 2', { exact: true })).toBeVisible();
-	await expect(final(page)).toHaveText([/^1\s*Team 1\s*4/, /^2\s*Team 2\s*4/, /^3\s*Team 3\s*2/]);
+	await expect(final(page)).toHaveText([/^1\s*Team 1\s*4\s*[^\d]+$/, /^1\s*Team 2\s*4\s*[^\d]+$/, /^3\s*Team 3\s*2\s*[^\d]+$/]);
 	await expect(final(page).and(page.locator('.lead'))).toHaveCount(2);
 	await expect(final(page).nth(2)).not.toHaveClass(/lead/);
 	await still(page, info, 'most-likely-tie');
@@ -407,7 +407,7 @@ test('Endstand with every team at 0 highlights all of them', async ({ page }) =>
 	for (let k = 0; k < 10; k++) await playTurn(page, 0);
 
 	await expect(page.getByText('Unentschieden', { exact: true })).toBeVisible();
-	await expect(final(page)).toHaveText([/^1\s*Team \d\s*0/, /^2\s*Team \d\s*0/]);
+	await expect(final(page)).toHaveText([/^1\s*Team \d\s*0\s*[^\d]+$/, /^1\s*Team \d\s*0\s*[^\d]+$/]);
 	await expect(final(page).and(page.locator('.lead'))).toHaveCount(2);
 });
 
@@ -544,7 +544,7 @@ test('Scenario: Most Likely demo by tapping highlighted controls', async ({ page
 				await expect(expected).toHaveText(action.matched === 0 ? 'Alle verschieden' : String(action.matched));
 			if (n === total) {
 				await expect(page.getByRole('region', { name: 'Punktestand' })).toBeVisible();
-				await expect(page.getByText('Gewinner', { exact: true }).or(page.getByText('Unentschieden', { exact: true }))).toBeVisible();
+				await expect(page.getByText('Gewinner', { exact: true })).toBeVisible();
 				await expect(expected).toHaveAttribute('data-action', 'rematch');
 			}
 			await expected.click();
