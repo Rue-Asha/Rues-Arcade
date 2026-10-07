@@ -204,3 +204,18 @@ Unit: 32 files, 292 tests passed. e2e: 396 passed, 2 skipped (look.test.ts viewp
 none (Rue: not needed)
 
 Round 2: table unchanged since round 1 (delta specs untouched); every unit and e2e scenario name re-checked against the round-2 green output and test sources, no gaps.
+
+## Review
+
+Round 1 (reviewer at b152d08), fixed by fixer round 1 (a1d10ee, 313bae2, 9445335, ae8ad77, 167f96d):
+- [weakened] e2e/codes.test.ts demo dropped Endstand + demo word checks → restored: word next to [Demo] tag, Gewinner / Team 2 before the rematch step (checked red).
+- [weak] e2e/most-likely.test.ts demo didn't pin the scripted count or the Endstand → highlighted button text must equal the step's count; Endstand asserted before rematch (checked red).
+- [weak] imposter/demo.test.ts second round didn't pin new deal / imposter from RNG → asserts pairId change, rng advance, imposter index varies over seeds (checked red).
+- [weakened] e2e/demo.test.ts "Only the expected control is enabled" lost the unchanged-state check → restored.
+- [spec mismatch] most-likely/Screen.svelte Endstand highlighted nobody when all teams end at 0 → `top > 0` guard dropped on Endstand rows only (live scoreboard keeps it at game start); e2e "Endstand with every team at 0 highlights all of them" added (checked red).
+
+Round 2 (reviewer at e688375): no weakened tests, no spec mismatch, no correctness findings. Fixed by fixer round 3 (9462bd0, b8e5cc6):
+- [weak] e2e/demo.test.ts disabled "Ziel anzeigen" click asserted an unchanged spectrum → now asserts the reveal cover "Verdeckt" is absent and the prep screen still shows (red only by changing the expectation: the demo engine rejects non-expected actions, so a click can't make it red).
+- [weak] e2e/start.test.ts old Erklärung link didn't assert the not-found page → asserts Kit's "Not Found" text and no Imposter heading (checked red).
+
+Round 3 changed tests only; proof:full at b8e5cc6 green: 396 passed, 2 skipped (viewport-conditional), exit 0. Screenshots: none (Rue: not needed).
