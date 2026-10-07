@@ -4,8 +4,8 @@ import { emptyServer, seedPlayers, seedRoster, seedSavedRoster, surveyByQuestion
 
 const CREW = ['Alex', 'Bo', 'Cleo', 'Dani'];
 // the eight-answer survey on the board, and a six-answer one for the double round
-const HOLES = 'Nenne etwas, das voller Löcher ist';
-const ZOO = 'Nenne ein Tier, das man im Zoo sieht';
+const HOLES = 'Nenne etwas, das voller Löcher sein kann';
+const GHOST = 'Was würdest du tun, wenn du einen Geist siehst?';
 
 const press = (page: Page, name: string) => page.getByRole('button', { name, exact: true }).click();
 const tile = (page: Page, i: number) => page.locator(`[data-tile="${i}"] button`);
@@ -23,7 +23,7 @@ export async function walk(page: Page, check: (slug: string) => Promise<void>) {
 	try {
 		const crew = await seedPlayers(page.request, server.origin, CREW);
 		const holes = await surveyByQuestion(page.request, HOLES, server.origin);
-		const zoo = await surveyByQuestion(page.request, ZOO, server.origin);
+		const ghost = await surveyByQuestion(page.request, GHOST, server.origin);
 		await page.goto(`${server.origin}/`);
 		await seedSavedRoster(page, crew);
 		await page.goto(`${server.origin}/spiele/family-feud/lobby`);
@@ -33,7 +33,7 @@ export async function walk(page: Page, check: (slug: string) => Promise<void>) {
 
 		await press(page, 'Weiter');
 		await expect(page.getByRole('heading', { name: 'Umfragen', exact: true })).toBeVisible();
-		for (const s of [holes, zoo])
+		for (const s of [holes, ghost])
 			await page.locator(`[data-survey="${s.id}"]`).getByRole('button', { name: 'Wählen', exact: true }).click();
 		await check('feud-prep');
 		await press(page, 'Start');
@@ -77,13 +77,13 @@ export async function walk(page: Page, check: (slug: string) => Promise<void>) {
 		await check('feud-result');
 
 		await press(page, 'Nächste Runde');
-		await expect(page.getByRole('heading', { name: ZOO, exact: true })).toBeVisible();
+		await expect(page.getByRole('heading', { name: GHOST, exact: true })).toBeVisible();
 		await expect(page.getByText('Doppelte Punkte', { exact: true })).toBeVisible();
 		await check('feud-faceoff-double');
 		await tile(page, 0).click();
 		await handoff(page).getByRole('button', { name: 'Spielen', exact: true }).click();
-		for (let i = 1; i < board(zoo).length; i++) await tile(page, i).click();
-		const double = board(zoo).reduce((sum, a) => sum + a.points, 0) * 2;
+		for (let i = 1; i < board(ghost).length; i++) await tile(page, i).click();
+		const double = board(ghost).reduce((sum, a) => sum + a.points, 0) * 2;
 		await expect(page.getByTestId('points')).toHaveText(`+${double}`);
 		await expect(page.getByTestId('score-1')).toHaveText(String(gain + double));
 		await check('feud-result-double');

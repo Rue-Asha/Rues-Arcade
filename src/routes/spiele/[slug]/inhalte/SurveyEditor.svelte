@@ -572,6 +572,9 @@
 			grid-row: 1;
 			position: sticky;
 			top: 24px;
+			/* taller than the viewport, a sticky side hides the import button until the end of a long list */
+			max-height: calc(100dvh - 48px);
+			overflow-y: auto;
 		}
 
 		.list {

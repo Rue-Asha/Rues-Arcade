@@ -45,13 +45,35 @@ describe('surveys', () => {
 		expect(db.prepare("SELECT 1 FROM sqlite_master WHERE name = 'feud_surveys'").get()).toBeUndefined();
 
 		migrate(db);
-		expect(surveyCount()).toBe(26);
+		expect(surveyCount()).toBe(247);
 		migrate(db);
 
-		expect(surveyCount()).toBe(26);
+		expect(surveyCount()).toBe(247);
 		const first = listSurveys(db)[0];
 		expect(first.answers.length).toBeGreaterThanOrEqual(3);
 		expect(first.answers[0]).toEqual({ text: expect.any(String), points: expect.any(Number) });
+	});
+
+	it('Scenario: Show surveys replace the placeholders', () => {
+		migrate(db, loadMigrations().filter((m) => m.name <= '0006_seed_surveys.sql'));
+		const fridge = listSurveys(db).find((s) => s.question === 'Nenne etwas, das man in einem Kühlschrank findet');
+		const alex = addPlayer(db, 'Alex');
+		const own = addSurvey(db, 'Nenne etwas mit Zähnen', [
+			{ text: 'Hai', points: 50 },
+			{ text: 'Kamm', points: 30 },
+			{ text: 'Säge', points: 20 }
+		]);
+		if (!fridge || !alex.ok || !own.ok) throw new Error('setup failed');
+		db.prepare('INSERT INTO feud_played (survey_id, player_id) VALUES (?, ?)').run(fridge.id, alex.player.id);
+
+		migrate(db);
+
+		const surveys = listSurveys(db);
+		expect(surveys.some((s) => s.id === fridge.id)).toBe(false);
+		expect(db.prepare('SELECT count(*) AS n FROM feud_played').get()?.n).toBe(0);
+		expect(surveys.find((s) => s.question === 'Nenne etwas mit Zähnen')?.answers[0]).toEqual({ text: 'Hai', points: 50 });
+		expect(surveys.some((s) => s.question === 'Nenne etwas, das man mit ins Badezimmer nimmt')).toBe(true);
+		expect(surveyCount()).toBe(247);
 	});
 
 	it('Scenario: Deleted seed surveys stay deleted', () => {
@@ -62,7 +84,7 @@ describe('surveys', () => {
 		migrate(db);
 
 		expect(listSurveys(db).some((s) => s.question === seed.question)).toBe(false);
-		expect(surveyCount()).toBe(25);
+		expect(surveyCount()).toBe(246);
 	});
 
 	it('Scenario: Deleting a survey removes its played-with entries', () => {
@@ -103,7 +125,7 @@ describe('surveys', () => {
 			status: 409,
 			message: 'Diese Frage gibt es schon.'
 		});
-		expect(listSurveys(db).filter((s) => /obst/i.test(s.question))).toHaveLength(1);
+		expect(listSurveys(db).filter((s) => /^nenne ein obst$/i.test(s.question))).toHaveLength(1);
 		expect(listSurveys(db).find((s) => s.id === other.survey.id)?.question).toBe('Nenne ein Tier');
 	});
 
@@ -260,8 +282,8 @@ describe('surveys', () => {
 
 		const surveys = listSurveys(db);
 
-		expect(surveys).toHaveLength(26);
+		expect(surveys).toHaveLength(247);
 		for (const s of surveys) expect(surveyError(s.question, s.answers), s.question).toBeNull();
-		expect(new Set(surveys.map((s) => s.question.toLowerCase())).size).toBe(26);
+		expect(new Set(surveys.map((s) => s.question.toLowerCase())).size).toBe(247);
 	});
 });

@@ -217,16 +217,30 @@ Like every migration it runs once per database; surveys the user later deletes S
 
 #### Scenario: Surveys seeded once
 - **WHEN** a database migrated through `0004` is migrated with all migrations, then migrated again
-- **THEN** `feud_surveys` holds 26 surveys after the first run and the second run adds nothing
+- **THEN** `feud_surveys` holds 247 surveys after the first run and the second run adds nothing
 - **proof:** unit
 
 #### Scenario: Deleted seed surveys stay deleted
 - **WHEN** a seeded survey is deleted and the migrations run again
-- **THEN** the survey is still absent and the count is 25
+- **THEN** the survey is still absent and the count is 246
 - **proof:** unit
 
 #### Scenario: Seed surveys are valid
 - **WHEN** the seed surveys of a fresh database are read
-- **THEN** every survey passes the survey validation and all 26 questions are distinct ignoring case
+- **THEN** every survey passes the survey validation and all 247 questions are distinct ignoring case
+- **proof:** unit
+
+### Requirement: Show survey seeds
+A forward-only migration `0007` SHALL delete the 15 placeholder surveys of `0006` (the 12 generic ones plus the
+three superseded by an original: Schneemann, Löcher, Auto) and insert 236 surveys from the show, translated into
+German from the classpoint.io and BuzzFeed lists. Questions that only work in English (word play, rhymes, letter
+or word completions) or only make sense in the US are left out. A survey the user already has under the same
+question SHALL stay as it is; played-with entries of a deleted placeholder go with it.
+
+#### Scenario: Show surveys replace the placeholders
+- **WHEN** a database migrated through `0006`, holding a played-with entry on a placeholder and a user survey under a
+  question that `0007` also inserts, is migrated with all migrations
+- **THEN** the placeholder and its played-with entry are gone, the user survey keeps its answers, the 11 remaining
+  `0006` surveys are kept and `feud_surveys` holds 247 surveys
 - **proof:** unit
 
