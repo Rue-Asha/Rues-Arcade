@@ -173,7 +173,18 @@ test('Scenario: Codes skipped round result', async ({ page }) => {
 	await press(page, 'Daneben, nächstes Team');
 	await press(page, 'Überspringen');
 
-	await expect(page.getByText('Übersprungen', { exact: true })).toBeVisible();
+	await expect(live(page).getByTestId('verdict')).toHaveText('Übersprungen');
+	const points = live(page).getByTestId('points');
+	await expect(points).toHaveText('+0');
+	const muted = await points.evaluate((el) => {
+		const probe = document.createElement('div');
+		probe.style.color = 'var(--muted)';
+		document.body.append(probe);
+		const want = getComputedStyle(probe).color;
+		probe.remove();
+		return getComputedStyle(el).color === want;
+	});
+	expect(muted).toBe(true);
 	await expect(page.getByText(word.a, { exact: true })).toBeVisible();
 	expect((await saved(page)).teams.map((t) => t.score)).toEqual([0, 0]);
 });
@@ -241,6 +252,14 @@ test('Scenario: Codes word uses the Reveal', async ({ page }) => {
 		})
 	);
 	expect(odd).toEqual([]);
+	const props = await reveal.evaluate((el) =>
+		el.getAnimations({ subtree: true }).map((a) => ({
+			duration: a.effect!.getTiming().duration,
+			keys: (a.effect as KeyframeEffect).getKeyframes().flatMap((k) => Object.keys(k))
+		}))
+	);
+	expect(props.some((a) => a.duration === 560 && a.keys.includes('transform'))).toBe(true);
+	expect(props.some((a) => a.duration === 1120 && a.keys.includes('transform'))).toBe(true);
 	await page.mouse.up();
 	await expect(live(page).getByTestId('reveal')).toHaveCount(0);
 });

@@ -257,6 +257,14 @@ test('Scenario: Duck word uses the Reveal', async ({ page }) => {
 		})
 	);
 	expect(odd).toEqual([]);
+	const props = await reveal.evaluate((el) =>
+		el.getAnimations({ subtree: true }).map((a) => ({
+			duration: a.effect!.getTiming().duration,
+			keys: (a.effect as KeyframeEffect).getKeyframes().flatMap((k) => Object.keys(k))
+		}))
+	);
+	expect(props.some((a) => a.duration === 560 && a.keys.includes('transform'))).toBe(true);
+	expect(props.some((a) => a.duration === 1120 && a.keys.includes('transform'))).toBe(true);
 });
 
 async function recordAnimations(page: Page) {
