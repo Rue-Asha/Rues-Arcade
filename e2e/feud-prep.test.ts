@@ -1,17 +1,20 @@
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
 import type { Survey } from '../src/lib/content/types.ts';
 import type { SavedPlayer } from '../src/lib/players.ts';
-import { chooseSurveys, emptyServer, seedPlayed, seedPlayers, seedSavedRoster, surveyCard } from './helpers.ts';
+import { chooseSurveys, deleteSurvey, emptyServer, seedPlayed, seedPlayers, seedSavedRoster, surveyCard } from './helpers.ts';
 
 const CREW = ['Alex', 'Bo', 'Cleo', 'Dani'];
 
 type Server = Awaited<ReturnType<typeof emptyServer>>;
 
-async function setup(page: Page, request: APIRequestContext, server: Server, extra: string[] = []) {
+async function setup(page: Page, request: APIRequestContext, server: Server, extra: string[] = [], keep = 12) {
 	const everyone = await seedPlayers(request, server.origin, [...CREW, ...extra]);
 	const crew = everyone.slice(0, CREW.length);
 	const others = everyone.slice(CREW.length);
-	const surveys: Survey[] = await (await request.get(`${server.origin}/api/content/feud_surveys`)).json();
+	const all: Survey[] = await (await request.get(`${server.origin}/api/content/feud_surveys`)).json();
+	// the list sorts least known first, so a survey with a played-with list sits on the last of the seed's ~42 pages
+	for (const s of all.slice(keep)) await deleteSurvey(request, s.id, server.origin);
+	const surveys = all.slice(0, keep);
 	return { crew, others, surveys };
 }
 
