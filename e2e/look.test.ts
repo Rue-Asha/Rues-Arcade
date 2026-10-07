@@ -1,4 +1,3 @@
-import { readFileSync } from 'node:fs';
 import { expect, test, type Page, type Route, type TestInfo } from '@playwright/test';
 import { seedRoster, shot } from './helpers.ts';
 import { walk as walkCodes } from './walks/codes.ts';
@@ -11,7 +10,6 @@ type Check = (slug: string) => Promise<void>;
 const names = ['Alex', 'Bo', 'Cleo', 'Dani'];
 const CREW = 'Was isst du am liebsten zum Frühstück?';
 const IMPOSTER = 'Was isst du am liebsten zu Mittag?';
-const fixture = new URL('./fixtures/explain/', import.meta.url);
 
 // The start screens need content in the shared e2e database, so each walk adds its own entries; the
 // lobby's content fetch is pinned to readable ones for the screenshots.
@@ -23,13 +21,6 @@ async function content(page: Page, info: TestInfo) {
 		route.request().method() === 'GET' ? route.fulfill({ json: [{ id: 1, a, b }] }) : route.fallback();
 	await page.route('**/api/content/imposter_pairs', pinned(CREW, IMPOSTER));
 	await page.route('**/api/content/wavelength_spectra', pinned('Kalt', 'Heiß'));
-	await page.route('**/explain/imposter/**', (route) => {
-		const name = new URL(route.request().url()).pathname.split('/').pop() || 'index.html';
-		route.fulfill({
-			body: readFileSync(new URL(name, fixture)),
-			contentType: name.endsWith('.png') ? 'image/png' : 'text/html; charset=utf-8'
-		});
-	});
 }
 
 async function press(page: Page, name: string) {
@@ -44,7 +35,7 @@ async function holding(page: Page, check: () => Promise<void>) {
 	await page.mouse.up();
 }
 
-// Home, Spieler, every start screen, lobbies, every game phase (Wavelength as Versus and Koop), Inhalte and Erklärung.
+// Home, Spieler, every start screen, lobbies, every game phase (Wavelength as Versus and Koop), Inhalte.
 // Codes, Duck and Most Likely To walk their own screens from e2e/walks/.
 async function walk(page: Page, info: TestInfo, check: Check) {
 	// The walk covers every screen of every game, ~1.5m on the check runner since the Feud walk joined it.
@@ -164,12 +155,6 @@ async function walk(page: Page, info: TestInfo, check: Check) {
 	await check('inhalte-imposter');
 	await page.goto('/spiele/wavelength/inhalte');
 	await check('inhalte-wavelength');
-	await page.goto('/spiele/imposter/erklaerung');
-	await expect(page.locator('iframe')).toBeVisible();
-	await check('erklaerung-imposter');
-	await page.goto('/spiele/wavelength/erklaerung');
-	await expect(page.getByText('Für dieses Spiel gibt es noch keine Erklärung.', { exact: true })).toBeVisible();
-	await check('erklaerung-wavelength');
 }
 
 async function aim(page: Page) {
