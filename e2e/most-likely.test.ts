@@ -1,6 +1,6 @@
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
 import { demo } from '../src/lib/games/most-likely/demo.ts';
-import { decoAudit, emptyServer, expectFrame, expectInstant, live, seedRoster, settled, shot } from './helpers.ts';
+import { bandIs, decoAudit, emptyServer, expectFrame, expectInstant, live, seedRoster, settled, shot } from './helpers.ts';
 
 const crew = (n: number) => Array.from({ length: n }, (_, i) => `Spieler ${i + 1}`);
 const names = ['Alex', 'Bo', 'Cleo', 'Dani'];
@@ -217,6 +217,8 @@ test('Scenario: Most Likely prompt uses the Handoff', async ({ page }) => {
 	const handoff = live(page).getByTestId('handoff');
 	await expect(handoff).toHaveCount(1);
 	await expect(handoff.getByRole('heading', { name: `${opener.name} ist dran`, exact: true })).toBeVisible();
+	await settled(page);
+	expect(await bandIs(handoff, 'most-likely')).toBe(true);
 	await expect(live(page).locator('[data-frame="stage"]').getByTestId('handoff')).toHaveCount(1);
 	expect(
 		await page.evaluate(() =>

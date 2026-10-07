@@ -1,5 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { expectFrame, expectInstant, live, seedContent, seedRoster, settled, shot } from './helpers.ts';
+import { bandIs, expectFrame, expectInstant, live, seedContent, seedRoster, settled, shot } from './helpers.ts';
 
 const players = [
 	{ id: 'a', name: 'Alex' },
@@ -409,6 +409,8 @@ test('Scenario: Wavelength prep uses the Handoff', async ({ page }) => {
 	await expect(handoff).toHaveCount(1);
 	await expect(handoff.getByRole('heading', { name: 'Gib das Handy an Alex', exact: true })).toBeVisible();
 	await expect(handoff).toContainText('Team 1 ist dran');
+	await settled(page);
+	expect(await bandIs(handoff, 'wavelength')).toBe(true);
 	await expect(live(page).locator('[data-frame="stage"]').getByTestId('handoff')).toHaveCount(1);
 	expect(await page.evaluate(() => [...document.querySelectorAll('*')].some((el) => getComputedStyle(el).position === 'fixed' && el.querySelector('[data-testid="handoff"]')))).toBe(false);
 	if (page.viewportSize()!.width >= 1024) await expect(live(page).locator('[data-frame="rail"]')).toBeVisible();

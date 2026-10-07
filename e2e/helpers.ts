@@ -279,6 +279,17 @@ export function ambient(page: Page) {
 	);
 }
 
+export function bandIs(handoff: Locator, token: string) {
+	return handoff.locator('.band').evaluate((el, t) => {
+		const probe = document.createElement('i');
+		probe.style.background = `var(--${t})`;
+		document.body.append(probe);
+		const want = getComputedStyle(probe).backgroundColor;
+		probe.remove();
+		return getComputedStyle(el).backgroundColor === want;
+	}, token);
+}
+
 // pointer-events is inherited, so a child that sets it back would take taps through the decoration
 export function decoAudit(page: Page) {
 	return page.evaluate(() =>

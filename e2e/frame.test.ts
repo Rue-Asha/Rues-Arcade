@@ -311,16 +311,13 @@ test('Scenario: Primary action dispatches during a transition', async ({ page })
 	await seedSession(page, all[4], (s) => ({ ...mlPrompt(s), phase: 'count' }));
 	await page.goto('/spiele/most-likely/spielen');
 	await settled(page);
-	const seen = await page.evaluate(async () => {
-		const frame = () => new Promise((ok) => requestAnimationFrame(ok));
-		const live = () => document.querySelector('[data-stage]:not([data-leaving])')!;
-		[...live().querySelectorAll('button')].find((b) => b.textContent?.trim() === '2')!.click();
-		await frame();
-		const leaving = document.querySelectorAll('[data-leaving]').length;
-		[...live().querySelectorAll('button')].find((b) => b.textContent?.trim() === 'Nächstes Team')!.click();
-		const state = JSON.parse(localStorage.getItem('arcade:session:most-likely')!).state;
-		return { leaving, phase: state.phase, turn: state.turn };
-	});
-	expect(seen).toEqual({ leaving: 1, phase: 'prompt', turn: 1 });
+	await live(page).getByRole('button', { name: '2', exact: true }).click();
+	await expect(page.locator('[data-leaving]')).toHaveCount(1);
+	const next = live(page).getByRole('button', { name: 'Nächstes Team', exact: true });
+	await next.waitFor();
+	const box = (await next.boundingBox())!;
+	await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+	const state = await page.evaluate(() => JSON.parse(localStorage.getItem('arcade:session:most-likely')!).state);
+	expect({ phase: state.phase, turn: state.turn }).toEqual({ phase: 'prompt', turn: 1 });
 	await expect(live(page).getByRole('button', { name: 'Alle haben gezeigt', exact: true })).toBeVisible();
 });

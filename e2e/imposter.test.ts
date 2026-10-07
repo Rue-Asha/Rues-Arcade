@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { expectFrame, expectInstant, live, seedRoster, settled, shot } from './helpers.ts';
+import { bandIs, expectFrame, expectInstant, live, seedRoster, settled, shot } from './helpers.ts';
 
 const names = ['Alex', 'Bo', 'Cleo', 'Dani'];
 const CREW = 'Was isst du am liebsten zum Frühstück?';
@@ -171,8 +171,7 @@ test('Scenario: Imposter handover uses the Handoff', async ({ page }) => {
 	await expect(handoff.getByRole('heading', { name: 'Gib das Handy an Alex' })).toBeVisible();
 	await expect(live(page).locator('[data-frame="stage"] [data-hero] [data-testid="handoff"]')).toHaveCount(1);
 	await expect(live(page).locator('[data-frame="rail"]')).toBeVisible();
-	const band = await handoff.locator('.band').evaluate((el) => getComputedStyle(el).backgroundColor);
-	expect(band).not.toBe('rgba(0, 0, 0, 0)');
+	expect(await bandIs(handoff, 'imposter')).toBe(true);
 });
 
 test('Scenario: Handoff wraps a long name', async ({ page }) => {
@@ -202,9 +201,12 @@ test('Scenario: Imposter reveals use the Reveal', async ({ page }) => {
 				.filter((a) => (a.effect as KeyframeEffect).target?.closest('[data-testid="reveal"]'))
 				.map((a) => ({
 					iterations: a.effect!.getTiming().iterations,
-					props: Object.keys((a.effect as KeyframeEffect).getKeyframes()[0] ?? {}).filter(
-						(k) => !['offset', 'easing', 'composite', 'computedOffset'].includes(k)
-					)
+					props: (a.effect as KeyframeEffect)
+						.getKeyframes()
+						.flatMap((k) => Object.keys(k))
+						.filter(
+							(k) => !['offset', 'easing', 'composite', 'computedOffset'].includes(k)
+						)
 				}))
 		);
 	for (const [open, next] of [
@@ -220,7 +222,7 @@ test('Scenario: Imposter reveals use the Reveal', async ({ page }) => {
 		expect(running.length).toBeGreaterThan(0);
 		for (const a of running) {
 			expect(a.iterations).toBe(1);
-			for (const prop of a.props) expect(['transform', 'opacity', 'translate', 'scale', 'rotate']).toContain(prop);
+			for (const prop of a.props) expect(['transform', 'opacity']).toContain(prop);
 		}
 		if (next !== 'Nächste Runde') await page.getByRole('button', { name: next }).click();
 	}

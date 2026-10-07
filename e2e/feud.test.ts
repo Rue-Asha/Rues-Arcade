@@ -618,7 +618,7 @@ test('Scenario: Feud reduced motion is instant', async ({ page, request }, info)
 	const server = await emptyServer(info, 'feud-reduced');
 	try {
 		const { surveys } = await begin(page, request, server, [PARTY, GHOST]);
-		const tap = (name: string) => live(page).getByRole('button', { name, exact: true }).evaluate((b: HTMLElement) => b.click());
+		const tap = (name: string) => live(page).getByRole('button', { name, exact: true }).click();
 		await expect(live(page).getByTestId('covered')).toBeVisible();
 		await tap('Frage aufdecken');
 		await expect(live(page).getByTestId('reveal')).toBeVisible();
