@@ -29,6 +29,8 @@ async function playToEnd(page: Page) {
 		await expect(progress(page)).toHaveText(`Demo · Schritt ${n}/${TOTAL}`);
 		const expected = page.locator('[data-demo="expected"]');
 		await expect(expected).toHaveCount(1);
+		const { action } = demo.steps[n - 1];
+		if ('tile' in action && action.tile === null) await expect(expected).toHaveText('Nicht auf der Tafel');
 		await expected.click();
 	}
 	await expect(page.getByText('Demo beendet', { exact: true })).toBeVisible();

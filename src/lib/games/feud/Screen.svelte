@@ -56,6 +56,11 @@
 		const action = demo?.expected ? script.steps[demo.step - 1]?.action : undefined;
 		return action && 'tile' in action ? action.tile : null;
 	});
+	// "Nicht auf der Tafel" dispatches answer/steal with tile null, so in the demo it carries the scripted action's type
+	const missing = $derived.by(() => {
+		const action = demo?.expected ? script.steps[demo.step - 1]?.action : undefined;
+		return action && 'tile' in action && action.tile === null ? action.type : 'miss';
+	});
 
 	// Handoff for the steal is shown once per visit; Stage remounts this per phase, so it starts closed.
 	// The demo has no control for its Weiter, so it goes straight to the board.
@@ -283,7 +288,7 @@
 
 		{#if s.phase === 'faceoff'}
 			<div class="row">
-				<Button variant="secondary" action="miss" onclick={() => answer(null)}>Nicht auf der Tafel</Button>
+				<Button variant="secondary" action={missing} onclick={() => answer(null)}>Nicht auf der Tafel</Button>
 				{@render undo()}
 			</div>
 		{:else if s.phase === 'board'}
@@ -301,7 +306,7 @@
 				<p class="pot">Im Topf <strong data-testid="pot">{pot(s)}</strong>{#if double} <span class="muted">× {multiplier(s)}</span>{/if}</p>
 			</div>
 			<div class="row">
-				<Button variant="secondary" action="miss" onclick={() => steal(null)}>Nicht auf der Tafel</Button>
+				<Button variant="secondary" action={missing} onclick={() => steal(null)}>Nicht auf der Tafel</Button>
 				{@render undo()}
 			</div>
 		{:else}
