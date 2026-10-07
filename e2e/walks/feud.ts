@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { board } from '../../src/lib/content/survey.ts';
-import { emptyServer, seedPlayers, seedRoster, seedSavedRoster, surveyByQuestion } from '../helpers.ts';
+import { chooseSurveys, emptyServer, seedPlayers, seedRoster, seedSavedRoster, surveyByQuestion } from '../helpers.ts';
 
 const CREW = ['Alex', 'Bo', 'Cleo', 'Dani'];
 // the eight-answer survey on the board, and a six-answer one for the double round
@@ -33,8 +33,7 @@ export async function walk(page: Page, check: (slug: string) => Promise<void>) {
 
 		await press(page, 'Weiter');
 		await expect(page.getByRole('heading', { name: 'Umfragen', exact: true })).toBeVisible();
-		for (const s of [holes, ghost])
-			await page.locator(`[data-survey="${s.id}"]`).getByRole('button', { name: 'Wählen', exact: true }).click();
+		await chooseSurveys(page, [holes.id, ghost.id]);
 		await check('feud-prep');
 		await press(page, 'Start');
 		await page.waitForURL('**/spielen');

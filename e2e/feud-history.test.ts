@@ -1,7 +1,7 @@
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
 import { board } from '../src/lib/content/survey.ts';
 import type { Survey } from '../src/lib/content/types.ts';
-import { emptyServer, seedPlayers, seedSavedRoster, surveyByQuestion } from './helpers.ts';
+import { chooseSurveys, emptyServer, seedPlayers, seedSavedRoster, surveyByQuestion } from './helpers.ts';
 
 const GHOST = 'Was würdest du tun, wenn du einen Geist siehst?';
 const CREW = ['Alex', 'Bo', 'Cleo', 'Dani'];
@@ -21,7 +21,7 @@ async function begin(page: Page, request: APIRequestContext, server: Server, que
 	await page.getByRole('button', { name: String(questions.length), exact: true }).click();
 	await page.getByRole('button', { name: 'Weiter' }).click();
 	await expect(page.getByRole('heading', { name: 'Umfragen', exact: true })).toBeVisible();
-	for (const s of surveys) await page.locator(`[data-survey="${s.id}"]`).getByRole('button', { name: 'Wählen', exact: true }).click();
+	await chooseSurveys(page, surveys.map((s) => s.id));
 	await page.getByRole('button', { name: 'Start', exact: true }).click();
 	await page.waitForURL('**/spielen');
 	return { crew, surveys };
