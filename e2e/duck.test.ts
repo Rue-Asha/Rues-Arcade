@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { decoAudit, emptyServer, seedRoster, shot } from './helpers.ts';
+import { decoAudit, emptyServer, expectFrame, expectInstant, live, seedRoster, settled, shot } from './helpers.ts';
 
 const names = ['Alex', 'Bo', 'Cleo', 'Dani'];
 const crew = (n: number) => Array.from({ length: n }, (_, i) => `Spieler ${i + 1}`);
@@ -149,7 +149,7 @@ test('Scenario: Duck standings sorted with struck letters', async ({ page }) => 
 	await tapLetter(page, 'Bo', 'Y');
 	await press(page, 'Weiter');
 
-	const rows = page.getByRole('list', { name: 'Punktestand' }).getByRole('listitem');
+	const rows = live(page).getByRole('region', { name: 'Punktestand' }).getByRole('listitem');
 	await expect(rows.locator('.who')).toHaveText(['Cleo', 'Alex', 'Dani', 'Bo']);
 	await expect(rows.locator('.pts')).toHaveText(['5', '3', '1', '0']);
 	await expect(rows.nth(3).locator('s')).toHaveText(['Y']);
@@ -165,12 +165,11 @@ test('Scenario: Duck tie at the top reads Unentschieden', async ({ page }) => {
 	await tapBox(page, 'Dani', 4);
 	await press(page, 'Weiter');
 
-	await expect(page.getByText('Unentschieden', { exact: true })).toBeVisible();
+	await expect(live(page).getByRole('heading', { name: 'Unentschieden', exact: true })).toBeVisible();
 	await expect(page.getByText('Gewinner', { exact: true })).toHaveCount(0);
-	await expect(page.getByRole('heading', { name: 'Alex & Bo', exact: true })).toBeVisible();
-	const rest = page.getByRole('list', { name: 'Rangliste' }).getByRole('listitem');
-	await expect(rest.locator('.who')).toHaveText(['Cleo', 'Dani']);
-	await expect(rest.locator('.rank')).toHaveText(['3', '3']);
+	await expect(live(page).getByText('Alex · Bo', { exact: true })).toBeVisible();
+	const rows = live(page).getByRole('region', { name: 'Punktestand' }).getByRole('listitem');
+	await expect(rows.locator('.who')).toHaveText(['Alex', 'Bo', 'Cleo', 'Dani']);
 });
 
 test('Scenario: Full Duck game', async ({ page }) => {
@@ -181,13 +180,13 @@ test('Scenario: Full Duck game', async ({ page }) => {
 	await press(page, 'Weiter');
 
 	await expect(page.getByText('Gewinner', { exact: true })).toBeVisible();
-	await expect(page.getByRole('heading', { name: 'Dani', exact: true })).toBeVisible();
+	await expect(live(page).getByRole('heading', { name: 'Dani', exact: true })).toBeVisible();
 	await expect(page.getByText('Zielpunktzahl von 10 erreicht.', { exact: true })).toBeVisible();
-	await expect(page.getByRole('list', { name: 'Rangliste' }).locator('.who')).toHaveText(['Alex', 'Bo', 'Cleo']);
+	await expect(live(page).getByRole('region', { name: 'Punktestand' }).locator('.who')).toHaveText(['Dani', 'Alex', 'Bo', 'Cleo']);
 
 	await press(page, 'Neue Runde');
 	await expect(page.getByRole('button', { name: 'Wort aufdecken' })).toBeVisible();
-	const board = page.getByRole('list', { name: 'Spielstand' }).getByRole('listitem');
+	const board = live(page).getByRole('region', { name: 'Punktestand' }).getByRole('listitem');
 	await expect(board.locator('.who')).toHaveText(names);
 	await expect(board.locator('.pts')).toHaveText(['0', '0', '0', '0']);
 	await expect(board.locator('s')).toHaveCount(0);
@@ -195,6 +194,147 @@ test('Scenario: Full Duck game', async ({ page }) => {
 	expect(s.phase).toBe('reveal');
 	expect(s.scores).toEqual([0, 0, 0, 0]);
 	expect(s.lives).toEqual([5, 5, 5, 5]);
+});
+
+const wide = (page: Page) => (page.viewportSize()?.width ?? 0) >= 1024;
+
+// Wertung stacks four player cards of 44px controls, so on a phone its Weiter button can't sit in the first
+// viewport; everything else the frame promises still has to hold there.
+async function expectScoringFrame(page: Page) {
+	if (wide(page)) return expectFrame(page);
+	await settled(page);
+	const found = await page.evaluate(() => {
+		const root = document.querySelector('[data-stage]:not([data-leaving])')!;
+		const stage = root.querySelector<HTMLElement>('[data-frame="stage"]')!;
+		const rail = root.querySelector<HTMLElement>('[data-frame="rail"]');
+		const actions = stage.querySelector('[data-frame="actions"]');
+		return {
+			heroes: stage.querySelectorAll('[data-hero]').length,
+			lastIsActions: stage.lastElementChild === actions,
+			railBelow: !!rail && rail.getBoundingClientRect().top >= stage.getBoundingClientRect().bottom - 1,
+			scrollsSideways: document.documentElement.scrollWidth > innerWidth
+		};
+	});
+	expect(found).toEqual({ heroes: 1, lastIsActions: true, railBelow: true, scrollsSideways: false });
+}
+
+test('Scenario: Duck screens use the stage and rail frame', async ({ page }) => {
+	await startGame(page);
+	await expectFrame(page);
+	await press(page, 'Wort aufdecken');
+	await expectFrame(page);
+	await press(page, 'Wort spielen');
+	await expectScoringFrame(page);
+	await tapBox(page, 'Alex', 3);
+	await press(page, 'Weiter');
+	await expect(page.getByRole('button', { name: 'Nächstes Wort' })).toBeVisible();
+	await expectFrame(page);
+	await press(page, 'Nächstes Wort');
+	await toScoring(page);
+	await tapBox(page, 'Dani', 10);
+	await press(page, 'Weiter');
+	await expect(live(page).getByRole('button', { name: 'Neue Runde' })).toBeVisible();
+	await expectFrame(page);
+});
+
+test('Scenario: Duck word uses the Reveal', async ({ page }) => {
+	await startGame(page);
+	const { word } = await saved(page);
+	await settled(page);
+	await expect(live(page).getByTestId('covered')).toHaveCount(1);
+	await expect(live(page).getByTestId('reveal')).toHaveCount(0);
+	await press(page, 'Wort aufdecken');
+	const reveal = live(page).getByTestId('reveal');
+	await expect(reveal.getByTestId('word')).toHaveText(word.a);
+	await expect(live(page).getByTestId('covered')).toHaveCount(0);
+	const odd = await reveal.evaluate((el) =>
+		el.getAnimations({ subtree: true }).flatMap((a) => {
+			const t = a.effect!.getTiming();
+			const keys = (a.effect as KeyframeEffect).getKeyframes().flatMap((k) => Object.keys(k));
+			const bad = keys.filter((k) => !['offset', 'easing', 'composite', 'computedOffset', 'transform', 'opacity'].includes(k));
+			return t.iterations === 1 && Number.isFinite(t.duration as number) && !bad.length ? [] : [`${t.iterations} ${keys}`];
+		})
+	);
+	expect(odd).toEqual([]);
+});
+
+async function recordAnimations(page: Page) {
+	await page.evaluate(() => {
+		const w = window as unknown as { __anims: { tag: string; keys: string[]; iterations: number; duration: number; card: boolean }[] };
+		w.__anims = [];
+		const own = Element.prototype.animate;
+		Element.prototype.animate = function (this: Element, frames, options) {
+			const list = Array.isArray(frames) ? frames : [];
+			const timing = typeof options === 'number' ? { duration: options } : (options ?? {});
+			w.__anims.push({
+				tag: this.getAttribute('data-testid') ?? this.tagName,
+				keys: [...new Set(list.flatMap((k) => Object.keys(k)))].filter((k) => k !== 'offset'),
+				iterations: timing.iterations ?? 1,
+				duration: Number(timing.duration),
+				card: this.matches('[aria-label="Wertung"] > li')
+			});
+			return own.call(this, frames, options);
+		};
+	});
+}
+
+const recorded = (page: Page) =>
+	page.evaluate(
+		() => (window as unknown as { __anims: { tag: string; keys: string[]; iterations: number; duration: number; card: boolean }[] }).__anims
+	);
+
+test('Scenario: Duck letter loss plays the fault motion', async ({ page }) => {
+	await startGame(page);
+	await toScoring(page);
+	await settled(page);
+	await recordAnimations(page);
+	await tapLetter(page, 'Bo', 'Y');
+
+	const seen = await recorded(page);
+	const shake = seen.find((a) => a.card);
+	expect(shake?.keys).toEqual(['transform']);
+	expect(shake?.iterations).toBe(1);
+	expect(Number.isFinite(shake?.duration)).toBe(true);
+	const stamp = seen.find((a) => a.tag === 'stamp');
+	expect([...(stamp?.keys ?? [])].sort()).toEqual(['opacity', 'transform']);
+	expect(stamp?.iterations).toBe(1);
+
+	await recordAnimations(page);
+	await tapLetter(page, 'Bo', 'Y');
+	expect(await recorded(page)).toEqual([]);
+});
+
+test('Scenario: Duck game over uses the winner frame', async ({ page }) => {
+	await startGame(page);
+	await toScoring(page);
+	await tapBox(page, 'Dani', 10);
+	await press(page, 'Weiter');
+
+	const stage = live(page).locator('[data-frame="stage"]');
+	await expect(stage.getByRole('heading', { level: 2 })).toHaveCount(1);
+	await expect(stage.getByRole('heading', { name: 'Dani', exact: true })).toBeVisible();
+	await expect(stage.getByText('Zielpunktzahl von 10 erreicht.', { exact: true })).toBeVisible();
+	await expect(stage.getByRole('button', { name: 'Neue Runde', exact: true })).toBeVisible();
+	await expect(page.getByRole('region', { name: 'Punktestand' })).toHaveCount(1);
+	await expect(live(page).locator('[data-frame="rail"]').getByRole('region', { name: 'Punktestand' })).toHaveCount(1);
+	await settled(page);
+	await expect(live(page).locator('[data-piece]')).toHaveCount(12);
+});
+
+test('Scenario: Duck reduced motion is instant', async ({ page }) => {
+	await page.emulateMedia({ reducedMotion: 'reduce' });
+	await startGame(page);
+	await press(page, 'Wort aufdecken');
+	await expectInstant(page);
+	await press(page, 'Wort spielen');
+	await expectInstant(page);
+	await recordAnimations(page);
+	await tapLetter(page, 'Bo', 'Y');
+	expect(await recorded(page)).toEqual([]);
+	await tapBox(page, 'Dani', 10);
+	await press(page, 'Weiter');
+	await expectInstant(page);
+	await expect(page.locator('[data-piece]')).toHaveCount(0);
 });
 
 test('Scenario: Duck session resumes after reload', async ({ page }) => {
@@ -296,7 +436,7 @@ test('Scenario: Duck demo by tapping highlighted controls', async ({ page }, inf
 		}
 		await expect(page.getByText('Demo beendet', { exact: true })).toBeVisible();
 		await expect(page.locator('[data-demo="expected"]')).toHaveCount(0);
-		const rows = page.getByRole('list', { name: 'Spielstand' }).getByRole('listitem');
+		const rows = live(page).getByRole('region', { name: 'Punktestand' }).getByRole('listitem');
 		await expect(rows.locator('.who')).toHaveText(['Alex', 'Bo', 'Cleo', 'Dani']);
 		await expect(rows.locator('.pts')).toHaveText(['0', '0', '0', '0']);
 	} finally {
