@@ -29,10 +29,20 @@ const start = (rounds = 3, teams: [FeudTeam, FeudTeam] = [A3, B2], points = [30,
 
 const step = (s: FeudState, ...actions: FeudAction[]) => actions.reduce((acc, a) => feud.reduce(acc, a), s);
 
+// the host uncovers the question and taps the team that buzzed first
+const open = (s: FeudState, team = 0) => step(s, { type: 'ask' }, { type: 'buzz', team });
+
 // the first named player hits #1, the team plays, three strikes, the steal misses, the round closes
 const strikes: FeudAction[] = [{ type: 'strike' }, { type: 'strike' }, { type: 'strike' }];
 const quick = (s: FeudState) =>
-	step(s, { type: 'answer', tile: 0 }, { type: 'play' }, ...strikes, { type: 'steal', tile: null }, { type: 'next' });
+	step(open(s), { type: 'answer', tile: 0 }, { type: 'play' }, ...strikes, { type: 'steal', tile: null }, { type: 'next' });
+
+// the last round's result with the scores set as given, then closed
+const closeAt = (scores: [number, number], rounds = 1) => {
+	let s = start(rounds, [A3, B2], forty);
+	for (let r = 1; r < rounds; r++) s = step(bank40(s), { type: 'next' });
+	return step({ ...bank40(s), scores }, { type: 'next' });
+};
 
 describe('feud engine: face-off', () => {
 	it('Scenario: Feud face-off names players in rotation', () => {
@@ -60,22 +70,46 @@ describe('feud engine: face-off', () => {
 	});
 
 	it('Scenario: Feud number one answer wins at once', () => {
-		const s = step(start(), { type: 'answer', tile: 0 });
+		const s = step(open(start()), { type: 'answer', tile: 0 });
 		expect(s.phase).toBe('choose');
 		expect(s.control).toBe(0);
 		expect(s.revealed).toEqual([true, false, false, false, false]);
 		expect(step(s, { type: 'answer', tile: 1 })).toBe(s);
+	});
 
-		// round 2: team B answers first, and its #1 wins at once too
-		const r2 = quick(start());
-		expect(due(r2)).toBe(1);
-		const won = step(r2, { type: 'answer', tile: 0 });
+	it('Scenario: Feud buzzing team answers first', () => {
+		const r1 = open(start(), 1);
+		expect(due(r1)).toBe(1);
+		const won = step(r1, { type: 'answer', tile: 0 });
 		expect(won.phase).toBe('choose');
 		expect(won.control).toBe(1);
+
+		const r2 = open(quick(start()), 1);
+		expect(r2.round).toBe(1);
+		expect(due(r2)).toBe(1);
+		const again = step(r2, { type: 'answer', tile: 0 });
+		expect(again.phase).toBe('choose');
+		expect(again.control).toBe(1);
+	});
+
+	it('Scenario: Feud every round asks for the buzz', () => {
+		const r1 = start();
+		const r2 = quick(start());
+		const sudden = closeAt([80, 80]);
+		expect(r2.round).toBe(1);
+		expect(sudden.round).toBe(1);
+		for (const s of [r1, r2, sudden]) {
+			expect(s.first).toBe(null);
+			const asked = step(s, { type: 'ask' });
+			expect(asked.asked).toBe(true);
+			expect(asked.first).toBe(null);
+			expect(step(asked, { type: 'answer', tile: 0 })).toBe(asked);
+			expect(step(asked, { type: 'answer', tile: null })).toBe(asked);
+		}
 	});
 
 	it('Scenario: Feud higher answer wins the face-off', () => {
-		const s0 = start();
+		const s0 = open(start());
 		expect(due(s0)).toBe(0);
 		const s1 = step(s0, { type: 'answer', tile: 3 });
 		expect(s1.phase).toBe('faceoff');
@@ -87,22 +121,23 @@ describe('feud engine: face-off', () => {
 	});
 
 	it('Scenario: Feud one miss loses the face-off', () => {
-		const s = step(start(), { type: 'answer', tile: null }, { type: 'answer', tile: 4 });
+		const s = step(open(start()), { type: 'answer', tile: null }, { type: 'answer', tile: 4 });
 		expect(s.phase).toBe('choose');
 		expect(s.control).toBe(1);
 		expect(s.revealed).toEqual([false, false, false, false, true]);
 
-		const hit = step(start(), { type: 'answer', tile: 4 }, { type: 'answer', tile: null });
+		const hit = step(open(start()), { type: 'answer', tile: 4 }, { type: 'answer', tile: null });
 		expect(hit.control).toBe(0);
 	});
 
 	it('Scenario: Feud both miss names the next pair', () => {
-		let s = start();
+		let s = open(start(), 1);
 		const pairs = [named(s)];
 		for (let i = 0; i < 3; i++) {
 			s = step(s, { type: 'answer', tile: null }, { type: 'answer', tile: null });
 			expect(s.phase).toBe('faceoff');
-			expect(due(s)).toBe(0);
+			expect(s.first).toBe(1);
+			expect(due(s)).toBe(1);
 			pairs.push(named(s));
 		}
 		expect(pairs).toEqual([
@@ -114,12 +149,12 @@ describe('feud engine: face-off', () => {
 	});
 
 	it('Scenario: Feud winner chooses Spielen or Passen', () => {
-		const played = step(start(), { type: 'answer', tile: 0 }, { type: 'play' });
+		const played = step(open(start()), { type: 'answer', tile: 0 }, { type: 'play' });
 		expect(played.phase).toBe('board');
 		expect(played.playing).toBe(0);
 
-		// round 2 opens with team B, which misses, so team A wins
-		const r2 = step(quick(start()), { type: 'answer', tile: null }, { type: 'answer', tile: 2 });
+		// team B buzzed first in round 2 and misses, so team A wins
+		const r2 = step(open(quick(start()), 1), { type: 'answer', tile: null }, { type: 'answer', tile: 2 });
 		expect(r2.control).toBe(0);
 		const passed = step(r2, { type: 'pass' });
 		expect(passed.phase).toBe('board');
@@ -129,12 +164,12 @@ describe('feud engine: face-off', () => {
 
 // pot 40 on the board: the first named player hits #1 (25), the team plays and finds #2 (15)
 const forty = [25, 15, 15, 10, 5];
-const board40 = (s: FeudState) => step(s, { type: 'answer', tile: 0 }, { type: 'play' }, { type: 'reveal', tile: 1 });
+const board40 = (s: FeudState) => step(open(s), { type: 'answer', tile: 0 }, { type: 'play' }, { type: 'reveal', tile: 1 });
 const bank40 = (s: FeudState) => step(board40(s), ...strikes, { type: 'steal', tile: null });
 
 describe('feud engine: board, steal and result', () => {
 	it('Scenario: Feud pot includes face-off answers', () => {
-		const s = step(start(), { type: 'answer', tile: 1 }, { type: 'answer', tile: null }, { type: 'play' });
+		const s = step(open(start()), { type: 'answer', tile: 1 }, { type: 'answer', tile: null }, { type: 'play' });
 		expect(pot(s)).toBe(25);
 		const after = step(s, { type: 'reveal', tile: 2 });
 		expect(pot(after)).toBe(43);
@@ -143,7 +178,7 @@ describe('feud engine: board, steal and result', () => {
 
 	it('Scenario: Feud cleared board banks the pot', () => {
 		const reveals: FeudAction[] = [1, 2, 3].map((tile) => ({ type: 'reveal', tile }));
-		const board = step(start(), { type: 'answer', tile: 0 }, { type: 'play' }, ...reveals);
+		const board = step(open(start()), { type: 'answer', tile: 0 }, { type: 'play' }, ...reveals);
 		expect(board.phase).toBe('board');
 		const s = step(board, { type: 'reveal', tile: 4 });
 		expect(s.phase).toBe('result');
@@ -152,7 +187,7 @@ describe('feud engine: board, steal and result', () => {
 	});
 
 	it('Scenario: Feud third strike opens the steal', () => {
-		const two = step(start(), { type: 'answer', tile: 0 }, { type: 'pass' }, { type: 'strike' }, { type: 'strike' });
+		const two = step(open(start()), { type: 'answer', tile: 0 }, { type: 'pass' }, { type: 'strike' }, { type: 'strike' });
 		expect(two.phase).toBe('board');
 		expect(two.strikes).toBe(2);
 		const s = step(two, { type: 'strike' });
@@ -209,13 +244,6 @@ describe('feud engine: board, steal and result', () => {
 	});
 });
 
-// the last round's result with the scores set as given, then closed
-const closeAt = (scores: [number, number], rounds = 1) => {
-	let s = start(rounds, [A3, B2], forty);
-	for (let r = 1; r < rounds; r++) s = step(bank40(s), { type: 'next' });
-	return step({ ...bank40(s), scores }, { type: 'next' });
-};
-
 describe('feud engine: end and sudden death', () => {
 	it('Scenario: Feud higher score wins', () => {
 		const s = closeAt([120, 80], 2);
@@ -232,10 +260,9 @@ describe('feud engine: end and sudden death', () => {
 		expect(current(s).id).toBe(99);
 		expect(s.revealed).toEqual([false, false, false]);
 		expect(named(s)).toEqual(['a2', 'b2']);
-		expect(due(s)).toBe(1);
 		expect(multiplier(s)).toBe(1);
 
-		const won = step(s, { type: 'answer', tile: 2 }, { type: 'answer', tile: 1 });
+		const won = step(open(s, 1), { type: 'answer', tile: 2 }, { type: 'answer', tile: 1 });
 		expect(won.phase).toBe('result');
 		expect(won.gain).toEqual({ team: 0, points: 0, stolen: false });
 		expect(won.winner).toBe(null);
@@ -245,13 +272,13 @@ describe('feud engine: end and sudden death', () => {
 		expect(end.scores).toEqual([80, 80]);
 		expect(end.closed).toEqual([1, 99]);
 
-		const first = step(closeAt([80, 80]), { type: 'answer', tile: 0 });
+		const first = step(open(closeAt([80, 80]), 1), { type: 'answer', tile: 0 });
 		expect(first.phase).toBe('result');
 		expect(first.gain?.team).toBe(1);
 	});
 
 	it('Scenario: Feud sudden death never ends in a draw', () => {
-		let s = closeAt([80, 80]);
+		let s = open(closeAt([80, 80]));
 		const pairs = [named(s)];
 		// both teams' players once (3 pairs for the larger team) and one more pair
 		for (let i = 0; i < 4; i++) {
@@ -267,6 +294,39 @@ describe('feud engine: end and sudden death', () => {
 			['a2', 'b1'],
 			['a3', 'b2']
 		]);
+	});
+});
+
+describe('feud engine: question reveal', () => {
+	it('Scenario: Feud next round starts covered', () => {
+		const s0 = start();
+		expect(s0.asked).toBe(false);
+		expect(s0.first).toBe(null);
+		const r2 = quick(start());
+		expect(r2.round).toBe(1);
+		expect(r2.phase).toBe('faceoff');
+		const sudden = closeAt([80, 80]);
+		expect(sudden.round).toBe(1);
+		expect(sudden.phase).toBe('faceoff');
+		for (const s of [r2, sudden]) {
+			expect(s.asked).toBe(false);
+			expect(s.first).toBe(null);
+		}
+	});
+
+	it('Scenario: Feud nothing counts before the reveal', () => {
+		const s = start();
+		expect(step(s, { type: 'answer', tile: 0 })).toBe(s);
+		expect(step(s, { type: 'answer', tile: null })).toBe(s);
+		expect(step(s, { type: 'buzz', team: 0 })).toBe(s);
+
+		// each step happens once per round, and only for a real team
+		const asked = step(s, { type: 'ask' });
+		expect(step(asked, { type: 'ask' })).toBe(asked);
+		expect(step(asked, { type: 'buzz', team: 2 })).toBe(asked);
+		const buzzed = step(asked, { type: 'buzz', team: 1 });
+		expect(step(buzzed, { type: 'buzz', team: 0 })).toBe(buzzed);
+		expect(feud.stateVersion).toBe(2);
 	});
 });
 
@@ -288,9 +348,8 @@ describe('feud engine: undo and purity', () => {
 			{ type: 'reveal', tile: 2 },
 			{ type: 'strike' }
 		];
-		const seen = [start()];
+		const seen = [open(start())];
 		for (const a of actions) seen.push(step(seen.at(-1)!, a));
-		expect(canUndo(seen[0])).toBe(false);
 		expect(canUndo(seen[4])).toBe(true);
 
 		let s = seen[4];
@@ -299,8 +358,28 @@ describe('feud engine: undo and purity', () => {
 			expect(s).toEqual(seen[i]);
 		}
 		expect(s.phase).toBe('faceoff');
+		s = step(s, undo, undo);
+		expect(s).toEqual(start());
 		expect(canUndo(s)).toBe(false);
 		expect(step(s, undo)).toBe(s);
+	});
+
+	it('Scenario: Feud undo of the reveal covers the question again', () => {
+		const asked = step(start(), { type: 'ask' });
+		expect(asked.asked).toBe(true);
+		const s = step(asked, undo);
+		expect(s.asked).toBe(false);
+		expect(s.first).toBe(null);
+		expect(s).toEqual(start());
+	});
+
+	it('Scenario: Feud undo of the buzz returns to the choice', () => {
+		const s = step(open(start(), 1), undo);
+		expect(s.asked).toBe(true);
+		expect(s.first).toBe(null);
+		const a = step(s, { type: 'buzz', team: 0 });
+		expect(a.first).toBe(0);
+		expect(due(a)).toBe(0);
 	});
 
 	it('Scenario: Feud undo stops at the round start', () => {
@@ -326,6 +405,8 @@ describe('feud engine: undo and purity', () => {
 
 	it('Scenario: Feud engine is deterministic and pure', () => {
 		const actions: FeudAction[] = [
+			{ type: 'ask' },
+			{ type: 'buzz', team: 1 },
 			{ type: 'answer', tile: null },
 			{ type: 'answer', tile: null },
 			{ type: 'answer', tile: 3 },
@@ -337,6 +418,8 @@ describe('feud engine: undo and purity', () => {
 			...strikes,
 			{ type: 'steal', tile: 4 },
 			{ type: 'next' },
+			{ type: 'ask' },
+			{ type: 'buzz', team: 0 },
 			{ type: 'answer', tile: 0 },
 			{ type: 'play' },
 			...[0, 1, 2, 3, 4].map((tile): FeudAction => ({ type: 'reveal', tile })),
@@ -356,13 +439,13 @@ describe('feud engine: undo and purity', () => {
 
 describe('feud engine: banks', () => {
 	it('is true only on the move into a result with points', () => {
-		const board = step(start(), { type: 'answer', tile: 0 }, { type: 'play' }, ...[1, 2, 3].map((tile): FeudAction => ({ type: 'reveal', tile })));
+		const board = step(open(start()), { type: 'answer', tile: 0 }, { type: 'play' }, ...[1, 2, 3].map((tile): FeudAction => ({ type: 'reveal', tile })));
 		const cleared = step(board, { type: 'reveal', tile: 4 });
 		expect(banks(board, cleared)).toBe(true);
 		expect(banks(cleared, cleared)).toBe(false);
 		expect(banks(cleared, step(cleared, { type: 'undo' }))).toBe(false);
 
-		const sudden = closeAt([80, 80]);
+		const sudden = open(closeAt([80, 80]));
 		const decided = step(sudden, { type: 'answer', tile: 0 });
 		expect(decided.phase).toBe('result');
 		expect(banks(sudden, decided)).toBe(false);

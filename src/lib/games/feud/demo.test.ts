@@ -35,9 +35,24 @@ describe('feud demo', () => {
 		const second = (s: (typeof steps)[number]) => s.before.answers.length === 1;
 		const tile = (s: (typeof steps)[number]) => (s.action as { tile: number | null }).tile;
 
+		// every round, sudden death included, opens with the reveal, then the buzz, then the first answer
+		const rounds = [...new Set(steps.map((s) => s.before.round))];
+		expect(rounds).toHaveLength(demo.config.surveys.length + 1);
+		const buzzed: number[] = [];
+		for (const r of rounds) {
+			const own = steps.filter((s) => s.before.round === r && s.action.type !== 'next');
+			expect(own.slice(0, 3).map((s) => s.action.type), `round ${r + 1}`).toEqual(['ask', 'buzz', 'answer']);
+			expect(own.slice(2).filter((s) => s.action.type === 'ask' || s.action.type === 'buzz')).toEqual([]);
+			expect(own[0].before.asked).toBe(false);
+			const team = (own[1].action as { team: number }).team;
+			expect(own[2].before.first).toBe(team);
+			buzzed.push(team);
+		}
+		expect(new Set(buzzed)).toEqual(new Set([0, 1]));
+
 		// face-off branches
 		const missThenHit = faceoffs.filter((s) => second(s) && s.before.answers[0] === null && tile(s) !== null);
-		expect(missThenHit.some((s) => s.after.phase === 'choose' && s.after.control === 1 - s.before.round % 2)).toBe(true);
+		expect(missThenHit.some((s) => s.after.phase === 'choose' && s.after.control === 1 - s.before.first!)).toBe(true);
 		const bothMiss = faceoffs.filter((s) => second(s) && s.before.answers[0] === null && tile(s) === null);
 		expect(bothMiss.length).toBeGreaterThan(0);
 		for (const s of bothMiss) {
@@ -53,7 +68,7 @@ describe('feud demo', () => {
 		const twoHits = faceoffs.filter((s) => second(s) && s.before.answers[0] !== null && tile(s) !== null);
 		expect(twoHits.length).toBeGreaterThan(0);
 		for (const s of twoHits) {
-			const first = s.before.round % 2;
+			const first = s.before.first!;
 			const higher = s.before.answers[0]! < tile(s)! ? first : 1 - first;
 			expect(s.after.control, 'the lower place number wins').toBe(higher);
 		}
