@@ -1,11 +1,15 @@
 <script lang="ts">
 	import { tick } from 'svelte';
+	import { MediaQuery } from 'svelte/reactivity';
 	import { invalidateAll } from '$app/navigation';
 	import { board } from '#lib/content/survey.ts';
 	import { MAX_ANSWERS, MIN_ANSWERS, type ImportReport, type Survey } from '#lib/content/types.ts';
 	import type { GameDef } from '#lib/engine/types.ts';
 	import Button from '#lib/ui/Button.svelte';
+	import { rise } from '#lib/motion.ts';
 	import Modal from '#lib/ui/Modal.svelte';
+	import Pager from '#lib/ui/Pager.svelte';
+	import { PAGE, pageItems } from '#lib/ui/pager.ts';
 
 	interface Props {
 		def: GameDef<any, any, any>;
@@ -40,10 +44,11 @@
 	let bulkLines = $state<string[]>([]);
 	let report = $state<ImportReport | null>(null);
 
-	const PAGE = 30;
-	let shown = $state(PAGE);
+	let page = $state(0);
+	const wide = new MediaQuery(PAGE.query);
+	const size = $derived(wide.current ? PAGE.wide : PAGE.narrow);
 	// newest first, so whatever was just added or imported is on the first page
-	const visible = $derived(surveys.toReversed().slice(0, shown));
+	const visible = $derived(pageItems(surveys.toReversed(), page, size));
 
 	function body(d: Draft) {
 		return {
@@ -67,6 +72,7 @@
 		message = await send(api, 'POST', body(draft));
 		if (message) return;
 		draft = blank();
+		page = 0;
 		await invalidateAll();
 		document.getElementById('new-question')?.focus();
 	}
@@ -109,6 +115,7 @@
 		report = await res.json();
 		bulkLines = bulk.split(/\r?\n/);
 		bulk = '';
+		page = 0;
 		await invalidateAll();
 	}
 
@@ -210,7 +217,8 @@
 			</div>
 
 			{#if surveys.length}
-				<ul class="rows" aria-labelledby="entries">
+				{#key page}
+				<ul class="rows" aria-labelledby="entries" in:rise>
 					{#each visible as survey (survey.id)}
 						<li class="card">
 							{#if editing === survey.id}
@@ -246,9 +254,8 @@
 						</li>
 					{/each}
 				</ul>
-				{#if surveys.length > shown}
-					<Button variant="secondary" onclick={() => (shown += PAGE)}>Mehr anzeigen ({surveys.length - shown} weitere)</Button>
-				{/if}
+				{/key}
+				<Pager bind:page total={surveys.length} {size} />
 			{:else}
 				<div class="empty panel">
 					<p class="empty-title">Noch keine Umfragen</p>
