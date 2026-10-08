@@ -122,6 +122,7 @@ test('Scenario: Feud disabled undo keeps its place', async ({ page, request }, i
 });
 
 test('Scenario: Feud fault row fits a phone', async ({ page, request }, info) => {
+	test.skip(info.project.name !== 'phone', '390px layout');
 	await page.setViewportSize({ width: 390, height: 844 });
 	const server = await emptyServer(info, 'controls-phone');
 	try {

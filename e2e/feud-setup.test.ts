@@ -239,6 +239,7 @@ const roundBoxes = async (page: Page) => {
 };
 
 test('Scenario: Feud rounds picker in one row on desktop', async ({ page, request }, info) => {
+	test.skip(info.project.name !== 'desktop', 'desktop layout');
 	const server = await emptyServer(info, 'feud-seg-wide');
 	try {
 		const saved = await seedPlayers(request, server.origin, NAMES.slice(0, 4));
@@ -256,6 +257,7 @@ test('Scenario: Feud rounds picker in one row on desktop', async ({ page, reques
 });
 
 test('Scenario: Feud rounds picker wraps on a phone', async ({ page, request }, info) => {
+	test.skip(info.project.name !== 'phone', '390px layout');
 	const server = await emptyServer(info, 'feud-seg-narrow');
 	try {
 		const saved = await seedPlayers(request, server.origin, NAMES.slice(0, 4));

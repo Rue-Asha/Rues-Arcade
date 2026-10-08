@@ -50,8 +50,9 @@ its production `node_modules`. Unpack it and start it with `node build`; it read
 start. `GET /healthz` answers 200 while the database does.
 
 To publish a release, bump `version` in `package.json` on `main`, then tag that commit `v<version>` and push the
-tag. The `release` workflow checks that the tag matches the version, reruns CI (proof, package, e2e against the
-unpacked tarball) and publishes a GitHub release with the tarball and its `.sha256`. Tagging is manual.
+tag. The `release` workflow checks that the tag matches the version and that the commit's `ci` run from its push to
+`main` is green, then publishes the tarball that run built and e2e-tested, with its `.sha256`, as a GitHub release.
+Tagging is manual; tag soon after the merge, since the run's artifact expires after 90 days.
 
 Deploying a release is not part of this repo: the Homelab change in Homelab-Managment will install it on the
 host and bump its version from then on.

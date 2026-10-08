@@ -1,5 +1,5 @@
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
-import { seedRoster, settled, shot } from './helpers.ts';
+import { seedRoster, settled } from './helpers.ts';
 import { walk as walkCodes } from './walks/codes.ts';
 import { walk as walkDuck } from './walks/duck.ts';
 import { walk as walkFeud } from './walks/feud.ts';
@@ -22,8 +22,8 @@ async function content(page: Page, info: TestInfo) {
 // Home, Spieler, every start screen, lobbies, every game phase (Wavelength as Versus and Koop), Inhalte.
 // Every game walks its own screens from e2e/walks/.
 async function walk(page: Page, info: TestInfo, check: Check) {
-	// The walk covers every screen of every game, ~1.5m on the check runner since the Feud walk joined it.
-	test.setTimeout(240_000);
+	// The walk covers every screen of every game and runs every look check on each, ~2m on the check runner.
+	test.setTimeout(300_000);
 	await content(page, info);
 	await seedRoster(page, names);
 
@@ -51,39 +51,6 @@ async function walk(page: Page, info: TestInfo, check: Check) {
 	await page.goto('/spiele/wavelength/inhalte');
 	await check('inhalte-wavelength');
 }
-
-test('Scenario: Touch targets are at least 44px', async ({ page }, info) => {
-	const small: string[] = [];
-	await walk(page, info, async (slug) => {
-		await settled(page);
-		const found = await page.evaluate(() =>
-			[...document.querySelectorAll<HTMLElement>('a[href], button, input, select, textarea, [role="slider"]')]
-				.filter((el) => el.checkVisibility())
-				.map((el) => {
-					let r = el.getBoundingClientRect();
-					// a checkbox styled away behind its label is tapped through the label
-					const label = (el as HTMLInputElement).labels?.[0];
-					if (label && (r.width < 44 || r.height < 44)) r = label.getBoundingClientRect();
-					const name = el.getAttribute('aria-label') || el.textContent?.trim() || el.tagName;
-					return { name, w: Math.round(r.width), h: Math.round(r.height) };
-				})
-				.filter(({ w, h }) => w < 44 || h < 44)
-				.map(({ name, w, h }) => `${name} ${w}×${h}`)
-		);
-		small.push(...found.map((f) => `${slug}: ${f}`));
-	});
-	expect(small).toEqual([]);
-});
-
-test('Scenario: Text contrast meets 4.5:1', async ({ page }, info) => {
-	const low: string[] = [];
-	await walk(page, info, async (slug) => {
-		await settled(page);
-		const found = await page.evaluate(contrastFailures);
-		low.push(...found.map((f) => `${slug}: ${f}`));
-	});
-	expect(low).toEqual([]);
-});
 
 // Every visible text node against the first opaque background behind it, translucent layers composited.
 // Disabled form controls are exempt (WCAG 1.4.3 "inactive components"); locked tiles are content and are checked.
@@ -145,84 +112,133 @@ const NEW_COPY = {
 	mode: 'section[aria-labelledby="mode"], section[aria-labelledby="order"]'
 };
 
-test('Scenario: Press Start 2P stays limited to logo and scores', async ({ page }, info) => {
-	const stray: string[] = [];
-	const seen = new Set<string>();
-	await walk(page, info, async (slug) => {
-		const found = await page.evaluate(
-			({ allowed, banned }) => {
-				const out: { text: string; kind: string | null; inside: string | null }[] = [];
-				const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-				for (let node = walker.nextNode(); node; node = walker.nextNode()) {
-					const el = node.parentElement!;
-					if (!(node as Text).data.trim() || !el.checkVisibility()) continue;
-					if (!getComputedStyle(el).fontFamily.includes('Press Start 2P')) continue;
-					const kind = Object.entries(allowed).find(([, sel]) => el.closest(sel))?.[0] ?? null;
-					const box = el.closest(banned);
-					out.push({ text: (node as Text).data.trim().slice(0, 30), kind, inside: box && (box.getAttribute('class') || box.tagName) });
-				}
-				return out;
-			},
-			{ allowed: PIXEL, banned: `${NEW_COPY.banner}, ${NEW_COPY.tile}, ${NEW_COPY.more}, [data-deco]` }
-		);
-		for (const { text, kind, inside } of found) {
-			if (kind) seen.add(kind);
-			if (!kind || inside) stray.push(`${slug}: "${text}"${inside ? ` in ${inside}` : ''}`);
-		}
-	});
-	expect(stray).toEqual([]);
-	expect([...seen].sort()).toEqual(Object.keys(PIXEL).sort());
-});
+function touchFailures() {
+	return [...document.querySelectorAll<HTMLElement>('a[href], button, input, select, textarea, [role="slider"]')]
+		.filter((el) => el.checkVisibility())
+		.map((el) => {
+			let r = el.getBoundingClientRect();
+			// a checkbox styled away behind its label is tapped through the label
+			const label = (el as HTMLInputElement).labels?.[0];
+			if (label && (r.width < 44 || r.height < 44)) r = label.getBoundingClientRect();
+			const name = el.getAttribute('aria-label') || el.textContent?.trim() || el.tagName;
+			return { name, w: Math.round(r.width), h: Math.round(r.height) };
+		})
+		.filter(({ w, h }) => w < 44 || h < 44)
+		.map(({ name, w, h }) => `${name} ${w}×${h}`);
+}
 
-test('Scenario: Decoration loads no external assets', async ({ page, baseURL }, info) => {
-	const foreign: string[] = [];
-	// the Feud walk loads its pages from its own loopback server (emptyServer), so the origins the main frame
-	// navigates to are the page's own, as long as they are loopback
-	const own = new Set([new URL(baseURL!).origin]);
-	page.on('request', (req) => {
-		const url = new URL(req.url());
-		if (req.isNavigationRequest() && req.frame() === page.mainFrame() && /^https?:$/.test(url.protocol) && /^(localhost|127\.0\.0\.1)$/.test(url.hostname))
-			own.add(url.origin);
-		if (/^https?:$/.test(url.protocol) && !own.has(url.origin)) foreign.push(req.url());
-	});
-	const screens: string[] = [];
-	await walk(page, info, async (slug) => {
-		await settled(page);
-		screens.push(slug);
-	});
-	expect(screens.length).toBeGreaterThan(20);
-	expect(foreign).toEqual([]);
-});
+// Walking the app is most of a look check's time, so one walk per project collects every rule's findings and
+// each rule's scenario asserts only its own.
+const found = {
+	small: [] as string[],
+	low: [] as string[],
+	stray: [] as string[],
+	pixel: new Set<string>(),
+	foreign: [] as string[],
+	screens: [] as string[],
+	loud: [] as string[],
+	copy: new Set<string>(),
+	wide: [] as string[],
+	empty: [] as string[]
+};
 
-test('Scenario: New copy has no exclamation marks', async ({ page }, info) => {
-	const loud: string[] = [];
-	const seen = new Set<string>();
-	await walk(page, info, async (slug) => {
-		const parts = { ...NEW_COPY, ...(slug === 'wavelength-koop-gameover' ? { gameover: 'main [data-frame="stage"]' } : {}) };
-		for (const [kind, sel] of Object.entries(parts))
-			for (const text of await page.locator(sel).allInnerTexts()) {
-				seen.add(kind);
-				if (/!|Spieleabend/.test(text)) loud.push(`${slug} ${kind}: ${text.replace(/\s+/g, ' ').slice(0, 60)}`);
+async function pixelFont(page: Page, slug: string) {
+	const hits = await page.evaluate(
+		({ allowed, banned }) => {
+			const out: { text: string; kind: string | null; inside: string | null }[] = [];
+			const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+			for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+				const el = node.parentElement!;
+				if (!(node as Text).data.trim() || !el.checkVisibility()) continue;
+				if (!getComputedStyle(el).fontFamily.includes('Press Start 2P')) continue;
+				const kind = Object.entries(allowed).find(([, sel]) => el.closest(sel))?.[0] ?? null;
+				const box = el.closest(banned);
+				out.push({ text: (node as Text).data.trim().slice(0, 30), kind, inside: box && (box.getAttribute('class') || box.tagName) });
 			}
-	});
-	expect(loud).toEqual([]);
-	expect([...seen].sort()).toEqual([...Object.keys(NEW_COPY), 'gameover'].sort());
-});
+			return out;
+		},
+		{ allowed: PIXEL, banned: `${NEW_COPY.banner}, ${NEW_COPY.tile}, ${NEW_COPY.more}, [data-deco]` }
+	);
+	for (const { text, kind, inside } of hits) {
+		if (kind) found.pixel.add(kind);
+		if (!kind || inside) found.stray.push(`${slug}: "${text}"${inside ? ` in ${inside}` : ''}`);
+	}
+}
 
-test('Scenario: No horizontal scroll on phone', async ({ page }, info) => {
-	test.skip(info.project.name !== 'phone', 'phone layout');
-	await walk(page, info, (slug) => shot(page, info, `look-${slug}`));
-});
+async function copy(page: Page, slug: string) {
+	const parts = { ...NEW_COPY, ...(slug === 'wavelength-koop-gameover' ? { gameover: 'main [data-frame="stage"]' } : {}) };
+	for (const [kind, sel] of Object.entries(parts))
+		for (const text of await page.locator(sel).allInnerTexts()) {
+			found.copy.add(kind);
+			if (/!|Spieleabend/.test(text)) found.loud.push(`${slug} ${kind}: ${text.replace(/\s+/g, ' ').slice(0, 60)}`);
+		}
+}
 
-test('Scenario: Desktop uses the width', async ({ page }, info) => {
-	test.skip(info.project.name !== 'desktop', 'desktop layout');
-	const empty: string[] = [];
-	await walk(page, info, async (slug) => {
-		await shot(page, info, `look-${slug}`);
-		const used = await reach(page);
-		if (used < 0.75) empty.push(`${slug}: ${Math.round(used * 100)}%`);
+test.describe('look walk', () => {
+	test.beforeAll(async ({ browser }, info) => {
+		const { viewport, isMobile, hasTouch, baseURL, extraHTTPHeaders } = info.project.use;
+		const page = await browser.newPage({ viewport, isMobile, hasTouch, baseURL, extraHTTPHeaders });
+		// the Feud walk loads its pages from its own loopback server (emptyServer), so the origins the main frame
+		// navigates to are the page's own, as long as they are loopback
+		const own = new Set([new URL(baseURL!).origin]);
+		page.on('request', (req) => {
+			const url = new URL(req.url());
+			if (req.isNavigationRequest() && req.frame() === page.mainFrame() && /^https?:$/.test(url.protocol) && /^(localhost|127\.0\.0\.1)$/.test(url.hostname))
+				own.add(url.origin);
+			if (/^https?:$/.test(url.protocol) && !own.has(url.origin)) found.foreign.push(req.url());
+		});
+		await walk(page, info, async (slug) => {
+			await settled(page);
+			found.screens.push(slug);
+			found.small.push(...(await page.evaluate(touchFailures)).map((f) => `${slug}: ${f}`));
+			found.low.push(...(await page.evaluate(contrastFailures)).map((f) => `${slug}: ${f}`));
+			await pixelFont(page, slug);
+			await copy(page, slug);
+			// shot() asserts the width itself, which would fail the walk instead of the scroll scenario
+			const width = await page.evaluate(() => document.documentElement.scrollWidth);
+			if (width > page.viewportSize()!.width) found.wide.push(`${slug}: ${width}px`);
+			await page.screenshot({ path: `test-results/shots/${info.project.name}-look-${slug}.png`, fullPage: true });
+			if (info.project.name === 'desktop') {
+				const used = await reach(page);
+				if (used < 0.75) found.empty.push(`${slug}: ${Math.round(used * 100)}%`);
+			}
+		});
+		await page.close();
 	});
-	expect(empty).toEqual([]);
+
+	test('Scenario: Touch targets are at least 44px', () => {
+		expect(found.small).toEqual([]);
+	});
+
+	test('Scenario: Text contrast meets 4.5:1', () => {
+		expect(found.low).toEqual([]);
+	});
+
+	test('Scenario: Press Start 2P stays limited to logo and scores', () => {
+		expect(found.stray).toEqual([]);
+		expect([...found.pixel].sort()).toEqual(Object.keys(PIXEL).sort());
+	});
+
+	test('Scenario: Decoration loads no external assets', () => {
+		expect(found.screens.length).toBeGreaterThan(20);
+		expect(found.foreign).toEqual([]);
+	});
+
+	test('Scenario: New copy has no exclamation marks', () => {
+		expect(found.loud).toEqual([]);
+		expect([...found.copy].sort()).toEqual([...Object.keys(NEW_COPY), 'gameover'].sort());
+	});
+
+	test('Scenario: No horizontal scroll on phone', ({}, info) => {
+		test.skip(info.project.name !== 'phone', 'phone layout');
+		expect(found.wide).toEqual([]);
+	});
+
+	test('Scenario: Desktop uses the width', ({}, info) => {
+		test.skip(info.project.name !== 'desktop', 'desktop layout');
+		expect(found.wide).toEqual([]);
+		expect(found.empty).toEqual([]);
+	});
 });
 
 // How far across the main column visible content reaches on the first screen. A phone-width column

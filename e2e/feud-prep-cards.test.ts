@@ -83,6 +83,7 @@ test('Scenario: Feud prep card shows all answers', async ({ page, request }, inf
 });
 
 test('Scenario: Feud prep card wraps a long question', async ({ page, request }, info) => {
+	test.skip(info.project.name !== 'phone', '390px layout');
 	const server = await emptyServer(info, 'cards-long');
 	try {
 		const { crew } = await setup(request, server);
@@ -184,6 +185,7 @@ test('Scenario: Feud played-with section with nobody on the list', async ({ page
 });
 
 test('Scenario: Feud prep grid by width', async ({ page, request }, info) => {
+	test.skip(info.project.name !== 'desktop', 'resizes the window');
 	const server = await emptyServer(info, 'cards-grid');
 	try {
 		const { crew } = await setup(request, server);
@@ -211,6 +213,7 @@ test('Scenario: Feud prep grid by width', async ({ page, request }, info) => {
 });
 
 test('Scenario: Feud picking keeps the grid in place', async ({ page, request }, info) => {
+	test.skip(info.project.name !== 'desktop', 'desktop layout');
 	const server = await emptyServer(info, 'cards-keep');
 	try {
 		const { crew, surveys } = await setup(request, server);

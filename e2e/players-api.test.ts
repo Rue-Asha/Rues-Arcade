@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 import { playerCall } from './helpers.ts';
 
 test('Scenario: Players API round trip on the server', async ({ request }, info) => {
+	test.skip(info.project.name !== 'desktop', 'server only');
 	const origin = String(info.project.use.baseURL ?? `http://localhost:${process.env.PORT ?? 4173}`);
 	const name = `Probe ${info.project.name}`;
 	const renamed = `${name} neu`;
@@ -24,6 +25,7 @@ test('Scenario: Players API round trip on the server', async ({ request }, info)
 });
 
 test('Scenario: Request without a usable name rejected', async ({ request }, info) => {
+	test.skip(info.project.name !== 'desktop', 'server only');
 	const origin = String(info.project.use.baseURL ?? `http://localhost:${process.env.PORT ?? 4173}`);
 	const name = `Body ${info.project.name}`;
 	const created = await playerCall(request, origin, 'POST', '', name);

@@ -15,7 +15,8 @@ Kit config lives in `vite.config.ts` (`sveltekit({ ... })`); Kit 3 refuses a `sv
 removed before each run. With `E2E_APP_DIR` set (CI: the unpacked tarball) it serves that dir's build instead.
 The server runs behind a proxy: without `PROTOCOL_HEADER` (or `ORIGIN`) Kit's CSRF check rejects form posts
 and DELETEs over plain http; e2e sends `x-forwarded-proto: http` for that reason. Unit tests live next to the
-code as `src/**/*.test.ts` (plus `scripts/*.test.ts`); e2e in `e2e/`.
+code as `src/**/*.test.ts` (plus `scripts/*.test.ts`); e2e in `e2e/`. An e2e test that sets its own viewport
+or only uses `request` runs in one project (`test.skip(info.project.name !== …)`); everything else runs in both.
 
 ## Specs
 - Before changing catalogue, read openspec/specs/catalogue/spec.md.
