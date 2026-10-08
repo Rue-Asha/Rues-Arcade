@@ -1,17 +1,17 @@
 import { expect, test, type Page } from '@playwright/test';
-import { seedRoster, shot } from './helpers.ts';
+import { bandIs, expectFrame, expectInstant, live, seedRoster, settled, shot } from './helpers.ts';
 
 const names = ['Alex', 'Bo', 'Cleo', 'Dani'];
 const CREW = 'Was isst du am liebsten zum Frühstück?';
 const IMPOSTER = 'Was isst du am liebsten zu Mittag?';
 
 // The e2e database is shared by parallel tests, so the lobby's content fetch is pinned to known pairs.
-async function start(page: Page, pairs: [string, string][] = [[CREW, IMPOSTER]]) {
+async function start(page: Page, pairs: [string, string][] = [[CREW, IMPOSTER]], roster = names) {
 	await page.request.post('/api/content/imposter_pairs', { data: { a: CREW, b: IMPOSTER } });
 	await page.route('**/api/content/imposter_pairs', (route) =>
 		route.fulfill({ json: pairs.map(([a, b], i) => ({ id: i + 1, a, b })) })
 	);
-	await seedRoster(page, names);
+	await seedRoster(page, roster);
 	await page.goto('/spiele/imposter');
 	await page.getByRole('button', { name: "Los geht's" }).click();
 	await expect(page).toHaveURL(/\/spiele\/imposter\/lobby$/);
@@ -46,7 +46,7 @@ test('Scenario: Full Imposter round', async ({ page }, info) => {
 	const imposter = names[saw.indexOf(IMPOSTER)];
 
 	await page.getByRole('button', { name: 'Crew-Frage aufdecken' }).click();
-	await expect(page.getByText(CREW)).toBeVisible();
+	await expect(live(page).getByText(CREW)).toBeVisible();
 	await shot(page, info, 'imposter-crew');
 	await page.getByRole('button', { name: 'Weiter zum Imposter' }).click();
 
@@ -122,7 +122,7 @@ test('Scenario: Reload mid-game resumes the same phase', async ({ page }) => {
 	await view(page, 'Cleo');
 	await view(page, 'Dani');
 	await page.getByRole('button', { name: 'Crew-Frage aufdecken' }).click();
-	await expect(page.getByText(CREW)).toBeVisible();
+	await expect(live(page).getByText(CREW)).toBeVisible();
 
 	await page.reload();
 	await expect(page.getByText(CREW)).toBeVisible();
@@ -142,4 +142,109 @@ test('Scenario: Spiel beenden clears the session', async ({ page }) => {
 	await expect(page.getByRole('button', { name: 'Weiterspielen' })).toHaveCount(0);
 	await page.goto('/spiele/imposter/spielen');
 	await expect(page).toHaveURL(/\/spiele\/imposter$/);
+});
+
+test('Scenario: Imposter screens use the stage and rail frame', async ({ page }) => {
+	await start(page);
+	await expectFrame(page);
+	for (const name of names) {
+		await page.getByRole('button', { name: `${name} ist bereit` }).click();
+		await expectFrame(page);
+		await hold(page);
+		await expect(page.getByTestId('question')).toBeVisible();
+		await page.mouse.up();
+		await expectFrame(page);
+	}
+	await page.getByRole('button', { name: 'Crew-Frage aufdecken' }).click();
+	await expectFrame(page);
+	await page.getByRole('button', { name: 'Weiter zum Imposter' }).click();
+	await expectFrame(page);
+	await page.getByRole('button', { name: 'Imposter aufdecken' }).click();
+	await expectFrame(page);
+});
+
+test('Scenario: Imposter handover uses the Handoff', async ({ page }) => {
+	await start(page);
+	await settled(page);
+	const handoff = live(page).getByTestId('handoff');
+	await expect(handoff).toHaveCount(1);
+	await expect(handoff.getByRole('heading', { name: 'Gib das Handy an Alex' })).toBeVisible();
+	await expect(live(page).locator('[data-frame="stage"] [data-hero] [data-testid="handoff"]')).toHaveCount(1);
+	await expect(live(page).locator('[data-frame="rail"]')).toBeVisible();
+	expect(await bandIs(handoff, 'imposter')).toBe(true);
+});
+
+test('Scenario: Handoff wraps a long name', async ({ page }) => {
+	const long = 'Maximiliane-Theodora von Hohenzollern';
+	await start(page, [[CREW, IMPOSTER]], [long, 'Bo', 'Cleo']);
+	await settled(page);
+	const heading = live(page).getByRole('heading', { name: `Gib das Handy an ${long}` });
+	await expect(heading).toBeVisible();
+	const fits = await heading.evaluate((h) => {
+		const stage = h.closest('[data-frame="stage"]')!.getBoundingClientRect();
+		const r = h.getBoundingClientRect();
+		return r.left >= stage.left && r.right <= stage.right;
+	});
+	expect(fits).toBe(true);
+	expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+		page.viewportSize()!.width
+	);
+});
+
+test('Scenario: Imposter reveals use the Reveal', async ({ page }) => {
+	await start(page);
+	for (const name of names) await view(page, name);
+	const finite = () =>
+		page.evaluate(() =>
+			document
+				.getAnimations()
+				.filter((a) => (a.effect as KeyframeEffect).target?.closest('[data-testid="reveal"]'))
+				.map((a) => ({
+					iterations: a.effect!.getTiming().iterations,
+					props: (a.effect as KeyframeEffect)
+						.getKeyframes()
+						.flatMap((k) => Object.keys(k))
+						.filter(
+							(k) => !['offset', 'easing', 'composite', 'computedOffset'].includes(k)
+						)
+				}))
+		);
+	for (const [open, next] of [
+		['Crew-Frage aufdecken', 'Weiter zum Imposter'],
+		['Imposter aufdecken', 'Nächste Runde']
+	]) {
+		await expect(live(page).getByTestId('covered')).toHaveCount(1);
+		await expect(live(page).getByTestId('reveal')).toHaveCount(0);
+		await page.getByRole('button', { name: open }).click();
+		await expect(live(page).getByTestId('reveal')).toHaveCount(1);
+		await expect(live(page).getByTestId('covered')).toHaveCount(0);
+		const running = await finite();
+		expect(running.length).toBeGreaterThan(0);
+		for (const a of running) {
+			expect(a.iterations).toBe(1);
+			for (const prop of a.props) expect(['transform', 'opacity']).toContain(prop);
+		}
+		if (next !== 'Nächste Runde') await page.getByRole('button', { name: next }).click();
+	}
+});
+
+test.describe('reduced motion', () => {
+	test.use({ reducedMotion: 'reduce' });
+
+	test('Scenario: Imposter reduced motion is instant', async ({ page }) => {
+		await start(page);
+		await settled(page);
+		for (const name of names) {
+			await page.getByRole('button', { name: `${name} ist bereit` }).click();
+			await expectInstant(page);
+			await hold(page);
+			await expect(page.getByTestId('question')).toBeVisible();
+			await page.mouse.up();
+			await expectInstant(page);
+		}
+		for (const name of ['Crew-Frage aufdecken', 'Weiter zum Imposter', 'Imposter aufdecken', 'Nächste Runde']) {
+			await page.getByRole('button', { name }).click();
+			await expectInstant(page);
+		}
+	});
 });

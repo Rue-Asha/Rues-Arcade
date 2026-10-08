@@ -6,6 +6,7 @@
 	import { clearSession, saveSession } from '#lib/session.ts';
 	import Button from '#lib/ui/Button.svelte';
 	import Modal from '#lib/ui/Modal.svelte';
+	import PlayHeader from '#lib/ui/PlayHeader.svelte';
 	import Stage from '#lib/ui/Stage.svelte';
 	import type { PageProps } from './$types';
 
@@ -47,18 +48,12 @@
 
 <div class="stack scene" style="--c: var(--{def.colour})">
 	<Art slug={def.slug} place="play" />
-	<header class="bar">
-		<div class="who">
-			<span class="label">Läuft</span>
-			<h1>{def.name}</h1>
-		</div>
-		<div class="row">
-			<Button variant="secondary" size="sm" onclick={() => goto(`${base}/demo?from=${base}/spielen`)}>Demo</Button>
-			{#if game !== null}
-				<Button variant="secondary" size="sm" onclick={() => (ending = true)}>Spiel beenden</Button>
-			{/if}
-		</div>
-	</header>
+	<PlayHeader
+		name={def.name}
+		label="Läuft"
+		status={game === null ? null : entry.status(game)}
+		onend={game === null ? undefined : () => (ending = true)}
+	/>
 
 	{#if discarded}
 		<div class="panel stack notice">
@@ -79,7 +74,7 @@
 <Modal open={ending} title="Spiel beenden?" onclose={() => (ending = false)}>
 	<p class="muted">Der Spielstand wird gelöscht. Ihr startet danach eine neue Runde.</p>
 	<div class="row">
-		<Button variant="primary" onclick={end}>Beenden</Button>
+		<Button variant="danger" onclick={end}>Beenden</Button>
 		<Button variant="ghost" onclick={() => (ending = false)}>Weiterspielen</Button>
 	</div>
 </Modal>
@@ -96,35 +91,6 @@
 	.scene > :global(:not([data-deco])) {
 		position: relative;
 		z-index: 1;
-	}
-
-	.bar {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		justify-content: space-between;
-		gap: 12px 16px;
-		padding: 12px 16px;
-		border-radius: var(--radius-xl);
-		background: var(--surface);
-		box-shadow:
-			inset 0 3px 0 var(--c),
-			0 var(--ledge) 0 var(--shadow);
-	}
-
-	.who {
-		display: flex;
-		flex-direction: column;
-		gap: 4px;
-	}
-
-	.who .label {
-		color: var(--c);
-	}
-
-	.who h1 {
-		font-size: 22px;
-		letter-spacing: -0.02em;
 	}
 
 	.notice {

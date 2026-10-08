@@ -1,6 +1,6 @@
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
 import { demo } from '../src/lib/games/most-likely/demo.ts';
-import { decoAudit, emptyServer, seedRoster, shot } from './helpers.ts';
+import { bandIs, decoAudit, emptyServer, expectFrame, expectInstant, live, seedRoster, settled, shot } from './helpers.ts';
 
 const crew = (n: number) => Array.from({ length: n }, (_, i) => `Spieler ${i + 1}`);
 const names = ['Alex', 'Bo', 'Cleo', 'Dani'];
@@ -13,8 +13,8 @@ const press = (page: Page, name: string) => page.getByRole('button', { name, exa
 const team = (page: Page, n: number) => page.getByRole('group', { name: `Team ${n}`, exact: true });
 const choice = (page: Page, name: string) =>
 	page.getByRole('group', { name: /^Wie viele aus/ }).getByRole('button', { name, exact: true });
-const board = (page: Page) => page.getByRole('region', { name: 'Punktestand' }).getByRole('listitem');
-const final = (page: Page) => page.getByRole('region', { name: 'Endstand' }).getByRole('listitem');
+const board = (page: Page) => live(page).getByRole('region', { name: 'Punktestand' }).getByRole('listitem');
+const final = board;
 
 // lobby → game with the roster dealt into `teams` teams, 5 rounds
 async function start(page: Page, roster = names, teams = 2) {
@@ -24,6 +24,20 @@ async function start(page: Page, roster = names, teams = 2) {
 	await press(page, '5');
 	await press(page, "Los geht's");
 	await expect(page).toHaveURL(/\/spiele\/most-likely\/spielen$/);
+}
+
+// rewrites the saved session and reopens it; `scores` are the teams' points in team order
+async function seedPhase(page: Page, patch: Record<string, unknown>, scores?: number[]) {
+	await page.evaluate(
+		({ patch, scores }) => {
+			const raw = JSON.parse(localStorage.getItem('arcade:session:most-likely')!);
+			Object.assign(raw.state, patch);
+			scores?.forEach((n, i) => (raw.state.teams[i].score = n));
+			localStorage.setItem('arcade:session:most-likely', JSON.stringify(raw));
+		},
+		{ patch, scores }
+	);
+	await page.goto('/spiele/most-likely/spielen');
 }
 
 // the phase's Stage rises in after the click, past what shot() can see yet
@@ -189,12 +203,84 @@ test('Scenario: Most Likely turn screen names the team', async ({ page }, info) 
 	await expect(page.getByRole('heading', { name: `${opener.name} ist dran`, exact: true })).toBeVisible();
 	await expect(page.getByTestId('players')).toHaveText(opener.name === 'Team 1' ? 'Alex und Cleo' : 'Bo und Dani');
 	await expect(page.getByTestId('prompt')).toHaveText(s.prompt.a);
-	await expect(page.getByText('Runde 1 / 5', { exact: true })).toBeVisible();
-	await expect(page.getByText('Team 1 / 2', { exact: true })).toBeVisible();
+	await expect(page.getByTestId('status')).toHaveText('Runde 1 / 5 · Team 1 / 2');
 	await expect(
-		page.getByText('Zählt bis drei und zeigt gleichzeitig auf die Person, die am besten passt.', { exact: true })
+		live(page).getByText('Zählt bis drei und zeigt gleichzeitig auf die Person, die am besten passt.', { exact: true })
 	).toBeVisible();
 	await still(page, info, 'most-likely-prompt');
+});
+
+test('Scenario: Most Likely prompt uses the Handoff', async ({ page }) => {
+	await start(page);
+	const s = await saved(page);
+	const opener = s.teams[s.startTeam];
+	const handoff = live(page).getByTestId('handoff');
+	await expect(handoff).toHaveCount(1);
+	await expect(handoff.getByRole('heading', { name: `${opener.name} ist dran`, exact: true })).toBeVisible();
+	await settled(page);
+	expect(await bandIs(handoff, 'most-likely')).toBe(true);
+	await expect(live(page).locator('[data-frame="stage"]').getByTestId('handoff')).toHaveCount(1);
+	expect(
+		await page.evaluate(() =>
+			[...document.querySelectorAll('*')].some(
+				(el) => getComputedStyle(el).position === 'fixed' && el.querySelector('[data-testid="handoff"]')
+			)
+		)
+	).toBe(false);
+	if (page.viewportSize()!.width >= 1024) await expect(live(page).locator('[data-frame="rail"]')).toBeVisible();
+	await expect(live(page).getByRole('button', { name: 'Alle haben gezeigt' })).toBeVisible();
+});
+
+test('Scenario: Most Likely screens use the stage and rail frame', async ({ page }) => {
+	await start(page);
+	await expectFrame(page);
+	await press(page, 'Alle haben gezeigt');
+	await expect(choice(page, '2')).toBeVisible();
+	await expectFrame(page);
+	await choice(page, '2').click();
+	await expect(live(page).getByTestId('verdict')).toBeVisible();
+	await expectFrame(page);
+	await seedPhase(page, { phase: 'result', lastPoints: 0 });
+	await expectFrame(page);
+	await seedPhase(page, { phase: 'gameOver', round: 4, lastPoints: null }, [4, 2]);
+	await expectFrame(page);
+});
+
+test('Scenario: Most Likely result counts up', async ({ page }) => {
+	await start(page);
+	await press(page, 'Alle haben gezeigt');
+	await expect(choice(page, '2')).toBeVisible();
+	await settled(page);
+	const mid = await page.evaluate(
+		() =>
+			new Promise<string>((resolve) => {
+				[...document.querySelectorAll('button')].find((b) => b.textContent?.trim() === '2')!.click();
+				requestAnimationFrame(() =>
+					requestAnimationFrame(() => resolve(document.querySelector('[data-testid="points"]')!.textContent!.trim()))
+				);
+			})
+	);
+	expect(mid).toMatch(/^\+[0-1]$/);
+	await expect(live(page).getByTestId('points')).toHaveText('+2');
+	await expect(live(page).locator('h2[data-testid="verdict"]')).toHaveText('Alle auf dieselbe Person');
+	await expect(live(page).getByTestId('result-prompt')).toBeVisible();
+	await expect(board(page).first()).toContainText('Team');
+});
+
+test('Scenario: Most Likely game over uses the winner frame', async ({ page }) => {
+	await start(page);
+	await seedPhase(page, { phase: 'gameOver', round: 4, lastPoints: null }, [4, 2]);
+	await expectFrame(page);
+	const stage = live(page).locator('[data-frame="stage"]');
+	await expect(stage.getByText('Gewinner', { exact: true })).toBeVisible();
+	await expect(stage.getByRole('heading', { name: 'Team 1', exact: true })).toBeVisible();
+	await expect(stage.getByRole('button', { name: 'Nochmal spielen', exact: true })).toBeVisible();
+	await expect(page.getByRole('region', { name: 'Punktestand' })).toHaveCount(1);
+	await expect(live(page).locator('[data-frame="rail"]').getByRole('region', { name: 'Punktestand' })).toHaveCount(1);
+	await expect(board(page)).toHaveText([/^1\s*Team 1\s*4\s*Alex und Cleo$/, /^2\s*Team 2\s*2\s*Bo und Dani$/]);
+	const pieces = await live(page).locator('[data-piece]').count();
+	expect(pieces).toBeGreaterThanOrEqual(10);
+	expect(pieces).toBeLessThanOrEqual(14);
 });
 
 test('Scenario: Most Likely count choices follow the team size', async ({ page }, info) => {
@@ -252,8 +338,8 @@ test('Scenario: Full Most Likely team game', async ({ page }, info) => {
 	}
 	const ranked = Object.entries(scores).sort((a, b) => b[1] - a[1]);
 
-	await expect(page.getByRole('region', { name: 'Endstand' })).toBeVisible();
-	await expect(final(page)).toHaveText(ranked.map(([name, score]) => new RegExp(`${name}.*${score}$`)));
+	await expect(final(page)).toHaveCount(2);
+	await expect(final(page)).toHaveText(ranked.map(([name, score]) => new RegExp(`${name}\\s*${score}\\s*\\S`)));
 	await expect(page.getByRole('button', { name: 'Nochmal spielen', exact: true })).toBeVisible();
 	await still(page, info, 'most-likely-gameover');
 
@@ -289,9 +375,9 @@ test('Scenario: Most Likely Endstand ranks teams', async ({ page }, info) => {
 	await expect(page.getByText('Gewinner', { exact: true })).toBeVisible();
 	await expect(page.getByRole('heading', { name: 'Team 2', exact: true })).toBeVisible();
 	await expect(final(page)).toHaveText([
-		/^1\s*Team 2\s*Bo, Eli und Hana\s*9$/,
-		/^2\s*Team 1\s*Alex, Dani und Gus\s*5$/,
-		/^3\s*Team 3\s*Cleo und Fynn\s*2$/
+		/^1\s*Team 2\s*9\s*Bo, Eli und Hana$/,
+		/^2\s*Team 1\s*5\s*Alex, Dani und Gus$/,
+		/^3\s*Team 3\s*2\s*Cleo und Fynn$/
 	]);
 	await expect(final(page).and(page.locator('.lead'))).toHaveCount(1);
 	await still(page, info, 'most-likely-endstand');
@@ -309,8 +395,9 @@ test('Scenario: Most Likely tie at the top reads Unentschieden', async ({ page }
 
 	await expect(page.getByText('Unentschieden', { exact: true })).toBeVisible();
 	await expect(page.getByText('Gewinner', { exact: true })).toHaveCount(0);
-	await expect(page.getByRole('heading', { name: 'Team 1 & Team 2', exact: true })).toBeVisible();
-	await expect(final(page)).toHaveText([/^1\s*Team 1.*4$/, /^1\s*Team 2.*4$/, /^3\s*Team 3.*2$/]);
+	await expect(live(page).getByRole('heading', { name: 'Unentschieden', exact: true })).toBeVisible();
+	await expect(live(page).getByText('Team 1 · Team 2', { exact: true })).toBeVisible();
+	await expect(final(page)).toHaveText([/^1\s*Team 1\s*4\s*[^\d]+$/, /^1\s*Team 2\s*4\s*[^\d]+$/, /^3\s*Team 3\s*2\s*[^\d]+$/]);
 	await expect(final(page).and(page.locator('.lead'))).toHaveCount(2);
 	await expect(final(page).nth(2)).not.toHaveClass(/lead/);
 	await still(page, info, 'most-likely-tie');
@@ -322,7 +409,7 @@ test('Endstand with every team at 0 highlights all of them', async ({ page }) =>
 	for (let k = 0; k < 10; k++) await playTurn(page, 0);
 
 	await expect(page.getByText('Unentschieden', { exact: true })).toBeVisible();
-	await expect(final(page)).toHaveText([/^1\s*Team \d.*0$/, /^1\s*Team \d.*0$/]);
+	await expect(final(page)).toHaveText([/^1\s*Team \d\s*0\s*[^\d]+$/, /^1\s*Team \d\s*0\s*[^\d]+$/]);
 	await expect(final(page).and(page.locator('.lead'))).toHaveCount(2);
 });
 
@@ -416,6 +503,31 @@ test('Scenario: Most Likely copy reads neutral', async ({ page }) => {
 	}
 });
 
+test.describe('reduced motion', () => {
+	test.use({ reducedMotion: 'reduce' });
+
+	test('Scenario: Most Likely reduced motion is instant', async ({ page }) => {
+		const click = (name: string) => live(page).getByRole('button', { name, exact: true }).evaluate((b: HTMLElement) => b.click());
+		await start(page);
+		await settled(page);
+		await click('Alle haben gezeigt');
+		await expectInstant(page);
+		await click('2');
+		await expect(live(page).getByTestId('points')).toBeVisible();
+		expect(await live(page).getByTestId('points').textContent()).toBe('+2');
+		await expectInstant(page);
+		const state = await saved(page);
+		const rows = await board(page).locator('.pts').allTextContents();
+		expect(rows.map((r) => r.trim()).sort()).toEqual(state.teams.map((t: { score: number }) => String(t.score)).sort());
+		await seedPhase(page, { phase: 'result', round: 4, turn: 1 });
+		await settled(page);
+		await click('Zum Ergebnis');
+		await expectInstant(page);
+		await expect(live(page).getByRole('button', { name: 'Nochmal spielen', exact: true })).toBeVisible();
+		await expect(page.locator('[data-piece]')).toHaveCount(0);
+	});
+});
+
 test('Scenario: Most Likely demo by tapping highlighted controls', async ({ page }, info) => {
 	// ~0.8s per step on phone
 	test.setTimeout(Math.max(60_000, demo.steps.length * 2_000));
@@ -434,7 +546,7 @@ test('Scenario: Most Likely demo by tapping highlighted controls', async ({ page
 			if (action.type === 'score')
 				await expect(expected).toHaveText(action.matched === 0 ? 'Alle verschieden' : String(action.matched));
 			if (n === total) {
-				await expect(page.getByRole('region', { name: 'Endstand' })).toBeVisible();
+				await expect(page.getByRole('region', { name: 'Punktestand' })).toBeVisible();
 				await expect(page.getByText('Gewinner', { exact: true })).toBeVisible();
 				await expect(expected).toHaveAttribute('data-action', 'rematch');
 			}

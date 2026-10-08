@@ -99,6 +99,7 @@ test('Scenario: No saved players shows an empty state', async ({ page }, info) =
 		).toBeVisible();
 		await expect(saved(page).getByLabel('Neuer gespeicherter Spieler')).toBeVisible();
 		await expect(saved(page).getByRole('listitem')).toHaveCount(0);
+		await expect(saved(page).getByRole('navigation', { name: 'Seiten', exact: true })).toHaveCount(0);
 		await shot(page, info, 'spieler-gespeichert-leer');
 	} finally {
 		server.close();
@@ -259,6 +260,98 @@ test('Scenario: Demo leaves saved players untouched', async ({ page, request }, 
 
 		expect(await list()).toEqual(before);
 		expect(await stored(page, 'arcade:roster')).toBe(crew);
+	} finally {
+		server.close();
+	}
+});
+
+const PHONE = { width: 390, height: 844 };
+const DESKTOP = { width: 1280, height: 800 };
+const pager = (page: Page) => saved(page).getByRole('navigation', { name: 'Seiten', exact: true });
+const next = (page: Page) => pager(page).getByRole('button', { name: 'Weiter', exact: true });
+const names = (n: number) => Array.from({ length: n }, (_, i) => `Anna ${String(i + 1).padStart(2, '0')}`);
+
+test('Scenario: Saved players page by width', async ({ page, request }, info) => {
+	const server = await emptyServer(info, 'players-pages');
+	try {
+		await seedPlayers(request, server.origin, names(13));
+		const rows = saved(page).getByRole('listitem');
+		await page.setViewportSize(PHONE);
+		await page.goto(`${server.origin}/spieler`);
+		await expect(pager(page)).toContainText('Seite 1 von 3');
+		await expect(rows).toHaveCount(6);
+		const last = (await rows.last().innerText()).split('\n')[0];
+		await next(page).click();
+		await expect(pager(page)).toContainText('Seite 2 von 3');
+		const first = (await rows.first().innerText()).split('\n')[0];
+		expect(first.localeCompare(last, 'de')).toBeGreaterThan(0);
+
+		await page.setViewportSize(DESKTOP);
+		await page.goto(`${server.origin}/spieler`);
+		await expect(pager(page)).toContainText('Seite 1 von 2');
+		await expect(rows).toHaveCount(12);
+	} finally {
+		server.close();
+	}
+});
+
+test('Scenario: Deleting the last saved player on a page goes back a page', async ({ page, request }, info) => {
+	const server = await emptyServer(info, 'players-pages-delete');
+	try {
+		await seedPlayers(request, server.origin, names(7));
+		await page.setViewportSize(PHONE);
+		await page.goto(`${server.origin}/spieler`);
+		await next(page).click();
+		await expect(pager(page)).toContainText('Seite 2 von 2');
+		await expect(saved(page).getByRole('listitem')).toHaveCount(1);
+		await saved(page).getByRole('button', { name: 'Anna 07 löschen' }).click();
+		await page.getByRole('dialog').getByRole('button', { name: 'Löschen' }).click();
+		await expect(saved(page).getByRole('listitem')).toHaveCount(6);
+		await expect(pager(page)).toHaveCount(0);
+	} finally {
+		server.close();
+	}
+});
+
+test('Scenario: Saving a player shows its page', async ({ page, request }, info) => {
+	const server = await emptyServer(info, 'players-pages-save');
+	try {
+		await seedPlayers(request, server.origin, names(12));
+		await page.setViewportSize(PHONE);
+		await page.goto(`${server.origin}/spieler`);
+		await expect(pager(page)).toContainText('Seite 1 von 2');
+		await create(page, 'Zora');
+		await expect(pager(page)).toContainText('Seite 3 von 3');
+		await expect(saved(page).getByText('Zora', { exact: true })).toBeVisible();
+	} finally {
+		server.close();
+	}
+});
+
+test('Scenario: Saving a player shows its page when a name differs only by a diacritic', async ({ page, request }, info) => {
+	const server = await emptyServer(info, 'players-pages-diacritic');
+	try {
+		await seedPlayers(request, server.origin, [...names(11), 'Müller']);
+		await page.setViewportSize(PHONE);
+		await page.goto(`${server.origin}/spieler`);
+		await expect(pager(page)).toContainText('Seite 1 von 2');
+		await create(page, 'Muller');
+		await expect(pager(page)).toContainText('Seite 3 von 3');
+		await expect(saved(page).getByText('Muller', { exact: true })).toBeVisible();
+	} finally {
+		server.close();
+	}
+});
+
+test('Scenario: Roster stays unpaged', async ({ page }, info) => {
+	const server = await emptyServer(info, 'players-roster-unpaged');
+	try {
+		await page.goto(`${server.origin}/`);
+		await seedRoster(page, names(13));
+		await page.setViewportSize(PHONE);
+		await page.goto(`${server.origin}/spieler`);
+		await expect(crew(page).getByRole('listitem')).toHaveCount(13);
+		await expect(crew(page).getByRole('navigation', { name: 'Seiten', exact: true })).toHaveCount(0);
 	} finally {
 		server.close();
 	}

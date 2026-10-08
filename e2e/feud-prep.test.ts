@@ -79,6 +79,30 @@ test('Scenario: Feud prep shows who knows a survey', async ({ page, request }, i
 	}
 });
 
+test('Scenario: Feud prep pager rises in a new page', async ({ page, request }, info) => {
+	const server = await emptyServer(info, 'prep-rise');
+	try {
+		const { crew } = await setup(page, request, server);
+		await page.setViewportSize({ width: 390, height: 844 });
+		await prep(page, server, crew);
+		const list = page.getByRole('list', { name: 'Alle Umfragen' });
+		const first = await ids(page);
+		await page.getByRole('navigation', { name: 'Seiten', exact: true }).getByRole('button', { name: 'Weiter', exact: true }).click();
+		const props = await list.evaluate((el) =>
+			el
+				.getAnimations()
+				.filter((a) => a.effect?.getTiming().iterations !== Infinity)
+				.flatMap((a) => (a.effect as KeyframeEffect).getKeyframes().flatMap((k) => Object.keys(k)))
+				.filter((k) => !['offset', 'easing', 'composite', 'computedOffset'].includes(k))
+		);
+		expect(props).toContain('opacity');
+		expect(props).toContain('transform');
+		expect(await ids(page)).not.toEqual(first);
+	} finally {
+		server.close();
+	}
+});
+
 test('Scenario: Feud prep sorts by known and by played', async ({ page, request }, info) => {
 	const server = await emptyServer(info, 'prep-sort');
 	try {

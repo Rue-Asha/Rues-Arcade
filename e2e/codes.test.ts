@@ -1,6 +1,6 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { demo } from '../src/lib/games/codes/demo.ts';
-import { ambient, decoAudit, emptyServer, seedRoster, shot } from './helpers.ts';
+import { ambient, decoAudit, emptyServer, expectFrame, expectInstant, live, seedRoster, settled, shot } from './helpers.ts';
 
 const crew = (n: number) => Array.from({ length: n }, (_, i) => `Spieler ${i + 1}`);
 
@@ -158,11 +158,9 @@ test('Scenario: Full Codes game', async ({ page }) => {
 	await press(page, 'Zum Ergebnis');
 
 	await expect(page.getByText('Gewinner', { exact: true })).toBeVisible();
-	const winner = page.getByRole('heading', { name: second, exact: true });
-	await expect(winner).toBeVisible();
-	const board = page.getByRole('region', { name: 'Punktestand' });
+	await expect(live(page).locator('[data-frame="stage"]').getByRole('heading', { name: second, exact: true })).toBeVisible();
+	const board = live(page).locator('[data-frame="rail"]').getByRole('region', { name: 'Punktestand' });
 	await expect(board.getByRole('listitem')).toHaveText([new RegExp(second), new RegExp(first.teams[first.teamIndex].name)]);
-	expect((await winner.boundingBox())!.y).toBeLessThan((await board.boundingBox())!.y);
 	await expect(page.getByRole('button', { name: 'Nochmal spielen' })).toBeVisible();
 });
 
@@ -175,7 +173,18 @@ test('Scenario: Codes skipped round result', async ({ page }) => {
 	await press(page, 'Daneben, nächstes Team');
 	await press(page, 'Überspringen');
 
-	await expect(page.getByText('Übersprungen', { exact: true })).toBeVisible();
+	await expect(live(page).getByTestId('verdict')).toHaveText('Übersprungen');
+	const points = live(page).getByTestId('points');
+	await expect(points).toHaveText('+0');
+	const muted = await points.evaluate((el) => {
+		const probe = document.createElement('div');
+		probe.style.color = 'var(--muted)';
+		document.body.append(probe);
+		const want = getComputedStyle(probe).color;
+		probe.remove();
+		return getComputedStyle(el).color === want;
+	});
+	expect(muted).toBe(true);
 	await expect(page.getByText(word.a, { exact: true })).toBeVisible();
 	expect((await saved(page)).teams.map((t) => t.score)).toEqual([0, 0]);
 });
@@ -190,8 +199,213 @@ test('Scenario: Codes tie shown as Unentschieden', async ({ page }) => {
 
 	await expect(page.getByText('Unentschieden', { exact: true })).toBeVisible();
 	await expect(page.getByText('Gewinner', { exact: true })).toHaveCount(0);
-	await expect(page.getByRole('heading', { name: 'Team 1 & Team 2', exact: true })).toBeVisible();
+	await expect(live(page).getByText('Team 1 · Team 2', { exact: true })).toBeVisible();
 	expect((await saved(page)).teams.map((t) => t.score)).toEqual([3, 3]);
+});
+
+test('Scenario: Codes screens use the stage and rail frame', async ({ page }) => {
+	await play(page, 1);
+	await expectFrame(page);
+	await press(page, 'Verdecken & raten');
+	await expectFrame(page);
+	for (let i = 0; i < 3; i++) await press(page, 'Daneben, nächstes Team');
+	await expect(page.getByRole('button', { name: 'Überspringen' })).toBeVisible();
+	await expectFrame(page);
+	await press(page, 'Überspringen');
+	await expectFrame(page);
+	await press(page, 'Zum Ergebnis');
+	await expectFrame(page);
+});
+
+test('Scenario: Codes reveal intro uses the Handoff', async ({ page }) => {
+	await play(page, 1);
+	const handoff = live(page).getByTestId('handoff');
+	await expect(handoff).toHaveCount(1);
+	await expect(handoff.getByRole('heading', { name: 'Diese Runde erklären: Alex und Bo.', exact: true })).toBeVisible();
+	await settled(page);
+	const band = await handoff.locator('.band').evaluate((el) => {
+		const probe = document.createElement('i');
+		probe.style.background = 'var(--codes)';
+		document.body.append(probe);
+		const want = getComputedStyle(probe).backgroundColor;
+		probe.remove();
+		return getComputedStyle(el).backgroundColor === want;
+	});
+	expect(band).toBe(true);
+	if ((page.viewportSize()?.width ?? 0) >= 1024) await expect(live(page).locator('[data-frame="rail"]')).toBeVisible();
+});
+
+test('Scenario: Codes word uses the Reveal', async ({ page }) => {
+	await play(page, 1);
+	const { word } = await saved(page);
+	await settled(page);
+	await expect(live(page).getByTestId('reveal')).toHaveCount(0);
+	await hold(page);
+	const reveal = live(page).getByTestId('reveal');
+	await expect(reveal.getByText(word.a, { exact: true })).toBeVisible();
+	const odd = await reveal.evaluate((el) =>
+		el.getAnimations({ subtree: true }).flatMap((a) => {
+			const t = a.effect!.getTiming();
+			const keys = (a.effect as KeyframeEffect).getKeyframes().flatMap((k) => Object.keys(k));
+			const bad = keys.filter((k) => !['offset', 'easing', 'composite', 'computedOffset', 'transform', 'opacity'].includes(k));
+			return t.iterations === 1 && Number.isFinite(t.duration as number) && !bad.length ? [] : [`${t.iterations} ${keys}`];
+		})
+	);
+	expect(odd).toEqual([]);
+	const props = await reveal.evaluate((el) =>
+		el.getAnimations({ subtree: true }).map((a) => ({
+			duration: a.effect!.getTiming().duration,
+			keys: (a.effect as KeyframeEffect).getKeyframes().flatMap((k) => Object.keys(k))
+		}))
+	);
+	expect(props.some((a) => a.duration === 560 && a.keys.includes('transform'))).toBe(true);
+	expect(props.some((a) => a.duration === 1120 && a.keys.includes('transform'))).toBe(true);
+	await page.mouse.up();
+	await expect(live(page).getByTestId('reveal')).toHaveCount(0);
+});
+
+test('Scenario: Scoreboard marks the acting team', async ({ page }) => {
+	await play(page, 1);
+	await press(page, 'Verdecken & raten');
+	const s = await saved(page);
+	await settled(page);
+	const acting = live(page).getByRole('region', { name: 'Punktestand' }).locator('[data-acting]');
+	await expect(acting).toHaveCount(1);
+	await expect(acting).toContainText(s.teams[s.teamIndex].name);
+	const colour = await acting.evaluate((el) => {
+		const probe = document.createElement('i');
+		probe.style.background = 'var(--codes)';
+		document.body.append(probe);
+		const want = getComputedStyle(probe).backgroundColor;
+		probe.remove();
+		return getComputedStyle(el, '::before').backgroundColor === want;
+	});
+	expect(colour).toBe(true);
+	await press(page, 'Daneben, nächstes Team');
+	await expect(acting).toContainText(s.teams[1 - s.teamIndex].name);
+});
+
+// records every Element.animate call so a short shake can't be missed between click and look
+async function recordAnimations(page: Page) {
+	await page.evaluate(() => {
+		const w = window as unknown as { __anims: { tag: string; keys: string[]; transforms: string[]; iterations: number; duration: number; stage: boolean }[] };
+		w.__anims = [];
+		const own = Element.prototype.animate;
+		Element.prototype.animate = function (this: Element, frames, options) {
+			const list = Array.isArray(frames) ? frames : [];
+			const timing = typeof options === 'number' ? { duration: options } : (options ?? {});
+			w.__anims.push({
+				tag: this.getAttribute('data-testid') ?? this.getAttribute('data-frame') ?? this.tagName,
+				keys: [...new Set(list.flatMap((k) => Object.keys(k)))].filter((k) => k !== 'offset'),
+				transforms: list.map((k) => String(k.transform ?? '')).filter(Boolean),
+				iterations: timing.iterations ?? 1,
+				duration: Number(timing.duration),
+				stage: this.matches('[data-frame="stage"]')
+			});
+			return own.call(this, frames, options);
+		};
+	});
+}
+
+const recorded = (page: Page) =>
+	page.evaluate(() => (window as unknown as { __anims: { tag: string; keys: string[]; transforms: string[]; iterations: number; duration: number; stage: boolean }[] }).__anims);
+
+test('Scenario: Codes Daneben plays the fault motion', async ({ page }) => {
+	await play(page, 1);
+	await press(page, 'Verdecken & raten');
+	await settled(page);
+	await recordAnimations(page);
+	await press(page, 'Daneben, nächstes Team');
+
+	const seen = await recorded(page);
+	const shake = seen.find((a) => a.stage);
+	expect(shake?.keys).toEqual(['transform']);
+	expect(shake?.transforms.every((t) => /^translateX\(-?[\d.]+(px)?\)$/.test(t))).toBe(true);
+	const offsets = shake!.transforms.map((t) => parseFloat(t.slice(11)));
+	expect(offsets.some((x) => x < 0) && offsets.some((x) => x > 0)).toBe(true);
+	expect(shake?.iterations).toBe(1);
+	expect(Number.isFinite(shake?.duration)).toBe(true);
+	const stamp = seen.find((a) => a.tag === 'stamp');
+	expect([...(stamp?.keys ?? [])].sort()).toEqual(['opacity', 'transform']);
+	expect(stamp?.iterations).toBe(1);
+});
+
+test('Scenario: Codes result uses the Outcome', async ({ page }) => {
+	await play(page, 1);
+	await press(page, 'Verdecken & raten');
+	await settled(page);
+	await page.evaluate(() => {
+		const w = window as unknown as { __points: string[] };
+		w.__points = [];
+		new MutationObserver(() => {
+			const text = document.querySelector('[data-stage]:not([data-leaving]) [data-testid="points"]')?.textContent;
+			if (text && w.__points.at(-1) !== text) w.__points.push(text);
+		}).observe(document.body, { subtree: true, childList: true, characterData: true });
+	});
+	await press(page, /^Erraten/);
+
+	await expect(live(page).getByTestId('verdict')).toHaveText('Im ersten Versuch erraten.');
+	await expect(live(page).getByTestId('points')).toHaveText('+3');
+	const seen = await page.evaluate(() => (window as unknown as { __points: string[] }).__points);
+	expect(seen.some((t) => Number(t.slice(1)) < 3)).toBe(true);
+	expect(seen.at(-1)).toBe('+3');
+});
+
+test('Scenario: Scoreboard rows move when ranks change', async ({ page }) => {
+	await play(page, 1);
+	await press(page, 'Verdecken & raten');
+	const first = await saved(page);
+	// whichever team opens, Team 2 is the one that scores and takes the lead from the tie
+	if (first.teamIndex === 0) await press(page, 'Daneben, nächstes Team');
+	await settled(page);
+	await page.evaluate(() => {
+		const w = window as unknown as { __moved: boolean };
+		w.__moved = false;
+		const own = Element.prototype.animate;
+		Element.prototype.animate = function (this: Element, frames, options) {
+			const list = Array.isArray(frames) ? frames : [];
+			if (this.closest('[aria-label="Punktestand"]') && this.tagName === 'LI' && list.some((k) => 'transform' in k)) w.__moved = true;
+			return own.call(this, frames, options);
+		};
+	});
+	await press(page, /^Erraten/);
+
+	const rows = live(page).getByRole('region', { name: 'Punktestand' }).getByRole('listitem');
+	await expect(rows).toHaveText([/Team 2/, /Team 1/]);
+	expect(await page.evaluate(() => (window as unknown as { __moved: boolean }).__moved)).toBe(true);
+});
+
+test('Scenario: Codes game over uses the winner frame', async ({ page }) => {
+	await play(page, 1);
+	await press(page, 'Verdecken & raten');
+	await press(page, /^Erraten/);
+	await press(page, 'Zum Ergebnis');
+
+	const stage = live(page).locator('[data-frame="stage"]');
+	await expect(stage.getByRole('heading', { level: 2 })).toHaveCount(1);
+	await expect(stage.getByRole('button', { name: 'Nochmal spielen', exact: true })).toBeVisible();
+	await expect(page.getByRole('region', { name: 'Punktestand' })).toHaveCount(1);
+	await expect(live(page).locator('[data-frame="rail"]').getByRole('region', { name: 'Punktestand' })).toHaveCount(1);
+	await settled(page);
+	const pieces = live(page).locator('[data-piece]');
+	await expect(pieces).toHaveCount(12);
+});
+
+test('Scenario: Codes reduced motion is instant', async ({ page }) => {
+	await page.emulateMedia({ reducedMotion: 'reduce' });
+	await play(page, 1);
+	await press(page, 'Verdecken & raten');
+	await expectInstant(page);
+	await recordAnimations(page);
+	await press(page, 'Daneben, nächstes Team');
+	expect(await recorded(page)).toEqual([]);
+	await press(page, /^Erraten/);
+	await expect(page.getByTestId('points')).toBeVisible();
+expect(await page.getByTestId('points').textContent()).toBe('+2');
+	await expectInstant(page);
+	await press(page, 'Zum Ergebnis');
+	await expectInstant(page);
+	await expect(page.locator('[data-piece]')).toHaveCount(0);
 });
 
 test('Scenario: Codes session resumes after reload', async ({ page }) => {

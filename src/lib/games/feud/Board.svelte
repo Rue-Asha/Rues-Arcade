@@ -34,7 +34,7 @@
 	const order = $derived(revealed.flatMap((r, i) => (r ? [] : [i])));
 </script>
 
-<ol class="tiles" aria-label="Tafel" style="--rows: {Math.ceil(tiles.length / 2)}">
+<ol class="tiles" aria-label="Tafel" style="--narrow: {Math.ceil(tiles.length / 2)}; --wide: {Math.ceil(tiles.length / 4)}">
 	{#each tiles as t, i (i)}
 		{@const kind = revealed[i] ? 'revealed' : result ? 'muted' : 'hidden'}
 		<li class="tile {kind}" data-tile={i} data-state={kind}>
@@ -70,17 +70,25 @@
 	.tiles {
 		display: grid;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
-		grid-template-rows: repeat(var(--rows), auto);
+		grid-template-rows: repeat(var(--narrow), auto);
 		grid-auto-flow: column;
-		gap: 12px;
+		gap: 8px 12px;
 		margin: 0;
 		padding: 0 0 var(--ledge);
 		list-style: none;
 	}
 
+	/* the stage card shares the first viewport with the header, so the board uses the width the rail leaves free */
+	@media (min-width: 1024px) {
+		.tiles {
+			grid-template-columns: repeat(4, minmax(0, 1fr));
+			grid-template-rows: repeat(var(--wide), auto);
+		}
+	}
+
 	.tile {
 		display: flex;
-		min-height: 60px;
+		min-height: 46px;
 	}
 
 	.face {

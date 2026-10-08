@@ -4,8 +4,8 @@
 TBD - created by archiving change party-games-rebuild. Update Purpose after archive.
 ## Requirements
 ### Requirement: Guided demo
-Each game's start screen (the Demo card in its "Mehr zu <Spiel>" box) and the header during play SHALL offer
-"Demo". Each game SHALL have exactly one demo script, played through the real engine with the game's committed
+Each game's start screen (the Demo card in its "Mehr zu <Spiel>" box) SHALL offer "Demo"; the header during play SHALL
+NOT. Each game SHALL have exactly one demo script, played through the real engine with the game's committed
 fixture and fixed players (Alex, Bo, Cleo, Dani). The script SHALL play more than one round and reach every outcome
 branch the engine has for a normal game: each scoring outcome, each special action that changes the flow (redraw,
 pass, steal, skip, …) and the game end with its "Nochmal spielen" control where the engine has one. Mutually
@@ -31,8 +31,8 @@ at every step. The demo SHALL never touch the session, roster or database, and S
 - **proof:** e2e
 
 #### Scenario: Exiting returns to the starting screen
-- **WHEN** the demo is started from the header during a real game and "Demo beenden" is chosen
-- **THEN** the game screen is shown again with the real session intact
+- **WHEN** a Wavelength session is saved, the demo is started from the Wavelength start screen's Demo card and "Demo beenden" is chosen
+- **THEN** the Wavelength start screen is shown with "Weiterspielen", and the saved session is unchanged
 - **proof:** e2e
 
 #### Scenario: Reload during demo returns to start screen

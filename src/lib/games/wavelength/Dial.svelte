@@ -162,7 +162,7 @@
 		flex-direction: column;
 		gap: 12px;
 		width: 100%;
-		max-width: 560px;
+		max-width: 460px;
 		margin: 0 auto;
 	}
 
@@ -289,6 +289,7 @@
 		padding: 8px 12px;
 		border-radius: var(--radius-sm);
 		background: var(--raised);
+		color: var(--text);
 		font-weight: 700;
 		font-size: 17px;
 		line-height: 1.2;

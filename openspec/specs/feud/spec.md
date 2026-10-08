@@ -525,7 +525,7 @@ round counting double; and, because a tie after the last round is a normal outco
 survey. "Rückgängig" is a correction, not an outcome, and SHALL be named in a tip; the engine has no rematch. Hidden
 survey information SHALL be shown openly with the [Demo] tag. The demo SHALL never touch the database, the roster
 or the played-with history, and SHALL run on an empty database and under reduced motion. The demo SHALL go from the
-third strike straight to the steal board, without the steal's full-screen handoff, because the handoff's "Weiter"
+third strike straight to the steal board, without the steal's Handoff, because the Handoff's "Weiter"
 has no scripted control. In the demo, "Nicht auf der Tafel" SHALL be the highlighted control when the scripted
 face-off answer or steal is a miss, and on a buzzer-team step only the scripted team's button SHALL be highlighted.
 
@@ -590,9 +590,11 @@ face-off answer or steal is a miss, and on a buzzer-team step only the scripted 
 - **proof:** e2e
 
 ### Requirement: Family Feud look, motion and sound
-The board SHALL be ledge tiles showing their rank number while hidden; a versus header SHALL show both team names
-and scores; strike pods SHALL reuse Lives; "Spielen/Passen" and the steal SHALL open with a full-screen handoff in
-the team's colour (the demo excepted, see its requirement). Motion SHALL be: tile flip (rotateX), strike pod pop with a short board shake and an X stamp,
+The board SHALL be ledge tiles showing their rank number while hidden, inside the stage card of the in-game frame
+(design-system "In-game frame"); a versus panel in the rail SHALL show both team names and scores; strike pods SHALL
+reuse Lives; "Spielen/Passen" and the steal SHALL open with the shared Handoff inline in the stage card, in the team's
+colour, with no fixed overlay (the steal's Handoff skipped in the demo, see its requirement). Motion SHALL be: tile
+flip (rotateX), strike pod pop with a short board shake and an X stamp from the shared fault helper,
 pot count-up into the score, staggered reveal of the remaining tiles — transform/opacity only, never blocking
 input, instant under reduced motion. Sounds SHALL use `play()`: reveal on a revealed tile, wrong on a strike or a
 miss, correct when a team banks the pot, win on the winner screen. Copy SHALL be neutral German with no "!" and no
@@ -605,12 +607,12 @@ emoji.
 
 #### Scenario: Feud versus header shows both teams
 - **WHEN** a Family Feud round is on the board
-- **THEN** a header shows both team names with their scores
+- **THEN** the rail shows both team names with their scores
 - **proof:** e2e
 
 #### Scenario: Feud handoff in team colour
 - **WHEN** a face-off is won and later a third strike is given
-- **THEN** each opens a full-screen handoff naming the team that acts next, in that team's colour
+- **THEN** each shows the shared Handoff inside the stage card naming the team that acts next on a band in that team's colour, no fixed overlay exists, and at 1280px the rail stays visible beside it
 - **proof:** e2e
 
 #### Scenario: Feud motion uses transform and opacity only
@@ -624,8 +626,8 @@ emoji.
 - **proof:** e2e
 
 #### Scenario: Feud reduced motion is instant
-- **WHEN** `prefers-reduced-motion: reduce` is set and a tile is revealed, a strike given and a result shown
-- **THEN** no animation is running after each step and the score shows its final value
+- **WHEN** `prefers-reduced-motion: reduce` is set and the question is uncovered, a tile is revealed, a strike given, the choice Handoff, a result and the winner shown
+- **THEN** no finite animation is running after each step, the score and `+N` show their final value, and no winner pieces exist
 - **proof:** e2e
 
 #### Scenario: Feud copy reads neutral

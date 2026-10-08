@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { contrast, textPairs, tokens } from '#lib/ui/tokens.ts';
+import { contrast, motion, textPairs, tokens } from '#lib/ui/tokens.ts';
 
 describe('design tokens', () => {
 	it('listed token pairs meet 4.5:1', () => {
@@ -60,6 +60,27 @@ describe('design tokens', () => {
 			codes: '#9d8cff',
 			duck: '#ff9f43',
 			'most-likely': '#f27bc4'
+		});
+	});
+
+	it('Scenario: Motion tokens in CSS and tokens.ts', () => {
+		const css = readFileSync('src/app.css', 'utf8');
+		const root = css.slice(css.indexOf(':root'));
+		const declared = (name: string, value: string) =>
+			expect(root, `--${name}`).toMatch(new RegExp(`--${name}:\\s*${value.replace(/[().]/g, '\\$&')};`));
+		declared('ease-in', 'cubic-bezier(0.5, 0, 0.75, 0)');
+		declared('ease-pop', 'cubic-bezier(0.34, 1.56, 0.64, 1)');
+		declared('ease-out', 'cubic-bezier(0.22, 1, 0.36, 1)');
+		declared('dur-out', '0.18s');
+		declared('dur-in', '0.42s');
+		declared('dur-hero', '0.56s');
+		expect(motion).toEqual({
+			'ease-in': 'cubic-bezier(0.5, 0, 0.75, 0)',
+			'ease-pop': 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+			'ease-out': 'cubic-bezier(0.22, 1, 0.36, 1)',
+			'dur-out': 180,
+			'dur-in': 420,
+			'dur-hero': 560
 		});
 	});
 });

@@ -1,0 +1,50 @@
+track: feature
+triage: "feature — cross-game polish: play header without Demo, shared pager, in-game redesign within Arcade-Abend, in/out phase motion. 16 S-items, 6 games, no schema. Appetite: 2-3 sessions."
+base: main
+gate0: 2026-10-07
+gate1: 2026-10-07
+gate2: 2026-10-08
+explore_notes:
+  - "2026-10-07 Rue: all four threads stay in one change (no split)"
+  - "2026-10-07 Rue: Demo removed from the play header entirely; Demo only from the start screen card"
+  - "2026-10-07 Rue: shared pager lifted from Feud prep, 6/page phone, 12/page >=1024px, for all content lists (Inhalte, Spieler lists)"
+  - "2026-10-07 Rue: motion stance = every phase/screen change transitions in and out, plus a bit of game-show flair"
+  - "2026-10-07 Rue: redesign consults Mobbin but must blend with the existing Arcade-Abend design"
+  - "2026-10-07 Rue delegated: appetite 2-3 sessions; pager on Gespeicherte Spieler only (roster stays unpaged, capped by player max); adding an entry jumps to page 1, deleting the last entry on a page clamps back one page"
+  - "2026-10-07 Rue (wave 4): Duck Wertung on phone may scroll to Weiter; only that screen on phone is exempt from the primary-action-in-first-viewport check, everything else keeps it"
+  - "2026-10-08 Rue (Gate 2): Feud sudden-death result keeps no +N line; add a spec exception to design-system Round outcome"
+  - "2026-10-08 Rue (Gate 2): one extra fixer round for the round-3 weak tests (reduced-motion final score values in Wavelength/Codes/Most Likely/Duck, transition tap timing, fault shake direction) before ship"
+  - "2026-10-08 Rue (Gate 2): approved and ship per ship_note; no learnings vetoed"
+learnings:
+  - "planner: scenarios for shared components with no consumer before later waves were written as one design-system scenario each whose proof lines name per-game tests (friction, arcade-polish planner)"
+  - "Gate 1: games without a round count (Duck) still want a progress line — Rue chose leading score / target over no line"
+  - "U3 friction: Svelte 5.57 transition internals (branch resume of a leaving {#key} branch keeps outro marks; detaching an outgoing node by hand breaks the anchor) took several rounds — fresh internal key per change + finish() the outgoing animations"
+  - "U3 friction: a taller play header pushed the demo's last button under the fixed CoachTip on phone — header height changes need the demo tap-through e2e"
+  - "U4 friction: an {#if} block on its own line in Scoreboard rows added a whitespace text node and broke an existing /2$/ text match"
+  - "U5 friction: Button.svelte is white-space: nowrap, so a long name in '<Name> ist bereit' overflowed phone width; patched locally in Imposter Screen, a shared Button fix would cover all games"
+  - "U5 friction: frame.test.ts 'Phase change fades out and rises in' (desktop) failed 3/5 reruns under parallel load from other units' proof runs"
+  - "U6 friction: wave-3 game units each hit shared-component checks (expectFrame flags right-aligned Scoreboard .pts, countUp showed +-0 from an early rAF timestamp, look.test.ts selector on .reveal) and U6 fixed them outside its file list; shared fixes surfaced by a new frame check belong in the contract unit"
+  - "U6 friction: frame.test.ts and demo.test.ts timing flakes under three parallel proof:full runs (237ms vs 220ms budget)"
+  - "U7 friction: HoldToView exposes no held state, so Reveal's covered-to-reveal swap cannot be driven by it; an onhold prop would help units that need a covered card"
+  - "Wave 3 merge: U6 and U7 both edited Scoreboard .pts for the same expectFrame check, differently (orchestrator kept U7's flex end-alignment); a shared-component fix a new check forces should be pre-assigned to one unit"
+  - "U8 friction: Duck Wertung on phone cannot fit Weiter in the first viewport (4 cards x 44px controls ~850px); planner set a frame rule without checking the tallest game screen against it"
+  - "U8 wrote scenario tests and code in one pass (never saw red) despite the brief saying red first"
+  - "U8/U9: shared Scoreboard ranks by position, so ties now show 1,2 (ML) and consecutive ranks (Duck) instead of shared ranks; Duck game over dropped the best/target figure"
+  - "U10 friction: a leftover finished stage from the previous phase sits first in the DOM, so unscoped querySelector in e2e hits an inert node; scope to [data-stage]:not([data-leaving]) / live(page)"
+  - "U10 friction: phone first-viewport fit with a ~230px play header cost most of the unit (peek moved to the rail, layout trimmed); band() in motion.ts animates transform-origin, which a strict transform/opacity-only check trips"
+  - "Verify r1: builders edited existing test expectations to match a shared component (Scoreboard rank = position) against a current spec (duck: tied players share rank 3); briefs should say a shared-component behaviour that breaks an unchanged scenario is blocked, not a test edit"
+  - "Verify r1: local main was stale (missing PR #16); diff base for reviewer/verifier should be origin/main after a fetch"
+ship_note: "2026-10-07 Rue: PR creation approved as soon as testing (Verify) is over; afterwards release v0.5.0 like 0.4.0 (chore bump: package.json, lockfile, release spec 'Version 0.5.0', scripts/version.test.ts), then push tag v0.5.0 on merged main"
+learnings_gate2:
+  repo:
+    - "new: e2e locators scope to the live stage ([data-stage]:not([data-leaving]) / live(page)); the previous phase's node lingers first in the DOM"
+    - "new: Stage out/in in Svelte 5.57 → fresh internal key per change + finish() outgoing animations; resuming a leaving {#key} branch keeps outro marks"
+    - "new: new game screens → measure each phase's primary-action bottom on phone (header ~230px) before layouting; first-viewport fit cost U8 and U10 most of their time"
+    - "update: Long demo tap-throughs entry → header height changes also need the demo tap-through e2e (CoachTip covered last button)"
+    - "update: proof:full from an agent entry → parallel proof:full runs make frame/demo/players timing tests flake; rerun alone before chasing"
+  flow:
+    - "new: reviewer/verifier diff base → origin/main after fetch, not local main (stale main pulled PR #16 into the review)"
+    - "new: appending learning candidates to flow.yaml → insert under learnings:, then yaml-parse; an append after ship_note crashed flow-status"
+    - "new: flow-unit drop with the primary checkout on another branch → branch -d fails; check merge-base --is-ancestor against flow/<change>, then -D"
+    - "update: Planning units / parallel units entry → a shared-component fix forced by a new contract check goes to one assigned unit; a shared behaviour that breaks an unchanged scenario is blocked, not a test edit (U6/U7 Scoreboard collision, tie ranks)"
+    - "update: Builder/fixer red-first entry → recurred in U8 and some fixer tests (never saw red)"

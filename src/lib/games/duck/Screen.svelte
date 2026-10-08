@@ -1,24 +1,36 @@
 <script lang="ts">
 	import { getDemo } from '#lib/demo/context.ts';
 	import type { ScreenProps } from '#lib/games/registry.ts';
-	import { pulse } from '#lib/motion.ts';
+	import { fault } from '#lib/motion.ts';
 	import { play } from '#lib/sound.ts';
 	import Button from '#lib/ui/Button.svelte';
-	import Card from '#lib/ui/Card.svelte';
+		import GameFrame from '#lib/ui/GameFrame.svelte';
 	import Modal from '#lib/ui/Modal.svelte';
+	import Reveal from '#lib/ui/Reveal.svelte';
+	import Scoreboard from '#lib/ui/Scoreboard.svelte';
+	import Winner from '#lib/ui/Winner.svelte';
 	import { demo as script } from './demo.ts';
-	import { checkWin, LETTERS, rankOf, type DuckAction, type DuckState } from './engine.ts';
+	import { checkWin, LETTERS, type DuckAction, type DuckState } from './engine.ts';
 
 	let { state: game, dispatch }: ScreenProps = $props();
 
 	const s = $derived(game as DuckState);
 	const chuck = $derived(s.players[s.chuck].name);
-	const ranked = $derived(
-		s.players.map((p, i) => ({ p, i, score: s.scores[i], lives: s.lives[i], rank: rankOf(s.scores, i) })).sort((a, b) => b.score - a.score)
+	const over = $derived(s.phase === 'gameOver');
+	const rows = $derived(
+		s.players.map((p, i) => ({
+			name: p.name,
+			score: s.scores[i],
+			before: s.phase === 'standings' || over ? s.baseScores[i] : undefined,
+			lead: over && s.winners.includes(i),
+			acting: !over && i === s.chuck
+		}))
 	);
-	const rest = $derived(ranked.filter((r) => !s.winners.includes(r.i)));
 
 	let skipping = $state(false);
+
+	const livesOf = (name: string) => s.lives[s.players.findIndex((p) => p.name === name)];
+	const isChuck = (name: string) => !over && s.players[s.chuck].name === name;
 
 	// the point boxes and letters aren't Buttons: in the demo only the one the script names may be tapped
 	const demo = $derived(getDemo());
@@ -53,8 +65,13 @@
 		act({ type: 'score', player, box });
 	}
 
-	function letter(player: number, letter: number) {
-		play(letter < s.lives[player] ? 'wrong' : 'press');
+	function letter(e: MouseEvent, player: number, letter: number) {
+		const lose = letter < s.lives[player];
+		play(lose ? 'wrong' : 'press');
+		if (lose) {
+			const card = (e.currentTarget as HTMLElement).closest<HTMLElement>('li')!;
+			fault(card, card.querySelector<HTMLElement>('[data-testid="stamp"]') ?? undefined);
+		}
 		act({ type: 'letter', player, letter });
 	}
 
@@ -82,33 +99,60 @@
 	</span>
 {/snippet}
 
-{#snippet board(rows: typeof ranked, label: string)}
-	<ol class="board" aria-label={label}>
-		{#each rows as r (r.p.id)}
-			<li class:chuck={s.phase === 'standings' && r.i === s.chuck}>
-				<span class="rank">{r.rank}</span>
-				<span class="who">{r.p.name}</span>
-				{#if s.phase === 'standings' && r.i === s.chuck}<span class="tag">Chuck</span>{/if}
-				{@render letters(r.lives)}
-				<span class="pts data">{r.score}</span>
-			</li>
-		{/each}
-	</ol>
+{#snippet standing(row: { name: string })}
+	<div class="standing">
+		{@render letters(livesOf(row.name))}
+		{#if isChuck(row.name)}<span class="tag">{@render duck(18, 'var(--ink)')} Chuck</span>{/if}
+	</div>
 {/snippet}
 
-{#if s.phase === 'scoring'}
-	<div class="stack">
-		<header class="panel head">
-			<div class="stack tight">
-				<p class="label">Wort</p>
+<GameFrame>
+	{#snippet hero()}
+		{#if s.phase === 'reveal'}
+			<Reveal shown={s.shown}>
+				{#snippet covered()}
+					<p class="label">Neues Wort</p>
+					<h2>Bereit?</h2>
+					<p class="muted">Deckt das Wort für alle gleichzeitig auf. Dann sucht jede Person still einen Reim darauf.</p>
+				{/snippet}
+				<p class="label">Das Wort lautet</p>
+				<p class="reveal-word" data-testid="word">{s.word.a}</p>
+			</Reveal>
+		{:else if s.phase === 'scoring'}
+			<div class="wordline">
 				<h2 class="word">{s.word.a}</h2>
+				<div class="chips">
+					<span class="chip on">{@render duck(22)} Chuck: {chuck}</span>
+					<span class="chip">Ziel: {s.target} Punkte</span>
+				</div>
 			</div>
-			<div class="row chips">
-				<span class="chip on">{@render duck(22)} Chuck: {chuck}</span>
-				<span class="chip">Ziel: {s.target} Punkte</span>
+		{:else if s.phase === 'standings'}
+			<div class="stack tight next">
+				{@render duck(56)}
+				<p class="label">Punktestand</p>
+				<p class="nextline">Als Nächstes bekommt <strong>{chuck}</strong> Chuck the Duck.</p>
 			</div>
-		</header>
+		{:else}
+			<Winner
+				names={s.winners.map((i) => s.players[i].name)}
+				label={s.winners.length > 1 ? undefined : 'Gewinner'}
+				note={s.endReason === 'target' ? `Zielpunktzahl von ${s.target} erreicht.` : 'Ein Spieler hat alle Leben (DUCKY) verloren.'}
+				colour="duck"
+			/>
+		{/if}
+	{/snippet}
 
+	{#if s.phase === 'reveal'}
+		<div class="banner">
+			{@render duck(56)}
+			<div class="stack tight">
+				<p class="label">Chuck the Duck</p>
+				<h2 class="holder">{chuck}</h2>
+				<p>Ein Reim-Match mit {chuck} bringt +2 Extrapunkte.</p>
+				<p class="muted">Ziel: {s.target} Punkte</p>
+			</div>
+		</div>
+	{:else if s.phase === 'scoring'}
 		<ul class="cards" aria-label="Wertung">
 			{#each s.players as p, i (p.id)}
 				<li class="pcard" class:chuck={i === s.chuck} aria-label={p.name}>
@@ -129,7 +173,7 @@
 								disabled={j >= s.baseLives[i] || c === 'blocked'}
 								data-demo={c === 'expected' ? 'expected' : undefined}
 								aria-pressed={lost}
-								onclick={() => letter(i, j)}
+								onclick={(e) => letter(e, i, j)}
 							>
 								{#if lost}<s>{l}</s>{:else}{l}{/if}
 							</button>
@@ -152,113 +196,44 @@
 							></button>
 						{/each}
 					</div>
+					<div class="stamp" data-testid="stamp" aria-hidden="true">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"></path></svg>
+					</div>
 				</li>
 			{/each}
 		</ul>
+	{:else if s.phase === 'standings'}
+		<h2 class="label">So wird gewertet</h2>
+		<ul class="rules">
+			<li>Genau eine andere Person mit demselben Reim: 3 Punkte.</li>
+			<li>Mehrere Personen mit demselben Reim: je 1 Punkt.</li>
+			<li>Ein Match mit Chuck the Duck: 2 Punkte extra.</li>
+			<li>Kein Reim: ein Buchstabe von DUCKY ist weg.</li>
+		</ul>
+		<p class="muted">Ziel: {s.target} Punkte</p>
+	{/if}
 
-		<div class="row">
-			<Button variant="primary" action="commit" onclick={commit}>Weiter</Button>
-		</div>
-	</div>
-{:else}
-	<div class="split">
-		<section class="stack" aria-live="polite">
-			{#if s.phase === 'reveal'}
-				<div class="banner">
-					{@render duck(56)}
-					<div class="stack tight">
-						<p class="label">Chuck the Duck</p>
-						<h2 class="holder">{chuck}</h2>
-						<p>Ein Reim-Match mit {chuck} bringt +2 Extrapunkte.</p>
-					</div>
-				</div>
-				{#if !s.shown}
-					<Card tone="duck_words">
-						<p class="label">Neues Wort</p>
-						<h2>Bereit?</h2>
-						<p class="muted">Deckt das Wort für alle gleichzeitig auf. Dann sucht jede Person still einen Reim darauf.</p>
-						<div class="row">
-							<Button variant="primary" action="show" onclick={reveal}>Wort aufdecken</Button>
-							<Button variant="secondary" action="skip" onclick={askSkip}>Überspringen</Button>
-						</div>
-					</Card>
-				{:else}
-					<div class="reveal" use:pulse>
-						<p class="label">Das Wort lautet</p>
-						<p class="reveal-word" data-testid="word">{s.word.a}</p>
-					</div>
-					<div class="row">
-						<Button variant="primary" action="play" onclick={() => act({ type: 'play' })}>Wort spielen</Button>
-						<Button variant="secondary" action="skip" onclick={askSkip}>Überspringen</Button>
-					</div>
-				{/if}
-			{:else if s.phase === 'standings'}
-				<section class="panel stack" aria-labelledby="standings">
-					<h2 id="standings" class="label">Punktestand</h2>
-					{@render board(ranked, 'Punktestand')}
-				</section>
-				<p class="next">Als Nächstes bekommt <strong>{chuck}</strong> Chuck the Duck.</p>
-				<div class="row">
-					<Button variant="primary" action="next" onclick={() => act({ type: 'next' })}>Nächstes Wort</Button>
-				</div>
+	{#snippet actions()}
+		{#if s.phase === 'reveal'}
+			{#if !s.shown}
+				<Button variant="primary" action="show" onclick={reveal}>Wort aufdecken</Button>
 			{:else}
-				{@const best = s.scores[s.winners[0]]}
-				<div class="reveal" use:pulse>
-					<p class="label">{s.winners.length > 1 ? 'Unentschieden' : 'Gewinner'}</p>
-					<h2 class="reveal-word winner">{s.winners.map((i) => s.players[i].name).join(' & ')}</h2>
-					<p class="total data">{best}/{s.target}</p>
-					<p>
-						{#if s.endReason === 'target'}
-							Zielpunktzahl von {s.target} erreicht.
-						{:else}
-							Ein Spieler hat alle Leben (DUCKY) verloren.
-						{/if}
-					</p>
-				</div>
-				<div class="row">
-					<Button variant="primary" action="restart" onclick={() => act({ type: 'restart' })}>Neue Runde</Button>
-				</div>
+				<Button variant="primary" action="play" onclick={() => act({ type: 'play' })}>Wort spielen</Button>
 			{/if}
-		</section>
+			<Button variant="secondary" action="skip" onclick={askSkip}>Überspringen</Button>
+		{:else if s.phase === 'scoring'}
+			<Button variant="primary" action="commit" onclick={commit}>Weiter</Button>
+		{:else if s.phase === 'standings'}
+			<Button variant="primary" action="next" onclick={() => act({ type: 'next' })}>Nächstes Wort</Button>
+		{:else}
+			<Button variant="primary" action="restart" onclick={() => act({ type: 'restart' })}>Neue Runde</Button>
+		{/if}
+	{/snippet}
 
-		<aside class="stack">
-			{#if s.phase === 'reveal'}
-				<section class="panel stack" aria-labelledby="score">
-					<div class="head">
-						<h2 id="score" class="label">Spielstand</h2>
-						<span class="muted">Ziel: {s.target} Punkte</span>
-					</div>
-					<ol class="board" aria-label="Spielstand">
-						{#each s.players as p, i (p.id)}
-							<li class:chuck={i === s.chuck}>
-								<span class="who">{p.name}</span>
-								{#if i === s.chuck}<span class="tag">Chuck</span>{/if}
-								{@render letters(s.lives[i])}
-								<span class="pts data">{s.scores[i]}</span>
-							</li>
-						{/each}
-					</ol>
-				</section>
-			{:else if s.phase === 'standings'}
-				<section class="panel stack" aria-labelledby="rules">
-					<h2 id="rules" class="label">So wird gewertet</h2>
-					<ul class="rules">
-						<li>Genau eine andere Person mit demselben Reim: 3 Punkte.</li>
-						<li>Mehrere Personen mit demselben Reim: je 1 Punkt.</li>
-						<li>Ein Match mit Chuck the Duck: 2 Punkte extra.</li>
-						<li>Kein Reim: ein Buchstabe von DUCKY ist weg.</li>
-					</ul>
-					<p class="muted">Ziel: {s.target} Punkte</p>
-				</section>
-			{:else if rest.length}
-				<section class="panel stack" aria-labelledby="ranking">
-					<h2 id="ranking" class="label">Rangliste</h2>
-					{@render board(rest, 'Rangliste')}
-				</section>
-			{/if}
-		</aside>
-	</div>
-{/if}
+	{#snippet rail()}
+		<Scoreboard {rows} detail={standing} />
+	{/snippet}
+</GameFrame>
 
 <Modal open={skipping} title="Wort überspringen?" onclose={() => (skipping = false)}>
 	<p class="muted">Das aktuelle Wort wird verworfen und durch ein neues ersetzt. Chuck the Duck bleibt bei {chuck}.</p>
@@ -273,7 +248,7 @@
 		color: var(--duck);
 	}
 
-	.reveal .label {
+	:global([data-testid='reveal']) .label {
 		color: inherit;
 	}
 
@@ -283,6 +258,14 @@
 
 	.duck {
 		flex: none;
+	}
+
+	.next {
+		align-items: center;
+	}
+
+	.nextline strong {
+		color: var(--duck);
 	}
 
 	.banner {
@@ -303,25 +286,24 @@
 		overflow-wrap: anywhere;
 	}
 
-	.winner {
-		font-size: clamp(40px, 11vw, 84px);
-	}
-
-	.reveal .total {
-		font-size: 18px;
-	}
-
-	.head {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		justify-content: space-between;
-		gap: 12px 16px;
-	}
-
 	.word {
 		font-size: clamp(30px, 7vw, 44px);
 		overflow-wrap: anywhere;
+	}
+
+	.wordline {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: center;
+		gap: 8px 20px;
+	}
+
+	.chips {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		gap: 8px;
 	}
 
 	.chip {
@@ -351,12 +333,13 @@
 	}
 
 	.pcard {
+		position: relative;
 		display: flex;
 		flex-direction: column;
-		gap: 12px;
-		padding: 14px;
+		gap: 8px;
+		padding: 10px 12px;
 		border-radius: var(--radius-lg);
-		background: var(--surface);
+		background: var(--raised);
 		box-shadow: 0 var(--ledge) 0 var(--shadow);
 	}
 
@@ -365,6 +348,22 @@
 		box-shadow:
 			inset 0 0 0 2px var(--duck),
 			0 var(--ledge) 0 var(--duck-ledge);
+	}
+
+	.stamp {
+		position: absolute;
+		inset: 0;
+		display: grid;
+		place-items: center;
+		color: var(--imposter);
+		opacity: 0;
+		pointer-events: none;
+	}
+
+	.stamp svg {
+		width: 40%;
+		height: auto;
+		filter: drop-shadow(0 4px 0 var(--shadow));
 	}
 
 	.top {
@@ -416,7 +415,7 @@
 		min-height: 44px;
 		border: 1px solid var(--line);
 		border-radius: var(--radius-sm);
-		background: var(--raised);
+		background: var(--surface);
 		box-shadow: 0 3px 0 var(--shadow);
 		cursor: pointer;
 		user-select: none;
@@ -434,7 +433,7 @@
 
 	.letter.lost {
 		color: var(--muted);
-		background: var(--surface);
+		background: var(--raised);
 	}
 
 	.letter s,
@@ -486,41 +485,10 @@
 		outline-offset: 3px;
 	}
 
-	.board {
-		display: flex;
-		flex-direction: column;
-		gap: 8px;
-		margin: 0;
-		padding: 0;
-		list-style: none;
-	}
-
-	.board li {
+	.standing {
 		display: flex;
 		align-items: center;
 		gap: 10px;
-		min-height: 46px;
-		padding: 0 12px;
-		border-radius: var(--radius-sm);
-		background: var(--raised);
-	}
-
-	.board li.chuck {
-		box-shadow: inset 3px 0 0 var(--duck);
-	}
-
-	.rank {
-		width: 20px;
-		flex: none;
-		font-weight: 800;
-		font-variant-numeric: tabular-nums;
-	}
-
-	.who {
-		flex: 1;
-		min-width: 0;
-		font-weight: 700;
-		overflow-wrap: anywhere;
 	}
 
 	.letters {
@@ -534,17 +502,6 @@
 
 	.letters s {
 		color: var(--muted);
-	}
-
-	.pts {
-		min-width: 40px;
-		flex: none;
-		font-size: 13px;
-		text-align: right;
-	}
-
-	.next strong {
-		color: var(--duck);
 	}
 
 	.rules {

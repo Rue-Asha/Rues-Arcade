@@ -4,11 +4,14 @@
 	import { board } from '#lib/content/survey.ts';
 	import type { Survey } from '#lib/content/types.ts';
 	import type { Player } from '#lib/engine/types.ts';
+	import { rise } from '#lib/motion.ts';
 	import { savedId } from '#lib/players.ts';
 	import { roster } from '#lib/roster.svelte.ts';
 	import Button from '#lib/ui/Button.svelte';
+	import Pager from '#lib/ui/Pager.svelte';
+	import { PAGE, pageItems } from '#lib/ui/pager.ts';
 	import type { FeudConfig, FeudTeam } from './engine.ts';
-	import { clampPage, drawTiebreak, fill, pageCount, pageItems, rows, sortRows, type Played, type Sort } from './prep.ts';
+	import { drawTiebreak, fill, rows, sortRows, type Played, type Sort } from './prep.ts';
 
 	interface Props {
 		teams: FeudTeam[];
@@ -28,7 +31,7 @@
 	let slots = $state<(number | null)[]>(untrack(() => Array.from({ length: rounds }, () => null)));
 	let open = $state<number[]>([]);
 	let page = $state(0);
-	const wide = new MediaQuery('(min-width: 1024px)');
+	const wide = new MediaQuery(PAGE.query);
 	let notice = $state('');
 
 	onMount(async () => {
@@ -38,9 +41,7 @@
 
 	const table = $derived(rows(surveys, played, saved));
 	const list = $derived(sortRows(table, sort));
-	const size = $derived(wide.current ? 12 : 6);
-	const pages = $derived(pageCount(list.length, size));
-	const current = $derived(clampPage(page, list.length, size));
+	const size = $derived(wide.current ? PAGE.wide : PAGE.narrow);
 	const shown = $derived(pageItems(list, page, size));
 	const byId = $derived(new Map(surveys.map((s) => [s.id, s])));
 	const full = $derived(slots.every((s) => s !== null));
@@ -143,7 +144,8 @@
 				<button type="button" class="opt" aria-pressed={sort === 'played'} onclick={() => sortBy('played')}>Gespielt</button>
 			</div>
 		</div>
-		<ul class="list" aria-label="Alle Umfragen">
+		{#key page}
+		<ul class="list" aria-label="Alle Umfragen" in:rise>
 			{#each shown as { survey, k, played: x } (survey.id)}
 				{@const chosen = slots.includes(survey.id)}
 				{@const on = listOf(survey.id)}
@@ -195,13 +197,8 @@
 				</li>
 			{/each}
 		</ul>
-		{#if pages > 1}
-			<nav class="pager" aria-label="Seiten">
-				<Button variant="secondary" size="sm" disabled={current === 0} onclick={() => (page = current - 1)}>Zurück</Button>
-				<span class="muted">Seite {current + 1} von {pages}</span>
-				<Button variant="secondary" size="sm" disabled={current === pages - 1} onclick={() => (page = current + 1)}>Weiter</Button>
-			</nav>
-		{/if}
+		{/key}
+		<Pager bind:page total={list.length} {size} />
 	</section>
 
 	<div class="row">
@@ -389,13 +386,6 @@
 		gap: 12px;
 		padding: 6px 0;
 		border-bottom: 1px solid var(--line);
-	}
-
-	.pager {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		gap: 16px;
 	}
 
 	.hint {

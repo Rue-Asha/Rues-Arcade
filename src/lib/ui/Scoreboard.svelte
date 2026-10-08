@@ -1,19 +1,40 @@
 <script lang="ts">
-	import { countUp } from '#lib/motion.ts';
+	import type { Snippet } from 'svelte';
+	import { onMount } from 'svelte';
+	import { flip } from 'svelte/animate';
+	import { countUp, outCurve, reducedMotion } from '#lib/motion.ts';
+	import { moved, places, ranked, type ScoreRow } from './scoreboard.ts';
+	import { motion } from './tokens.ts';
 
 	interface Props {
-		rows: { name: string; score: number; lead?: boolean }[];
+		rows: ScoreRow[];
+		detail?: Snippet<[ScoreRow]>;
 	}
 
-	let { rows }: Props = $props();
+	let { rows, detail }: Props = $props();
+
+	let settled = $state(reducedMotion());
+	const order = $derived(settled ? ranked(rows) : ranked(rows, (r) => r.before ?? r.score));
+	const shifted = $derived(
+		moved(
+			ranked(rows, (r) => r.before ?? r.score).map((r) => r.name),
+			ranked(rows).map((r) => r.name)
+		)
+	);
+	const place = $derived(places(order.map((r) => (settled ? r.score : (r.before ?? r.score)))));
+
+	onMount(() => {
+		const frame = requestAnimationFrame(() => (settled = true));
+		return () => cancelAnimationFrame(frame);
+	});
 </script>
 
 <section class="board" aria-label="Punktestand">
 	<h2 class="label">Punktestand</h2>
 	<ol class="rows rise">
-		{#each rows as row, i (row.name)}
-			<li class="row" class:lead={row.lead}>
-				<span class="rank">{i + 1}</span>
+		{#each order as row, i (row.name)}
+			<li class="row" class:lead={row.lead} data-acting={row.acting ? '' : undefined} animate:flip={{ duration: reducedMotion() || !shifted.includes(row.name) ? 0 : motion['dur-in'], easing: outCurve }}>
+				<span class="rank">{place[i]}</span>
 				<span class="who">
 					{row.name}
 					{#if row.lead}
@@ -22,7 +43,7 @@
 						</span>
 					{/if}
 				</span>
-				<span class="pts data" use:countUp={row.score}></span>
+				<span class="pts data" use:countUp={row.score}></span>{#if detail}<div class="detail">{@render detail(row)}</div>{/if}
 			</li>
 		{/each}
 	</ol>
@@ -49,13 +70,31 @@
 	}
 
 	.row {
+		position: relative;
 		display: flex;
+		flex-wrap: wrap;
 		align-items: center;
 		gap: 12px;
 		min-height: 46px;
 		padding: 0 14px;
 		border-radius: var(--radius-sm);
 		background: var(--raised);
+	}
+
+	.row[data-acting]::before {
+		content: '';
+		position: absolute;
+		left: 0;
+		top: 8px;
+		bottom: 8px;
+		width: 5px;
+		border-radius: 0 3px 3px 0;
+		background: var(--c, var(--gold));
+	}
+
+	.detail {
+		flex: 1 0 100%;
+		padding-bottom: 10px;
 	}
 
 	.rank {
@@ -77,9 +116,10 @@
 	}
 
 	.pts {
+		display: flex;
+		justify-content: flex-end;
 		min-width: 64px;
 		font-size: 13px;
-		text-align: right;
 		font-variant-numeric: tabular-nums;
 	}
 
