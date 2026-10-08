@@ -43,7 +43,8 @@ desktop (≥1024px), "So geht's" SHALL follow it on phone and fill the left colu
 box "Mehr zu <Spiel>" SHALL hold two cards, Demo and Inhalte, each a link with a one-line description. The Demo
 card SHALL be the way to learn the game, and its line SHALL say so. There SHALL be no Erklärung card and no
 `/spiele/<slug>/erklaerung` route; an old link to it gets the normal unknown-route 404, with no redirect. All games
-SHALL use the same layout. The play header (Demo, Spiel beenden) is unchanged.
+SHALL use the same layout. The Demo card SHALL be the only way into a game's demo; the play header offers no Demo
+(game-engine "Play header").
 
 #### Scenario: Start banner carries title, badge and player range
 - **WHEN** the Imposter start screen is opened

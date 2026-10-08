@@ -202,10 +202,11 @@ neutral hint and still allow the start.
 
 ### Requirement: Most Likely turns
 At game start the opening team SHALL be drawn from the RNG. Round r SHALL open with team (opener + r) mod n and the
-other teams SHALL follow in team order, one turn each (archive rule). Each turn SHALL show "<Team> ist dran", the
-team's player names, the prompt, "Runde r / R", the team's position in the round ("Team k / n"), and the hint that the
-team members count to three and point at the same moment at the person who fits best. "Alle haben gezeigt" SHALL
-open the count.
+other teams SHALL follow in team order, one turn each (archive rule). Each turn SHALL open with the shared Handoff
+"<Team> ist dran" and show the team's player names, the prompt, and the hint that the team members count to three and
+point at the same moment at the person who fits best; the play header status SHALL read "Runde r / R · Team k / n",
+the team's position in the round (game-engine "Round status in the play header"). "Alle haben gezeigt" SHALL open the
+count.
 
 #### Scenario: Most Likely opener comes from the RNG
 - **WHEN** Most Likely To is initialised with 3 teams under several seeds
@@ -219,7 +220,7 @@ open the count.
 
 #### Scenario: Most Likely turn screen names the team
 - **WHEN** a Most Likely To game with teams Alex & Bo and Cleo & Dani starts
-- **THEN** the turn shows "<opening team> ist dran", that team's player names, the prompt, "Runde 1 / 5", "Team 1 / 2" and the hint "Zählt bis drei und zeigt gleichzeitig auf die Person, die am besten passt."
+- **THEN** the Handoff reads "<opening team> ist dran", the stage shows that team's player names, the prompt and the hint "Zählt bis drei und zeigt gleichzeitig auf die Person, die am besten passt.", and the header status reads "Runde 1 / 5 · Team 1 / 2"
 - **proof:** e2e
 
 ### Requirement: Most Likely scoring
