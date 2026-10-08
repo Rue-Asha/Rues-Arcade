@@ -554,21 +554,25 @@ test.describe('reduced motion', () => {
 
 	test('Scenario: Wavelength reduced motion is instant', async ({ page }) => {
 		const click = (name: string) => live(page).getByRole('button', { name, exact: true }).evaluate((b: HTMLElement) => b.click());
-		await seedPhase(page, { phase: 'prep', teamIndex: 1 });
+		await seedPhase(page, { phase: 'prep', teamIndex: 1, scores: [1, 0] });
 		await settled(page);
 		await click('Ziel anzeigen');
 		await expectInstant(page);
 		await expect(live(page).getByRole('button', { name: 'Verdecken & Hinweis geben' })).toBeVisible();
 		await click('Verdecken & Hinweis geben');
 		await expectInstant(page);
+		const dial = live(page).getByRole('slider', { name: 'Zeiger' });
+		await dial.focus();
+		for (let i = 0; i < 30; i++) await dial.press('ArrowLeft');
+		await expect(dial).toHaveAttribute('aria-valuenow', '60');
 		await click('Einloggen');
 		await expectInstant(page);
-		await expect(live(page).getByTestId('points')).toHaveText(/^\+\d$/);
-		const points = (await live(page).getByTestId('points').textContent())!.trim();
+		await expect(live(page).getByTestId('points')).toHaveText('+4', { timeout: 500 });
 		const state = await page.evaluate(() => JSON.parse(localStorage.getItem('arcade:session:wavelength')!).state);
-		expect(points).toBe(`+${state.lastScore}`);
-		const rows = await seen(page).locator('.pts').allTextContents();
-		expect(rows.map((r) => r.trim())).toEqual(state.teams.map((t: { score: number }) => String(t.score)));
+		expect(state.lastScore).toBe(4);
+		const sorted = state.teams.map((t: { score: number }) => t.score).sort((a: number, b: number) => b - a);
+		expect(sorted).toEqual([4, 1]);
+		await expect(seen(page).locator('.pts')).toHaveText(sorted.map(String), { timeout: 500 });
 		await click('Zum Endstand');
 		await expectInstant(page);
 		await expect(page.locator('[data-piece]')).toHaveCount(0);

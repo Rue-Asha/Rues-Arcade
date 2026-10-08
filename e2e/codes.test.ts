@@ -288,7 +288,7 @@ test('Scenario: Scoreboard marks the acting team', async ({ page }) => {
 // records every Element.animate call so a short shake can't be missed between click and look
 async function recordAnimations(page: Page) {
 	await page.evaluate(() => {
-		const w = window as unknown as { __anims: { tag: string; keys: string[]; iterations: number; duration: number; stage: boolean }[] };
+		const w = window as unknown as { __anims: { tag: string; keys: string[]; transforms: string[]; iterations: number; duration: number; stage: boolean }[] };
 		w.__anims = [];
 		const own = Element.prototype.animate;
 		Element.prototype.animate = function (this: Element, frames, options) {
@@ -297,6 +297,7 @@ async function recordAnimations(page: Page) {
 			w.__anims.push({
 				tag: this.getAttribute('data-testid') ?? this.getAttribute('data-frame') ?? this.tagName,
 				keys: [...new Set(list.flatMap((k) => Object.keys(k)))].filter((k) => k !== 'offset'),
+				transforms: list.map((k) => String(k.transform ?? '')).filter(Boolean),
 				iterations: timing.iterations ?? 1,
 				duration: Number(timing.duration),
 				stage: this.matches('[data-frame="stage"]')
@@ -307,7 +308,7 @@ async function recordAnimations(page: Page) {
 }
 
 const recorded = (page: Page) =>
-	page.evaluate(() => (window as unknown as { __anims: { tag: string; keys: string[]; iterations: number; duration: number; stage: boolean }[] }).__anims);
+	page.evaluate(() => (window as unknown as { __anims: { tag: string; keys: string[]; transforms: string[]; iterations: number; duration: number; stage: boolean }[] }).__anims);
 
 test('Scenario: Codes Daneben plays the fault motion', async ({ page }) => {
 	await play(page, 1);
@@ -319,6 +320,9 @@ test('Scenario: Codes Daneben plays the fault motion', async ({ page }) => {
 	const seen = await recorded(page);
 	const shake = seen.find((a) => a.stage);
 	expect(shake?.keys).toEqual(['transform']);
+	expect(shake?.transforms.every((t) => /^translateX\(-?[\d.]+(px)?\)$/.test(t))).toBe(true);
+	const offsets = shake!.transforms.map((t) => parseFloat(t.slice(11)));
+	expect(offsets.some((x) => x < 0) && offsets.some((x) => x > 0)).toBe(true);
 	expect(shake?.iterations).toBe(1);
 	expect(Number.isFinite(shake?.duration)).toBe(true);
 	const stamp = seen.find((a) => a.tag === 'stamp');
@@ -396,8 +400,9 @@ test('Scenario: Codes reduced motion is instant', async ({ page }) => {
 	await press(page, 'Daneben, nächstes Team');
 	expect(await recorded(page)).toEqual([]);
 	await press(page, /^Erraten/);
+	await expect(page.getByTestId('points')).toBeVisible();
+expect(await page.getByTestId('points').textContent()).toBe('+2');
 	await expectInstant(page);
-	await expect(page.getByTestId('points')).toHaveText('+2');
 	await press(page, 'Zum Ergebnis');
 	await expectInstant(page);
 	await expect(page.locator('[data-piece]')).toHaveCount(0);

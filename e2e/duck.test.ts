@@ -269,7 +269,7 @@ test('Scenario: Duck word uses the Reveal', async ({ page }) => {
 
 async function recordAnimations(page: Page) {
 	await page.evaluate(() => {
-		const w = window as unknown as { __anims: { tag: string; keys: string[]; iterations: number; duration: number; card: boolean }[] };
+		const w = window as unknown as { __anims: { tag: string; keys: string[]; transforms: string[]; iterations: number; duration: number; card: boolean }[] };
 		w.__anims = [];
 		const own = Element.prototype.animate;
 		Element.prototype.animate = function (this: Element, frames, options) {
@@ -278,6 +278,7 @@ async function recordAnimations(page: Page) {
 			w.__anims.push({
 				tag: this.getAttribute('data-testid') ?? this.tagName,
 				keys: [...new Set(list.flatMap((k) => Object.keys(k)))].filter((k) => k !== 'offset'),
+				transforms: list.map((k) => String(k.transform ?? '')).filter(Boolean),
 				iterations: timing.iterations ?? 1,
 				duration: Number(timing.duration),
 				card: this.matches('[aria-label="Wertung"] > li')
@@ -289,7 +290,7 @@ async function recordAnimations(page: Page) {
 
 const recorded = (page: Page) =>
 	page.evaluate(
-		() => (window as unknown as { __anims: { tag: string; keys: string[]; iterations: number; duration: number; card: boolean }[] }).__anims
+		() => (window as unknown as { __anims: { tag: string; keys: string[]; transforms: string[]; iterations: number; duration: number; card: boolean }[] }).__anims
 	);
 
 test('Scenario: Duck letter loss plays the fault motion', async ({ page }) => {
@@ -302,6 +303,9 @@ test('Scenario: Duck letter loss plays the fault motion', async ({ page }) => {
 	const seen = await recorded(page);
 	const shake = seen.find((a) => a.card);
 	expect(shake?.keys).toEqual(['transform']);
+	expect(shake?.transforms.every((t) => /^translateX\(-?[\d.]+(px)?\)$/.test(t))).toBe(true);
+	const offsets = shake!.transforms.map((t) => parseFloat(t.slice(11)));
+	expect(offsets.some((x) => x < 0) && offsets.some((x) => x > 0)).toBe(true);
 	expect(shake?.iterations).toBe(1);
 	expect(Number.isFinite(shake?.duration)).toBe(true);
 	const stamp = seen.find((a) => a.tag === 'stamp');
@@ -343,6 +347,7 @@ test('Scenario: Duck reduced motion is instant', async ({ page }) => {
 	await tapBox(page, 'Dani', 10);
 	await press(page, 'Weiter');
 	await expectInstant(page);
+	await expect(live(page).getByRole('region', { name: 'Punktestand' }).locator('.pts')).toHaveText(['10', '0', '0', '0'], { timeout: 500 });
 	await expect(page.locator('[data-piece]')).toHaveCount(0);
 });
 

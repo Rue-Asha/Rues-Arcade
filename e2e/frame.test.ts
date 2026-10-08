@@ -316,7 +316,13 @@ test('Scenario: Primary action dispatches during a transition', async ({ page })
 	const next = live(page).getByRole('button', { name: 'Nächstes Team', exact: true });
 	await next.waitFor();
 	const box = (await next.boundingBox())!;
+	await page.evaluate(() => {
+		const w = window as unknown as { __leaving: boolean | null };
+		w.__leaving = null;
+		document.addEventListener('click', () => (w.__leaving = !!document.querySelector('[data-leaving]')), { capture: true, once: true });
+	});
 	await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+	expect(await page.evaluate(() => (window as unknown as { __leaving: boolean | null }).__leaving)).toBe(true);
 	const state = await page.evaluate(() => JSON.parse(localStorage.getItem('arcade:session:most-likely')!).state);
 	expect({ phase: state.phase, turn: state.turn }).toEqual({ phase: 'prompt', turn: 1 });
 	await expect(live(page).getByRole('button', { name: 'Alle haben gezeigt', exact: true })).toBeVisible();

@@ -513,8 +513,9 @@ test.describe('reduced motion', () => {
 		await click('Alle haben gezeigt');
 		await expectInstant(page);
 		await click('2');
+		await expect(live(page).getByTestId('points')).toBeVisible();
+		expect(await live(page).getByTestId('points').textContent()).toBe('+2');
 		await expectInstant(page);
-		await expect(live(page).getByTestId('points')).toHaveText('+2');
 		const state = await saved(page);
 		const rows = await board(page).locator('.pts').allTextContents();
 		expect(rows.map((r) => r.trim()).sort()).toEqual(state.teams.map((t: { score: number }) => String(t.score)).sort());

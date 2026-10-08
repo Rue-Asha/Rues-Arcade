@@ -214,7 +214,8 @@ SHALL be instant.
 Every round result in Wavelength, Codes, Most Likely To and Family Feud SHALL use a shared `Outcome`: a verdict heading
 and `+N` in Press Start 2P (`data-testid="points"`) counting up to the final value; the `+N` chip pops in
 (`--ease-pop`). Zero points SHALL show "+0" in a muted miss style. Most Likely To gains the count-up. Under reduced
-motion the final number SHALL show at once.
+motion the final number SHALL show at once. The one exception is the Family Feud sudden-death result, which banks no
+points: it SHALL show the verdict without a `+N` line.
 
 #### Scenario: Outcome counts up to +N
 - **WHEN** a round result with N > 1 points is shown with motion allowed
@@ -225,6 +226,11 @@ motion the final number SHALL show at once.
 - **WHEN** a Wavelength turn scores 0 and a Codes round is skipped
 - **THEN** each result shows "+0" in the miss style next to its verdict ("Kein Punkt.", "Übersprungen")
 - **proof:** e2e ("Scenario: Wavelength miss shows +0", "Scenario: Codes skipped round result")
+
+#### Scenario: Feud sudden-death result shows no points
+- **WHEN** a Family Feud tiebreak question is decided
+- **THEN** the verdict reads "Stichfrage entschieden" and no `[data-testid="points"]` is rendered
+- **proof:** e2e ("Scenario: Feud tiebreak survey is recorded")
 
 ### Requirement: Scoreboard reorder
 The Scoreboard SHALL sort its rows by score, ties in the given order, and when ranks change between the scores before
