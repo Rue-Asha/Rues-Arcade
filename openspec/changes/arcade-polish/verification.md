@@ -205,10 +205,12 @@ Three rounds (reviewer, fresh context each round). Diff base for rounds 2–3: `
 | Scoreboard flip used `cubicOut` | token easing `outCurve` |
 | Pager clamp not written back | `$effect` writes back, new test |
 
-### Round 3 — open after the round limit (taken to Gate 2)
+### Round 3 — taken to Gate 2 after the round limit, resolved in an extra round Rue approved (b06867c)
 | Finding | Status |
 |---|---|
-| Reduced-motion tests for Wavelength, Codes, Most Likely, Duck don't pin "scores show their final value" (Wavelength turn scores 0; Codes/ML retrying toHaveText; Duck doesn't check rail) | open — weak test, behaviour unverified by test |
-| Transition tap test doesn't prove the tap landed mid-transition | open — weak test, low |
-| Codes/Duck fault tests accept any transform, not a translateX shake | open — weak test, low |
-| Feud sudden-death result has no `+N`; design-system "Round outcome" has no carve-out, feud-history asserts no points chip | open — spec decision for Rue |
+| Reduced-motion tests for Wavelength, Codes, Most Likely, Duck don't pin "scores show their final value" (Wavelength turn scores 0; Codes/ML retrying toHaveText; Duck doesn't check rail) | fixed in round 4: Wavelength turn scores +4 with sorted rows; Codes/ML one-shot read; Duck rail pinned — each red against a temporary countUp break |
+| Transition tap test doesn't prove the tap landed mid-transition | fixed in round 4: capture-phase listener asserts `[data-leaving]` at tap time — red against a delayed tap |
+| Codes/Duck fault tests accept any transform, not a translateX shake | fixed in round 4: transform values asserted as translateX with ± offsets — red against translateY |
+| Feud sudden-death result has no `+N`; design-system "Round outcome" has no carve-out, feud-history asserts no points chip | Rue (Gate 2): keep; delta spec exception + scenario "Feud sudden-death result shows no points" → e2e "Scenario: Feud tiebreak survey is recorded" |
+
+Round 4 proof (fixer, tip b06867c): `proof:full` PORT=4801 — 565 passed, 3 skipped (8.1m), exit 0. `openspec validate arcade-polish --strict` valid.
