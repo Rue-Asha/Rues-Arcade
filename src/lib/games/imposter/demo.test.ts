@@ -21,8 +21,17 @@ describe('imposter demo', () => {
 	it('Scenario: Imposter demo script plays to the end', () => {
 		expect(walk()).toEqual(states);
 		states.slice(1).forEach((s, i) => expect(s, `step ${i + 1}`).not.toEqual(states[i]));
-		expect(states.at(-1)!.phase).toBe('unmask');
-		expect(states.at(-1)!.shown).toBe(true);
+		expect(states.at(-1)!.phase).toBe('handover');
+		expect(states.at(-1)!.round).toBe(2);
+	});
+
+	it('Regression: Imposter demo plays one round and stops at the next-round step', () => {
+		expect(demo.steps).toHaveLength(16);
+		expect(demo.steps.at(-1)!.action.type).toBe('nextRound');
+		expect(at('reveal').filter(([, i]) => states[i].phase === 'unmask')).toHaveLength(1);
+		expect(at('unmask')).toHaveLength(1);
+		expect(states.slice(0, -1).every((s) => s.round === 1)).toBe(true);
+		expect(demo.steps.at(-1)!.tip).toContain('Spiel beenden');
 	});
 
 	describe('Scenario: Imposter demo covers every outcome branch', () => {
@@ -37,20 +46,16 @@ describe('imposter demo', () => {
 			expect(after.imposterIndex).toBe(before.imposterIndex);
 		});
 
-		it('reveals the crew question and the imposter in each round', () => {
-			const rounds = [1, 2];
-			for (const round of rounds) {
-				const inRound = states.filter((s) => s.round === round);
-				expect(inRound.some((s) => s.phase === 'crew' && !s.shown)).toBe(true);
-				expect(inRound.some((s) => s.phase === 'crew' && s.shown)).toBe(true);
-				expect(inRound.some((s) => s.phase === 'unmask' && !s.shown)).toBe(true);
-				expect(inRound.some((s) => s.phase === 'unmask' && s.shown)).toBe(true);
-				const last = inRound.filter((s) => s.phase === 'handover' && s.revealIndex === 3);
-				expect(last.length).toBeGreaterThan(0);
-			}
+		it('reveals the crew question and the imposter in the round', () => {
+			const inRound = states.filter((s) => s.round === 1);
+			expect(inRound.some((s) => s.phase === 'crew' && !s.shown)).toBe(true);
+			expect(inRound.some((s) => s.phase === 'crew' && s.shown)).toBe(true);
+			expect(inRound.some((s) => s.phase === 'unmask' && !s.shown)).toBe(true);
+			expect(inRound.some((s) => s.phase === 'unmask' && s.shown)).toBe(true);
+			expect(inRound.some((s) => s.phase === 'handover' && s.revealIndex === 3)).toBe(true);
 		});
 
-		it('plays a second round with a new deal where everyone reads again', () => {
+		it('ends on the next-round step with a new deal', () => {
 			const [[, i]] = at('nextRound');
 			expect(states[i + 1].round).toBe(states[i].round + 1);
 			expect(states[i + 1].phase).toBe('handover');
@@ -61,20 +66,15 @@ describe('imposter demo', () => {
 				imposter.reduce({ ...states[i], rng: { state: k } }, demo.steps[i].action).imposterIndex
 			);
 			expect(new Set(reseeded).size).toBeGreaterThan(1);
-			expect(states.at(-1)!.round).toBe(2);
-			const after = demo.steps.slice(i + 1).filter((s) => s.action.type === 'seen');
-			expect(after).toHaveLength(demo.players.length);
+			expect(i).toBe(demo.steps.length - 1);
 		});
 
-		it('narrates one caught and one uncaught imposter and that rounds go on', () => {
+		it('narrates the caught imposter and that rounds go on', () => {
 			const reveals = at('reveal').filter(([, i]) => states[i].phase === 'unmask');
-			expect(reveals).toHaveLength(2);
-			reveals.forEach(([step, i]) => {
-				const name = (states[i + 1] as ImposterState).players[states[i + 1].imposterIndex].name;
-				expect(step.tip).toContain(name);
-			});
-			expect(reveals[0][0].tip).toContain('gefunden');
-			expect(reveals[1][0].tip).toContain('durchgekommen');
+			expect(reveals).toHaveLength(1);
+			const [[step, i]] = reveals;
+			expect(step.tip).toContain((states[i + 1] as ImposterState).players[states[i + 1].imposterIndex].name);
+			expect(step.tip).toContain('gefunden');
 			expect(demo.steps.some((s) => s.tip.includes('Spiel beenden'))).toBe(true);
 		});
 

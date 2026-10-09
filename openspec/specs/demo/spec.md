@@ -47,7 +47,7 @@ at every step. The demo SHALL never touch the session, roster or database, and S
 
 #### Scenario: Every demo covers its outcome branches over several rounds
 - **WHEN** each game's demo script is played through its real reducer
-- **THEN** it passes more than one round and every branch its game's spec lists under "<Game> demo covers every outcome branch"
+- **THEN** it plays through several turns, words or rounds (Imposter one round ending on "Nächste Runde", Wavelength one round of two turns) and every branch its game's spec lists under "<Game> demo covers every outcome branch"
 - **proof:** unit ("Scenario: Imposter demo covers every outcome branch", "Scenario: Wavelength demo covers every outcome branch", "Scenario: Feud demo covers every outcome branch", "Scenario: Codes demo covers every outcome branch", "Scenario: Duck demo covers every outcome branch", "Scenario: Most Likely demo covers every outcome branch")
 
 #### Scenario: Demo tips read neutral

@@ -1,6 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
+import { demo as duckDemo } from '../src/lib/games/duck/demo.ts';
 import { decoAudit, emptyServer, expectFrame, expectInstant, live, seedRoster, settled, shot } from './helpers.ts';
 
+const DUCK_STEPS = duckDemo.steps.length;
 const names = ['Alex', 'Bo', 'Cleo', 'Dani'];
 const crew = (n: number) => Array.from({ length: n }, (_, i) => `Spieler ${i + 1}`);
 
@@ -435,24 +437,17 @@ test('Scenario: Duck demo by tapping highlighted controls', async ({ page }, inf
 
 		const progress = page.getByText(/^Demo · Schritt \d+\/\d+$/);
 		const total = Number((await progress.textContent())!.split('/').at(-1));
-		expect(total).toBeGreaterThan(20);
+		expect(total).toBe(DUCK_STEPS);
 		for (let n = 1; n <= total; n++) {
 			await expect(progress).toHaveText(`Demo · Schritt ${n}/${total}`);
 			const expected = page.locator('[data-demo="expected"]');
 			await expect(expected).toHaveCount(1);
-			if (n === 9) await shot(page, info, 'duck-demo-scoring');
-			if (n === total) {
-				await expect(page.getByText('Gewinner', { exact: true })).toBeVisible();
-				await expect(page.getByText('Zielpunktzahl von 10 erreicht.', { exact: true })).toBeVisible();
-				await expect(expected).toHaveText('Neue Runde');
-			}
+			if (n === 5) await shot(page, info, 'duck-demo-scoring');
+			if (n === 1) await expect(page.getByRole('button', { name: 'Überspringen' })).toBeDisabled();
 			await expected.click();
 		}
 		await expect(page.getByText('Demo beendet', { exact: true })).toBeVisible();
 		await expect(page.locator('[data-demo="expected"]')).toHaveCount(0);
-		const rows = live(page).getByRole('region', { name: 'Punktestand' }).getByRole('listitem');
-		await expect(rows.locator('.who')).toHaveText(['Alex', 'Bo', 'Cleo', 'Dani']);
-		await expect(rows.locator('.pts')).toHaveText(['0', '0', '0', '0']);
 	} finally {
 		server.close();
 	}
