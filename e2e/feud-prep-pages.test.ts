@@ -37,6 +37,7 @@ const next = (page: Page) => pager(page).getByRole('button', { name: 'Weiter', e
 const back = (page: Page) => pager(page).getByRole('button', { name: 'Zurück', exact: true });
 
 test('Scenario: Feud prep pages by width', async ({ page, request }, info) => {
+	test.skip(info.project.name !== 'desktop', 'resizes the window');
 	const server = await emptyServer(info, 'pages-width');
 	try {
 		const { crew, surveys } = await setup(request, server);
@@ -70,6 +71,7 @@ test('Scenario: Feud prep pages by width', async ({ page, request }, info) => {
 });
 
 test('Scenario: Feud prep without pager for one page', async ({ page, request }, info) => {
+	test.skip(info.project.name !== 'desktop', 'resizes the window');
 	const server = await emptyServer(info, 'pages-single');
 	try {
 		const { crew } = await setup(request, server, [], 6);
@@ -86,6 +88,7 @@ test('Scenario: Feud prep without pager for one page', async ({ page, request },
 });
 
 test('Scenario: Feud sort goes to page 1', async ({ page, request }, info) => {
+	test.skip(info.project.name !== 'phone', '390px layout');
 	const server = await emptyServer(info, 'pages-sort');
 	try {
 		const { crew, others, surveys } = await setup(request, server, ['Eva', 'Finn']);
@@ -111,6 +114,7 @@ test('Scenario: Feud sort goes to page 1', async ({ page, request }, info) => {
 });
 
 test('Scenario: Feud picks stay across pages', async ({ page, request }, info) => {
+	test.skip(info.project.name !== 'phone', '390px layout');
 	const server = await emptyServer(info, 'pages-picks');
 	try {
 		const { crew } = await setup(request, server);

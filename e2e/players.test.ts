@@ -272,6 +272,7 @@ const next = (page: Page) => pager(page).getByRole('button', { name: 'Weiter', e
 const names = (n: number) => Array.from({ length: n }, (_, i) => `Anna ${String(i + 1).padStart(2, '0')}`);
 
 test('Scenario: Saved players page by width', async ({ page, request }, info) => {
+	test.skip(info.project.name !== 'desktop', 'resizes the window');
 	const server = await emptyServer(info, 'players-pages');
 	try {
 		await seedPlayers(request, server.origin, names(13));
@@ -296,6 +297,7 @@ test('Scenario: Saved players page by width', async ({ page, request }, info) =>
 });
 
 test('Scenario: Deleting the last saved player on a page goes back a page', async ({ page, request }, info) => {
+	test.skip(info.project.name !== 'phone', '390px layout');
 	const server = await emptyServer(info, 'players-pages-delete');
 	try {
 		await seedPlayers(request, server.origin, names(7));
@@ -314,6 +316,7 @@ test('Scenario: Deleting the last saved player on a page goes back a page', asyn
 });
 
 test('Scenario: Saving a player shows its page', async ({ page, request }, info) => {
+	test.skip(info.project.name !== 'phone', '390px layout');
 	const server = await emptyServer(info, 'players-pages-save');
 	try {
 		await seedPlayers(request, server.origin, names(12));
@@ -329,6 +332,7 @@ test('Scenario: Saving a player shows its page', async ({ page, request }, info)
 });
 
 test('Scenario: Saving a player shows its page when a name differs only by a diacritic', async ({ page, request }, info) => {
+	test.skip(info.project.name !== 'phone', '390px layout');
 	const server = await emptyServer(info, 'players-pages-diacritic');
 	try {
 		await seedPlayers(request, server.origin, [...names(11), 'Müller']);
@@ -344,6 +348,7 @@ test('Scenario: Saving a player shows its page when a name differs only by a dia
 });
 
 test('Scenario: Roster stays unpaged', async ({ page }, info) => {
+	test.skip(info.project.name !== 'phone', '390px layout');
 	const server = await emptyServer(info, 'players-roster-unpaged');
 	try {
 		await page.goto(`${server.origin}/`);

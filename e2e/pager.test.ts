@@ -27,6 +27,7 @@ async function toPage(page: Page, target: number) {
 }
 
 test('Scenario: Inhalte pages by width', async ({ page }, info) => {
+	test.skip(info.project.name !== 'desktop', 'resizes the window');
 	const server = await emptyServer(info, 'pager-width');
 	try {
 		await page.setViewportSize(PHONE);
@@ -55,6 +56,7 @@ test('Scenario: Inhalte pages by width', async ({ page }, info) => {
 });
 
 test('Scenario: Survey cards page by width', async ({ page }, info) => {
+	test.skip(info.project.name !== 'desktop', 'resizes the window');
 	const server = await emptyServer(info, 'pager-surveys');
 	try {
 		const cards = page.getByRole('list', { name: 'Umfragen' }).locator(':scope > li');
@@ -83,6 +85,7 @@ test('Scenario: Empty content list shows no pager', async ({ page }, info) => {
 });
 
 test('Scenario: Pager hidden when one page holds everything', async ({ page, request }, info) => {
+	test.skip(info.project.name !== 'desktop', 'resizes the window');
 	const server = await emptyServer(info, 'pager-one');
 	try {
 		await seed(request, server.origin, 'imposter_pairs', pairs(6));
@@ -102,6 +105,7 @@ test('Scenario: Pager hidden when one page holds everything', async ({ page, req
 });
 
 test('Scenario: Pager page clamps across 1024px', async ({ page }, info) => {
+	test.skip(info.project.name !== 'desktop', 'resizes the window');
 	const server = await emptyServer(info, 'pager-clamp');
 	try {
 		await page.setViewportSize(PHONE);
@@ -117,6 +121,7 @@ test('Scenario: Pager page clamps across 1024px', async ({ page }, info) => {
 });
 
 test('Scenario: Pager clamped page stays after widening back and forth', async ({ page }, info) => {
+	test.skip(info.project.name !== 'desktop', 'resizes the window');
 	const server = await emptyServer(info, 'pager-writeback');
 	try {
 		await page.setViewportSize(PHONE);
@@ -132,6 +137,7 @@ test('Scenario: Pager clamped page stays after widening back and forth', async (
 });
 
 test('Scenario: Pager page change is instant under reduced motion', async ({ page }, info) => {
+	test.skip(info.project.name !== 'phone', '390px layout');
 	const server = await emptyServer(info, 'pager-instant');
 	try {
 		await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -159,6 +165,7 @@ test('Scenario: Pager page change is instant under reduced motion', async ({ pag
 });
 
 test('Scenario: Added entry shows on page 1', async ({ page }, info) => {
+	test.skip(info.project.name !== 'phone', '390px layout');
 	const server = await emptyServer(info, 'pager-add');
 	try {
 		await page.setViewportSize(PHONE);
@@ -175,6 +182,7 @@ test('Scenario: Added entry shows on page 1', async ({ page }, info) => {
 });
 
 test('Scenario: Deleting the last entry on the last page goes back a page', async ({ page }, info) => {
+	test.skip(info.project.name !== 'phone', '390px layout');
 	const server = await emptyServer(info, 'pager-delete');
 	try {
 		await page.setViewportSize(PHONE);
@@ -193,6 +201,7 @@ test('Scenario: Deleting the last entry on the last page goes back a page', asyn
 });
 
 test('Scenario: Import goes to page 1', async ({ page }, info) => {
+	test.skip(info.project.name !== 'phone', '390px layout');
 	const server = await emptyServer(info, 'pager-import');
 	try {
 		await page.setViewportSize(PHONE);

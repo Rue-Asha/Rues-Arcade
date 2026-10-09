@@ -80,6 +80,7 @@ test('Scenario: Feud prep shows who knows a survey', async ({ page, request }, i
 });
 
 test('Scenario: Feud prep pager rises in a new page', async ({ page, request }, info) => {
+	test.skip(info.project.name !== 'phone', '390px layout');
 	const server = await emptyServer(info, 'prep-rise');
 	try {
 		const { crew } = await setup(page, request, server);

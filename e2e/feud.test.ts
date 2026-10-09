@@ -524,6 +524,7 @@ const running = (page: Page) =>
 	);
 
 test('Scenario: Feud board fits a phone', async ({ page, request }, info) => {
+	test.skip(info.project.name !== 'phone', '390px layout');
 	await page.setViewportSize({ width: 390, height: 844 });
 	const server = await emptyServer(info, 'feud-phone');
 	try {

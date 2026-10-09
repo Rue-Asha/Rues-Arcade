@@ -6,12 +6,14 @@ import { emptyServer } from './helpers.ts';
 
 const port = Number(process.env.PORT ?? 4173);
 
-test('Scenario: Healthy server', async ({ request }) => {
+test('Scenario: Healthy server', async ({ request }, info) => {
+	test.skip(info.project.name !== 'desktop', 'server only');
 	const res = await request.get('/healthz');
 	expect(res.status()).toBe(200);
 });
 
-test('Scenario: Proof-full runs e2e on an isolated database', async ({ request }) => {
+test('Scenario: Proof-full runs e2e on an isolated database', async ({ request }, info) => {
+	test.skip(info.project.name !== 'desktop', 'server only');
 	await request.get('/healthz');
 	const path = `.e2e/${port}.db`;
 
@@ -23,6 +25,7 @@ test('Scenario: Proof-full runs e2e on an isolated database', async ({ request }
 });
 
 test('Scenario: Server starts from any working directory', async ({ request }, info) => {
+	test.skip(info.project.name !== 'desktop', 'server only');
 	const server = await emptyServer(info, 'cwd', tmpdir());
 	try {
 		const res = await request.get(`${server.origin}/healthz`);

@@ -1,8 +1,8 @@
 name: gate
 
-# The check and release gate, shared by ci.yml and release.yml. `runner` is a
-# JSON label list: PR checks run on the homelab check host, but the tarball a
-# release publishes is built and tested on a GitHub-hosted runner.
+# The check and release gate, called by ci.yml. `runner` is a JSON label list:
+# PR checks run on the homelab check host, but a push to main runs on a
+# GitHub-hosted runner, because release.yml publishes the tarball that run uploads.
 on:
   workflow_call:
     inputs:
@@ -33,9 +33,12 @@ jobs:
 
       - run: npx playwright install chromium
 
-      - run: npm run proof
+      - run: npm run check
 
+      # package is the only build; the unit tests run after it because package.test.ts copies build/.
       - run: npm run package
+
+      - run: npm run test:unit
 
       - name: Verify checksum
         working-directory: dist
