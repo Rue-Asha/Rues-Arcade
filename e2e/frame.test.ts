@@ -174,8 +174,13 @@ function tapAndSample(page: Page, names: string[], ms = 500) {
 			const t0 = performance.now();
 			for (const [i, name] of names.entries()) {
 				if (i) await frame();
-				const live = document.querySelector('[data-stage]:not([data-leaving])')!;
-				[...live.querySelectorAll('button')].find((b) => b.textContent?.trim() === name)!.click();
+				const find = () =>
+					[...(document.querySelector('[data-stage]:not([data-leaving])')?.querySelectorAll('button') ?? [])].find(
+						(b) => b.textContent?.trim() === name
+					);
+				// under load the next stage can lag a frame or two behind the tap
+				for (let n = 0; n < 30 && !find(); n++) await frame();
+				find()!.click();
 			}
 			const samples: Sample[] = [];
 			while (performance.now() - t0 < ms) {
