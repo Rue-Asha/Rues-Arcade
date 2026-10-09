@@ -57,8 +57,8 @@ describe('duck demo', () => {
 		// two rhymes, 3 points each; the other two lose a letter
 		expect(w[1].gained).toEqual([3, 0, 3, 0]);
 		expect(w[1].lost).toEqual([0, 1, 0, 1]);
-		// two pairs, 3 each; Chuck's holder gets 2 more and nobody loses a letter
-		expect(w[2].gained).toEqual([5, 3, 3, 3]);
+		// all four share one rhyme with Chuck's holder: 1 + 2 each, the holder included, and nobody loses a letter
+		expect(w[2].gained).toEqual([3, 3, 3, 3]);
 		expect(w[2].lost).toEqual([0, 0, 0, 0]);
 		expect(w.every((x) => x.after.phase === 'standings')).toBe(true);
 		expect(bo).toBe(1);
@@ -84,6 +84,6 @@ describe('duck demo', () => {
 		for (const x of w) expect(x.after.chuck).toBe((x.before.chuck + 1) % 4);
 		expect(w.some((x) => x.gained.filter((g) => g === 1).length === 3)).toBe(true);
 		expect(w.some((x) => x.gained.filter((g) => g === 3).length === 2 && x.gained.every((g) => g === 0 || g === 3))).toBe(true);
-		expect(w.some((x) => x.gained.includes(5))).toBe(true);
+		expect(w.some((x) => x.gained.every((g) => g === 3))).toBe(true);
 	});
 });
