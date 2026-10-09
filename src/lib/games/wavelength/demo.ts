@@ -12,8 +12,8 @@ const spectra = [
 	['Klein', 'Groß']
 ];
 
-// seed 1 deals the four turns targets near 156°, 120°, 158° and 88° (the two redraws shift them);
-// the dial values score 4, 3, 2 and 0
+// seed 1 deals the first two turns targets near 156° and 120° (the two redraws shift them);
+// the dial values score 4 and 0
 export const demo: DemoScript<WavelengthAction, WavelengthConfig> = {
 	players: ['Alex', 'Bo', 'Cleo', 'Dani'],
 	config: {
@@ -21,7 +21,7 @@ export const demo: DemoScript<WavelengthAction, WavelengthConfig> = {
 			['Alex', 'Bo'],
 			['Cleo', 'Dani']
 		],
-		rounds: 2
+		rounds: 1
 	},
 	content: spectra.map(([a, b], i) => ({ id: i + 1, a, b })),
 	seed: 1,
@@ -63,51 +63,13 @@ export const demo: DemoScript<WavelengthAction, WavelengthConfig> = {
 			tip: 'Cleo hat einen Hinweis und verdeckt das Ziel, damit Dani nur nach dem Hinweis rät.'
 		},
 		{
-			action: { type: 'dial', value: 130.6 },
-			tip: 'Dani dreht den Zeiger auf den Hinweis. Er liegt ein Stück neben der Mitte des Ziels.'
+			action: { type: 'dial', value: 60 },
+			tip: 'Dani dreht den Zeiger auf den Hinweis, liegt aber weit neben dem Ziel.'
 		},
 		{ action: { type: 'lockIn' }, tip: 'Einloggen, damit Danis Antwort gewertet wird.' },
 		{
 			action: { type: 'next' },
-			tip: 'Knapp daneben, 3 Punkte, weil der Zeiger direkt neben der Mitte liegt. Damit ist Runde 1 vorbei.'
-		},
-		{
-			action: { type: 'show' },
-			tip: 'Runde 2 beginnt bei Team 1. Jetzt gibt Bo den Hinweis, damit jeder in der Gruppe einmal dran ist.'
-		},
-		{
-			action: { type: 'guess' },
-			tip: 'Bo verdeckt das Ziel und gibt den Hinweis. Alex rät.'
-		},
-		{
-			action: { type: 'dial', value: 175 },
-			tip: 'Alex dreht den Zeiger etwas zu weit nach rechts.'
-		},
-		{ action: { type: 'lockIn' }, tip: 'Einloggen.' },
-		{
-			action: { type: 'next' },
-			tip: 'In der Nähe, 2 Punkte, weil der Zeiger zwei Felder neben der Mitte liegt. Weiter zu Team 2.'
-		},
-		{
-			action: { type: 'show' },
-			tip: 'Team 2 spielt die zweite Runde: Dani gibt den Hinweis, Cleo rät.'
-		},
-		{
-			action: { type: 'guess' },
-			tip: 'Dani verdeckt das Ziel nach dem Hinweis.'
-		},
-		{
-			action: { type: 'dial', value: 118.5 },
-			tip: 'Cleo dreht den Zeiger weit weg vom Ziel, damit auch ein Fehlwurf zu sehen ist.'
-		},
-		{ action: { type: 'lockIn' }, tip: 'Einloggen.' },
-		{
-			action: { type: 'next' },
-			tip: 'Kein Punkt, weil der Zeiger außerhalb aller Felder liegt. Das war der letzte Zug, also folgt der Endstand.'
-		},
-		{
-			action: { type: 'again' },
-			tip: 'Team 1 gewinnt mit 6 zu 3 Punkten. Nochmal spielen startet ein neues Spiel mit denselben Teams. Im Koop-Modus spielen alle gemeinsam gegen die Skala, das zeigt dieses Demo nicht.'
+			tip: 'Kein Punkt, weil der Zeiger außerhalb aller Felder liegt. Beide Teams waren einmal dran, also folgt der Endstand: Team 1 gewinnt mit 4 zu 0 Punkten. Im Koop-Modus spielen alle gemeinsam gegen die Skala, das zeigt dieses Demo nicht.'
 		}
 	]
 };

@@ -31,59 +31,59 @@ describe('duck demo', () => {
 		for (let i = 0; i < demo.steps.length; i++) expect(a[i + 1], `step ${i + 1} changes the state`).not.toEqual(a[i]);
 		expect(a[0].players.map((p) => p.name)).toEqual(['Alex', 'Bo', 'Cleo', 'Dani']);
 		expect(demo.config.target).toBe(10);
-		expect(demo.steps.at(-1)!.action.type).toBe('restart');
+		expect(a.at(-1)!.phase).toBe('reveal');
 		expect(demo.steps.filter((s) => /!|\p{Extended_Pictographic}/u.test(s.tip))).toEqual([]);
 		expect(demo.steps.filter((s) => !s.tip.trim())).toEqual([]);
 	});
 
-	it('Scenario: Duck demo covers every outcome branch', () => {
-		const steps = walk();
-
-		// Duck demo skips a word: a different word, Chuck unchanged
-		const skips = steps.filter((s) => s.type === 'skip');
+	it('Regression: Duck demo never skips before the word is shown', () => {
+		const skips = walk().filter((s) => s.type === 'skip');
 		expect(skips).toHaveLength(1);
-		expect(skips[0].before.phase).toBe('reveal');
+		expect(demo.steps[0].action.type).toBe('show');
+		expect(skips[0].before.shown).toBe(true);
 		expect(skips[0].after.word.id).not.toBe(skips[0].before.word.id);
 		expect(skips[0].after.chuck).toBe(skips[0].before.chuck);
+	});
 
-		// Duck demo scores none, one match and a multi-match
+	it('Regression: Duck demo scores everyone who found a rhyme together, Chuck holder included', () => {
 		const w = words();
-		expect(w.length).toBeGreaterThanOrEqual(5);
-		expect(w.some((x) => x.gained.every((g) => g === 0))).toBe(true);
-		const chuckOf = (x: (typeof w)[number]) => x.before.chuck;
-		const oneMatch = w.filter((x) => x.gained.filter((g) => g > 0).length === 2);
-		expect(oneMatch.length).toBeGreaterThanOrEqual(1);
-		expect(oneMatch.some((x) => x.gained.includes(5) && x.gained.includes(3) && x.gained[chuckOf(x)] === 3)).toBe(true);
-		const multi = w.filter((x) => x.gained.filter((g) => g === 1).length >= 3);
-		expect(multi.length).toBeGreaterThanOrEqual(1);
-		expect(multi.every((x) => x.gained.every((g) => g === 0 || g === 1))).toBe(true);
+		expect(w).toHaveLength(3);
+		const [alex, bo, cleo, dani] = [0, 1, 2, 3];
+		expect(w.map((x) => x.before.chuck)).toEqual([cleo, dani, alex]);
 
-		// Duck demo loses letters to elimination: one player from 5 to 0, at most one letter per word, Chuck moves on
+		// three rhymes, 1 point each; the player without one loses a letter
+		expect(w[0].gained).toEqual([1, 1, 0, 1]);
+		expect(w[0].lost).toEqual([0, 0, 1, 0]);
+		// two rhymes, 3 points each; the other two lose a letter
+		expect(w[1].gained).toEqual([3, 0, 3, 0]);
+		expect(w[1].lost).toEqual([0, 1, 0, 1]);
+		// two pairs, 3 each; Chuck's holder gets 2 more and nobody loses a letter
+		expect(w[2].gained).toEqual([5, 3, 3, 3]);
+		expect(w[2].lost).toEqual([0, 0, 0, 0]);
+		expect(w.every((x) => x.after.phase === 'standings')).toBe(true);
+		expect(bo).toBe(1);
+	});
+
+	it('Regression: Duck demo ends on two slides naming both ways the game ends', () => {
+		const last = demo.steps.slice(-2);
+		expect(last[0].tip).toMatch(/Buchstaben/);
+		expect(last[1].tip).toMatch(/Zielpunkt|Ziel/);
+		expect(last[0].tip).not.toMatch(/Ziel/);
+		const end = run().at(-1)!;
+		expect(end.phase).toBe('reveal');
+		expect(Math.max(...end.scores)).toBeLessThan(10);
+		expect(Math.min(...end.lives)).toBeGreaterThan(0);
+	});
+
+	it('Scenario: Duck demo covers every outcome branch', () => {
+		const steps = walk();
+		const skips = steps.filter((s) => s.type === 'skip');
+		expect(skips).toHaveLength(1);
+		const w = words();
 		for (const x of w) expect(x.lost.every((l) => l <= 1)).toBe(true);
-		const losing = w.map((x) => x.lost.findIndex((l) => l === 1)).filter((i) => i >= 0);
-		expect(new Set(losing).size).toBe(1);
-		const bo = losing[0];
-		expect(w[0].before.baseLives[bo]).toBe(MAX_LIVES);
-		expect(w.at(-1)!.after.lives[bo]).toBe(0);
-		expect(w.filter((x) => x.lost[bo] === 1).length).toBe(MAX_LIVES);
-		for (const x of w.slice(0, -1)) expect(x.after.chuck).toBe((x.before.chuck + 1) % 4);
-
-		// Duck demo ends at target with an elimination
-		const last = w.at(-1)!;
-		expect(last.after.phase).toBe('gameOver');
-		expect(last.after.endReason).toBe('target');
-		expect(Math.max(...last.after.scores)).toBe(10);
-		expect(last.after.lives.some((l) => l === 0)).toBe(true);
-		expect(w.slice(0, -1).every((x) => x.after.phase === 'standings')).toBe(true);
-		expect(demo.steps.some((s) => s.tip.includes('Buchstaben') && s.tip.includes('allein'))).toBe(true);
-
-		// Duck demo plays a new round
-		const again = steps.at(-1)!;
-		expect(again.type).toBe('restart');
-		expect(again.before.phase).toBe('gameOver');
-		expect(again.after.phase).toBe('reveal');
-		expect(again.after.scores).toEqual([0, 0, 0, 0]);
-		expect(again.after.lives).toEqual([5, 5, 5, 5]);
-		expect(again.after.players).toEqual(again.before.players);
+		for (const x of w) expect(x.after.chuck).toBe((x.before.chuck + 1) % 4);
+		expect(w.some((x) => x.gained.filter((g) => g === 1).length === 3)).toBe(true);
+		expect(w.some((x) => x.gained.filter((g) => g === 3).length === 2 && x.gained.every((g) => g === 0 || g === 3))).toBe(true);
+		expect(w.some((x) => x.gained.includes(5))).toBe(true);
 	});
 });

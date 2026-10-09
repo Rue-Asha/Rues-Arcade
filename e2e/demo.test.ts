@@ -46,18 +46,15 @@ test('Scenario: Imposter demo by tapping highlighted controls', async ({ page })
 	await expect(page.getByText('Gib das Handy an Alex', { exact: true })).toBeVisible();
 	await playToEnd(page, IMPOSTER_STEPS);
 	await expect(page.getByRole('dialog')).toHaveCount(0);
-	await expect(page.getByTestId('unmasked')).toHaveText('Dani');
 	await expect(page.getByText('Runde 2', { exact: true })).toBeVisible();
 });
 
 test('Scenario: Wavelength demo by tapping highlighted controls', async ({ page }) => {
 	test.setTimeout(90_000);
 	await openDemo(page, 'wavelength');
-	await playToEnd(page, WAVELENGTH_STEPS, async () => {
-		await expect(page.getByText('Gewinner', { exact: true })).toBeVisible();
-		await expect(page.getByRole('heading', { name: 'Team 1', exact: true })).toBeVisible();
-		await expect(page.locator('[data-demo="expected"]')).toHaveAttribute('data-action', 'again');
-	});
+	await playToEnd(page, WAVELENGTH_STEPS);
+	await expect(page.getByText('Gewinner', { exact: true })).toBeVisible();
+	await expect(page.getByRole('heading', { name: 'Team 1', exact: true })).toBeVisible();
 });
 
 test('Scenario: Only the expected control is enabled', async ({ page }) => {

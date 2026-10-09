@@ -46,11 +46,11 @@ Pairs SHALL be drawn without repeats until the pool is exhausted, then reshuffle
 
 ### Requirement: Imposter demo script
 Imposter SHALL ship one committed demo script (content + seed + scripted actions) with Alex, Bo, Cleo and Dani that
-plays two rounds and ends at "Demo beendet". It SHALL reach every branch of the Imposter reducer: handover and
+plays one round and ends at "Demo beendet" on the "Nächste Runde" step. It SHALL reach every branch of the Imposter reducer: handover and
 reading per player, the last reader leading to the crew phase, revealing the crew question, unmasking, revealing the
-imposter, a skip that redraws the pair mid-reveal, and "Nächste Runde" into round 2. The engine has no game end and
-does not record whether the group caught the imposter, so the tips SHALL narrate one caught and one uncaught
-imposter and say that rounds go on until the group ends the game. Hidden questions SHALL keep the [Demo] tag.
+imposter, a skip that redraws the pair mid-reveal, and "Nächste Runde" as the last step. The engine has no game end and
+does not record whether the group caught the imposter, so the tips SHALL narrate the caught imposter and say that
+rounds go on until the group ends the game. Hidden questions SHALL keep the [Demo] tag.
 
 #### Scenario: Imposter demo script plays to the end
 - **WHEN** the Imposter demo script's actions are applied to its fixture through the real reducer, twice
@@ -64,21 +64,26 @@ imposter and say that rounds go on until the group ends the game. Hidden questio
 
 #### Scenario: Imposter demo reveals the crew question and the imposter
 - **WHEN** the demo's states are walked
-- **THEN** in each round the last `seen` leads to the crew phase, the crew question is revealed, `unmask` follows and the imposter is revealed
+- **THEN** in the round the last `seen` leads to the crew phase, the crew question is revealed, `unmask` follows and the imposter is revealed
 - **proof:** unit ("Scenario: Imposter demo covers every outcome branch")
 
-#### Scenario: Imposter demo plays a second round
+#### Scenario: Imposter demo ends on the next-round step
 - **WHEN** the demo reaches its `nextRound` step
-- **THEN** round 2 starts with a new deal and an imposter drawn from the RNG, and every player hands over and reads again
+- **THEN** it is the last of 16 steps, a new deal and an imposter drawn from the RNG start round 2, and its tip says rounds go on until "Spiel beenden"
 - **proof:** unit ("Scenario: Imposter demo covers every outcome branch")
 
-#### Scenario: Imposter demo narrates caught and not caught
-- **WHEN** the tips of the two imposter-reveal steps are read
-- **THEN** each names that round's imposter, one says the group found the imposter and the other that the imposter got through, a tip says rounds go on until "Spiel beenden", and no tip contains "!" or an emoji
+#### Scenario: Imposter demo plays exactly one round
+- **WHEN** the demo's states are walked
+- **THEN** the script has 16 steps, every state before the last belongs to round 1, and the imposter is revealed once
+- **proof:** unit ("Regression: Imposter demo plays one round and stops at the next-round step")
+
+#### Scenario: Imposter demo narrates the caught imposter
+- **WHEN** the tip of the imposter-reveal step is read
+- **THEN** it names that round's imposter and says the group found the imposter, and no tip contains "!" or an emoji
 - **proof:** unit ("Scenario: Imposter demo covers every outcome branch")
 
 #### Scenario: Imposter demo by tapping highlighted controls
 - **WHEN** the user opens Imposter's Demo and taps only the highlighted control at each step, including the skip
-- **THEN** exactly one control is highlighted at each step, both rounds complete and "Demo beendet" is shown
+- **THEN** exactly one control is highlighted at each step, the round completes and "Demo beendet" is shown
 - **proof:** e2e
 

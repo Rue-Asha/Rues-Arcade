@@ -33,17 +33,6 @@ export const demo: DemoScript<ImposterAction, ImposterConfig> = {
 		{ action: { type: 'reveal' }, tip: 'Jetzt beantworten alle ihre Frage reihum laut. Die Antworten verraten, wer eine andere Frage hatte. Danach deckt ihr die Frage der Crew auf.' },
 		{ action: { type: 'unmask' }, tip: 'Mit der Crew-Frage vor Augen lässt sich prüfen, wessen Antwort nicht passte. Erst wird diskutiert, dann kommt die Auflösung.' },
 		{ action: { type: 'reveal' }, tip: 'Alle zeigen auf ihren Verdacht, dann wird aufgedeckt. Alex war der Imposter und ist von der Gruppe gefunden worden. Die App merkt sich nicht, wer gefunden wurde. Die Gruppe entscheidet das selbst.' },
-		{ action: { type: 'nextRound' }, tip: 'Weiter geht es mit Runde 2. Es gibt ein neues Paar, und wer Imposter ist, wird neu ausgelost.' },
-		{ action: H, tip: 'In jeder Runde liest jede Person wieder allein. Das Handy geht an Alex.' },
-		{ action: S, tip: 'Alex liest die Frage der neuen Runde.' },
-		{ action: H, tip: 'Weiter an Bo.' },
-		{ action: S, tip: 'Bo liest die Frage.' },
-		{ action: H, tip: 'Weiter an Cleo.' },
-		{ action: S, tip: 'Cleo liest die Frage.' },
-		{ action: H, tip: 'Zuletzt Dani.' },
-		{ action: S, tip: 'Dani liest als Letzte. Danach wird laut geantwortet.' },
-		{ action: { type: 'reveal' }, tip: 'Wieder antworten alle reihum, dann wird die Crew-Frage aufgedeckt.' },
-		{ action: { type: 'unmask' }, tip: 'Auch hier wird zuerst diskutiert, wessen Antwort nicht zur Crew-Frage passte.' },
-		{ action: { type: 'reveal' }, tip: 'Dani war der Imposter und ist durchgekommen, weil die Gruppe jemand anderen verdächtigt hat. Auch das hält die App nicht fest. Die Runden gehen weiter, bis die Gruppe über Spiel beenden aufhört.' }
+		{ action: { type: 'nextRound' }, tip: 'Weiter geht es mit Runde 2: neues Paar, und wer Imposter ist, wird neu ausgelost. Die Runden gehen weiter, bis die Gruppe über Spiel beenden aufhört.' }
 	]
 };

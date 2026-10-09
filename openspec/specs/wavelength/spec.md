@@ -60,10 +60,9 @@ The dial SHALL be operable by touch drag, mouse and keyboard (arrow keys).
 - **proof:** e2e
 
 ### Requirement: Wavelength demo script
-Wavelength SHALL ship one committed demo script that plays a Versus game of 2 rounds (2 teams × 2 turns) with
+Wavelength SHALL ship one committed demo script that plays a Versus game of 1 round (2 teams × 1 turn, 12 steps) with
 Alex & Bo against Cleo & Dani and ends at "Demo beendet". It SHALL reach every Versus branch of the reducer: a
-redraw before the target is shown and one after, results of 4, 3, 2 and 0 points, "Weiter" to the other team and
-into round 2 with the next psychic, the game over with one winning team, and "Nochmal spielen". There is no Koop
+redraw before the target is shown and one after, a result of 4 points and a miss of 0 points, "Weiter" to the other team, and the game over with one winning team. There is no Koop
 demo: the tips SHALL name Koop as the other mode.
 
 #### Scenario: Wavelength demo script plays to the end
@@ -76,24 +75,24 @@ demo: the tips SHALL name Koop as the other mode.
 - **THEN** its opening state is a Versus game with two teams (Alex & Bo, Cleo & Dani) and no Koop mode
 - **proof:** unit
 
-#### Scenario: Wavelength demo scores 4, 3, 2 and 0
-- **WHEN** the demo's four `lockIn` steps are applied
-- **THEN** their results are 4, 3, 2 and 0 points, one each
-- **proof:** unit ("Scenario: Wavelength demo covers every outcome branch")
+#### Scenario: Wavelength demo scores a hit of 4 and a miss of 0
+- **WHEN** the demo's two `lockIn` steps are applied
+- **THEN** their results are 4 and 0 points, the second turn is a miss, and the demo has 12 steps
+- **proof:** unit ("Regression: Wavelength demo plays two turns and the second is a miss with 0 points")
 
 #### Scenario: Wavelength demo redraws before and after the target is shown
 - **WHEN** the demo's `redraw` steps are applied
 - **THEN** one happens in the prep phase and one after "Ziel anzeigen", each changes the spectrum and keeps the team and psychic
 - **proof:** unit ("Scenario: Wavelength demo covers every outcome branch")
 
-#### Scenario: Wavelength demo plays a second round
+#### Scenario: Wavelength demo plays one turn per team
 - **WHEN** the demo's states are walked
-- **THEN** both teams play in round 1 and round 2, and in round 2 each team's psychic is its other player (Bo, Dani)
+- **THEN** each team plays one turn (Alex for Team 1, Cleo for Team 2) in the one round
 - **proof:** unit ("Scenario: Wavelength demo covers every outcome branch")
 
-#### Scenario: Wavelength demo ends with a winner and plays again
+#### Scenario: Wavelength demo ends with a winner
 - **WHEN** the demo's last turn is resolved
-- **THEN** the game over shows one winning team with the higher score, and the final step taps "Nochmal spielen", which starts a new game with both scores 0
+- **THEN** the game over shows Team 1 as the one winning team with 4 to 0 points, and the last tip names Koop
 - **proof:** unit ("Scenario: Wavelength demo covers every outcome branch")
 
 #### Scenario: Wavelength demo names Koop
@@ -103,7 +102,7 @@ demo: the tips SHALL name Koop as the other mode.
 
 #### Scenario: Wavelength demo by tapping highlighted controls
 - **WHEN** the user opens Wavelength's Demo and taps only the highlighted control at each step
-- **THEN** all four turns and the game over complete and "Demo beendet" is shown
+- **THEN** both turns and the game over complete and "Demo beendet" is shown
 - **proof:** e2e
 
 ### Requirement: Wavelength modes
@@ -198,6 +197,6 @@ SHALL use the same tone: each result tip opens with its turn's verdict and point
 
 #### Scenario: Wavelength demo tips read neutral
 - **WHEN** the Wavelength demo script's tips are read
-- **THEN** none contains "!" or an emoji, and the tips of the four result steps open with "Genau getroffen, 4 Punkte", "Knapp daneben, 3 Punkte", "In der Nähe, 2 Punkte" and "Kein Punkt" in the order the script plays them
+- **THEN** none contains "!" or an emoji, and the tips of the two result steps open with "Genau getroffen, 4 Punkte" and "Kein Punkt" in the order the script plays them
 - **proof:** unit
 

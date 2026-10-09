@@ -131,13 +131,13 @@ players, scores and lives reset, and a new random Chuck.
 ### Requirement: Duck engine, session and demo
 Duck SHALL be a pure reducer with its RNG in the state, save after every action and resume on reload; "Spiel
 beenden" SHALL ask for confirmation in the arcade Modal. It SHALL ship one committed demo script with Alex, Bo, Cleo
-and Dani playing several words with Zielpunkte 10 to Spielende and "Demo beendet", gated like the existing demos.
-The script SHALL reach every branch of the Duck reducer: "Überspringen" on a word, a word nobody scores on, a word
-with exactly one match (3 points each, +2 for matching Chuck's holder), a word where several players share a rhyme (1 point
-each), letters lost on missing rhymes word after word until one player loses the last letter, Chuck moving after
-each played word, and a final word where one player reaches 10 while another loses the last letter, so Spielende
-gives the reason "target reached"; a tip SHALL name the game end by lost lives alone. The last step SHALL tap
-"Neue Runde". Sound SHALL use the existing cues: press on controls, reveal on "Wort aufdecken", wrong when a letter
+and Dani playing three words with Zielpunkte 10 and ending at "Demo beendet", gated like the existing demos. The script
+SHALL show the word before it uses "Überspringen". It SHALL score each word for everyone together: in word 1 three
+players share a rhyme and get 1 point each while the Chuck holder without a rhyme loses a letter; in word 2 only two
+players (not the Chuck holder) share a rhyme and get 3 points each while the other two lose a letter each; in word 3
+two pairs each share a rhyme, 3 points each, and the Chuck holder gets 2 more. Chuck SHALL move after each played
+word. The last two steps SHALL name the two ways the game ends: someone has lost all letters, or someone reaches the
+preset Zielpunkte. Sound SHALL use the existing cues: press on controls, reveal on "Wort aufdecken", wrong when a letter
 is crossed, correct on "Weiter" when points were added, win at Spielende.
 
 #### Scenario: Duck engine is deterministic and pure
@@ -160,34 +160,24 @@ is crossed, correct on "Weiter" when points were added, win at Spielende.
 - **THEN** both runs reach the end state with identical states at every step, and every step changes the state
 - **proof:** unit
 
-#### Scenario: Duck demo skips a word
+#### Scenario: Duck demo skips a shown word
 - **WHEN** the demo reaches its `skip` step
-- **THEN** a different word is drawn and Chuck's holder is unchanged
-- **proof:** unit ("Scenario: Duck demo covers every outcome branch")
+- **THEN** the word was already shown, a different word is drawn and Chuck's holder is unchanged; the first step is "Wort aufdecken"
+- **proof:** unit ("Regression: Duck demo never skips before the word is shown")
 
-#### Scenario: Duck demo scores none, one match and a multi-match
-- **WHEN** the demo's committed words are walked
-- **THEN** one word adds no points to anyone, one gives exactly two matching players 3 points each, with 2 extra for the player who matched Chuck's holder, and one adds 1 to each of three or more players sharing a rhyme
-- **proof:** unit ("Scenario: Duck demo covers every outcome branch")
+#### Scenario: Duck demo scores everyone who found a rhyme together
+- **WHEN** the demo's three committed words are walked
+- **THEN** the points gained are 1, 1, 0, 1 with the Chuck holder losing a letter (word 1), 3 and 3 for two players with the other two losing a letter each (word 2), and 5, 3, 3, 3 with nobody losing a letter (word 3, Chuck's holder 3 + 2)
+- **proof:** unit ("Regression: Duck demo scores everyone who found a rhyme together, Chuck holder included")
 
-#### Scenario: Duck demo loses letters to elimination
-- **WHEN** the demo's states are walked
-- **THEN** one player's lives fall over several words from 5 to 0, at most one letter per word, and Chuck moves to the next player after each played word that does not end the game
-- **proof:** unit ("Scenario: Duck demo covers every outcome branch")
-
-#### Scenario: Duck demo ends at target with an elimination
-- **WHEN** the demo's final word is committed
-- **THEN** one player is at 10 points and another at 0 lives, the game ends with reason "target", and a tip names the end by lost lives alone
-- **proof:** unit ("Scenario: Duck demo covers every outcome branch")
-
-#### Scenario: Duck demo plays a new round
-- **WHEN** the demo's last step is applied
-- **THEN** it is "Neue Runde": a new game starts with the same players, all scores 0 and five letters each; no tip contains "!" or an emoji
-- **proof:** unit ("Scenario: Duck demo covers every outcome branch")
+#### Scenario: Duck demo names both ways the game ends
+- **WHEN** the demo's last two steps are read
+- **THEN** one tip names the end by all letters lost and the other the end by reaching the Zielpunkte, the game is not over at the end, and no tip contains "!" or an emoji
+- **proof:** unit ("Regression: Duck demo ends on two slides naming both ways the game ends")
 
 #### Scenario: Duck demo by tapping highlighted controls
 - **WHEN** on a server with an empty database the user opens Duck's Demo and taps only the highlighted control at each step, including the skip
-- **THEN** exactly one control is highlighted at each step, the words are played and scored through Spielende, and "Demo beendet" is shown
+- **THEN** exactly one control is highlighted at each step, the three words are played and scored, the two end-of-game tips are shown, and "Demo beendet" is shown
 - **proof:** e2e
 
 #### Scenario: Duck cues sound right
