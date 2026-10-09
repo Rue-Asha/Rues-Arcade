@@ -444,6 +444,7 @@ test('Scenario: Duck demo by tapping highlighted controls', async ({ page }, inf
 			await expect(expected).toHaveCount(1);
 			if (n === 5) await shot(page, info, 'duck-demo-scoring');
 			if (n === 1) await expect(page.getByRole('button', { name: 'Überspringen' })).toBeDisabled();
+			if (n >= total - 1) await expect(page.getByRole('complementary', { name: 'Demo' }).getByText(duckDemo.steps[n - 1].tip, { exact: true })).toBeVisible();
 			await expected.click();
 		}
 		await expect(page.getByText('Demo beendet', { exact: true })).toBeVisible();

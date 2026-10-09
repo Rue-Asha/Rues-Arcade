@@ -11,12 +11,12 @@ export const demo: DemoScript<DuckAction, DuckConfig> = {
 	content: ['Haus', 'Stern', 'Brot', 'Wald', 'Meer', 'Tisch', 'Hund', 'Licht'].map((a, i) => ({ id: i + 1, a, b: '' })),
 	seed: 1,
 	steps: [
-		{ action: { type: 'show' }, tip: `Cleo hat Chuck the Duck. Wort 1: ${SHOW} Wer denselben Reim wie Cleo sagt, bekommt 2 Punkte extra.` },
+		{ action: { type: 'show' }, tip: `Cleo hat Chuck the Duck. Das erste Wort ist verdeckt. ${SHOW} Wer denselben Reim wie Cleo sagt, bekommt 2 Punkte extra.` },
 		{
 			action: { type: 'skip' },
 			tip: 'Das aufgedeckte Wort fällt niemandem ein. Überspringen geht erst, wenn das Wort sichtbar ist, und zieht ein neues Wort. Chuck bleibt bei Cleo.'
 		},
-		{ action: { type: 'show' }, tip: `Das neue Wort ist wieder verdeckt. ${SHOW}` },
+		{ action: { type: 'show' }, tip: `Das neue Wort ist Wort 1 und zählt, das übersprungene nicht. ${SHOW}` },
 		{ action: { type: 'play' }, tip: PLAY },
 		{
 			action: { type: 'score', player: 0, box: 1 },
