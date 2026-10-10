@@ -21,16 +21,16 @@ beforeEach(() => {
 describe('content store', () => {
 	it('adds, lists, updates and removes an entry', () => {
 		const added = add(db, 'imposter_pairs', ' Hund ', 'Katze');
-		expect(added).toEqual({ ok: true, item: { id: expect.any(Number), a: 'Hund', b: 'Katze' } });
+		expect(added).toEqual({ ok: true, item: { id: expect.any(Number), a: 'Hund', b: 'Katze', interchangeable: false } });
 		if (!added.ok) return;
 		const id = added.item.id;
 
-		expect(list(db, 'imposter_pairs')).toEqual([{ id, a: 'Hund', b: 'Katze' }]);
+		expect(list(db, 'imposter_pairs')).toEqual([{ id, a: 'Hund', b: 'Katze', interchangeable: false }]);
 		expect(update(db, 'imposter_pairs', id, 'Hund', 'Maus')).toEqual({
 			ok: true,
-			item: { id, a: 'Hund', b: 'Maus' }
+			item: { id, a: 'Hund', b: 'Maus', interchangeable: false }
 		});
-		expect(list(db, 'imposter_pairs')).toEqual([{ id, a: 'Hund', b: 'Maus' }]);
+		expect(list(db, 'imposter_pairs')).toEqual([{ id, a: 'Hund', b: 'Maus', interchangeable: false }]);
 		expect(remove(db, 'imposter_pairs', id)).toBe(true);
 		expect(list(db, 'imposter_pairs')).toEqual([]);
 		expect(remove(db, 'imposter_pairs', id)).toBe(false);
@@ -63,7 +63,7 @@ describe('content store', () => {
 		const ok = add(db, 'imposter_pairs', 'Hund', 'Katze');
 		if (!ok.ok) throw new Error('setup');
 		expect(update(db, 'imposter_pairs', ok.item.id, 'Hund', long)).toMatchObject({ ok: false });
-		expect(list(db, 'imposter_pairs')).toEqual([{ id: ok.item.id, a: 'Hund', b: 'Katze' }]);
+		expect(list(db, 'imposter_pairs')).toEqual([{ id: ok.item.id, a: 'Hund', b: 'Katze', interchangeable: false }]);
 	});
 
 	it('Scenario: Bulk import reports skipped and malformed lines', () => {
@@ -170,6 +170,73 @@ function call(handler: Handler, params: Record<string, string>, body?: unknown) 
 			return json(e.body, { status: e.status });
 		});
 }
+
+describe('imposter flag', () => {
+	const flags = () => list(db, 'imposter_pairs').map((i) => i.interchangeable);
+
+	it('Scenario: Imposter flag stored and returned by the API', async () => {
+		process.env.DATABASE_PATH = join(mkdtempSync(join(tmpdir(), 'arcade-flag-')), 'flag.db');
+		try {
+			const type = 'imposter_pairs';
+			const one = await (await call(collection.POST, { type }, { a: 'A1', b: 'B1', interchangeable: true })).json();
+			const two = await (await call(collection.POST, { type }, { a: 'A2', b: 'B2' })).json();
+			const read = async () =>
+				((await (await call(collection.GET, { type })).json()) as { interchangeable: unknown }[]).map(
+					(i) => i.interchangeable
+				);
+			expect(await read()).toEqual([true, false]);
+
+			await call(entry.PUT, { type, id: String(one.id) }, { a: 'A1', b: 'B1x' });
+			await call(entry.PUT, { type, id: String(two.id) }, { a: 'A2', b: 'B2', interchangeable: true });
+			expect(await read()).toEqual([true, true]);
+
+			await call(entry.PUT, { type, id: String(one.id) }, { a: 'A1', b: 'B1x', interchangeable: false });
+			expect(await read()).toEqual([false, true]);
+
+			await call(entry.PUT, { type, id: String(one.id) }, { a: 'A1', b: 'B1x', interchangeable: 'yes' });
+			expect(await read()).toEqual([false, true]);
+		} finally {
+			closeDb();
+			delete process.env.DATABASE_PATH;
+		}
+	});
+
+	it('Scenario: Imposter import adds pairs with the flag off', () => {
+		const report = importBulk(db, 'imposter_pairs', 'Hund | Katze\nTee | Kaffee');
+
+		expect(report.imported).toBe(2);
+		expect(list(db, 'imposter_pairs')).toEqual([
+			{ id: expect.any(Number), a: 'Hund', b: 'Katze', interchangeable: false },
+			{ id: expect.any(Number), a: 'Tee', b: 'Kaffee', interchangeable: false }
+		]);
+	});
+
+	it('Scenario: Imposter swapped pair is not a duplicate', () => {
+		add(db, 'imposter_pairs', 'Hund', 'Katze');
+
+		const swapped = add(db, 'imposter_pairs', 'Katze', 'Hund');
+
+		expect(swapped.ok).toBe(true);
+		expect(flags()).toHaveLength(2);
+	});
+
+	it('Scenario: Only Imposter pairs carry the flag', () => {
+		add(db, 'wavelength_spectra', 'kalt', 'heiß', true);
+		add(db, 'codes_words', 'Wort', '', true);
+
+		expect(list(db, 'wavelength_spectra').find((i) => i.a === 'kalt')).toEqual({
+			id: expect.any(Number),
+			a: 'kalt',
+			b: 'heiß'
+		});
+		expect(list(db, 'codes_words').find((i) => i.a === 'Wort')).toEqual({ id: expect.any(Number), a: 'Wort', b: '' });
+		const tables = db.prepare("SELECT name FROM sqlite_master WHERE type = 'table'").all() as { name: string }[];
+		const withFlag = tables.filter((t) =>
+			(db.prepare(`PRAGMA table_info(${t.name})`).all() as { name: string }[]).some((c) => c.name === 'interchangeable')
+		);
+		expect(withFlag.map((t) => t.name)).toEqual(['imposter_pairs']);
+	});
+});
 
 describe('content API', () => {
 	beforeEach(() => {
