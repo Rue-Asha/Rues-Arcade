@@ -4,6 +4,7 @@
 	import { invalidateAll } from '$app/navigation';
 	import { isSingle, isSurvey, type ContentItem, type ImportReport, type ItemType } from '#lib/content/types.ts';
 	import { games } from '#lib/games/registry.ts';
+	import { roster } from '#lib/roster.svelte.ts';
 	import Button from '#lib/ui/Button.svelte';
 	import { rise } from '#lib/motion.ts';
 	import Modal from '#lib/ui/Modal.svelte';
@@ -51,8 +52,14 @@
 	const api = $derived(`/api/content/${def.contentType}`);
 	const items = $derived(data.items);
 
+	const imposter = $derived(def.contentType === 'imposter_pairs');
+	const names = $derived(new Map(roster.saved.map((p) => [p.id, p.name])));
+	const listOf = (id: number) => data.played.find((p) => p.pairId === id)?.playerIds ?? [];
+
 	let a = $state('');
 	let b = $state('');
+	let swap = $state(false);
+	let open = $state<number[]>([]);
 	let message = $state('');
 
 	let editing = $state<number | null>(null);
@@ -86,9 +93,10 @@
 
 	async function add(e?: Event) {
 		e?.preventDefault();
-		message = await send(api, 'POST', { a, b });
+		message = await send(api, 'POST', imposter ? { a, b, interchangeable: swap } : { a, b });
 		if (message) return;
 		a = b = '';
+		swap = false;
 		page = 0;
 		await invalidateAll();
 		document.getElementById('new-a')?.focus();
@@ -110,6 +118,27 @@
 		if (editMessage) return;
 		editing = null;
 		await invalidateAll();
+	}
+
+	async function flip(item: ContentItem) {
+		await send(`${api}/${item.id}`, 'PUT', { a: item.a, b: item.b, interchangeable: !item.interchangeable });
+		await invalidateAll();
+	}
+
+	const toggle = (id: number) => (open = open.includes(id) ? open.filter((o) => o !== id) : [...open, id]);
+
+	async function addPlayed(pairId: number, playerId: number) {
+		const res = await fetch('/api/imposter/played', {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ pairId, playerIds: [playerId] })
+		});
+		if (res.ok) await invalidateAll();
+	}
+
+	async function dropPlayed(pairId: number, playerId: number) {
+		const res = await fetch(`/api/imposter/played/${pairId}/${playerId}`, { method: 'DELETE' });
+		if (res.ok) await invalidateAll();
 	}
 
 	async function remove() {
@@ -180,6 +209,9 @@
 					{#if message}
 						<p id="new-error" class="error" role="alert">{message}</p>
 					{/if}
+					{#if imposter}
+						<button class="swap" type="button" aria-pressed={swap} onclick={() => (swap = !swap)}>Austauschbar</button>
+					{/if}
 					<Button variant="primary" onclick={() => add()}>Hinzufügen</Button>
 				</form>
 
@@ -223,7 +255,7 @@
 					{#key page}
 					<ul class="rows" aria-labelledby="entries" in:rise>
 						{#each visible as item (item.id)}
-							<li class="row">
+							<li class="row" data-pair={imposter ? item.id : undefined}>
 								{#if editing === item.id}
 									<form class="edit" aria-label="{name(item)} bearbeiten" onsubmit={save}>
 										<label class="field">
@@ -254,6 +286,11 @@
 										{#if !single}<span class="b">{item.b}</span>{/if}
 									</span>
 									<span class="tools">
+										{#if imposter}
+											<button class="icon" type="button" aria-label="{name(item)} austauschbar" aria-pressed={item.interchangeable === true} onclick={() => flip(item)}>
+												<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h14M14 4l4 4-4 4M20 16H6M10 12l-4 4 4 4"></path>{#if item.interchangeable !== true}<path d="M4 20L20 4"></path>{/if}</svg>
+											</button>
+										{/if}
 										<button class="icon" type="button" aria-label="{name(item)} bearbeiten" onclick={() => edit(item)}>
 											<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"></path><path d="M13.5 6.5l4 4"></path></svg>
 										</button>
@@ -261,6 +298,34 @@
 											<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 7h14M10 7V4.5h4V7M7 7l1 13h8l1-13"></path></svg>
 										</button>
 									</span>
+									{#if imposter}
+										{@const on = listOf(item.id)}
+										<div class="played">
+											<button type="button" class="small" aria-expanded={open.includes(item.id)} onclick={() => toggle(item.id)}>Gespielt mit</button>
+											{#if open.includes(item.id)}
+												<div class="stack" role="group" aria-label="Spielerliste">
+													{#if on.length === 0}
+														<p class="muted">Noch niemand.</p>
+													{/if}
+													<ul class="who">
+														{#each on as id (id)}
+															<li>
+																<span>{names.get(id) ?? 'Unbekannt'}</span>
+																<button type="button" class="small" onclick={() => dropPlayed(item.id, id)}>
+																	Entfernen<span class="sr"> {names.get(id)}</span>
+																</button>
+															</li>
+														{/each}
+													</ul>
+													<div class="chips">
+														{#each roster.saved.filter((p) => !on.includes(p.id)) as p (p.id)}
+															<button type="button" class="small" onclick={() => addPlayed(item.id, p.id)}>+ {p.name}</button>
+														{/each}
+													</div>
+												</div>
+											{/if}
+										</div>
+									{/if}
 								{/if}
 							</li>
 						{/each}
@@ -443,6 +508,7 @@
 
 	.row {
 		display: flex;
+		flex-wrap: wrap;
 		align-items: center;
 		gap: 12px;
 		min-height: 64px;
@@ -473,6 +539,73 @@
 
 	.b {
 		color: var(--muted);
+	}
+
+	.played {
+		flex: 1 0 100%;
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 10px;
+		padding-right: 8px;
+	}
+
+	.played .stack {
+		align-self: stretch;
+	}
+
+	.chips {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+	}
+
+	.who {
+		display: flex;
+		flex-direction: column;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.who li {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: 12px;
+		padding: 6px 0;
+		border-bottom: 1px solid var(--line);
+	}
+
+	.small,
+	.swap {
+		min-height: 44px;
+		padding: 0 14px;
+		border: 1px solid var(--line);
+		border-radius: var(--radius-sm);
+		background: var(--raised);
+		color: var(--text);
+		box-shadow: 0 3px 0 var(--shadow);
+		font-weight: 700;
+		cursor: pointer;
+		touch-action: manipulation;
+	}
+
+	.small[aria-expanded='true'],
+	.swap[aria-pressed='true'] {
+		border-color: var(--c);
+	}
+
+	.swap {
+		align-self: flex-start;
+	}
+
+	.sr {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip-path: inset(50%);
 	}
 
 	.doomed {
