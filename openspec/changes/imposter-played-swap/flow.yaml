@@ -6,3 +6,5 @@ gate1: 2026-10-10
 learnings:
   - "openspec validate --strict checks SHALL/MUST only in the first line of a requirement body → planner puts the normative sentence first"
   - "Track set to tweak but the request adds stored per-item data (played lists, flags) → expect a migration and ask about escalating at explore (Rue chose feature)"
+  - "Planner splitting tasks that edit the same hunks of one file (U3 3.1/3.2 in inhalte +page.svelte) → one task, or the builder bundles them into one commit"
+  - "Builder waiting on proof:full in the background → plain sleep is blocked; wait via Monitor or the run_in_background notification"
