@@ -69,7 +69,7 @@ Gaps: none.
 
 ## Diffstat (origin/main...flow/imposter-played-swap)
 
-34 files changed, 1872 insertions(+), 34 deletions(-); source, tests, migration `0008_imposter_played.sql`, version 0.6.0, and the change dir.
+39 files changed, 1964 insertions(+), 34 deletions(-) (as of 5701ca9, before this commit); source, tests, migration `0008_imposter_played.sql`, version 0.6.0, and the change dir.
 
 ## Screenshots
 
