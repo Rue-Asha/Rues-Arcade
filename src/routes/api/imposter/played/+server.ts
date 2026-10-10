@@ -7,9 +7,8 @@ export const GET: RequestHandler = () => json(listImposterPlayed(getDb()));
 
 export const POST: RequestHandler = async ({ request }) => {
 	const body = await request.json().catch(() => null);
-	const ids: unknown[] = Array.isArray(body?.playerIds) ? body.playerIds : [];
-	if (!Number.isInteger(body?.pairId) || !ids.every((id) => Number.isInteger(id)))
+	if (!Number.isInteger(body?.pairId) || !Array.isArray(body.playerIds) || !body.playerIds.every((id: unknown) => Number.isInteger(id)))
 		return json({ message: 'Ungültige Angaben.' }, { status: 400 });
-	addImposterPlayed(getDb(), body.pairId, ids as number[]);
+	addImposterPlayed(getDb(), body.pairId, body.playerIds);
 	return new Response(null, { status: 204 });
 };

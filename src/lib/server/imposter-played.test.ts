@@ -133,9 +133,16 @@ describe('imposter played-with API', () => {
 		const x = pair('Hund', 'Katze', getDb());
 		const alex = player('Alex', getDb());
 
-		const bodies = [undefined, JSON.stringify({ pairId: '3', playerIds: [alex] }), JSON.stringify({ pairId: x, playerIds: [alex, 'x'] })];
+		const bodies = [
+			undefined,
+			'kaputt',
+			JSON.stringify({ pairId: '3', playerIds: [alex] }),
+			JSON.stringify({ pairId: x, playerIds: [alex, 'x'] }),
+			JSON.stringify({ pairId: x }),
+			JSON.stringify({ pairId: x, playerIds: 'x' })
+		];
 		for (const body of bodies) {
-			const res = await call(collection.POST, {}, body ?? 'kaputt');
+			const res = await call(collection.POST, {}, body);
 			expect(res.status).toBe(400);
 			expect(await res.json()).toEqual({ message: 'Ungültige Angaben.' });
 		}

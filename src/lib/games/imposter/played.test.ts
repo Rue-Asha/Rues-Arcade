@@ -64,6 +64,15 @@ describe('imposter record', () => {
 	});
 
 	it('Scenario: Imposter reveal records once', () => {
+		const covered = play(everyone, reading(3));
+		expect(covered.phase).toBe('crew');
+		expect(fetchMock).not.toHaveBeenCalled();
+
+		const uncovered = play(everyone, [...reading(3), 'reveal']);
+		expect(uncovered.shown).toBe(true);
+		expect(posts()).toEqual([['/api/imposter/played', { pairId: uncovered.pairId, playerIds: [1, 3] }]]);
+
+		fetchMock.mockClear();
 		play(everyone, [...reading(3), 'reveal', 'reveal', 'unmask', 'reveal', 'reveal', 'nextRound', ...reading(3)]);
 		expect(fetchMock).toHaveBeenCalledTimes(1);
 	});
