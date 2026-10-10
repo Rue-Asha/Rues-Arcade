@@ -1,14 +1,16 @@
 <script lang="ts">
 	import { getDemo } from '#lib/demo/context.ts';
 	import type { ScreenProps } from '#lib/games/registry.ts';
-		import { play } from '#lib/sound.ts';
+	import { play } from '#lib/sound.ts';
 	import Button from '#lib/ui/Button.svelte';
 	import GameFrame from '#lib/ui/GameFrame.svelte';
 	import Handoff from '#lib/ui/Handoff.svelte';
 	import HoldToView from '#lib/ui/HoldToView.svelte';
 	import Modal from '#lib/ui/Modal.svelte';
 	import Reveal from '#lib/ui/Reveal.svelte';
+	import type { PairPlayed } from '#lib/content/types.ts';
 	import type { ImposterAction, ImposterState } from './engine.ts';
+	import { history, knownBy } from './played.svelte.ts';
 
 	let { state: game, dispatch }: ScreenProps = $props();
 
@@ -17,6 +19,15 @@
 	const revealing = $derived(s.phase === 'handover' || s.phase === 'view');
 
 	let skipping = $state(false);
+	let played = $state<PairPlayed[] | null>(null);
+
+	// the fetch is a side effect, so it runs here and not in a derived
+	$effect(() => {
+		if (getDemo() === null) played = history(s.rng.state);
+	});
+
+	const known = $derived(played === null || getDemo() !== null ? null : knownBy(s.players, played, s.pairId));
+	const asking = $derived(known !== null && (revealing || (s.phase === 'crew' && !s.shown)));
 
 	function act(type: ImposterAction['type']) {
 		dispatch({ type });
@@ -117,6 +128,24 @@
 		{/snippet}
 
 		{#snippet rail()}
+			<div class="stack">
+			{#if asking && known}
+				<div class="corner">
+					<HoldToView label="Wer kennt die Frage?" corner onrelease={() => {}}>
+						<div data-testid="known" class="known">
+							{#if known.length}
+								<ul aria-label="Kennen die Frage">
+									{#each known as name (name)}
+										<li>{name}</li>
+									{/each}
+								</ul>
+							{:else}
+								<p>Noch niemand aus dieser Runde.</p>
+							{/if}
+						</div>
+					</HoldToView>
+				</div>
+			{/if}
 			<div class="panel stack tight">
 				<ol class="order" aria-label="Reihenfolge">
 					{#each s.players as p, i (p.id)}
@@ -133,6 +162,7 @@
 						</li>
 					{/each}
 				</ol>
+			</div>
 			</div>
 		{/snippet}
 	</GameFrame>
@@ -188,6 +218,27 @@
 	.secret {
 		max-width: 36ch;
 		font-weight: 600;
+	}
+
+	.corner {
+		display: flex;
+		justify-content: flex-end;
+	}
+
+	.known ul {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+		font-weight: 700;
+		overflow-wrap: anywhere;
+	}
+
+	.known p {
+		margin: 0;
+		font-weight: 700;
 	}
 
 	.order {
