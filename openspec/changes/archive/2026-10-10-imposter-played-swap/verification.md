@@ -50,7 +50,7 @@ The 35 skips are the by-design single-project e2e tests (including the phone-onl
 | Imposter import adds pairs with the flag off | unit | `src/lib/server/content.test.ts` ✓ |
 | Imposter swapped pair is not a duplicate | unit | `src/lib/server/content.test.ts` ✓ |
 | Only Imposter pairs carry the flag | unit | `src/lib/server/content.test.ts` ✓ |
-| Imposter flag icons read as on and off | manual (visual judgement of the two icons on the verifier's screenshots at Gate 2) | `shots/phone-inhalte-imposter-flag.png`, `shots/desktop-inhalte-imposter-flag.png`; `e2e/imposter-flag.test.ts` also ✓ phone, desktop |
+| Imposter flag icons read as on and off | manual (visual judgement of the two icons on the verifier's screenshots at Gate 2) | `shots/phone-inhalte-imposter-flag.png` (not committed, local verifier run), `shots/desktop-inhalte-imposter-flag.png` (not committed, local verifier run); `e2e/imposter-flag.test.ts` also ✓ phone, desktop |
 | Imposter interchangeable pair swaps across seeds | unit | `src/lib/games/imposter/engine.test.ts` ✓ |
 | Imposter fixed pair never swaps | unit | `src/lib/games/imposter/engine.test.ts` ✓ |
 | Imposter swap is deterministic | unit | `src/lib/games/imposter/engine.test.ts` ✓ |
@@ -64,8 +64,8 @@ Gaps: none.
 ## Manual checklist
 
 - Release v0.6.0 published: after the merge, push tag `v0.6.0` and confirm the release workflow passes `check-tag` and the release holds `rues-arcade-0.6.0.tgz` and its `.sha256`.
-- Imposter flag icons: open `shots/phone-inhalte-imposter-flag.png` and `shots/desktop-inhalte-imposter-flag.png`; the on button must read as a reverse arrow, the off one as the same arrow crossed out, both at least 44px.
-- Imposter "Wer kennt die Frage?" control: open `shots/phone-imposter-known.png` and `shots/desktop-imposter-known.png`, or run `npm run dev` and hold the corner control at a hand-over.
+- Imposter flag icons: open `shots/phone-inhalte-imposter-flag.png` (not committed, local verifier run) and `shots/desktop-inhalte-imposter-flag.png` (not committed, local verifier run); the on button must read as a reverse arrow, the off one as the same arrow crossed out, both at least 44px.
+- Imposter "Wer kennt die Frage?" control: open `shots/phone-imposter-known.png` (not committed, local verifier run) and `shots/desktop-imposter-known.png` (not committed, local verifier run), or run `npm run dev` and hold the corner control at a hand-over.
 
 ## Diffstat (origin/main...flow/imposter-played-swap)
 
@@ -73,10 +73,10 @@ Gaps: none.
 
 ## Screenshots
 
-- `openspec/changes/imposter-played-swap/shots/phone-imposter-known.png`
-- `openspec/changes/imposter-played-swap/shots/desktop-imposter-known.png`
-- `openspec/changes/imposter-played-swap/shots/phone-inhalte-imposter-flag.png`
-- `openspec/changes/imposter-played-swap/shots/desktop-inhalte-imposter-flag.png`
+- `shots/phone-imposter-known.png` (not committed, local verifier run)
+- `shots/desktop-imposter-known.png` (not committed, local verifier run)
+- `shots/phone-inhalte-imposter-flag.png` (not committed, local verifier run)
+- `shots/desktop-inhalte-imposter-flag.png` (not committed, local verifier run)
 
 ## Review
 
