@@ -47,14 +47,11 @@ export const demo: DemoScript<DuckAction, DuckConfig> = {
 		{ action: { type: 'show' }, tip: `Wort 3: ${SHOW}` },
 		{ action: { type: 'play' }, tip: PLAY },
 		{
-			action: { type: 'score', player: 0, box: 9 },
-			tip: 'Alex und Bo haben einen gemeinsamen Reim und Alex hält Chuck: 3 Punkte für beide, Alex bekommt 2 extra, zusammen 5. Alex steht bei 9.'
+			action: { type: 'score', player: 0, box: 7 },
+			tip: 'Alle vier sagen denselben Reim: je 1 Punkt, weil mehr als zwei ihn teilen, und je 2 extra, weil alle mit Chuck-Halter Alex gereimt haben. Auch Alex bekommt 3, nicht 5, und steht bei 7.'
 		},
-		{ action: { type: 'score', player: 1, box: 4 }, tip: 'Bo bekommt 3 Punkte, ohne Extra, und steht bei 4.' },
-		{
-			action: { type: 'score', player: 2, box: 6 },
-			tip: 'Cleo und Dani haben einen anderen gemeinsamen Reim. Auch dieses Paar bekommt je 3 Punkte, Cleo steht bei 6.'
-		},
+		{ action: { type: 'score', player: 1, box: 4 }, tip: 'Bo bekommt ebenfalls 3 Punkte und steht bei 4.' },
+		{ action: { type: 'score', player: 2, box: 6 }, tip: 'Cleo bekommt 3 Punkte und steht bei 6.' },
 		{ action: { type: 'score', player: 3, box: 4 }, tip: 'Dani bekommt 3 Punkte und steht bei 4. Alle haben einen Reim gefunden, niemand verliert einen Buchstaben.' },
 		{ action: { type: 'commit' }, tip: 'Weiter zum Punktestand.' },
 		{
@@ -63,7 +60,7 @@ export const demo: DemoScript<DuckAction, DuckConfig> = {
 		},
 		{
 			action: { type: 'show' },
-			tip: 'Das Spiel endet auch, sobald jemand die vorher festgelegte Zielpunktzahl erreicht, hier 10. Alex steht bei 9, ein Punkt fehlt noch. Mit dem Ende gewinnt, wer die meisten Punkte hat.'
+			tip: 'Das Spiel endet auch, sobald jemand die vorher festgelegte Zielpunktzahl erreicht, hier 10. Alex steht bei 7, drei Punkte fehlen noch. Mit dem Ende gewinnt, wer die meisten Punkte hat.'
 		}
 	]
 };

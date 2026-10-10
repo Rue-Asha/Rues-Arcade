@@ -135,7 +135,8 @@ and Dani playing three words with Zielpunkte 10 and ending at "Demo beendet", ga
 SHALL show the word before it uses "Überspringen". It SHALL score each word for everyone together: in word 1 three
 players share a rhyme and get 1 point each while the Chuck holder without a rhyme loses a letter; in word 2 only two
 players (not the Chuck holder) share a rhyme and get 3 points each while the other two lose a letter each; in word 3
-two pairs each share a rhyme, 3 points each, and the Chuck holder gets 2 more. Chuck SHALL move after each played
+all four share one rhyme with the Chuck holder and get 3 points each (1 for the shared rhyme plus 2 extra, the holder
+included, so the holder gets 3 like everyone else). Chuck SHALL move after each played
 word. The last two steps SHALL name the two ways the game ends: someone has lost all letters, or someone reaches the
 preset Zielpunkte. Sound SHALL use the existing cues: press on controls, reveal on "Wort aufdecken", wrong when a letter
 is crossed, correct on "Weiter" when points were added, win at Spielende.
@@ -167,7 +168,7 @@ is crossed, correct on "Weiter" when points were added, win at Spielende.
 
 #### Scenario: Duck demo scores everyone who found a rhyme together
 - **WHEN** the demo's three committed words are walked
-- **THEN** the points gained are 1, 1, 0, 1 with the Chuck holder losing a letter (word 1), 3 and 3 for two players with the other two losing a letter each (word 2), and 5, 3, 3, 3 with nobody losing a letter (word 3, Chuck's holder 3 + 2)
+- **THEN** the points gained are 1, 1, 0, 1 with the Chuck holder losing a letter (word 1), 3 and 3 for two players with the other two losing a letter each (word 2), and 3, 3, 3, 3 with nobody losing a letter (word 3, everyone 1 + 2 for sharing the rhyme with Chuck's holder, the holder included)
 - **proof:** unit ("Regression: Duck demo scores everyone who found a rhyme together, Chuck holder included")
 
 #### Scenario: Duck demo names both ways the game ends
