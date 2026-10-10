@@ -1,4 +1,4 @@
-verified-at: ac9216f
+verified-at: 5701ca9
 
 ## Layer 1: `npm run proof:full` green
 
@@ -7,7 +7,7 @@ Test Files  38 passed (38)
      Tests  343 passed (343)
 Running 606 tests using 8 workers
   35 skipped
-  571 passed (4.2m)
+  571 passed (4.3m)
 EXIT 0
 ```
 
@@ -56,6 +56,8 @@ The 35 skips are the by-design single-project e2e tests (including the phone-onl
 | Imposter swap is deterministic | unit | `src/lib/games/imposter/engine.test.ts` ✓ |
 | Imposter skip redraws the swap | unit | `src/lib/games/imposter/engine.test.ts` ✓ |
 | Imposter reveal and unmask show the dealt sides | unit | `src/lib/games/imposter/engine.test.ts` ✓ |
+
+Round 2: rechecked the scenarios touched by 5701ca9 (malformed body now also covers non-JSON, missing `playerIds`, non-array `playerIds`, table unchanged; records-once pins the covered phase to no post and the uncovered one to exactly one post with the right ids). All 39 names found in the green run or in the unit files that passed (38/38 files, 343 tests).
 
 Gaps: none.
 
