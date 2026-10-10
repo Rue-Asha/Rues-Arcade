@@ -39,6 +39,12 @@ export interface ContentItem {
 	id: number;
 	a: string;
 	b: string;
+	interchangeable?: boolean;
+}
+
+export interface PairPlayed {
+	pairId: number;
+	playerIds: number[];
 }
 
 export const MAX_TEXT = 200;

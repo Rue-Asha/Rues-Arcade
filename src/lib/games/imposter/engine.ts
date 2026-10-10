@@ -66,13 +66,19 @@ function bind(rng: Rng, players: Player[], pair: ContentItem) {
 function deal(s: ImposterState, avoid?: number): ImposterState {
 	const d = draw(s.rng, s.pool, s.used, avoid);
 	const b = bind(d.rng, s.players, d.pair);
+	let { crew, imposter, rng } = b;
+	if (d.pair.interchangeable === true) {
+		let coin: number;
+		[coin, rng] = int(rng, 0, 1);
+		if (coin === 1) [crew, imposter] = [imposter, crew];
+	}
 	return {
 		...s,
-		rng: b.rng,
+		rng,
 		used: d.used,
 		pairId: d.pair.id,
-		crew: b.crew,
-		imposter: b.imposter,
+		crew,
+		imposter,
 		phase: 'handover',
 		revealIndex: 0,
 		shown: false

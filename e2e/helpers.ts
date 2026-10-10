@@ -3,7 +3,7 @@ import { spawn } from 'node:child_process';
 import { rmSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { playerId, type SavedPlayer } from '../src/lib/players.ts';
-import type { ContentType, Survey } from '../src/lib/content/types.ts';
+import type { ContentItem, ContentType, PairPlayed, Survey } from '../src/lib/content/types.ts';
 
 export async function seedRoster(page: Page, names: string[]) {
 	if (page.url() === 'about:blank') await page.goto('/');
@@ -108,6 +108,31 @@ export async function deleteSurvey(request: APIRequestContext, id: number, origi
 export async function seedPlayed(request: APIRequestContext, surveyId: number, playerIds: number[], origin = sharedOrigin()) {
 	const res = await request.post(`${origin}/api/feud/played`, { headers: writeHeaders(origin), data: { surveyId, playerIds } });
 	expect(res.status()).toBe(204);
+}
+
+export async function seedPairs(
+	request: APIRequestContext,
+	origin: string,
+	pairs: { a: string; b: string; interchangeable?: boolean }[]
+): Promise<ContentItem[]> {
+	const saved: ContentItem[] = [];
+	for (const data of pairs) {
+		const res = await request.post(`${origin}/api/content/imposter_pairs`, { headers: writeHeaders(origin), data });
+		expect(res.status()).toBe(201);
+		saved.push(await res.json());
+	}
+	return saved;
+}
+
+export async function seedImposterPlayed(request: APIRequestContext, origin: string, pairId: number, playerIds: number[]) {
+	const res = await request.post(`${origin}/api/imposter/played`, { headers: writeHeaders(origin), data: { pairId, playerIds } });
+	expect(res.status()).toBe(204);
+}
+
+export async function imposterPlayed(request: APIRequestContext, origin: string): Promise<PairPlayed[]> {
+	const res = await request.get(`${origin}/api/imposter/played`);
+	expect(res.ok()).toBe(true);
+	return res.json();
 }
 
 // The stage node the player sees; an outgoing one stays in the DOM for --dur-out after a phase change.
