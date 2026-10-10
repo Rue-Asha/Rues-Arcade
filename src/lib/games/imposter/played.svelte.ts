@@ -20,3 +20,16 @@ export function knownBy(players: Player[], played: PairPlayed[], pairId: number)
 	const ids = played.find((p) => p.pairId === pairId)?.playerIds ?? [];
 	return players.filter((p) => ids.includes(savedId(p.id) ?? -1)).map((p) => p.name);
 }
+
+let cache = $state<{ key: number; played: PairPlayed[] } | null>(null);
+let requested: number | null = null;
+
+export function history(key: number): PairPlayed[] | null {
+	if (requested !== key) {
+		requested = key;
+		void fetch('/api/imposter/played').then(async (res) => {
+			if (res.ok && requested === key) cache = { key, played: await res.json() };
+		});
+	}
+	return cache?.key === key ? cache.played : null;
+}
