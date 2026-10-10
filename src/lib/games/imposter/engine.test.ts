@@ -147,3 +147,70 @@ describe('imposter engine', () => {
 		expect(run(s, ['seen', 'unmask', 'nextRound'])).toBe(s);
 	});
 });
+
+describe('imposter swapped deal', () => {
+	const swap = (n: number, interchangeable?: boolean): ContentItem[] =>
+		Array.from({ length: n }, (_, i) => ({ id: i + 1, a: `A${i + 1}?`, b: `B${i + 1}?`, interchangeable }));
+	const seeds = Array.from({ length: 40 }, (_, i) => i + 1);
+
+	it('Scenario: Imposter interchangeable pair swaps across seeds', () => {
+		const dealt = seeds.map((seed) => start(3, swap(1, true), seed));
+		expect(dealt.some((s) => s.crew === 'B1?' && s.imposter === 'A1?')).toBe(true);
+		expect(dealt.some((s) => s.crew === 'A1?' && s.imposter === 'B1?')).toBe(true);
+		expect(dealt.every((s) => s.crew !== s.imposter)).toBe(true);
+	});
+
+	it('Scenario: Imposter fixed pair never swaps', () => {
+		for (const seed of seeds) {
+			let off = start(3, swap(1, false), seed);
+			let bare = start(3, swap(1), seed);
+			for (let i = 0; i < 3; i++) {
+				expect([off.crew, off.imposter]).toEqual(['A1?', 'B1?']);
+				expect({ ...off, pool: [] }).toEqual({ ...bare, pool: [] });
+				off = playRound(off);
+				bare = playRound(bare);
+			}
+		}
+	});
+
+	it('Scenario: Imposter swap is deterministic', () => {
+		for (const seed of seeds) {
+			let a = start(4, swap(3, true), seed);
+			let b = start(4, swap(3, true), seed);
+			for (const type of allActions) {
+				a = imposter.reduce(a, { type } as ImposterAction);
+				b = imposter.reduce(b, { type } as ImposterAction);
+				expect(a).toEqual(b);
+			}
+		}
+	});
+
+	it('Scenario: Imposter skip redraws the swap', () => {
+		const sides = new Set<string>();
+		for (const seed of seeds) {
+			const s = start(3, swap(2, true), seed);
+			const t = run(s, ['skip']);
+			expect(t.pairId).not.toBe(s.pairId);
+			expect(t.crew).toMatch(new RegExp(`^[AB]${t.pairId}\\?$`));
+			sides.add(t.crew[0]);
+		}
+		expect([...sides].sort()).toEqual(['A', 'B']);
+	});
+
+	it('Scenario: Imposter reveal and unmask show the dealt sides', () => {
+		const seed = seeds.find((x) => start(4, swap(1, true), x).crew === 'B1?')!;
+		let s = start(4, swap(1, true), seed);
+		const saw: string[] = [];
+		for (let i = 0; i < 4; i++) {
+			s = run(s, ['handover']);
+			saw.push(s.revealIndex === s.imposterIndex ? 'imposter' : 'crew');
+			expect(s.revealIndex === s.imposterIndex ? s.imposter : s.crew).toBe(s.revealIndex === s.imposterIndex ? 'A1?' : 'B1?');
+			s = run(s, ['seen']);
+		}
+		expect(saw.filter((x) => x === 'crew')).toHaveLength(3);
+		s = run(s, ['reveal']);
+		expect(s.crew).toBe('B1?');
+		s = run(s, ['unmask']);
+		expect(s.imposter).toBe('A1?');
+	});
+});
