@@ -77,3 +77,14 @@ Gaps: none.
 - `openspec/changes/imposter-played-swap/shots/desktop-imposter-known.png`
 - `openspec/changes/imposter-played-swap/shots/phone-inhalte-imposter-flag.png`
 - `openspec/changes/imposter-played-swap/shots/desktop-inhalte-imposter-flag.png`
+
+## Review
+
+Round 1 (reviewer, fresh context) found 3 issues. A fixer resolved all three in 5701ca9:
+- [spec] `src/routes/api/imposter/played/+server.ts`: a missing or non-array `playerIds` was treated as `[]`, so the route answered 204 instead of 400. The fix: the test cases were added first and failed, then the route now rejects unless `Array.isArray(playerIds)` and every id is an integer.
+- [weak] "Imposter played-with API rejects a malformed body" never sent an empty body. The fix: the test now sends a real empty body, and the invalid-JSON case is kept separately.
+- [weak] "Imposter reveal records once" did not pin the transition at which the record happens. The fix: the test now asserts no post while the crew question is covered, then one post with the right pairId and playerIds when it is uncovered.
+
+Round 2 (new reviewer, fresh context): no blocking findings.
+- [weak, minor] "Imposter swapped pair is not a duplicate" calls the store's `add()` and never checks the route's 201. Not fixed: the route maps `ok` to 201 with no logic in between, and the store result plus the row count pin the behaviour. A third round would re-run the whole Verify for that mapping alone.
+- Notes the reviewer did not count as findings, since the spec only requires one fetch per deal: the who-knows cache is keyed by the deal, so a played-with list edited on Inhalte in the middle of a deal shows up only from the next deal. If the GET fails, the control stays hidden for that deal.
