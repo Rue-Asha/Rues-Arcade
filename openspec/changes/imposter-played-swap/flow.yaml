@@ -3,6 +3,7 @@ triage: "feature — Imposter prompts get a played-with history like Feud plus a
 base: main
 gate0: 2026-10-10
 gate1: 2026-10-10
+gate2: 2026-10-10
 learnings:
   - "openspec validate --strict checks SHALL/MUST only in the first line of a requirement body → planner puts the normative sentence first"
   - "Track set to tweak but the request adds stored per-item data (played lists, flags) → expect a migration and ask about escalating at explore (Rue chose feature)"
