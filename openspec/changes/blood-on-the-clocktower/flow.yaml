@@ -5,6 +5,10 @@ base: main
 gate0: 2026-10-14
 gate1: 2026-10-14
 learnings:
+- a fixer committed on a red proof:full after the one failing test (feud-history tiebreak, shared DB) passed alone → fixer briefs say: a red full run means rerun the whole proof:full once before committing, never a scoped rerun (2026-10-14)
+- a fixer replaced a placeholder-only assertion with an unnamed `getByRole('heading')`, which broke under strict mode once the real screen had several headings → fixers assert one named, specced element, never a bare role (wave-2 fix, red again after wave 3, 2026-10-14)
+- placeholders from earlier units satisfied later scenarios (U7 drag/5-seat, U8 Wecke heading, U9 header status), so tests passed before the code → planner keeps placeholders minimal (no headings or behaviour a later scenario asserts) and the brief says a test green on the placeholder must be tightened until it fails (U7, U8, U9, 2026-10-14)
+- parallel units fixed shared components outside their files (U7 Circle tap + engine `back`, U9 Circle hand CSS); merged cleanly, but the planner should assign shared-component fixes forced by a scenario to one unit (strengthens the existing planning learning, 2026-10-14)
 - builder tests written after the code recurred: U4 4.4 e2e art test, U6 6.3 RoleCard test, U5 reload test passed against a looser placeholder → brief names the fail-first check per task (strengthens the existing builder learning, 2026-10-14)
 - builders polling background runs with until-loops grepping for an exit marker never matched (the marker goes to task output, not the log) → wait for the completion notice; grep the log for "passed|failed" if needed (U4, U6 friction, 2026-10-14)
 - design.md contract left `seatPositions`/`seatSize`' second arg ambiguous (box px vs 'setup'|'play') → planner gives units of every numeric contract arg (U6, 2026-10-14)
