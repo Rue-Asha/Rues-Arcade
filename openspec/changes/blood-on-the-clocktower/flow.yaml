@@ -5,6 +5,7 @@ base: main
 gate0: 2026-10-14
 gate1: 2026-10-14
 learnings:
+- planner on Gate 2 revisions: the user's "rechtsbündig" matched no box (panels were left-aligned) and "Uhr" had two candidates → gate feedback naming UI elements gets a screenshot-backed identification step before planning, and the open readings go back to the user (2026-10-14)
 - Rue at Gate 2 (2026-10-14): 11 visual revisions (night/day atmosphere with stars, moon, sun; decorated connected circle and ghost token; roles at a glance in setup; non-sticky Weiter when scrolling; compact show-bar; emphasised day clock; end screen grouped by team) after the build looked flat → explore asks for the decoration/atmosphere level and the storyteller's at-a-glance info per screen, and the design brief states them before planning
 - Rue chose in Verify r1 (2026-10-14): desktop sheet slide keeps ≥12px as an exception to the deck's 16px rule (one-screen overview); ghost vote stays symbol-only (✕ ●/✕ ○) with the words in the accessible label → spec wording "shape and label" and "every slide ≥16px" were ambiguous or infeasible for dense reference screens; planner states legibility exceptions explicitly
 - review r1 found 3 reproduced reducer bugs (duplicate history key on end reveal, Zurück onto an answered dusk question traps the guide, starpass leaves the new Imp's old Minion step) that unit tests per action missed → planner adds cross-action sequence scenarios (SW takeover + starpass same night, back across answered questions) for state machines (2026-10-14)
