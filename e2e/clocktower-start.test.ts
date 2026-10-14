@@ -294,6 +294,6 @@ test('Scenario: Game without content starts without a content fetch', async ({ p
 
 	await page.getByRole('button', { name: 'Spiel starten', exact: true }).click();
 	await expect(page).toHaveURL(/\/spiele\/clocktower\/spielen$/);
-	await expect(live(page).getByRole('heading')).toBeVisible();
+	await expect(live(page).getByRole('heading', { name: 'Sitzordnung', exact: true })).toBeVisible();
 	expect(fetched).toEqual([]);
 });
