@@ -439,3 +439,27 @@ Phase set copied from this run to /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/9
 - /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/913b500e-2f4d-45c3-84e8-6936fe13c65c/scratchpad/shots/phone-look-lobby-clocktower-pick.png
 - /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/913b500e-2f4d-45c3-84e8-6936fe13c65c/scratchpad/shots/phone-look-lobby-clocktower.png
 - /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/913b500e-2f4d-45c3-84e8-6936fe13c65c/scratchpad/shots/phone-look-start-clocktower.png
+
+## Review
+
+Fresh-context reviewer (opus) over `git diff origin/main...flow/blood-on-the-clocktower`, three rounds.
+
+### Round 1 (fixed, each with a regression test)
+- End history keyed by night: duplicate key crashed the end screen. Keyed per entry.
+- Back onto an answered dusk question trapped the guide. `next`/`back` skip closed question screens; spec sentence added.
+- After a starpass the new Imp still woke in their old Minion step. The step is dropped.
+- ShowBar takeover step had no Imp card preselected. Preselected.
+- Desktop sheet credit at 11px. Raised to 12px (user decision: sheet exception, ≥12px).
+- Circle death animation used `filter`. Now scale plus opacity.
+- Four weak tests tightened; setup/reveal look shots renamed `clocktower-setup-*` / `clocktower-reveal-*`.
+
+### Round 2 (fixed)
+- "Lebt doch" left a queued Scarlet Woman question. Dropped on revive; new scenario "Lebt doch takes back the Scarlet Woman question".
+- Day-phase reload painted night first. Inline head script sets the day variant before first paint.
+- Deck night slide text was wrong. Corrected.
+- Seven weak tests tightened.
+
+### Round 3 (open, round limit reached)
+- [weak] `e2e/clocktower-deck.test.ts:142-158` "Slide change animated, crossfade under reduced motion" checks that opacity animates and transform is present or absent, but not that nothing else animates. Current code animates only opacity and transform (`Deck.svelte:29`). Not fixed: round limit.
+- [spec] `VoteClock.svelte:50-53`, `engine.ts:386-392`: during the sweep, tapping any markable seat toggles its vote, not only the seat under the hand. Space is limited to the hand seat. "Real short sweep marks votes" taps a seat before the hand starts. Left for the user at Gate 2: keep the convenience and say so in the spec, or restrict taps to the hand seat.
+- No weakened tests and no correctness bugs found.
