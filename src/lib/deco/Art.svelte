@@ -12,6 +12,7 @@
 	import MostLikely from './MostLikely.svelte';
 	import Neutral from './Neutral.svelte';
 	import Rings from './Rings.svelte';
+	import Sky from './Sky.svelte';
 
 	interface Props {
 		slug?: string;
@@ -44,6 +45,8 @@
 		<Feud {place} />
 	{:else if motif === 'clocktower'}
 		<Clocktower {place} />
+	{:else if motif === 'sky'}
+		<Sky />
 	{:else if motif === 'corner'}
 		<Corner />
 	{:else}

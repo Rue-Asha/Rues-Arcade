@@ -68,8 +68,11 @@ describe('motifFor', () => {
 	it('Scenario: Clocktower gets its own motif', () => {
 		expect(motifFor('clocktower', 'tile')).toBe('clocktower');
 		expect(motifFor('clocktower', 'start')).toBe('clocktower');
-		expect(motifFor('clocktower', 'lobby')).toBe('crew');
-		expect(motifFor('clocktower', 'play')).toBe('rings');
+		expect(motifFor('clocktower', 'lobby')).toBe('sky');
+		expect(motifFor('clocktower', 'play')).toBe('sky');
+		expect(motifFor('imposter', 'lobby')).toBe('crew');
+		expect(motifFor('imposter', 'play')).toBe('rings');
+		expect(motifFor('charade', 'play')).toBe('neutral');
 	});
 
 	it('home, lobby and the locked tile have their own motifs', () => {
@@ -170,7 +173,8 @@ describe('Banner', () => {
 			[{ slug: 'charade', place: 'start' }, 'neutral'],
 			[{ slug: 'duck', place: 'start', colour: 'duck' }, 'duck'],
 			[{ slug: 'clocktower', place: 'start', colour: 'clocktower' }, 'clocktower'],
-			[{ slug: 'wavelength', place: 'lobby', colour: 'wavelength' }, 'crew']
+			[{ slug: 'wavelength', place: 'lobby', colour: 'wavelength' }, 'crew'],
+			[{ slug: 'clocktower', place: 'lobby', colour: 'clocktower' }, 'sky']
 		] as const;
 		for (const [props, motif] of cases) {
 			const body = banner(props);
