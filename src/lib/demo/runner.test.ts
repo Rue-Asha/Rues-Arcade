@@ -3,7 +3,17 @@ import { games } from '#lib/games/registry.ts';
 import { getDemo, setDemo } from './context.ts';
 import { done, next, start, view, type DemoRun } from './runner.ts';
 
-describe.each(games.map((g) => [g.def.slug, g] as const))('demo runner: %s', (_, { def, demo }) => {
+const withDemo = games.filter((g) => g.demo).map((g) => [g.def.slug, { def: g.def, demo: g.demo! }] as const);
+
+describe('demo-less games', () => {
+	it('Scenario: Generic demo checks skip a game without a demo', () => {
+		expect(withDemo.map(([slug]) => slug)).toEqual(['imposter', 'wavelength', 'codes', 'duck', 'most-likely', 'family-feud']);
+		expect(games.filter((g) => !g.demo).map((g) => g.def.slug)).toEqual(['clocktower']);
+		for (const g of games) expect(g.demo ?? g.Explanation, g.def.slug).toBeDefined();
+	});
+});
+
+describe.each(withDemo)('demo runner: %s', (_, { def, demo }) => {
 	const total = demo.steps.length;
 
 	function playThrough() {

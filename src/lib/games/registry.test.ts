@@ -14,6 +14,7 @@ describe('registry', () => {
 		expect(range('duck')).toBe('4–16 Spieler');
 		expect(range('most-likely')).toBe('4–20 Spieler');
 		expect(range('family-feud')).toBe('4–20 Spieler');
+		expect(range('clocktower')).toBe('5–15 Spieler');
 	});
 
 	it('Scenario: Wavelength player range reads 2–18', () => {
@@ -21,22 +22,55 @@ describe('registry', () => {
 		expect(playerRange(wavelength.def)).toBe('2–18 Spieler');
 	});
 
-	it('lists six games in order, one locked one and unique slugs', () => {
+	it('Scenario: Registry lists Blood on the Clocktower last', () => {
 		expect(games.map((g) => g.def.slug)).toEqual([
 			'imposter',
 			'wavelength',
 			'codes',
 			'duck',
 			'most-likely',
-			'family-feud'
+			'family-feud',
+			'clocktower'
 		]);
 		expect(comingSoon).toEqual(['Charade']);
 		const slugs = games.map((g) => g.def.slug);
 		expect(new Set(slugs).size).toBe(slugs.length);
+
+		const clocktower = games.at(-1)!;
+		expect(clocktower.def).toMatchObject({
+			name: 'Blood on the Clocktower',
+			colour: 'clocktower',
+			contentType: 'none',
+			minContent: 0,
+			stateVersion: 1
+		});
+		expect(clocktower.demo).toBeUndefined();
+		expect(clocktower.Explanation).toBeDefined();
+		expect(clocktower.countFirst).toBe(true);
+		expect(clocktower.pitch).toBe('Eine Stadt sucht ihren Dämon, die Bösen lügen, eine Person erzählt.');
+	});
+
+	it('the Clocktower placeholder starts in setup with one seat per player', () => {
+		const { def, status } = games.find((g) => g.def.slug === 'clocktower')!;
+		const players = ['Alex', 'Bo', 'Cleo', 'Dani', 'Eli'].map((name, i) => ({ id: `p${i}`, name }));
+		const state = def.init({ players, config: {}, content: [], seed: 1 });
+		expect(state.phase).toEqual({ kind: 'setup' });
+		expect(state.seats.map((s: { player: { name: string } }) => s.player.name)).toEqual(['Alex', 'Bo', 'Cleo', 'Dani', 'Eli']);
+		expect(state.seats[0]).toEqual({ player: players[0], character: null, believed: null, alive: true, ghostVote: true });
+		expect(status(state)).toEqual({ parts: ['Aufbau'], progress: null });
+	});
+
+	it('a Clocktower session is checked against its explicit shape', () => {
+		const entry = games.find((g) => g.def.slug === 'clocktower')!;
+		const players = ['Alex', 'Bo', 'Cleo', 'Dani', 'Eli'].map((name, i) => ({ id: `p${i}`, name }));
+		write('arcade:session:clocktower', JSON.stringify({ v: 1, state: entry.def.init({ players, config: {}, content: [], seed: 1 }) }));
+		expect(loadGameSession(entry)).toHaveProperty('state');
+		write('arcade:session:clocktower', JSON.stringify({ v: 1, state: { phase: { kind: 'setup' } } }));
+		expect(loadGameSession(entry)).toEqual({ discarded: true });
 	});
 
 	it('new games carry their contract: colour, content type, minContent, state version', () => {
-		const contract = games.slice(2).map(({ def }) => ({
+		const contract = games.slice(2, 6).map(({ def }) => ({
 			slug: def.slug,
 			name: def.name,
 			colour: def.colour,
@@ -74,9 +108,9 @@ describe('registry', () => {
 	});
 
 	it('every demo starts from four players and fixture content', () => {
-		for (const { def, demo } of games.slice(2)) {
-			expect(demo.players, def.slug).toEqual(['Alex', 'Bo', 'Cleo', 'Dani']);
-			expect(demo.content.length, def.slug).toBeGreaterThan(0);
+		for (const { def, demo } of games.slice(2).filter((g) => g.demo)) {
+			expect(demo!.players, def.slug).toEqual(['Alex', 'Bo', 'Cleo', 'Dani']);
+			expect(demo!.content.length, def.slug).toBeGreaterThan(0);
 			expect(loadGameSession(games.find((g) => g.def.slug === def.slug)!), def.slug).toBeNull();
 		}
 	});
