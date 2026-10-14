@@ -38,27 +38,27 @@ export async function walk(page: Page, check: Check) {
 	for (const n of [7, 15]) {
 		await open(page, empty(n));
 		await expect(live(page).getByRole('heading', { name: 'Sitzordnung' })).toBeVisible();
-		await check(`setup-${n}-empty`);
+		await check(`clocktower-setup-${n}-empty`);
 
 		await open(page, play(empty(n), assign('poisoner', 'spy', ...(n === 15 ? (['scarlet-woman', 'baron'] as const) : []))));
 		await expect(live(page).getByText('zu viele', { exact: true })).toBeVisible();
-		await check(`setup-${n}-error`);
+		await check(`clocktower-setup-${n}-error`);
 
 		await open(page, done(n));
 		await expect(live(page).getByLabel('Red Herring')).toHaveValue('0');
-		await check(`setup-${n}-complete`);
+		await check(`clocktower-setup-${n}-complete`);
 
 		await live(page).getByRole('button', { name: 'Weiter', exact: true }).click();
 		await expect(page.getByRole('dialog').getByRole('heading', { name: 'Rollen sind verteilt und notiert?' })).toBeVisible();
-		await check(`setup-${n}-confirm`);
+		await check(`clocktower-setup-${n}-confirm`);
 
 		const locked = play(done(n), [{ type: 'lock' }]);
 		await open(page, locked);
 		await expect(live(page).getByRole('button', { name: 'Rolle zeigen', exact: true })).toBeVisible();
-		await check(`reveal-${n}-name`);
+		await check(`clocktower-reveal-${n}-name`);
 
 		await live(page).getByRole('button', { name: 'Rolle zeigen', exact: true }).click();
 		await expect(live(page).getByTestId('role-card')).toBeVisible();
-		await check(`reveal-${n}-card`);
+		await check(`clocktower-reveal-${n}-card`);
 	}
 }
