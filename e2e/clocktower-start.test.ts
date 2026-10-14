@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { seedRoster } from './helpers.ts';
+import { seedRoster, seedSavedRoster } from './helpers.ts';
 
 // Blood on the Clocktower stores nothing in the database: roster and count live in localStorage, so phone and
 // desktop never share state.
@@ -67,6 +67,7 @@ test('Scenario: Chosen count persists', async ({ page }) => {
 
 	await page.getByRole('button', { name: "Los geht's", exact: true }).click();
 	await expect(page).toHaveURL(/\/spiele\/clocktower\/lobby$/);
+	await expect(page.getByText('Für 11 Spieler fehlen noch 4 im Kader.', { exact: true })).toBeVisible();
 	await page.goto('/spiele/clocktower');
 	await expect(count(page)).toHaveText('11');
 });
@@ -148,4 +149,151 @@ test('Scenario: Clocktower demo and Inhalte are not found', async ({ page }) => 
 		await expect(page.getByRole('button', { name: 'Demo beenden' }), path).toHaveCount(0);
 		await expect(page.getByText(/^Schritt \d+\/\d+$/), path).toHaveCount(0);
 	}
+});
+
+const box = (page: Page, name: string) => page.getByRole('checkbox', { name, exact: true });
+const picked = (page: Page) =>
+	page.evaluate(() =>
+		[...document.querySelectorAll<HTMLInputElement>('input[type="checkbox"]')].filter((b) => b.checked).length
+	);
+const seated = (page: Page) =>
+	page.evaluate(
+		() =>
+			JSON.parse(localStorage.getItem('arcade:session:clocktower')!).state.seats.map(
+				(s: { player: { id: string; name: string } }) => s.player
+			) as { id: string; name: string }[]
+	);
+
+async function openLobby(page: Page, roster: string[], n: number) {
+	await seedRoster(page, roster);
+	await page.evaluate((v) => localStorage.setItem('arcade:count:clocktower', String(v)), n);
+	await page.goto('/spiele/clocktower/lobby');
+}
+
+test('Scenario: Fewer than N offers adding players', async ({ page }) => {
+	await openLobby(page, crew(5), 7);
+
+	await expect(page.getByText('Für 7 Spieler fehlen noch 2 im Kader.', { exact: true })).toBeVisible();
+	const add = page.getByRole('link', { name: 'Spieler hinzufügen', exact: true });
+	await expect(add).toHaveAttribute('href', '/spieler?from=/spiele/clocktower/lobby');
+	await expect(page.getByRole('button', { name: 'Spiel starten', exact: true })).toHaveCount(0);
+
+	await add.click();
+	const name = page.getByLabel('Name');
+	for (const guest of ['Jürgen', 'Özlem']) {
+		await name.fill(guest);
+		await page.getByRole('button', { name: 'Hinzufügen', exact: true }).click();
+		await expect(page.getByRole('region', { name: 'Dabei' }).getByText(guest, { exact: true })).toBeVisible();
+	}
+	await page.getByRole('button', { name: 'Fertig', exact: true }).click();
+
+	await expect(page).toHaveURL(/\/spiele\/clocktower\/lobby$/);
+	await expect(page.getByRole('button', { name: 'Spiel starten', exact: true })).toBeVisible();
+	await expect(page.getByText(/fehlen noch/)).toHaveCount(0);
+});
+
+test('Scenario: More than N picks exactly N', async ({ page }) => {
+	await openLobby(page, crew(9), 7);
+	const next = page.getByRole('button', { name: 'Weiter', exact: true });
+
+	await expect(page.getByText('Wer spielt mit?', { exact: true })).toBeVisible();
+	await expect(page.getByText('7 von 7 gewählt', { exact: true })).toBeVisible();
+	for (let i = 1; i <= 7; i++) await expect(box(page, `Spieler ${i}`)).toBeChecked();
+	for (const i of [8, 9]) {
+		await expect(box(page, `Spieler ${i}`)).not.toBeChecked();
+		await expect(box(page, `Spieler ${i}`)).toBeDisabled();
+	}
+	await expect(next).toBeEnabled();
+
+	await box(page, 'Spieler 3').uncheck();
+	await expect(page.getByText('6 von 7 gewählt', { exact: true })).toBeVisible();
+	await expect(next).toBeDisabled();
+	for (const i of [3, 8, 9]) await expect(box(page, `Spieler ${i}`)).toBeEnabled();
+
+	await box(page, 'Spieler 9').check();
+	await expect(page.getByText('7 von 7 gewählt', { exact: true })).toBeVisible();
+	await expect(next).toBeEnabled();
+	for (const i of [3, 8]) await expect(box(page, `Spieler ${i}`)).toBeDisabled();
+	expect(await picked(page)).toBe(7);
+});
+
+test('Scenario: Exactly N goes to the start', async ({ page }) => {
+	// saved players come from the players API; answering it here keeps the test off the shared database
+	const saved = [
+		{ id: 9101, name: 'Alex' },
+		{ id: 9102, name: 'Jürgen' },
+		{ id: 9103, name: 'Bo' }
+	];
+	await page.route('**/api/players', (route) => route.fulfill({ json: saved }));
+	await page.goto('/');
+	await seedSavedRoster(page, saved, ['Özlem', 'Cleo']);
+	await page.evaluate(() => localStorage.setItem('arcade:count:clocktower', '5'));
+	await page.goto('/spiele/clocktower/lobby');
+
+	const names = ['Alex', 'Jürgen', 'Bo', 'Özlem', 'Cleo'];
+	await expect(page.getByRole('button', { name: 'Spiel starten', exact: true })).toBeVisible();
+	await expect(page.getByRole('checkbox')).toHaveCount(0);
+	for (const name of names) await expect(page.getByText(name, { exact: true })).toBeVisible();
+
+	await page.getByRole('button', { name: 'Spiel starten', exact: true }).click();
+	await expect(page).toHaveURL(/\/spiele\/clocktower\/spielen$/);
+	expect(await seated(page)).toEqual([
+		{ id: 'player-9101', name: 'Alex' },
+		{ id: 'player-9102', name: 'Jürgen' },
+		{ id: 'player-9103', name: 'Bo' },
+		{ id: 'p1', name: 'Özlem' },
+		{ id: 'p2', name: 'Cleo' }
+	]);
+});
+
+test('Scenario: Count changed while in the lobby', async ({ page }) => {
+	await openLobby(page, crew(9), 7);
+	await expect(page.getByText('7 von 7 gewählt', { exact: true })).toBeVisible();
+	await box(page, 'Spieler 1').uncheck();
+	await box(page, 'Spieler 8').check();
+	await box(page, 'Spieler 2').uncheck();
+	await box(page, 'Spieler 9').check();
+	await expect(page.getByText('7 von 7 gewählt', { exact: true })).toBeVisible();
+
+	await page.goto('/spiele/clocktower');
+	await expect(count(page)).toHaveText('7');
+	await step(page, 'Mehr').click();
+	await expect(count(page)).toHaveText('8');
+	await page.getByRole('button', { name: "Los geht's", exact: true }).click();
+
+	await expect(page).toHaveURL(/\/spiele\/clocktower\/lobby$/);
+	await expect(page.getByText('8 von 8 gewählt', { exact: true })).toBeVisible();
+	for (let i = 1; i <= 8; i++) await expect(box(page, `Spieler ${i}`)).toBeChecked();
+	await expect(box(page, 'Spieler 9')).not.toBeChecked();
+});
+
+test('Scenario: Roster above the Clocktower maximum', async ({ page }) => {
+	await openLobby(page, crew(18), 15);
+
+	await expect(page.getByText('15 von 15 gewählt', { exact: true })).toBeVisible();
+	for (const i of [16, 17, 18]) await expect(box(page, `Spieler ${i}`)).toBeDisabled();
+	await box(page, 'Spieler 1').uncheck();
+	await box(page, 'Spieler 18').check();
+	await page.getByRole('button', { name: 'Weiter', exact: true }).click();
+
+	await expect(page.getByRole('checkbox')).toHaveCount(0);
+	await page.getByRole('button', { name: 'Spiel starten', exact: true }).click();
+	await expect(page).toHaveURL(/\/spiele\/clocktower\/spielen$/);
+	expect((await seated(page)).map((p) => p.name)).toEqual([
+		...Array.from({ length: 14 }, (_, i) => `Spieler ${i + 2}`),
+		'Spieler 18'
+	]);
+});
+
+test('Scenario: Game without content starts without a content fetch', async ({ page }) => {
+	await openLobby(page, crew(5), 5);
+	const fetched: string[] = [];
+	page.on('request', (req) => {
+		if (new URL(req.url()).pathname.startsWith('/api/content/')) fetched.push(req.url());
+	});
+
+	await page.getByRole('button', { name: 'Spiel starten', exact: true }).click();
+	await expect(page).toHaveURL(/\/spiele\/clocktower\/spielen$/);
+	await expect(page.getByRole('heading', { name: 'Aufbau', exact: true })).toBeVisible();
+	expect(fetched).toEqual([]);
 });
