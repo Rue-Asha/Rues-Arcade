@@ -367,9 +367,9 @@ Screen (3) of a waking step SHALL offer a show-bar whose items open a full-scree
 card (picker over all 22 characters), "Das ist der Dämon", "Deine Minions", the 3 bluffs, "Du bist" plus a character, a
 big number 0–9, and Ja / Nein. The items a role needs SHALL be preselected (Washerwoman, Librarian, Investigator: the
 character; Chef, Empath: the number; Fortune Teller: Ja/Nein; Minion info: "Das ist der Dämon"; Demon info: "Deine
-Minions" then the bluffs; new Imp: "Du bist" Imp; Undertaker, Ravenkeeper: the character). The bluffs SHALL be 3 good
-characters not in play, suggested as 2 Townsfolk and 1 Outsider when possible, never the Drunk's believed role, drawn
-from the seeded RNG and rerollable before they are shown.
+Minions" then the bluffs; new Imp by starpass or takeover: "Du bist" Imp; Undertaker, Ravenkeeper: the character).
+The bluffs SHALL be 3 good characters not in play, suggested as 2 Townsfolk and 1 Outsider when possible, never the
+Drunk's believed role, drawn from the seeded RNG and rerollable before they are shown.
 
 #### Scenario: Show-bar opens full-screen cards
 - **WHEN** each show-bar item is opened on the circle screen and the card is tapped
@@ -377,8 +377,8 @@ from the seeded RNG and rerollable before they are shown.
 - **proof:** e2e
 
 #### Scenario: Role preselects its cards
-- **WHEN** the circle screens of the Washerwoman, Chef, Fortune Teller, Minion info, Demon info and a new Imp are shown
-- **THEN** the preselected items are the Washerwoman's Townsfolk character, a number, Ja/Nein, "Das ist der Dämon", "Deine Minions" with the bluffs, and "Du bist" Imp
+- **WHEN** the circle screens of the Washerwoman, Chef, Fortune Teller, Minion info, Demon info, a new Imp after a starpass and a Scarlet Woman after her takeover are shown
+- **THEN** the preselected items are the Washerwoman's Townsfolk character, a number, Ja/Nein, "Das ist der Dämon", "Deine Minions" with the bluffs, and "Du bist" Imp for both new Imps
 - **proof:** e2e
 
 #### Scenario: Bluffs are good characters not in play

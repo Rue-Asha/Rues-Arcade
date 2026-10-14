@@ -50,6 +50,7 @@
 			case 'demon-info':
 				return { ...none, item: 'minions' };
 			case 'new-imp':
+			case 'scarlet-woman':
 				return { ...none, item: 'youare', youare: 'imp' };
 		}
 		return none;

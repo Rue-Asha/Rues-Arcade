@@ -83,6 +83,8 @@ test('Scenario: Each waking step is four screens', async ({ page }) => {
 
 	await weiter(page).click();
 	await expect(screen.locator('[data-circle]')).toBeVisible();
+	await expect(screen.getByTestId('show-bar')).toBeVisible();
+	await expect(screen.getByTestId('show-bar').getByRole('button', { name: 'Zahl', exact: true })).toHaveAttribute('aria-pressed', 'true');
 
 	await weiter(page).click();
 	await expect(screen.getByRole('heading', { name: 'Schlaf wieder ein', exact: true })).toBeVisible();
@@ -232,6 +234,15 @@ test('Scenario: Role preselects its cards', async ({ page }) => {
 	// night 2 of F5: the Imp chooses themself and the Poisoner on seat 3 becomes the Imp
 	const imp = play(night2(), [...next(5), { type: 'starpass', seat: 2 }, ...next(6)]);
 	await open(page, imp);
+	await pressed('Du bist');
+	await expect(bar(page).getByLabel('Du bist', { exact: true })).toHaveValue('imp');
+
+	// F15: the Imp (seat 15) executed on day 1, the Scarlet Woman (seat 14) takes over at the night-2 dusk
+	const taken = play(voted(firstDay(reveal(seated(F15))), 14, 0, 8), [{ type: 'endDay' }, ...next(2), { type: 'answer', yes: true }]);
+	const { screens, steps, at: woken } = taken.night!;
+	const takeover = screens.findIndex((x) => x.screen === 'circle' && steps[x.step].kind === 'scarlet-woman');
+	expect(takeover).toBeGreaterThan(woken);
+	await open(page, play(taken, next(takeover - woken)));
 	await pressed('Du bist');
 	await expect(bar(page).getByLabel('Du bist', { exact: true })).toHaveValue('imp');
 });
