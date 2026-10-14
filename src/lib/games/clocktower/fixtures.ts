@@ -1,5 +1,6 @@
+import { clocktower } from './engine.ts';
 import { drawBluffs, herringOptions, needsHerring } from './setup.ts';
-import type { CharacterId, ClocktowerState, Seat } from './types.ts';
+import type { CharacterId, ClocktowerAction, ClocktowerState, Seat } from './types.ts';
 
 const NAMES = ['Alex', 'Bo', 'Cleo', 'Dani', 'Eli', 'Fey', 'Gus', 'Hana', 'Ida', 'Jo', 'Kai', 'Lu', 'Mo', 'Nia', 'Ole'];
 
@@ -42,4 +43,32 @@ export function seated(characters: CharacterId[], opts: { believed?: CharacterId
 		questions: [],
 		winner: null
 	};
+}
+
+export const step = (s: ClocktowerState, ...actions: ClocktowerAction[]) => actions.reduce((acc, a) => clocktower.reduce(acc, a), s);
+
+export const dead = (s: ClocktowerState, ...seats: number[]): ClocktowerState => ({
+	...s,
+	seats: s.seats.map((seat, i) => (seats.includes(i) ? { ...seat, alive: false } : seat))
+});
+
+// From the reveal of seat 1: every card shown and hidden, night 1 tapped through, dawn without a timer.
+export function firstDay(s: ClocktowerState): ClocktowerState {
+	const n1 = step(s, ...s.seats.flatMap((): ClocktowerAction[] => [{ type: 'show' }, { type: 'hide' }]));
+	const steps = n1.night!.screens.map((): ClocktowerAction => ({ type: 'next' }));
+	return step(n1, ...steps, { type: 'next' }, { type: 'next' }, { type: 'timer', minutes: null, now: 0 });
+}
+
+// From the day grimoire: the nomination voted with `votes`, confirmed, and back on the grimoire.
+export function voted(s: ClocktowerState, nominee: number, nominator: number, votes: number): ClocktowerState {
+	return step(
+		s,
+		{ type: 'nominee', seat: nominee },
+		{ type: 'nominate', nominator },
+		{ type: 'vote' },
+		{ type: 'swept' },
+		{ type: 'count', votes },
+		{ type: 'confirm' },
+		{ type: 'next' }
+	);
 }

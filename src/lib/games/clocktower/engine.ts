@@ -5,7 +5,7 @@ import { believable, drawBluffs, fill, herringOptions, needsHerring, problems } 
 import { nightScreens, nightSteps } from './night.ts';
 import type { ClocktowerAction, ClocktowerState, DayState, Nomination, Seat } from './types.ts';
 import { voteResult } from './vote.ts';
-import { check, living } from './win.ts';
+import { check, decided, duskQuestions, living, open as asking } from './win.ts';
 
 const has = (s: ClocktowerState, seat: number) => Number.isInteger(seat) && seat >= 0 && seat < s.seats.length;
 
@@ -125,9 +125,10 @@ export function heirs(s: ClocktowerState): number[] {
 	return sw !== undefined && living(s.seats) >= 5 ? [sw] : minions;
 }
 
-function kill(s: ClocktowerState, seats: number[]): ClocktowerState {
+function kill(s: ClocktowerState, seats: number[], executed: number | null = null): ClocktowerState {
 	const after = { ...s, seats: s.seats.map((x, i) => (seats.includes(i) ? { ...x, alive: false } : x)) };
-	return { ...after, winner: s.winner ?? check(s, after) };
+	const { winner, questions } = check(s, after, executed);
+	return { ...after, winner: s.winner ?? winner, questions: [...s.questions, ...questions] };
 }
 
 function dawn(s: ClocktowerState): ClocktowerState {
@@ -146,7 +147,7 @@ function night(s: ClocktowerState, action: ClocktowerAction): ClocktowerState {
 	const go = (at: number): ClocktowerState => ({ ...s, night: { ...n, at } });
 	switch (action.type) {
 		case 'next':
-			if (here.screen === 'deaths') return s;
+			if (here.screen === 'deaths' || (here.screen === 'question' && asking(s, here.question))) return s;
 			return n.at + 1 < n.screens.length ? go(n.at + 1) : dawn(s);
 		case 'back':
 			return n.at > 0 ? go(n.at - 1) : s;
@@ -189,10 +190,34 @@ function night(s: ClocktowerState, action: ClocktowerAction): ClocktowerState {
 			const after = kill(s, seats);
 			return dawn({ ...after, night: { ...n, deaths: [...seats] } });
 		}
+		case 'answer': {
+			if (here.screen !== 'question' || !asking(s, here.question)) return s;
+			const q = here.question;
+			const answered = { ...go(n.at + 1), questions: s.questions.filter((x) => x.kind !== q.kind || x.seat !== q.seat) };
+			const winner = decided(q, action.yes);
+			if (winner) return over({ ...answered, winner });
+			return q.kind === 'scarlet-woman' && action.yes ? takeover(answered, q.seat) : answered;
+		}
 		case 'declare':
 			return over({ ...s, winner: action.winner });
 	}
 	return s;
+}
+
+// The Scarlet Woman becomes the Imp at dusk: she wakes in her slot tonight and at the Imp's from then on.
+function takeover(s: ClocktowerState, to: number): ClocktowerState {
+	const n = s.night!;
+	const taken: ClocktowerState = {
+		...s,
+		seats: s.seats.map((x, i) => (i === to ? { ...x, character: 'imp' } : x)),
+		demon: to,
+		history: [...s.history, { night: n.number, from: s.demon!, to, was: 'scarlet-woman', kind: 'scarlet-woman' }]
+	};
+	const steps = nightSteps(taken, n.number);
+	const questions = n.screens.flatMap((x) => (x.screen === 'question' ? [x.question] : []));
+	const night = { ...n, steps, screens: nightScreens(n.number, steps, questions) };
+	const winner = !taken.seats[to].alive ? 'good' : living(taken.seats) <= 2 ? 'evil' : null;
+	return winner ? over({ ...taken, night, winner }) : { ...taken, night };
 }
 
 function daybreak(s: ClocktowerState, action: ClocktowerAction): ClocktowerState {
@@ -269,11 +294,12 @@ function day(s: ClocktowerState, action: ClocktowerAction): ClocktowerState {
 		}
 		case 'next':
 			if (screen === 'result') return to('grimoire');
-			if (screen === 'execution') return s.winner ? over(s) : dusk({ ...s, lastExecution: t.executed }, t.number + 1);
+			if (screen === 'execution')
+				return s.winner ? over(s) : dusk({ ...s, lastExecution: t.executed, questions: [...s.questions, ...duskQuestions(s)] }, t.number + 1);
 			return s;
 		case 'execute': {
 			if (!seatAction) return s;
-			const after = kill(s, [action.seat]);
+			const after = kill(s, [action.seat], action.seat);
 			return to('execution', { executed: action.seat, block: null, closed: true, pending: null }, after);
 		}
 		case 'died': {
@@ -291,7 +317,7 @@ function day(s: ClocktowerState, action: ClocktowerAction): ClocktowerState {
 		}
 		case 'endDay': {
 			if (screen !== 'grimoire' || t.closed) return s;
-			const after = t.block === null ? s : kill(s, [t.block]);
+			const after = t.block === null ? s : kill(s, [t.block], t.block);
 			return to('execution', { executed: t.block, block: null, closed: true }, after);
 		}
 	}
