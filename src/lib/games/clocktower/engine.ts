@@ -3,7 +3,8 @@ import type { GameDef } from '#lib/engine/types.ts';
 import { byId } from './characters.ts';
 import { believable, drawBluffs, fill, herringOptions, needsHerring, problems } from './setup.ts';
 import { nightScreens, nightSteps } from './night.ts';
-import type { ClocktowerAction, ClocktowerState, Seat } from './types.ts';
+import type { ClocktowerAction, ClocktowerState, DayState, Nomination, Seat } from './types.ts';
+import { voteResult } from './vote.ts';
 import { check, living } from './win.ts';
 
 const has = (s: ClocktowerState, seat: number) => Number.isInteger(seat) && seat >= 0 && seat < s.seats.length;
@@ -195,9 +196,105 @@ function night(s: ClocktowerState, action: ClocktowerAction): ClocktowerState {
 }
 
 function daybreak(s: ClocktowerState, action: ClocktowerAction): ClocktowerState {
-	if (s.phase.kind !== 'dawn' || action.type !== 'next') return s;
-	if (s.phase.screen === 'wake') return { ...s, phase: { kind: 'dawn', screen: 'deaths' } };
-	if (s.phase.screen === 'deaths') return s.winner ? over(s) : { ...s, phase: { kind: 'dawn', screen: 'timer' } };
+	if (s.phase.kind !== 'dawn') return s;
+	const { screen } = s.phase;
+	if (action.type === 'next' && screen === 'wake') return { ...s, phase: { kind: 'dawn', screen: 'deaths' } };
+	if (action.type === 'next' && screen === 'deaths') return s.winner ? over(s) : { ...s, phase: { kind: 'dawn', screen: 'timer' } };
+	if (action.type === 'timer' && screen === 'timer') {
+		const { minutes, now } = action;
+		if (minutes !== null && !(Number.isInteger(minutes) && minutes >= 1 && minutes <= 59)) return s;
+		return { ...s, today: { ...s.today!, deadline: minutes === null ? null : now + minutes * 60_000 }, phase: { kind: 'day', screen: 'grimoire' } };
+	}
+	return s;
+}
+
+type DayScreen = Extract<ClocktowerState['phase'], { kind: 'day' }>['screen'];
+
+function day(s: ClocktowerState, action: ClocktowerAction): ClocktowerState {
+	if (s.phase.kind !== 'day') return s;
+	const t = s.today!;
+	const { screen } = s.phase;
+	const open = t.nominations.at(-1);
+	const to = (screen: DayScreen, today: Partial<DayState> = {}, base = s): ClocktowerState => ({
+		...base,
+		today: { ...base.today!, ...today },
+		phase: { kind: 'day', screen }
+	});
+	const vote = (change: Partial<Nomination>) => [...t.nominations.slice(0, -1), { ...open!, ...change }];
+	// seat actions: on the grimoire, and on the clock before the vote (a Virgin's nominator)
+	const target = 'seat' in action ? action.seat : null;
+	const seatAction = (screen === 'grimoire' || screen === 'clock') && target !== null && has(s, target);
+	switch (action.type) {
+		case 'nominee': {
+			const { seat } = action;
+			if (screen !== 'grimoire' || t.closed || !has(s, seat) || t.nominations.some((n) => n.nominee === seat)) return s;
+			return to('nominator', { pending: seat });
+		}
+		case 'nominate': {
+			const { nominator } = action;
+			if (screen !== 'nominator' || t.pending === null || !has(s, nominator) || !s.seats[nominator].alive) return s;
+			if (t.nominations.some((n) => n.nominator === nominator)) return s;
+			const nomination: Nomination = { nominator, nominee: t.pending, voters: [], votes: null, result: null };
+			return to('clock', { pending: null, nominations: [...t.nominations, nomination] });
+		}
+		case 'cancel':
+			if (screen === 'nominator') return to('grimoire', { pending: null });
+			if (screen === 'clock') return to('grimoire', { nominations: t.nominations.slice(0, -1) });
+			return s;
+		case 'vote':
+			return screen === 'clock' ? to('sweep') : s;
+		case 'mark': {
+			const { seat, on } = action;
+			if ((screen !== 'sweep' && screen !== 'confirm') || !has(s, seat) || open!.voters.includes(seat) === on) return s;
+			if (on && !s.seats[seat].alive && !s.seats[seat].ghostVote) return s;
+			const voters = on ? [...open!.voters, seat].sort((a, b) => a - b) : open!.voters.filter((v) => v !== seat);
+			const votes = screen === 'confirm' ? Math.max(0, open!.votes! + (on ? 1 : -1)) : open!.votes;
+			return to(screen, { nominations: vote({ voters, votes }) });
+		}
+		case 'swept':
+			return screen === 'sweep' ? to('confirm', { nominations: vote({ votes: open!.voters.length }) }) : s;
+		case 'count': {
+			const { votes } = action;
+			if (screen !== 'confirm' || !Number.isInteger(votes) || votes < 0 || votes > s.seats.length || votes === open!.votes) return s;
+			return to('confirm', { nominations: vote({ votes }) });
+		}
+		case 'confirm': {
+			if (screen !== 'confirm') return s;
+			const votes = open!.votes!;
+			const result = voteResult(votes, living(s.seats), t.high);
+			const seats = s.seats.map((x, i) => (!x.alive && open!.voters.includes(i) ? { ...x, ghostVote: false } : x));
+			const block = result === 'block' ? open!.nominee : result === 'tie' ? null : t.block;
+			const high = result === 'none' ? t.high : votes;
+			return to('result', { nominations: vote({ result }), block, high }, { ...s, seats });
+		}
+		case 'next':
+			if (screen === 'result') return to('grimoire');
+			if (screen === 'execution') return s.winner ? over(s) : dusk({ ...s, lastExecution: t.executed }, t.number + 1);
+			return s;
+		case 'execute': {
+			if (!seatAction) return s;
+			const after = kill(s, [action.seat]);
+			return to('execution', { executed: action.seat, block: null, closed: true, pending: null }, after);
+		}
+		case 'died': {
+			if (!seatAction || !s.seats[action.seat].alive) return s;
+			const after = kill(s, [action.seat]);
+			return after.winner ? over(after) : after;
+		}
+		case 'revive':
+			if (!seatAction || s.seats[action.seat].alive) return s;
+			return { ...s, seats: s.seats.map((x, i) => (i === action.seat ? { ...x, alive: true, ghostVote: true } : x)) };
+		case 'ghost': {
+			const { seat, on } = action;
+			if (!seatAction || s.seats[seat].alive || s.seats[seat].ghostVote === on) return s;
+			return { ...s, seats: s.seats.map((x, i) => (i === seat ? { ...x, ghostVote: on } : x)) };
+		}
+		case 'endDay': {
+			if (screen !== 'grimoire' || t.closed) return s;
+			const after = t.block === null ? s : kill(s, [t.block]);
+			return to('execution', { executed: t.block, block: null, closed: true }, after);
+		}
+	}
 	return s;
 }
 
@@ -235,6 +332,8 @@ export const clocktower: GameDef<ClocktowerState, ClocktowerAction, Record<strin
 				return night(s, action);
 			case 'dawn':
 				return daybreak(s, action);
+			case 'day':
+				return day(s, action);
 			case 'over':
 				return action.type === 'reveal' && !s.phase.revealed ? { ...s, phase: { kind: 'over', revealed: true } } : s;
 		}

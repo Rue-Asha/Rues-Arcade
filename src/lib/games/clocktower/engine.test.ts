@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { alignment, byId } from './characters.ts';
 import { clocktower, dusk, heirs } from './engine.ts';
 import { F15, F5, F7, seated } from './fixtures.ts';
+import { info } from './info.ts';
 import { believable, counts, herringOptions, problems, required } from './setup.ts';
 import type { CharacterId, ClocktowerAction, ClocktowerState } from './types.ts';
 
@@ -48,6 +49,14 @@ describe('clocktower setup', () => {
 		expect(night.night?.number).toBe(1);
 		expect(names(night)).toEqual(order);
 		expect(ids(night)).toEqual(F7);
+
+		const day = day1(locked);
+		expect(day.phase).toEqual({ kind: 'day', screen: 'grimoire' });
+		const n2 = step(vote(day, 3, 0, 4), { type: 'endDay' }, { type: 'next' });
+		expect(n2.night!.number).toBe(2);
+		expect(names(n2)).toEqual(order);
+		expect(n2.seats[3].alive).toBe(false);
+		expect(n2.lastExecution).toBe(3);
 	});
 
 	it('moves keep the clockwise order and the picks on their players', () => {
@@ -383,5 +392,209 @@ describe('clocktower phase keys', () => {
 		const over = step(n2, { type: 'declare', winner: 'good' });
 		expect(clocktower.phase(over)).toBe('over');
 		expect(clocktower.phase(step(over, { type: 'reveal' }))).toBe('over-reveal');
+	});
+});
+
+// the reveal, then night 1 tapped through, then dawn without a timer
+const day1 = (s: ClocktowerState) => {
+	const n1 = reveal(s);
+	return step(next(n1, n1.night!.screens.length), { type: 'next' }, { type: 'next' }, { type: 'timer', minutes: null, now: 0 });
+};
+
+const nominate = (s: ClocktowerState, nominee: number, nominator: number) =>
+	step(s, { type: 'nominee', seat: nominee }, { type: 'nominate', nominator });
+
+// nominee by nominator, voted with `votes`, confirmed and back on the grimoire
+const vote = (s: ClocktowerState, nominee: number, nominator: number, votes: number) =>
+	step(nominate(s, nominee, nominator), { type: 'vote' }, { type: 'swept' }, { type: 'count', votes }, { type: 'confirm' }, { type: 'next' });
+
+const last = (s: ClocktowerState) => s.today!.nominations.at(-1)!;
+
+describe('clocktower day', () => {
+	it('dawn sets the timer from its deadline, or none', () => {
+		const n1 = reveal(seated(F7));
+		const dawn = step(next(n1, n1.night!.screens.length), { type: 'next' }, { type: 'next' });
+		expect(dawn.phase).toEqual({ kind: 'dawn', screen: 'timer' });
+		const timed = step(dawn, { type: 'timer', minutes: 5, now: 1000 });
+		expect(timed.today!.deadline).toBe(301000);
+		expect(timed.phase).toEqual({ kind: 'day', screen: 'grimoire' });
+		expect(step(dawn, { type: 'timer', minutes: null, now: 1000 }).today!.deadline).toBeNull();
+		for (const minutes of [0, 60, 2.5]) expect(step(dawn, { type: 'timer', minutes, now: 0 })).toBe(dawn);
+		expect(clocktower.phase(timed)).toBe('day-1-grimoire');
+		expect(clocktower.phase(nominate(timed, 0, 1))).toBe('day-1-clock');
+	});
+
+	it('Scenario: Nomination rules enforced', () => {
+		const s = day1(dead(seated(F7), 5));
+		const picked = step(s, { type: 'nominee', seat: 0 });
+		expect(picked.today!.pending).toBe(0);
+		expect(picked.phase).toEqual({ kind: 'day', screen: 'nominator' });
+		expect(step(picked, { type: 'nominate', nominator: 5 })).toBe(picked);
+
+		const voted = vote(s, 0, 1, 0);
+		const again = step(voted, { type: 'nominee', seat: 2 });
+		expect(step(again, { type: 'nominate', nominator: 1 })).toBe(again);
+		expect(step(voted, { type: 'nominee', seat: 0 })).toBe(voted);
+
+		const open = nominate(voted, 2, 3);
+		expect(open.phase).toEqual({ kind: 'day', screen: 'clock' });
+		expect(step(open, { type: 'nominee', seat: 4 })).toBe(open);
+
+		const executed = step(voted, { type: 'execute', seat: 4 });
+		expect(step(executed, { type: 'nominee', seat: 2 })).toBe(executed);
+
+		const self = nominate(voted, 3, 3);
+		expect(last(self)).toEqual({ nominator: 3, nominee: 3, voters: [], votes: null, result: null });
+		const corpse = nominate(voted, 5, 2);
+		expect(last(corpse)).toMatchObject({ nominator: 2, nominee: 5 });
+		expect(corpse.phase).toEqual({ kind: 'day', screen: 'clock' });
+	});
+
+	it('cancels a nomination before the vote without using it up', () => {
+		const s = day1(seated(F7));
+		const picked = step(s, { type: 'nominee', seat: 1 });
+		expect(step(picked, { type: 'cancel' }).today).toEqual(s.today);
+		const open = nominate(s, 1, 0);
+		const back = step(open, { type: 'cancel' });
+		expect(back.today!.nominations).toEqual([]);
+		expect(back.phase).toEqual({ kind: 'day', screen: 'grimoire' });
+		expect(last(nominate(back, 1, 0))).toMatchObject({ nominator: 0, nominee: 1 });
+		const voting = step(open, { type: 'vote' });
+		expect(voting.phase).toEqual({ kind: 'day', screen: 'sweep' });
+		expect(step(voting, { type: 'cancel' })).toBe(voting);
+	});
+
+	it('Scenario: Dead voters spend their ghost vote', () => {
+		const s = day1(dead(seated(F7), 4, 5));
+		const spent = { ...s, seats: s.seats.map((x, i) => (i === 5 ? { ...x, ghostVote: false } : x)) };
+		const sweep = step(nominate(spent, 0, 1), { type: 'vote' });
+		expect(step(sweep, { type: 'mark', seat: 5, on: true })).toBe(sweep);
+		const marked = step(sweep, { type: 'mark', seat: 4, on: true }, { type: 'mark', seat: 2, on: true });
+		const confirm = step(marked, { type: 'swept' });
+		expect(confirm.phase).toEqual({ kind: 'day', screen: 'confirm' });
+		expect(last(confirm).votes).toBe(2);
+		const done = step(confirm, { type: 'confirm' });
+		expect(done.seats[4].ghostVote).toBe(false);
+		expect(done.seats[2].ghostVote).toBe(true);
+		expect(last(done)).toMatchObject({ voters: [2, 4], votes: 2 });
+		expect(done.phase).toEqual({ kind: 'day', screen: 'result' });
+	});
+
+	it('marks on the confirm screen move the count', () => {
+		const s = step(nominate(day1(seated(F7)), 3, 0), { type: 'vote' }, { type: 'mark', seat: 4, on: true }, { type: 'mark', seat: 5, on: true }, { type: 'swept' });
+		expect(last(s).votes).toBe(2);
+		const more = step(s, { type: 'mark', seat: 1, on: true }, { type: 'count', votes: 4 });
+		expect(last(more)).toMatchObject({ voters: [1, 4, 5], votes: 4 });
+		expect(last(step(s, { type: 'mark', seat: 4, on: false }))).toMatchObject({ voters: [5], votes: 1 });
+		expect(step(s, { type: 'mark', seat: 4, on: true })).toBe(s);
+		expect(step(s, { type: 'count', votes: -1 })).toBe(s);
+		expect(last(step(more, { type: 'confirm' }))).toMatchObject({ voters: [1, 4, 5], votes: 4 });
+	});
+
+	it('Scenario: Vote result by threshold and high-water mark', () => {
+		let s = day1(seated(F7));
+		const results: [string | null, number | null, number][] = [];
+		for (const [k, votes] of [3, 4, 5, 5, 4].entries()) {
+			s = vote(s, k, k, votes);
+			results.push([last(s).result, s.today!.block, s.today!.high]);
+		}
+		expect(results).toEqual([
+			['none', null, 0],
+			['block', 1, 4],
+			['block', 2, 5],
+			['tie', null, 5],
+			['none', null, 5]
+		]);
+	});
+
+	it('Scenario: Threshold uses living players at vote time', () => {
+		const ten: CharacterId[] = ['washerwoman', 'librarian', 'investigator', 'chef', 'empath', 'monk', 'slayer', 'poisoner', 'spy', 'imp'];
+		const s = day1(dead(seated(ten), 0, 1));
+		const first = vote(s, 2, 3, 3);
+		expect(last(first).result).toBe('none');
+		const fewer = step(first, { type: 'died', seat: 2 });
+		expect(fewer.seats.filter((x) => x.alive)).toHaveLength(7);
+		const marks: ClocktowerAction[] = [0, 1, 4, 5].map((seat) => ({ type: 'mark', seat, on: true }));
+		const second = step(nominate(fewer, 4, 4), { type: 'vote' }, ...marks, { type: 'swept' }, { type: 'confirm' });
+		expect(last(second)).toMatchObject({ votes: 4, result: 'block' });
+		expect(second.today!.block).toBe(4);
+		expect(second.seats[0].ghostVote || second.seats[1].ghostVote).toBe(false);
+		const short = step(nominate(fewer, 4, 4), { type: 'vote' }, ...marks.slice(1), { type: 'swept' }, { type: 'confirm' });
+		expect(last(short).result).toBe('none');
+	});
+
+	it('Scenario: Immediate execution ends the day', () => {
+		const s = vote(day1(seated(F7)), 3, 0, 4);
+		expect(s.today!.block).toBe(3);
+		const done = step(s, { type: 'execute', seat: 1 });
+		expect(done.seats[1].alive).toBe(false);
+		expect(done.today).toMatchObject({ executed: 1, block: null, closed: true });
+		expect(done.phase).toEqual({ kind: 'day', screen: 'execution' });
+		expect(done.winner).toBeNull();
+		const night = step(done, { type: 'next' });
+		expect(night.phase).toEqual({ kind: 'night' });
+		expect(night.night!.number).toBe(2);
+		expect(night.lastExecution).toBe(1);
+	});
+
+	it('Scenario: Death by day runs the win check', () => {
+		const s = step(day1(seated(F7)), { type: 'died', seat: 6 });
+		expect(s.seats[6].alive).toBe(false);
+		expect(s.today!.executed).toBeNull();
+		expect(s.winner).toBe('good');
+		expect(s.phase).toEqual({ kind: 'over', revealed: false });
+	});
+
+	it('Scenario: Corrections by day', () => {
+		const s = day1(dead(seated(F7), 1, 2, 3));
+		const spent = { ...s, seats: s.seats.map((x, i) => (i === 3 ? { ...x, ghostVote: false } : x)) };
+		const fixed = step(spent, { type: 'revive', seat: 1 }, { type: 'ghost', seat: 2, on: false }, { type: 'ghost', seat: 3, on: true });
+		expect(fixed.seats.slice(1, 4).map((x) => [x.alive, x.ghostVote])).toEqual([
+			[true, true],
+			[false, false],
+			[false, true]
+		]);
+		for (const action of [{ type: 'revive', seat: 0 }, { type: 'ghost', seat: 0, on: false }, { type: 'ghost', seat: 2, on: true }, { type: 'died', seat: 1 }] as ClocktowerAction[])
+			expect(step(spent, action), action.type).toBe(spent);
+	});
+
+	it('Scenario: Executing a dead player counts as the execution', () => {
+		// F15: chef on seat 4 (index 3), undertaker on seat 7 (index 6)
+		const s = vote(day1(dead(seated(F15), 3)), 3, 0, 7);
+		expect(s.today!.block).toBe(3);
+		const ended = step(s, { type: 'endDay' });
+		expect(ended.seats[3].alive).toBe(false);
+		expect(ended.seats.filter((x) => !x.alive)).toHaveLength(1);
+		expect(ended.today!.executed).toBe(3);
+		expect(ended.phase).toEqual({ kind: 'day', screen: 'execution' });
+		const n2 = step(ended, { type: 'next' });
+		expect(n2.lastExecution).toBe(3);
+		const undertaker = n2.night!.steps.find((x) => x.kind === 'undertaker')!;
+		expect(info(n2, undertaker)).toEqual({ kind: 'character', character: 'chef' });
+	});
+
+	it('a day without a block holder ends without an execution', () => {
+		const tie = vote(vote(day1(seated(F7)), 0, 0, 4), 1, 1, 4);
+		expect(tie.today!.block).toBeNull();
+		for (const s of [tie, day1(seated(F7))]) {
+			const ended = step(s, { type: 'endDay' });
+			expect(ended.today!.executed).toBeNull();
+			expect(ended.seats).toEqual(s.seats);
+			const n2 = step(ended, { type: 'next' });
+			expect(n2.lastExecution).toBeNull();
+			expect(n2.night!.steps.map((x) => x.kind)).not.toContain('undertaker');
+		}
+		const open = nominate(day1(seated(F7)), 0, 1);
+		expect(step(open, { type: 'endDay' })).toBe(open);
+	});
+
+	it('Tag beenden executes the block holder and starts the next night', () => {
+		const s = step(vote(day1(seated(F7)), 3, 0, 4), { type: 'endDay' });
+		expect(s.seats[3].alive).toBe(false);
+		expect(s.today).toMatchObject({ executed: 3, closed: true });
+		const n2 = step(s, { type: 'next' });
+		expect(n2.phase).toEqual({ kind: 'night' });
+		expect(n2.night!.number).toBe(2);
+		expect(n2.night!.steps.map((x) => x.kind)).toEqual(['monk', 'imp', 'spy']);
 	});
 });
