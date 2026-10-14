@@ -1,0 +1,8 @@
+track: feature
+triage: 'feature (set) — new game Blood on the Clocktower (Trouble Brewing): own theme, count-first lobby + explanation deck, storyteller grimoire, guided nights, public days with voting clock, end detection
+  + reveal. Appetite: one change, multi-session, ~10-12 units in 4-5 waves, deck last.'
+base: main
+gate0: 2026-10-14
+gate1: 2026-10-14
+learnings:
+- explore extracted the deck's fonts/icons only into the session scratchpad → U2/U4 must re-extract; when explore extracts assets builders need, store them (or the extraction recipe) in the change dir
