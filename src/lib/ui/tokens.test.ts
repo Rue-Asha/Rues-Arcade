@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { contrast, motion, textPairs, tokens } from '#lib/ui/tokens.ts';
+import { clocktowerDay, clocktowerNight, clocktowerPairs, contrast, motion, textPairs, tokens } from '#lib/ui/tokens.ts';
 
 describe('design tokens', () => {
 	it('listed token pairs meet 4.5:1', () => {
@@ -36,6 +36,62 @@ describe('design tokens', () => {
 		expect(contrast(tokens.feud, tokens.surface)).toBeGreaterThanOrEqual(4.5);
 		for (const text of ['text', 'text-soft', 'muted', 'gold', 'imposter-text'] as const)
 			expect(contrast(tokens[text], tokens['feud-tint']), text).toBeGreaterThanOrEqual(4.5);
+	});
+
+	it('Scenario: Clocktower colour meets contrast', () => {
+		const listed = (fg: string, bg: string) => textPairs.some(([f, b]) => f === fg && b === bg);
+		expect(listed('ink', 'clocktower')).toBe(true);
+		expect(listed('clocktower', 'surface')).toBe(true);
+		for (const text of ['text', 'text-soft', 'muted', 'gold', 'imposter-text'])
+			expect(listed(text, 'clocktower-tint'), `${text} on clocktower-tint`).toBe(true);
+		expect(tokens['clocktower-ledge']).toMatch(/^#[0-9a-f]{6}$/);
+		expect(contrast(tokens.ink, tokens.clocktower)).toBeGreaterThanOrEqual(4.5);
+		expect(contrast(tokens.clocktower, tokens.surface)).toBeGreaterThanOrEqual(4.5);
+		for (const text of ['text', 'text-soft', 'muted', 'gold', 'imposter-text'] as const)
+			expect(contrast(tokens[text], tokens['clocktower-tint']), text).toBeGreaterThanOrEqual(4.5);
+	});
+
+	it('Scenario: Clocktower tokens meet contrast in both variants', () => {
+		const css = readFileSync('src/app.css', 'utf8');
+		// the body of the rule that starts with exactly this selector
+		const rule = (selector: string) => {
+			const at = css.indexOf(`\n${selector} {`);
+			expect(at, selector).toBeGreaterThan(-1);
+			return css.slice(css.indexOf('{', at), css.indexOf('\n}', at));
+		};
+		const variants = [
+			['night', clocktowerNight, rule("[data-theme='clocktower']")],
+			['day', clocktowerDay, rule("[data-theme='clocktower'][data-variant='day']")]
+		] as const;
+		expect(clocktowerPairs.length).toBeGreaterThan(40);
+		for (const [name, set, block] of variants) {
+			const failing = clocktowerPairs
+				.map(([fg, bg]) => ({ fg, bg, ratio: contrast(set[fg], set[bg]) }))
+				.filter((p) => p.ratio < 4.5);
+			expect(failing, name).toEqual([]);
+			for (const [token, value] of Object.entries(set))
+				expect(block, `${name} --${token}`).toMatch(new RegExp(`--${token}:\\s*${value};`, 'i'));
+		}
+		expect(Object.keys(clocktowerDay)).toEqual(Object.keys(clocktowerNight));
+		expect(clocktowerNight).toMatchObject({ ground: '#100e14', text: '#ece4d4' });
+		expect(clocktowerDay).toMatchObject({ ground: '#e8dfcb', text: '#1c1714' });
+		for (const font of ['--font-ui:\\s*\'Alegreya Sans\'', '--font-data:\\s*\'IM Fell English\'', '--font-display:\\s*\'IM Fell English SC\''])
+			expect(rule("[data-theme='clocktower']"), font).toMatch(new RegExp(font));
+	});
+
+	it('every Clocktower font file has a face and an OFL text', () => {
+		const css = readFileSync('src/app.css', 'utf8');
+		for (const file of [
+			'im-fell-english-sc-latin',
+			'im-fell-english-latin',
+			'im-fell-english-italic-latin',
+			'alegreya-sans-latin-400',
+			'alegreya-sans-latin-500',
+			'alegreya-sans-latin-700'
+		])
+			expect(css, file).toContain(`url('/fonts/${file}.woff2')`);
+		for (const text of ['IMFellEnglish-OFL.txt', 'AlegreyaSans-OFL.txt'])
+			expect(readFileSync(`static/fonts/${text}`, 'utf8'), text).toContain('SIL OPEN FONT LICENSE Version 1.1');
 	});
 
 	it('contrast matches the WCAG formula on known pairs', () => {
