@@ -6,6 +6,7 @@
 	import { info } from './info.ts';
 	import { who, whoAll } from './label.ts';
 	import RoleCard from './RoleCard.svelte';
+	import ShowBar from './ShowBar.svelte';
 	import type { ClocktowerAction, ClocktowerState, NightScreen } from './types.ts';
 
 	interface Props {
@@ -114,8 +115,9 @@
 {:else if at.screen === 'circle'}
 	<section class="stack circle" aria-labelledby="phase">
 		<h2 id="phase" class="sr">Grimoire</h2>
+		<ShowBar state={s} {dispatch} {step} />
 		<Circle seats={s.seats} marked={step.seats} />
-		{@render nav()}
+		<div class="dock">{@render nav()}</div>
 	</section>
 {:else}
 	<section class="panel stack wake" aria-labelledby="phase">
@@ -181,6 +183,15 @@
 	.card,
 	.circle {
 		gap: 16px;
+	}
+
+	/* the circle screen is the tallest, so its buttons stay at the bottom of the viewport */
+	.dock {
+		position: sticky;
+		bottom: 0;
+		z-index: 2;
+		padding: 8px 0 4px;
+		background: var(--ground);
 	}
 
 	.sr {

@@ -3,6 +3,7 @@ import { F15, F5, firstDay, seated, voted } from '../src/lib/games/clocktower/fi
 import type { ClocktowerState } from '../src/lib/games/clocktower/types.ts';
 import { play, seedClocktower } from './clocktower-session.ts';
 import { byId } from '../src/lib/games/clocktower/characters.ts';
+import { info } from '../src/lib/games/clocktower/info.ts';
 import { live } from './helpers.ts';
 
 const NAMES = ['Alex', 'Bo', 'Cleo', 'Dani', 'Eli', 'Fey', 'Gus', 'Hana', 'Ida', 'Jo', 'Kai', 'Lu', 'Mo', 'Nia', 'Ole'];
@@ -145,4 +146,117 @@ test('the primary action of every waking screen is in the first phone viewport',
 		await weiter(page).click();
 	}
 	expect(bottoms.filter((b) => b > 844), `Weiter bottoms ${bottoms}`).toEqual([]);
+});
+
+// The circle screen of step k (0-based) of night 1 is screen 1 + 4k + 2.
+const circle = (k: number) => 3 + 4 * k;
+const fifteen = () => reveal(seated(F15));
+const chip = (page: Page, name: string) => live(page).getByRole('button', { name, exact: true });
+const card = (page: Page) => page.getByTestId('show-card');
+const bar = (page: Page) => live(page).getByTestId('show-bar');
+
+test('Scenario: Show-bar opens full-screen cards', async ({ page }) => {
+	const state = play(fifteen(), next(circle(3)));
+	await open(page, state);
+	await expect(bar(page)).toBeVisible();
+	const viewport = page.viewportSize()!;
+
+	const cases: { item: string; value?: { label: string; option: string }; shows: (c: ReturnType<typeof card>) => Promise<void> }[] = [
+		{ item: 'Charakter', value: { label: 'Charakter', option: 'imp' }, shows: (c) => expect(c.getByTestId('role-card')).toContainText('Imp') },
+		{ item: 'Das ist der Dämon', shows: (c) => expect(c.getByText('Das ist der Dämon', { exact: true })).toBeVisible() },
+		{ item: 'Deine Minions', shows: (c) => expect(c.getByText('Deine Minions', { exact: true })).toBeVisible() },
+		{
+			item: 'Bluffs',
+			shows: async (c) => {
+				for (const id of state.bluffs) await expect(c.getByText(byId[id].name, { exact: true })).toBeVisible();
+			}
+		},
+		{
+			item: 'Du bist',
+			value: { label: 'Du bist', option: 'imp' },
+			shows: async (c) => {
+				await expect(c.getByText('Du bist', { exact: true })).toBeVisible();
+				await expect(c.getByText('Imp', { exact: true })).toBeVisible();
+			}
+		},
+		{ item: 'Zahl', value: { label: 'Zahl', option: '7' }, shows: (c) => expect(c.getByText('7', { exact: true })).toBeVisible() },
+		{ item: 'Ja', shows: (c) => expect(c.getByText('Ja', { exact: true })).toBeVisible() },
+		{ item: 'Nein', shows: (c) => expect(c.getByText('Nein', { exact: true })).toBeVisible() }
+	];
+	for (const { item, value, shows } of cases) {
+		await chip(page, item).click();
+		if (value) await bar(page).getByLabel(value.label, { exact: true }).selectOption(value.option);
+		await bar(page).getByRole('button', { name: 'Zeigen', exact: true }).click();
+		await expect(card(page), item).toBeVisible();
+		await shows(card(page));
+		expect(await card(page).boundingBox(), item).toEqual({ x: 0, y: 0, ...viewport });
+		await card(page).click();
+		await expect(card(page), item).toHaveCount(0);
+	}
+});
+
+test('Scenario: Role preselects its cards', async ({ page }) => {
+	const base = fifteen();
+	const pressed = async (name: string) => expect(chip(page, name)).toHaveAttribute('aria-pressed', 'true');
+	const at = async (k: number) => {
+		const state = play(base, next(circle(k)));
+		await open(page, state);
+		return state;
+	};
+
+	let state = await at(3);
+	const ww = info(state, state.night!.steps[3]);
+	await pressed('Charakter');
+	if (ww.kind !== 'pair') throw new Error('washerwoman info');
+	await expect(bar(page).getByLabel('Charakter', { exact: true })).toHaveValue(ww.character);
+
+	state = await at(6);
+	const chef = info(state, state.night!.steps[6]);
+	await pressed('Zahl');
+	if (chef.kind !== 'number') throw new Error('chef info');
+	await expect(bar(page).getByLabel('Zahl', { exact: true })).toHaveValue(String(chef.n));
+
+	await at(8);
+	await pressed('Ja');
+
+	await at(0);
+	await pressed('Das ist der Dämon');
+
+	state = await at(1);
+	await pressed('Deine Minions');
+	await bar(page).getByRole('button', { name: 'Zeigen', exact: true }).click();
+	await card(page).click();
+	await pressed('Bluffs');
+	await expect(bar(page).getByTestId('bluffs')).toHaveText(state.bluffs.map((id) => byId[id].name).join(' · '));
+
+	// night 2 of F5: the Imp chooses themself and the Poisoner on seat 3 becomes the Imp
+	const imp = play(night2(), [...next(5), { type: 'starpass', seat: 2 }, ...next(6)]);
+	await open(page, imp);
+	await pressed('Du bist');
+	await expect(bar(page).getByLabel('Du bist', { exact: true })).toHaveValue('imp');
+});
+
+test('Scenario: Bluffs can be rerolled before showing', async ({ page }) => {
+	const state = play(fifteen(), next(circle(1)));
+	await open(page, state);
+	const list = (names: string[]) => names.join(' · ');
+	const before = list(state.bluffs.map((id) => byId[id].name));
+	await chip(page, 'Bluffs').click();
+	const preview = bar(page).getByTestId('bluffs');
+	await expect(preview).toHaveText(before);
+
+	await bar(page).getByRole('button', { name: 'Neu würfeln', exact: true }).click();
+	await expect(preview).not.toHaveText(before);
+	const names = (await preview.innerText()).split(' · ');
+	expect(new Set(names).size).toBe(3);
+	const inPlay = new Set(F15.map((id) => byId[id].name));
+	for (const name of names) {
+		const found = Object.values(byId).find((c) => c.name === name)!;
+		expect(inPlay.has(name), name).toBe(false);
+		expect(found.team === 'townsfolk' || found.team === 'outsider', name).toBe(true);
+	}
+
+	await bar(page).getByRole('button', { name: 'Zeigen', exact: true }).click();
+	await card(page).click();
+	await expect(bar(page).getByRole('button', { name: 'Neu würfeln', exact: true })).toBeDisabled();
 });
