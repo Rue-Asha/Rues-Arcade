@@ -174,3 +174,112 @@ test('Scenario: Deck follows the chosen count', async ({ page }) => {
 	await forward(page, at('town'));
 	expect(await nums()).toEqual(['5', '2', '1', '1']);
 });
+
+// slides are reached by key presses in one burst; only the end waits for the transitions
+async function goTo(page: Page, from: number, to: number) {
+	for (let i = from; i < to; i++) await page.keyboard.press('ArrowRight');
+	await expect(progress(page)).toHaveText(`${to + 1} / ${M}`);
+	await settled(page);
+	return to;
+}
+
+test('Scenario: Deck explains the app', async ({ page }) => {
+	test.setTimeout(30_000);
+	await openDeck(page);
+	let now = 0;
+	for (const id of ['app-grimoire', 'app-night', 'app-show', 'app-timer', 'app-vote', 'app-end']) {
+		now = await goTo(page, now, at(id));
+		await expect(slide(page).getByRole('heading', { level: 2, name: list[now].title, exact: true })).toBeVisible();
+		if (id === 'app-vote') {
+			const tap = 'Platz antippen oder die Leertaste drücken, solange der Zeiger darauf steht.';
+			await expect(slide(page).getByText(tap, { exact: true })).toBeVisible();
+		}
+	}
+});
+
+test('Scenario: Credits slide names the sources', async ({ page }) => {
+	await openDeck(page);
+	await goTo(page, 0, at('credits'));
+	const credits = page.locator('[data-slide="credits"]');
+	await expect(credits.getByText('game-icons.net', { exact: true })).toBeVisible();
+	await expect(credits.getByText(/CC BY 3\.0/)).toBeVisible();
+	await expect(credits.getByText('The Pandemonium Institute', { exact: true })).toBeVisible();
+});
+
+const sheetBox = (page: Page) => page.getByTestId('sheet');
+
+// one evaluate: sheet, scroll extent and every entry against the container that must hold it
+function sheetFit() {
+	const sheet = document.querySelector<HTMLElement>('[data-testid="sheet"]')!;
+	const slide = document.querySelector<HTMLElement>('[data-slide="sheet"]')!;
+	const s = sheet.getBoundingClientRect();
+	const items = [...sheet.querySelectorAll<HTMLElement>('li')].filter((el) => el.checkVisibility());
+	const footer = sheet.querySelector('footer')!.getBoundingClientRect();
+	const holders = [...sheet.querySelectorAll<HTMLElement>('.page[data-current]')];
+	const escaped = items
+		.filter((el) => {
+			const r = el.getBoundingClientRect();
+			return r.bottom > s.bottom + 0.5 || r.right > s.right + 0.5 || r.left < s.left - 0.5 || r.top < s.top - 0.5 || r.bottom > innerHeight;
+		})
+		.map((el) => el.querySelector('b')?.textContent);
+	const overFooter = items.filter((el) => footer.height > 0 && el.getBoundingClientRect().bottom > footer.top + 0.5).map((el) => el.querySelector('b')?.textContent);
+	const clipped = [sheet, slide, ...holders].filter((el) => el.scrollHeight > el.clientHeight + 1 || el.scrollWidth > el.clientWidth + 1).length;
+	let small = Infinity;
+	for (const el of sheet.querySelectorAll<HTMLElement>('.name, .de, .ability')) small = Math.min(small, parseFloat(getComputedStyle(el).fontSize));
+	return {
+		names: items.map((el) => el.querySelector('b')?.textContent),
+		escaped,
+		overFooter,
+		clipped,
+		footerInside: footer.bottom <= innerHeight && footer.right <= innerWidth,
+		small
+	};
+}
+
+test('Scenario: Sheet fits one desktop viewport', async ({ page }) => {
+	test.skip(test.info().project.name !== 'desktop', 'desktop layout');
+	await openDeck(page);
+	await goTo(page, 0, at('sheet'));
+	await expect(sheetBox(page)).toBeVisible();
+	const fit = await page.evaluate(sheetFit);
+	expect(fit.names).toHaveLength(22);
+	expect(fit.escaped).toEqual([]);
+	expect(fit.overFooter).toEqual([]);
+	expect(fit.clipped).toBe(0);
+	expect(fit.footerInside).toBe(true);
+});
+
+test('Scenario: Sheet on phone is two pages', async ({ page }) => {
+	test.skip(test.info().project.name !== 'phone', 'phone layout');
+	await openDeck(page);
+	await goTo(page, 0, at('sheet'));
+	const sheet = sheetBox(page);
+	await expect(sheet).toHaveAttribute('data-page', '0');
+
+	const gut = await page.evaluate(sheetFit);
+	expect(gut.names).toHaveLength(17);
+	expect(gut.escaped).toEqual([]);
+	expect(gut.clipped).toBe(0);
+
+	const b = (await sheet.boundingBox())!;
+	const y = b.y + b.height / 2;
+	const swipe = async (from: number, to: number) => {
+		await page.mouse.move(b.x + b.width * from, y);
+		await page.mouse.down();
+		await page.mouse.move(b.x + b.width * to, y, { steps: 6 });
+		await page.mouse.up();
+	};
+	await swipe(0.8, 0.2);
+	await expect(sheet).toHaveAttribute('data-page', '1');
+	const evil = await page.evaluate(sheetFit);
+	expect(evil.names).toHaveLength(5);
+	expect(evil.escaped).toEqual([]);
+	expect(evil.overFooter).toEqual([]);
+	expect(evil.clipped).toBe(0);
+	expect(evil.footerInside).toBe(true);
+
+	await swipe(0.2, 0.8);
+	await expect(sheet).toHaveAttribute('data-page', '0');
+	// the sheet's own swipe never moves the deck
+	await expect(progress(page)).toHaveText(`${M} / ${M}`);
+});
