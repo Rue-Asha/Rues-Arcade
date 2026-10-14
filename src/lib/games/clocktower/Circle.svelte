@@ -297,9 +297,14 @@
 		}
 	}
 
+	/* a zero-width box over the plane's height turns about the centre without its corners leaving the plane; an
+	   inset:0 square would widen the page while it rotates */
 	.hand {
 		position: absolute;
-		inset: 0;
+		left: 50%;
+		top: 0;
+		width: 0;
+		height: 100%;
 		pointer-events: none;
 		transform: rotate(var(--angle));
 		transition: transform var(--ms) linear;
@@ -308,7 +313,7 @@
 	.hand::before {
 		content: '';
 		position: absolute;
-		left: calc(50% - 2px);
+		left: -2px;
 		top: calc(var(--seat) + 4px);
 		width: 4px;
 		height: calc(50% - var(--seat) - 4px);
