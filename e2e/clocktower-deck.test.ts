@@ -80,12 +80,23 @@ test('Scenario: Deck readable without horizontal scroll', async ({ page }, info)
 				const size = parseFloat(getComputedStyle(parent).fontSize);
 				if (size < 16) small.push(`${(node as Text).data.trim().slice(0, 24)} ${size}px`);
 			}
+			const small14: string[] = [];
+			if (el.dataset.slide === 'sheet') {
+				const w2 = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+				for (let node = w2.nextNode(); node; node = w2.nextNode()) {
+					const parent = node.parentElement!;
+					if (!(node as Text).data.trim() || !parent.checkVisibility()) continue;
+					const size = parseFloat(getComputedStyle(parent).fontSize);
+					if (size < 14) small14.push(`${(node as Text).data.trim().slice(0, 24)} ${size}px`);
+				}
+			}
 			const r = st.getBoundingClientRect();
 			const overflowY = getComputedStyle(el).overflowY;
 			return {
 				page: document.documentElement.scrollWidth,
 				sideways: Math.max(el.scrollWidth - el.clientWidth, st.scrollWidth - st.clientWidth),
 				small,
+				small14,
 				inside: r.left >= 0 && r.right <= innerWidth && r.bottom <= innerHeight,
 				fits: el.scrollHeight <= el.clientHeight + 1 || overflowY === 'auto' || overflowY === 'scroll'
 			};
@@ -94,8 +105,10 @@ test('Scenario: Deck readable without horizontal scroll', async ({ page }, info)
 		if (found.sideways > 0) failures.push(`${id}: slide scrolls sideways by ${found.sideways}px`);
 		if (!found.inside) failures.push(`${id}: stage leaves the viewport`);
 		if (!found.fits) failures.push(`${id}: content neither fits nor scrolls`);
-		// the sheet keeps its own sizes (needs-human), every other slide reads at 16px or more
+		// the sheet reads at 14px on phone, every other slide at 16px or more
+		const sheetPhone = id === 'sheet' && width < 900;
 		if (id !== 'sheet' && found.small.length) failures.push(`${id}: ${found.small.join(', ')}`);
+		if (sheetPhone && found.small14.length) failures.push(`${id}: ${found.small14.join(', ')}`);
 		if (i < M - 1) await forward(page, 1);
 	}
 	expect(failures, info.project.name).toEqual([]);
@@ -224,16 +237,42 @@ function sheetFit() {
 		.map((el) => el.querySelector('b')?.textContent);
 	const overFooter = items.filter((el) => footer.height > 0 && el.getBoundingClientRect().bottom > footer.top + 0.5).map((el) => el.querySelector('b')?.textContent);
 	const clipped = [sheet, slide, ...holders].filter((el) => el.scrollHeight > el.clientHeight + 1 || el.scrollWidth > el.clientWidth + 1).length;
-	let small = Infinity;
-	for (const el of sheet.querySelectorAll<HTMLElement>('.name, .de, .ability')) small = Math.min(small, parseFloat(getComputedStyle(el).fontSize));
+	const h = holders[0];
+	const oy = h ? getComputedStyle(h).overflowY : '';
+	let smallAll = Infinity;
+	const walker = document.createTreeWalker(sheet, NodeFilter.SHOW_TEXT);
+	for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+		const parent = node.parentElement!;
+		if ((node as Text).data.trim() && parent.checkVisibility()) smallAll = Math.min(smallAll, parseFloat(getComputedStyle(parent).fontSize));
+	}
 	return {
+		holder: {
+			scrolls: !!h && (oy === 'auto' || oy === 'scroll') && h.scrollHeight > h.clientHeight + 1,
+			sideways: h ? h.scrollWidth - h.clientWidth : 0
+		},
+		page: document.documentElement.scrollWidth,
+		small: smallAll,
 		names: items.map((el) => el.querySelector('b')?.textContent),
 		escaped,
 		overFooter,
 		clipped,
-		footerInside: footer.bottom <= innerHeight && footer.right <= innerWidth,
-		small
+		footerInside: footer.bottom <= innerHeight && footer.right <= innerWidth
 	};
+}
+
+// scroll each visible entry into its page and report the ones that still lie outside the viewport or the page box
+function gutReach() {
+	const sheet = document.querySelector<HTMLElement>('[data-testid="sheet"]')!;
+	const h = sheet.querySelector<HTMLElement>('.page[data-current]')!;
+	const lost: (string | null | undefined)[] = [];
+	for (const el of sheet.querySelectorAll<HTMLElement>('.page[data-current] li')) {
+		el.scrollIntoView({ block: 'center' });
+		const r = el.getBoundingClientRect();
+		const box = h.getBoundingClientRect();
+		if (r.top < box.top - 0.5 || r.bottom > box.bottom + 0.5 || r.bottom > innerHeight || r.right > innerWidth) lost.push(el.querySelector('b')?.textContent);
+	}
+	h.scrollTop = 0;
+	return lost;
 }
 
 test('Scenario: Sheet fits one desktop viewport', async ({ page }) => {
@@ -258,8 +297,11 @@ test('Scenario: Sheet on phone is two pages', async ({ page }) => {
 
 	const gut = await page.evaluate(sheetFit);
 	expect(gut.names).toHaveLength(17);
-	expect(gut.escaped).toEqual([]);
-	expect(gut.clipped).toBe(0);
+	expect(gut.small).toBeGreaterThanOrEqual(14);
+	expect(gut.holder.scrolls).toBe(true);
+	expect(gut.holder.sideways).toBe(0);
+	expect(gut.page).toBeLessThanOrEqual(390);
+	expect(await page.evaluate(gutReach)).toEqual([]);
 
 	const b = (await sheet.boundingBox())!;
 	const y = b.y + b.height / 2;
@@ -273,10 +315,12 @@ test('Scenario: Sheet on phone is two pages', async ({ page }) => {
 	await expect(sheet).toHaveAttribute('data-page', '1');
 	const evil = await page.evaluate(sheetFit);
 	expect(evil.names).toHaveLength(5);
-	expect(evil.escaped).toEqual([]);
+	expect(evil.small).toBeGreaterThanOrEqual(14);
+	expect(evil.holder.sideways).toBe(0);
 	expect(evil.overFooter).toEqual([]);
-	expect(evil.clipped).toBe(0);
 	expect(evil.footerInside).toBe(true);
+	expect(evil.page).toBeLessThanOrEqual(390);
+	expect(await page.evaluate(gutReach)).toEqual([]);
 
 	await swipe(0.2, 0.8);
 	await expect(sheet).toHaveAttribute('data-page', '0');

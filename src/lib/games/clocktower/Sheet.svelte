@@ -83,8 +83,8 @@
 		width: 100%;
 		height: 100%;
 		min-height: 0;
-		font-size: 9.5px;
-		line-height: 1.1;
+		font-size: 14px;
+		line-height: 1.25;
 	}
 
 	.tabs {
@@ -124,8 +124,11 @@
 	.page {
 		display: none;
 		flex-direction: column;
-		gap: 6px;
+		gap: 10px;
 		height: 100%;
+		overflow-x: hidden;
+		overflow-y: auto;
+		overscroll-behavior: contain;
 	}
 
 	.page[data-current] {
@@ -133,13 +136,13 @@
 	}
 
 	.team {
-		min-height: 0;
+		flex: none;
 	}
 
 	h3 {
 		margin: 0 0 3px;
 		font-family: var(--font-display, var(--font-ui));
-		font-size: 12px;
+		font-size: 16px;
 		letter-spacing: 0.04em;
 	}
 
@@ -147,14 +150,14 @@
 		margin: 0;
 		padding: 0;
 		list-style: none;
-		column-count: 2;
+		column-count: 1;
 		column-gap: 8px;
 	}
 
 	li {
 		display: flex;
-		gap: 4px;
-		margin-bottom: 4px;
+		gap: 8px;
+		margin-bottom: 10px;
 		break-inside: avoid;
 	}
 
@@ -165,7 +168,7 @@
 	}
 
 	.name {
-		font-size: 10.5px;
+		font-size: 14px;
 	}
 
 	.ability {
@@ -201,13 +204,18 @@
 
 	.credit {
 		color: var(--muted);
-		font-size: 9px;
+		font-size: 14px;
 	}
 
 	@container (min-width: 900px) {
 		.pages,
 		footer {
 			font-size: 12px;
+			line-height: 1.1;
+		}
+
+		.page {
+			overflow: visible;
 		}
 
 		.tabs {
