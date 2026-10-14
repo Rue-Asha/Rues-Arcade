@@ -5,6 +5,9 @@
 	import Dawn from './Dawn.svelte';
 	import SeatActions from './SeatActions.svelte';
 	import Timer from './Timer.svelte';
+	import VoteClock from './VoteClock.svelte';
+	import { threshold } from './vote.ts';
+	import { living } from './win.ts';
 	import type { ClocktowerAction, ClocktowerState } from './types.ts';
 
 	let { state: game, dispatch }: ScreenProps = $props();
@@ -24,6 +27,18 @@
 	}
 	const barredSeats = $derived(s.seats.flatMap((_, i) => (barred(i) === null ? [] : [i])));
 
+	const last = $derived(today.nominations.at(-1)!);
+	const result = $derived.by(() => {
+		const { result, votes, nominee } = last;
+		const need = threshold(living(s.seats));
+		if (result === 'block') return { title: `${name(nominee)} kommt auf den Block`, detail: `${votes} Stimmen` };
+		if (result === 'tie') return { title: 'Gleichstand', detail: `${votes} Stimmen wie der Höchststand, niemand ist auf dem Block` };
+		return {
+			title: 'Nichts ändert sich',
+			detail: votes! < need ? `Zu wenig Stimmen: ${votes} von ${need}` : `Nicht über dem Höchststand von ${today.high}`
+		};
+	});
+
 	const screen = $derived(s.phase.kind === 'day' ? s.phase.screen : null);
 </script>
 
@@ -31,14 +46,13 @@
 	<Dawn state={s} dispatch={send} />
 {:else if screen === 'grimoire'}
 	<section class="stack" aria-labelledby="phase">
-		<h2 id="phase" class="sr-only">Tag {today.number}</h2>
-		{#if today.deadline !== null}<Timer deadline={today.deadline} />{/if}
+		{@render head(`Tag ${today.number}`)}
 		<Circle seats={s.seats} block={today.block} onseat={(i) => (sheet = i)} />
+		{#if today.block !== null}<p class="facts">Auf dem Block: {name(today.block)}</p>{/if}
 	</section>
 {:else if screen === 'nominator'}
 	<section class="stack" aria-labelledby="phase">
-		<h2 id="phase">Wer nominiert {name(nominee)}?</h2>
-		{#if today.deadline !== null}<Timer deadline={today.deadline} />{/if}
+		{@render head(`Wer nominiert ${name(nominee)}?`)}
 		<Circle seats={s.seats} block={today.block} disabled={barred} onseat={(i) => send({ type: 'nominate', nominator: i })} />
 		{#if barredSeats.length}
 			<ul class="muted why">
@@ -49,14 +63,15 @@
 			<Button variant="secondary" onclick={() => send({ type: 'cancel' })}>Zurück</Button>
 		</div>
 	</section>
-{:else if screen === 'clock'}
+{:else if screen === 'clock' || screen === 'sweep' || screen === 'confirm'}
+	<VoteClock state={s} dispatch={send} onseat={(i) => (sheet = i)} />
+{:else if screen === 'result'}
 	<section class="stack" aria-labelledby="phase">
-		<h2 id="phase">{name(nominator)} nominiert {name(nominee)}</h2>
-		{#if today.deadline !== null}<Timer deadline={today.deadline} />{/if}
-		<Circle seats={s.seats} block={today.block} hand={nominee} onseat={(i) => (sheet = i)} />
+		{@render head(result.title)}
+		<Circle seats={s.seats} block={today.block} marked={last.voters} hand={last.nominee} />
+		<p class="facts">{result.detail}</p>
 		<div class="row">
-			<Button variant="primary" onclick={() => send({ type: 'vote' })}>Abstimmung beginnen</Button>
-			<Button variant="secondary" onclick={() => send({ type: 'cancel' })}>Zurück</Button>
+			<Button variant="primary" onclick={() => send({ type: 'next' })}>Weiter</Button>
 		</div>
 	</section>
 {:else}
@@ -68,9 +83,32 @@
 	</section>
 {/if}
 
+{#snippet head(title: string)}
+	<div class="head">
+		<h2 id="phase">{title}</h2>
+		{#if today.deadline !== null}<Timer deadline={today.deadline} />{/if}
+	</div>
+{/snippet}
+
 <SeatActions state={s} seat={sheet} dispatch={send} onclose={() => (sheet = null)} />
 
 <style>
+	.head {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 12px;
+	}
+
+	.head :global(h2) {
+		font-size: 22px;
+	}
+
+	.facts {
+		margin: 0;
+		font-weight: 700;
+	}
+
 	.why {
 		margin: 0;
 		padding: 0;
