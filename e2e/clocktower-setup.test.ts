@@ -1,8 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
 import { clocktower } from '../src/lib/games/clocktower/engine.ts';
 import { required } from '../src/lib/games/clocktower/setup.ts';
-import type { CharacterId, ClocktowerState } from '../src/lib/games/clocktower/types.ts';
-import { seedClocktower } from './clocktower-session.ts';
+import type { CharacterId, ClocktowerAction, ClocktowerState } from '../src/lib/games/clocktower/types.ts';
+import { play, seedClocktower } from './clocktower-session.ts';
 import { live, seedRoster } from './helpers.ts';
 
 const NAMES = ['Alex', 'Bo', 'Cleo', 'Dani', 'Eli', 'Fey', 'Gus', 'Hana', 'Ida', 'Jo', 'Kai', 'Lu', 'Mo', 'Nia', 'Ole'];
@@ -106,6 +106,7 @@ for (const n of [5, 15]) {
 }
 
 const character = (page: Page, id: CharacterId) => live(page).locator(`[data-character="${id}"]`);
+const weiter = (page: Page) => live(page).getByRole('button', { name: 'Weiter', exact: true });
 const count = (page: Page, team: string) => live(page).getByTestId(`count-${team}`);
 const held = async (page: Page) => (await saved(page)).seats.map((s) => s.character);
 
@@ -159,6 +160,7 @@ test('Scenario: Over-assigned team shown as an error', async ({ page }) => {
 	await expect(count(page, 'minion')).toHaveText('2 / 1');
 	await expect(live(page).locator('[data-team="minion"]').getByText('zu viele', { exact: true })).toBeVisible();
 	await expect(live(page).locator('[data-team="townsfolk"]').getByText('zu viele', { exact: true })).toHaveCount(0);
+	await expect(weiter(page)).toBeDisabled();
 });
 
 test('Scenario: Assign by seat or by character first', async ({ page }) => {
@@ -217,4 +219,100 @@ test('Scenario: Zufällig keeps choices and Alles neu starts over', async ({ pag
 	const again = await held(page);
 	expect(again.every((c) => c !== null)).toBe(true);
 	expect(again).not.toEqual(seats);
+});
+
+const assign = (...ids: (CharacterId | null)[]): ClocktowerAction[] =>
+	ids.flatMap((character, seat): ClocktowerAction[] => (character === null ? [] : [{ type: 'assign', seat, character }]));
+
+const FIVE: (CharacterId | null)[] = ['washerwoman', 'chef', 'empath', 'poisoner', 'imp'];
+
+test('Scenario: Drunk and red herring on the board', async ({ page }) => {
+	await open(page, board(7));
+	await seat(page, 1).click();
+	await character(page, 'drunk').click();
+	await seat(page, 2).click();
+	await character(page, 'fortune-teller').click();
+	await seat(page, 3).click();
+	await character(page, 'imp').click();
+	await seat(page, 4).click();
+	await character(page, 'chef').click();
+
+	const glaubt = live(page).getByLabel('Drunk glaubt');
+	const herring = live(page).getByLabel('Red Herring');
+	const believable = await glaubt.locator('option').allInnerTexts();
+	expect(believable).toContain('Washerwoman');
+	expect(believable).not.toContain('Chef');
+	expect(believable).not.toContain('Fortune Teller');
+	expect(believable).not.toContain('Drunk');
+	expect(believable).not.toContain('Imp');
+	const options = await herring.locator('option').allInnerTexts();
+	expect(options.join('|')).toContain('Platz 2');
+	expect(options.join('|')).toContain('Platz 4');
+	expect(options.join('|')).not.toContain('Platz 3');
+
+	await live(page).getByRole('button', { name: 'Zufällig', exact: true }).click();
+	const done = await saved(page);
+	expect(done.seats.every((s) => s.character !== null)).toBe(true);
+	expect(done.seats[0].believed).not.toBeNull();
+	expect(done.redHerring).not.toBeNull();
+	await expect(glaubt).not.toHaveValue('');
+	await expect(herring).not.toHaveValue('');
+});
+
+test('Scenario: Weiter needs a complete valid distribution', async ({ page }) => {
+	const six = play(board(6), assign('drunk', 'washerwoman', 'chef', 'empath', 'poisoner', null));
+	await open(page, six);
+	await expect(weiter(page)).toBeDisabled();
+
+	await seat(page, 6).click();
+	await character(page, 'imp').click();
+	await expect(weiter(page)).toBeDisabled();
+
+	await live(page).getByLabel('Drunk glaubt').selectOption({ label: 'Monk' });
+	await expect(weiter(page)).toBeEnabled();
+});
+
+test('Scenario: Confirm before the reveal', async ({ page }) => {
+	await open(page, play(board(5), assign(...FIVE)));
+	const before = await saved(page);
+
+	await weiter(page).click();
+	const dialog = page.getByRole('dialog');
+	await expect(dialog.getByRole('heading', { name: 'Rollen sind verteilt und notiert?' })).toBeVisible();
+	await dialog.getByRole('button', { name: 'Zurück', exact: true }).click();
+	await expect(dialog).toBeHidden();
+	expect(await saved(page)).toEqual(before);
+	await expect(live(page).getByRole('heading', { name: 'Sitzordnung' })).toBeVisible();
+
+	await weiter(page).click();
+	await dialog.getByRole('button', { name: 'Ja, weiter', exact: true }).click();
+	const after = await saved(page);
+	expect(after.locked).toBe(true);
+	expect(after.phase).toEqual({ kind: 'reveal', seat: 0, shown: false });
+	expect(after.seats.map((s) => s.player.name)).toEqual(before.seats.map((s) => s.player.name));
+});
+
+test('Scenario: Setup board shows the character sheet', async ({ page }, info) => {
+	await open(page, board(7));
+	const sheet = live(page).getByTestId('sheet');
+	await expect(sheet).toHaveCount(1);
+	const below = await sheet.evaluate((el) => {
+		const mine = el.getBoundingClientRect().top;
+		const circle = document.querySelector('[data-circle]')!.getBoundingClientRect().bottom;
+		return { below: mine > circle, items: el.querySelectorAll('li').length, text: el.textContent ?? '' };
+	});
+	expect(below.below).toBe(true);
+	expect(below.items).toBe(22);
+	expect(below.text).toContain('So gewinnt ihr');
+	expect(below.text).toContain('Each night*, choose a player: they die.');
+	if (info.project.name === 'desktop') await expect(sheet.getByText('So gewinnt ihr', { exact: true })).toBeVisible();
+});
+
+test('Scenario: Weiter stays in the first phone screen', async ({ page }, info) => {
+	test.skip(info.project.name !== 'phone', 'phone layout');
+	for (const n of [5, 15]) {
+		await open(page, board(n));
+		const bottom = await weiter(page).evaluate((el) => el.getBoundingClientRect().bottom);
+		expect(bottom, `${n} seats`).toBeLessThanOrEqual(844);
+	}
 });
