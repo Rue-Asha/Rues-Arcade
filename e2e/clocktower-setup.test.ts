@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { clocktower } from '../src/lib/games/clocktower/engine.ts';
-import type { ClocktowerState } from '../src/lib/games/clocktower/types.ts';
+import { required } from '../src/lib/games/clocktower/setup.ts';
+import type { CharacterId, ClocktowerState } from '../src/lib/games/clocktower/types.ts';
 import { seedClocktower } from './clocktower-session.ts';
 import { live, seedRoster } from './helpers.ts';
 
@@ -103,3 +104,117 @@ for (const n of [5, 15]) {
 		expect(found.scroll).toBe(true);
 	});
 }
+
+const character = (page: Page, id: CharacterId) => live(page).locator(`[data-character="${id}"]`);
+const count = (page: Page, team: string) => live(page).getByTestId(`count-${team}`);
+const held = async (page: Page) => (await saved(page)).seats.map((s) => s.character);
+
+async function counters(page: Page) {
+	return [
+		await count(page, 'townsfolk').innerText(),
+		await count(page, 'outsider').innerText(),
+		await count(page, 'minion').innerText(),
+		await count(page, 'demon').innerText()
+	];
+}
+
+test('Scenario: Counters follow the setup table', async ({ page }) => {
+	await open(page, board(7));
+	await expect(live(page).locator('[data-character]')).toHaveCount(22);
+	for (const [name, team, n] of [
+		['Townsfolk', 'townsfolk', '0 / 5'],
+		['Outsider', 'outsider', '0 / 0'],
+		['Minions', 'minion', '0 / 1'],
+		['Dämon', 'demon', '0 / 1']
+	])
+		await expect(live(page).getByRole('heading', { name: `${name} ${n}` })).toBeVisible();
+	for (const team of ['townsfolk', 'outsider', 'minion', 'demon'])
+		await expect(live(page).locator(`[data-team="${team}"] [data-character]`).first()).toBeVisible();
+	expect(await counters(page)).toEqual(['0 / 5', '0 / 0', '0 / 1', '0 / 1']);
+});
+
+test('Scenario: Baron changes the requirement live', async ({ page }) => {
+	await open(page, board(8));
+	expect(await counters(page)).toEqual(['0 / 5', '0 / 1', '0 / 1', '0 / 1']);
+
+	await seat(page, 1).click();
+	await character(page, 'baron').click();
+	expect(await counters(page)).toEqual(['0 / 3', '0 / 3', '1 / 1', '0 / 1']);
+	expect((await held(page))[0]).toBe('baron');
+
+	// the Baron is removed by tapping it again while its seat is selected
+	await seat(page, 1).click();
+	await character(page, 'baron').click();
+	expect((await held(page))[0]).toBeNull();
+	expect(await counters(page)).toEqual(['0 / 5', '0 / 1', '0 / 1', '0 / 1']);
+});
+
+test('Scenario: Over-assigned team shown as an error', async ({ page }) => {
+	await open(page, board(5));
+	await seat(page, 1).click();
+	await character(page, 'poisoner').click();
+	await seat(page, 2).click();
+	await character(page, 'spy').click();
+
+	await expect(count(page, 'minion')).toHaveText('2 / 1');
+	await expect(live(page).locator('[data-team="minion"]').getByText('zu viele', { exact: true })).toBeVisible();
+	await expect(live(page).locator('[data-team="townsfolk"]').getByText('zu viele', { exact: true })).toHaveCount(0);
+});
+
+test('Scenario: Assign by seat or by character first', async ({ page }) => {
+	await open(page, board(7));
+	await seat(page, 1).click();
+	await character(page, 'chef').click();
+	await character(page, 'imp').click();
+	await seat(page, 3).click();
+
+	const seats = await held(page);
+	expect(seats[0]).toBe('chef');
+	expect(seats[2]).toBe('imp');
+	expect(seats.filter((c) => c !== null)).toHaveLength(2);
+	expect((await counters(page))[0]).toBe('1 / 5');
+	expect((await counters(page))[3]).toBe('1 / 1');
+});
+
+test('Scenario: Each character at most once', async ({ page }) => {
+	await open(page, board(7));
+	await seat(page, 2).click();
+	await character(page, 'empath').click();
+	await seat(page, 4).click();
+
+	await expect(character(page, 'empath')).toBeDisabled();
+	await expect(character(page, 'empath')).toContainText('Platz 2');
+	expect((await held(page))[3]).toBeNull();
+});
+
+test('Scenario: Impossible manual choice is flagged', async ({ page }) => {
+	await open(page, board(5));
+	await seat(page, 1).click();
+	await character(page, 'poisoner').click();
+	await seat(page, 2).click();
+	await character(page, 'spy').click();
+	await live(page).getByRole('button', { name: 'Zufällig', exact: true }).click();
+
+	await expect(live(page).getByRole('alert')).toHaveText('Diese Verteilung geht nicht auf: zu viele Minions.');
+	expect((await held(page)).filter((c) => c !== null)).toEqual(['poisoner', 'spy']);
+});
+
+test('Scenario: Zufällig keeps choices and Alles neu starts over', async ({ page }) => {
+	await open(page, board(10));
+	await seat(page, 3).click();
+	await character(page, 'empath').click();
+	await live(page).getByRole('button', { name: 'Zufällig', exact: true }).click();
+
+	const seats = await held(page);
+	expect(seats[2]).toBe('empath');
+	expect(seats.every((c) => c !== null)).toBe(true);
+	const baron = seats.includes('baron');
+	const want = required(10, baron);
+	expect(await counters(page)).toEqual([`${want.townsfolk} / ${want.townsfolk}`, `${want.outsider} / ${want.outsider}`, `${want.minion} / ${want.minion}`, '1 / 1']);
+	await expect(live(page).getByRole('alert')).toHaveCount(0);
+
+	await live(page).getByRole('button', { name: 'Alles neu', exact: true }).click();
+	const again = await held(page);
+	expect(again.every((c) => c !== null)).toBe(true);
+	expect(again).not.toEqual(seats);
+});
