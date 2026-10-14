@@ -76,6 +76,10 @@ a BotC demo, multi-device, CI changes, history/undo).
   Google Fonts' latin subsets of the same families are an acceptable source if the extraction fails.
 - **Character sheet is a component built early (U6) and placed twice**: on the setup board (U7, S13) and as the deck's
   last slide (U11, S38). Its fit-to-viewport scenarios are proven where it is a slide.
+- **Phone sheet scrolls at 14px+; deck stays fullscreen** (2026-10-14, user decision after the build). On phone each
+  sheet page (Gut, Böse) uses text of at least 14px and scrolls vertically inside the page, giving up "fits one screen
+  for a photo" (17 Gut entries only fit at 9.5px). Desktop keeps four columns, no scroll. The deck stays
+  `position: fixed; inset: 0`, covering the Arcade header and mute button while open; "Schließen" is the way out.
 - **e2e stays small and local.** Rules are proven in vitest (`src/lib/games/clocktower/*.test.ts`); e2e proves flows and
   look. BotC e2e uses only localStorage (roster via `seedRoster`, sessions via `seedClocktower`), never the database,
   so phone and desktop projects never collide. Self-sized tests use `test.skip(info.project.name !== …)`, locators are

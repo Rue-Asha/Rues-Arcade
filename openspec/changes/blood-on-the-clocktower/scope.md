@@ -115,7 +115,7 @@ Rue hosts Blood on the Clocktower game nights with no physical grimoire and runs
   - edges: every N from 5 to 15; 5–6 players note "keine Minion/Dämon-Info".
 - **S37** The deck adds slides explaining this app's mechanics: the grimoire circle and ghost-vote markers, the private night guide (wake → card → circle → sleep), the show-bar, the day timer, nominations and the voting clock (tap/Space), the end reveal.
   - edges: none (content).
-- **S38** The deck ends with a character sheet in the look of `Character Sheet.pdf` (not a copy): all 22 characters with icon, name, team and a more detailed German explanation plus the original ability text, re-proportioned so it fits one desktop viewport and, on phone, two swipeable pages (Gut / Böse) that each fit one screen for a photo. The same component is reused by S13.
+- **S38** The deck ends with a character sheet in the look of `Character Sheet.pdf` (not a copy): all 22 characters with icon, name, team and a more detailed German explanation plus the original ability text, re-proportioned so it fits one desktop viewport and, on phone, two swipeable pages (Gut / Böse) whose text is at least 14px and that scroll vertically within the page, with no horizontal scroll (changed 2026-10-14, user decision: was "each fit one screen for a photo"). The same component is reused by S13.
   - edges: "how to win" box with the official rules; icon attribution line (CC BY 3.0) on the sheet and a credits slide.
 
 ## Non-goals

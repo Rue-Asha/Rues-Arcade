@@ -834,7 +834,8 @@ Space), and the end reveal.
 The deck SHALL end with a character sheet in the look of Rue's `Character Sheet.pdf` (not a copy): all 22 characters
 with icon, name, team and a more detailed German explanation plus the original ability text, a "So gewinnt ihr" box
 with the official win rules, and an icon attribution line (game-icons.net, CC BY 3.0); it SHALL fit one desktop
-viewport (1280×800) and on phone be two swipeable pages, Gut and Böse, that each fit one screen. A credits slide SHALL
+viewport (1280×800) without scrolling and on phone be two swipeable pages, Gut and Böse, whose text is at least 14px and
+that each scroll vertically within the page, never horizontally. A credits slide SHALL
 carry the icon attribution and the note that the characters belong to The Pandemonium Institute. The same component
 SHALL be used on the setup board.
 
@@ -850,7 +851,7 @@ SHALL be used on the setup board.
 
 #### Scenario: Sheet on phone is two pages
 - **WHEN** the sheet slide is shown at 390×844 and swiped
-- **THEN** the first page "Gut" holds the 17 good characters and the second "Böse" the 5 evil ones, each page fits the screen without scrolling, and the swipe changes the page
+- **THEN** the first page "Gut" holds the 17 good characters and the second "Böse" the 5 evil ones, each page uses text of at least 14px, every entry is reachable by scrolling the page vertically, nothing scrolls horizontally, and the swipe changes the page
 - **proof:** e2e
 
 #### Scenario: Credits slide names the sources
@@ -860,5 +861,5 @@ SHALL be used on the setup board.
 
 #### Scenario: Sheet in the look of the PDF
 - **WHEN** Rue compares the sheet with her `Character Sheet.pdf` on desktop and phone
-- **THEN** Rue finds it recognisably the same sheet, readable and photo-ready on the phone pages
+- **THEN** Rue finds it recognisably the same sheet, readable at 14px or more on the scrolling phone pages
 - **proof:** manual (visual judgement at Gate 2)
