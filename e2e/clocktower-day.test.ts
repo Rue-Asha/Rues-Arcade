@@ -314,6 +314,8 @@ test('Scenario: Real short sweep marks votes', async ({ page }) => {
 	expect(await under(page)).toBe('6');
 	await page.keyboard.press('Space');
 	await expect.poll(() => lit(page)).toEqual([5, 6]);
+	// a turning hand must not widen the page
+	expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 
 	await page.clock.runFor(SHORT * 4);
 	expect(await under(page)).toBe('3');
