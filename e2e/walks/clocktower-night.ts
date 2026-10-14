@@ -55,6 +55,13 @@ export async function walk(page: Page, check: Check) {
 	await weiter(page).click();
 	await expect(live(page).getByTestId('show-bar')).toBeVisible();
 	await check('clocktower-circle-pair');
+	// the 15-seat circle screen scrolled to its navigation: Weiter sits at the very end
+	if (page.viewportSize()!.width < 600) {
+		await weiter(page).scrollIntoViewIfNeeded();
+		await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+		await check('clocktower-circle-navigation');
+		await page.evaluate(() => window.scrollTo(0, 0));
+	}
 
 	const bar = live(page).getByTestId('show-bar');
 	const cards: [string, string | null][] = [
