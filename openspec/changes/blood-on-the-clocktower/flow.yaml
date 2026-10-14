@@ -5,6 +5,9 @@ base: main
 gate0: 2026-10-14
 gate1: 2026-10-14
 learnings:
+- builder tests written after the code recurred: U4 4.4 e2e art test, U6 6.3 RoleCard test, U5 reload test passed against a looser placeholder → brief names the fail-first check per task (strengthens the existing builder learning, 2026-10-14)
+- builders polling background runs with until-loops grepping for an exit marker never matched (the marker goes to task output, not the log) → wait for the completion notice; grep the log for "passed|failed" if needed (U4, U6 friction, 2026-10-14)
+- design.md contract left `seatPositions`/`seatSize`' second arg ambiguous (box px vs 'setup'|'play') → planner gives units of every numeric contract arg (U6, 2026-10-14)
 - waiting for proof:full with a foreground until-loop hit the 600s Bash cap twice → builders rely on the run_in_background completion notice (U1 friction, 2026-10-14)
 - e2e files edited while proof:full runs break it (Playwright workers import test files lazily) → builders write only src files during a run (U1 friction, 2026-10-14)
 - spec scenarios with exact team counts after a random fill are seed-dependent once a setup-modifying character (Baron) can be drawn → planner states the seed or the required(n, …) form in the scenario (U2 friction, 2026-10-14)
