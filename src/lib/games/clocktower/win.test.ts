@@ -115,6 +115,25 @@ describe('clocktower dusk questions', () => {
 		expect(four.winner).toBe('good');
 	});
 
+	it('Scenario: Lebt doch takes back the Scarlet Woman question', () => {
+		const died = step(firstDay(seated(SW)), { type: 'died', seat: 6 });
+		expect(died.winner).toBeNull();
+		expect(died.questions).toEqual([{ kind: 'scarlet-woman', seat: 5 }]);
+		const revived = step(died, { type: 'revive', seat: 6 });
+		expect(revived.questions).toEqual([]);
+		const n2 = step(revived, { type: 'endDay' }, next);
+		expect(n2.night!.screens.some((x) => x.screen === 'question')).toBe(false);
+		const asked = step(n2, next);
+		expect(screen(asked)).toEqual({ screen: 'wake', step: 0 });
+		expect(asked.winner).toBeNull();
+
+		const night = throughNight(step(firstDay(seated(SW)), { type: 'endDay' }, next), [6]);
+		expect(night.questions).toEqual([{ kind: 'scarlet-woman', seat: 5 }]);
+		const back = step(night, { type: 'revive', seat: 6 }, { type: 'endDay' }, next);
+		expect(back.questions).toEqual([]);
+		expect(back.night!.screens.some((x) => x.screen === 'question')).toBe(false);
+	});
+
 	it('Scenario: Saint executed asks at dusk', () => {
 		const executed = execute(firstDay(seated(SAINT)), 4);
 		expect(executed.winner).toBeNull();

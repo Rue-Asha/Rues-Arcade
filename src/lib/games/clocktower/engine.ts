@@ -317,9 +317,12 @@ function day(s: ClocktowerState, action: ClocktowerAction): ClocktowerState {
 			const after = kill(s, [action.seat]);
 			return after.winner ? over(after) : after;
 		}
-		case 'revive':
+		case 'revive': {
 			if (!seatAction || s.seats[action.seat].alive) return s;
-			return { ...s, seats: s.seats.map((x, i) => (i === action.seat ? { ...x, alive: true, ghostVote: true } : x)) };
+			// the Demon's death queued the Scarlet Woman question; a Saint's needs an execution, which ends the seat actions
+			const questions = action.seat === s.demon ? s.questions.filter((q) => q.kind !== 'scarlet-woman') : s.questions;
+			return { ...s, questions, seats: s.seats.map((x, i) => (i === action.seat ? { ...x, alive: true, ghostVote: true } : x)) };
+		}
 		case 'ghost': {
 			const { seat, on } = action;
 			if (!seatAction || s.seats[seat].alive || s.seats[seat].ghostVote === on) return s;

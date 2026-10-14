@@ -603,7 +603,8 @@ The block holder SHALL be marked on the circle.
 Tapping a seat during the day SHALL also offer "Sofort hinrichten" (execution now, nominations close, the day moves to
 its execution announcement), "Ist gestorben" (death without execution) and corrections ("Lebt doch", "Geisterstimme
 zurück" / "Geisterstimme weg"). None of these SHALL name a character. An immediate execution while someone is on the
-block SHALL replace the block; a death or execution by day SHALL trigger the win check.
+block SHALL replace the block; a death or execution by day SHALL trigger the win check. "Lebt doch" SHALL undo the
+death completely, including a dusk question that death queued.
 
 #### Scenario: Seat actions name no character
 - **WHEN** a living seat, then a dead seat with a ghost vote, is tapped by day
@@ -623,6 +624,11 @@ block SHALL replace the block; a death or execution by day SHALL trigger the win
 #### Scenario: Corrections by day
 - **WHEN** "Lebt doch", "Geisterstimme weg" and "Geisterstimme zurück" are dispatched for dead seats
 - **THEN** the first seat is alive again and the ghost vote flags change accordingly
+- **proof:** unit
+
+#### Scenario: Lebt doch takes back the Scarlet Woman question
+- **WHEN** with the Scarlet Woman eligible "Ist gestorben" is dispatched for the Imp's seat by mistake (and in a second game the Imp died at night), then "Lebt doch" for it, and the day ends
+- **THEN** no question is left queued, the next dusk asks nothing and no winner is set
 - **proof:** unit
 
 ### Requirement: End of day
