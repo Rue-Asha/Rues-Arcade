@@ -67,6 +67,23 @@ function townSlide(count: number): Slide {
 	};
 }
 
+const SEAT_MS = 750;
+
+// The vote animation as data: the hand starts on seat 1 and sweeps clockwise to the nominee (seat 0, one turn
+// later); the voters are spread over seats 1..n-1 and each turns red when the hand arrives.
+export function voteTimeline(n: number) {
+	const needed = threshold(n);
+	const voters = Array.from({ length: needed }, (_, j) => 1 + Math.floor((j * (n - 1)) / needed));
+	return {
+		seats: n,
+		nominee: 0 as const,
+		voters,
+		at: voters.map((v) => (v - 1) * SEAT_MS),
+		handMs: (n - 1) * SEAT_MS,
+		holdMs: 3000
+	};
+}
+
 function voteSlide(count: number): Slide {
 	const needed = threshold(count);
 	return {

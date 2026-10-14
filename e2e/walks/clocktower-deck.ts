@@ -1,5 +1,5 @@
 import { expect, type Page } from '@playwright/test';
-import { slides } from '../../src/lib/games/clocktower/deck.ts';
+import { slides, voteTimeline } from '../../src/lib/games/clocktower/deck.ts';
 import { seedRoster, settled } from '../helpers.ts';
 
 // Every slide of the deck at N 9, one check per slide at the project's width, then the sheet's second phone page.
@@ -14,6 +14,17 @@ export async function walk(page: Page, check: (slug: string) => Promise<void>) {
 	for (const [i, s] of list.entries()) {
 		await expect(progress).toHaveText(`${i + 1} / ${list.length}`);
 		await settled(page);
+		// the vote loop never ends: hold it on the end of the sweep so every shot sees the same frame
+		if (s.id === 'voting') {
+			await page.evaluate((ms) => {
+				const root = document.querySelector('[data-slide="voting"]')!;
+				for (const a of document.getAnimations()) {
+					if (a.effect?.getTiming().iterations !== Infinity || !root.contains((a.effect as KeyframeEffect).target)) continue;
+					a.pause();
+					a.currentTime = ms;
+				}
+			}, voteTimeline(9).handMs);
+		}
 		await check(`clocktower-deck-${s.id}`);
 		if (i < list.length - 1) await page.keyboard.press('ArrowRight');
 	}

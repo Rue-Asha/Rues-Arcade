@@ -78,9 +78,9 @@ test('Scenario: Full Clocktower game', async ({ page }, info) => {
 	await expect(live(page).getByTestId('winner')).toHaveText('Das Gute gewinnt');
 	const rows = live(page).getByTestId('end-row');
 	await expect(rows).toHaveCount(5);
-	for (const [i, seat] of state.seats.entries()) {
-		await expect(rows.nth(i)).toContainText(seat.player.name);
-		await expect(rows.nth(i)).toContainText(byId[seat.character!].name);
+	for (const seat of state.seats) {
+		const row = rows.filter({ hasText: seat.player.name });
+		await expect(row).toContainText(byId[seat.character!].name);
 	}
 	await expect(live(page).getByRole('button', { name: 'Zurück zum Start', exact: true })).toBeVisible();
 });

@@ -5,7 +5,8 @@
 	import { clearSession } from '#lib/session.ts';
 	import { play } from '#lib/sound.ts';
 	import Button from '#lib/ui/Button.svelte';
-	import { byId } from './characters.ts';
+	import { alignment, byId } from './characters.ts';
+	import CharacterIcon from './CharacterIcon.svelte';
 	import { who } from './label.ts';
 	import type { ClocktowerState, DemonEvent, Seat } from './types.ts';
 
@@ -14,6 +15,13 @@
 	const s = $derived(game as ClocktowerState);
 	const revealed = $derived(s.phase.kind === 'over' && s.phase.revealed);
 	const good = $derived(s.winner === 'good');
+	const groups = $derived(
+		(good ? (['good', 'evil'] as const) : (['evil', 'good'] as const)).map((team) => ({
+			team,
+			name: team === 'good' ? 'Gut' : 'Böse',
+			seats: s.seats.flatMap((seat, i) => (alignment(seat.character!) === team ? [{ seat, i }] : []))
+		}))
+	);
 
 	onMount(() => {
 		if (!revealed) play('gong');
@@ -38,10 +46,10 @@
 </script>
 
 {#if !revealed}
-	<section class="panel stack pad" aria-labelledby="phase">
+	<section class="panel stack pad teaser" aria-labelledby="phase">
 		<h2 id="phase">Das Spiel ist vorbei</h2>
 		<p class="muted">Die Geschichte der Stadt ist erzählt. Gleich seht ihr, wie sie ausging.</p>
-		<div class="row">
+		<div class="row center">
 			<Button variant="primary" onclick={() => dispatch({ type: 'reveal' })}>Weiter</Button>
 		</div>
 	</section>
@@ -50,16 +58,24 @@
 		<h2 id="phase" class="winner" class:good data-testid="winner">
 			{good ? 'Das Gute gewinnt' : 'Das Böse gewinnt'}
 		</h2>
-		<ul class="rows panel">
-			{#each s.seats as seat, i (i)}
-				<li data-testid="end-row" class="row-seat" data-dead={seat.alive ? undefined : ''}>
-					<span class="no data">{i + 1}</span>
-					<span class="who">{seat.player.name}</span>
-					<span class="char {byId[seat.character!].team}">{character(seat)}</span>
-					<span class="status" class:ghost={!seat.alive && seat.ghostVote}>{status(seat)}</span>
-				</li>
+		<div class="groups">
+			{#each groups as g (g.team)}
+				<section class="panel group {g.team}" data-testid="end-group" aria-labelledby="g-{g.team}">
+					<h3 id="g-{g.team}"><span class="glyph" aria-hidden="true"></span>{g.name}</h3>
+					<ul class="rows">
+						{#each g.seats as { seat, i } (i)}
+							<li data-testid="end-row" class="row-seat {byId[seat.character!].team}" data-dead={seat.alive ? undefined : ''}>
+								<CharacterIcon id={seat.character!} size={32} />
+								<span class="no data">{i + 1}</span>
+								<span class="who">{seat.player.name}</span>
+								<span class="char">{character(seat)}</span>
+								<span class="status" class:ghost={!seat.alive && seat.ghostVote}>{status(seat)}</span>
+							</li>
+						{/each}
+					</ul>
+				</section>
 			{/each}
-		</ul>
+		</div>
 		<div class="panel history" data-testid="history">
 			{#if s.history.length}
 				{#each s.history as e, i (i)}<p>{event(e)}</p>{/each}
@@ -112,19 +128,61 @@
 		}
 	}
 
+	.teaser {
+		text-align: center;
+		text-wrap: balance;
+	}
+
+	.center {
+		justify-content: center;
+	}
+
+	.groups {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr);
+		gap: 12px;
+	}
+
+	.group h3 {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		margin: 0 0 4px;
+		font-family: var(--font-display);
+		font-size: 22px;
+		color: var(--good);
+	}
+
+	.group.evil h3 {
+		color: var(--evil);
+	}
+
+	.glyph {
+		width: 12px;
+		height: 12px;
+		border-radius: 50%;
+		background: currentColor;
+	}
+
+	.evil .glyph {
+		border-radius: 0;
+		clip-path: polygon(50% 0, 100% 100%, 0 100%);
+	}
+
 	.rows {
 		display: grid;
 		gap: 0;
 		margin: 0;
-		padding: 4px 16px;
+		padding: 0;
 		list-style: none;
 	}
 
 	.row-seat {
 		display: grid;
-		grid-template-columns: 24px minmax(0, 1fr) auto;
+		grid-template-columns: 32px 24px minmax(0, 1fr);
 		column-gap: 10px;
-		align-items: baseline;
+		row-gap: 0;
+		align-items: center;
 		padding: 8px 0;
 		border-bottom: 1px solid var(--line);
 	}
@@ -133,9 +191,21 @@
 		border-bottom: 0;
 	}
 
+	.row-seat > :global(.icon) {
+		grid-row: 1 / span 3;
+	}
+
 	.no {
+		grid-column: 2;
+		grid-row: 1 / span 3;
 		color: var(--muted);
 		font-size: 14px;
+	}
+
+	.who,
+	.char,
+	.status {
+		grid-column: 3;
 	}
 
 	.who {
@@ -148,30 +218,35 @@
 	}
 
 	.char {
-		text-align: right;
 		color: var(--good);
 	}
 
-	.char.outsider {
+	.row-seat.outsider .char {
 		color: var(--outsider);
 	}
 
-	.char.minion {
+	.row-seat.minion .char {
 		color: var(--evil);
 	}
 
-	.char.demon {
+	.row-seat.demon .char {
 		color: var(--demon);
 	}
 
 	.status {
-		grid-column: 2 / -1;
 		font-size: 14px;
 		color: var(--muted);
 	}
 
 	.status.ghost {
 		color: var(--gold);
+	}
+
+	@media (min-width: 768px) {
+		.groups {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			align-items: start;
+		}
 	}
 
 	.history {

@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { slides } from '../src/lib/games/clocktower/deck.ts';
+import { slides, voteTimeline } from '../src/lib/games/clocktower/deck.ts';
 import { seedRoster, settled } from './helpers.ts';
 
 // The deck reads only localStorage (roster and count), so phone and desktop never share state.
@@ -314,4 +314,67 @@ test('Scenario: Sheet on phone is two pages', async ({ page }) => {
 	await expect(sheet).toHaveAttribute('data-page', '0');
 	// the sheet's own swipe never moves the deck
 	await expect(progress(page)).toHaveText(`${M} / ${M}`);
+});
+
+const N = 7;
+const timeline = voteTimeline(N);
+
+// the slide's looping animations, paused at `ms`; returns the properties every animation on the slide touches
+async function seekVote(page: Page, ms: number) {
+	return page.evaluate((to) => {
+		const root = document.querySelector('[data-slide="voting"]')!;
+		const own = document.getAnimations().filter((a) => root.contains((a.effect as KeyframeEffect).target));
+		const props = new Set<string>();
+		for (const a of own) {
+			for (const k of (a.effect as KeyframeEffect).getKeyframes())
+				for (const p of Object.keys(k)) if (!['offset', 'easing', 'composite', 'computedOffset'].includes(p)) props.add(p);
+			if (a.effect!.getTiming().iterations === Infinity) {
+				a.pause();
+				a.currentTime = to;
+			}
+		}
+		return { props: [...props], looping: own.filter((a) => a.effect!.getTiming().iterations === Infinity).length };
+	}, ms);
+}
+
+// seats showing red, the count shown and the hand's angle, read from computed style
+const voteState = (page: Page) =>
+	page.evaluate(() => {
+		const root = document.querySelector('[data-slide="voting"]')!;
+		const on = (el: Element) => Number(getComputedStyle(el).opacity) > 0.5;
+		const m = new DOMMatrix(getComputedStyle(root.querySelector('[data-hand]')!).transform);
+		const shown = [...root.querySelectorAll('[data-n]')].filter(on).map((el) => el.textContent);
+		const angle = ((Math.atan2(m.b, m.a) * 180) / Math.PI + 360) % 360;
+		return { red: [...root.querySelectorAll('[data-voter]')].filter(on).length, shown, angle: Math.min(angle, 360 - angle) };
+	});
+
+test('Scenario: Voting slide sweeps and counts up', async ({ page }) => {
+	await openDeck(page, N);
+	await goTo(page, 0, list.findIndex((s) => s.id === 'voting'));
+	await expect(page.locator('[data-slide="voting"] [data-hand]')).toBeAttached();
+
+	const second = await seekVote(page, timeline.at[1] + 50);
+	expect(second.looping).toBeGreaterThan(0);
+	for (const p of second.props) expect(['transform', 'opacity'], p).toContain(p);
+	expect(await voteState(page)).toMatchObject({ red: 2, shown: ['2'] });
+
+	await seekVote(page, timeline.handMs);
+	const end = await voteState(page);
+	expect(end).toMatchObject({ red: 4, shown: ['4'] });
+	expect(end.angle).toBeLessThan(0.5);
+});
+
+test('Scenario: Voting slide shows the end state under reduced motion', async ({ page }) => {
+	await page.emulateMedia({ reducedMotion: 'reduce' });
+	await openDeck(page, N);
+	await goTo(page, 0, list.findIndex((s) => s.id === 'voting'));
+	await expect(page.locator('[data-slide="voting"] [data-hand]')).toBeAttached();
+	const running = await page.evaluate(() => {
+		const root = document.querySelector('[data-slide="voting"]')!;
+		return document.getAnimations().filter((a) => a.playState === 'running' && root.contains((a.effect as KeyframeEffect).target)).length;
+	});
+	expect(running).toBe(0);
+	const end = await voteState(page);
+	expect(end).toMatchObject({ red: 4, shown: ['4'] });
+	expect(end.angle).toBeLessThan(0.5);
 });

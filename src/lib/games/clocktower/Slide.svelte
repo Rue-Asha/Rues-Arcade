@@ -1,16 +1,61 @@
 <script lang="ts">
 	import { byId } from './characters.ts';
 	import CharacterIcon from './CharacterIcon.svelte';
-	import { triggerLabel, type Slide } from './deck.ts';
+	import { triggerLabel, voteTimeline, type Slide } from './deck.ts';
 	import Sheet from './Sheet.svelte';
 
 	let { slide }: { slide: Slide } = $props();
+
+	const alive = $derived(slide.vote?.alive ?? 0);
+	const tl = $derived(voteTimeline(Math.max(alive, 2)));
 
 	// seats of the vote ring on a circle, the nominee at the top, clockwise
 	const seat = (i: number, n: number) => {
 		const a = (i / n) * 2 * Math.PI;
 		return { x: 50 + 40 * Math.sin(a), y: 50 - 40 * Math.cos(a) };
 	};
+
+	// The static markup is the end state; with motion allowed the loop below replays the sweep over it. Opacity steps
+	// switch a voter's red fill and the centre numeral in step with the hand, which only rotates.
+	const STEP = 0.004;
+	const END = 0.97;
+	const steps = (from: number, to: number): Keyframe[] => [
+		from > 0 ? { opacity: 0, offset: 0 } : { opacity: 1, offset: 0 },
+		...(from > 0 ? [{ opacity: 0, offset: from }, { opacity: 1, offset: from + STEP }] : []),
+		{ opacity: 1, offset: to },
+		{ opacity: 0, offset: to + STEP },
+		{ opacity: 0, offset: 1 }
+	];
+
+	function sweep(disc: HTMLElement, alive: number) {
+		if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+		const t = voteTimeline(alive);
+		const total = t.handMs + t.holdMs;
+		const at = t.at.map((ms) => ms / total);
+		const timing = { duration: total, iterations: Infinity, easing: 'linear' };
+		const run = [
+			disc.querySelector<HTMLElement>('[data-hand]')!.animate(
+				[
+					{ transform: `rotate(${360 / alive}deg)`, offset: 0 },
+					{ transform: 'rotate(360deg)', offset: t.handMs / total },
+					{ transform: 'rotate(360deg)', offset: 1 }
+				],
+				timing
+			)
+		];
+		disc.querySelectorAll<HTMLElement>('[data-voter]').forEach((el, j) => {
+			run.push(
+				el.animate(
+					steps(at[j], END).map((k) => (k.opacity === 1 ? { ...k, transform: 'scale(1)' } : { ...k, transform: 'scale(0.6)' })),
+					timing
+				)
+			);
+		});
+		disc.querySelectorAll<HTMLElement>('[data-n]').forEach((el, j) => {
+			run.push(el.animate(steps(at[j], j + 1 < at.length ? at[j + 1] : END), timing));
+		});
+		return { destroy: () => run.forEach((a) => a.cancel()) };
+	}
 </script>
 
 <div
@@ -61,17 +106,25 @@
 						{/each}
 					</div>
 					<figure class="ring">
-						<div class="disc" role="img" aria-label={slide.vote?.caption}>
-							{#each Array.from({ length: slide.vote?.alive ?? 0 }) as _, i (i)}
-								{@const p = seat(i, slide.vote!.alive)}
-								<span
-									class="seat"
-									class:nominee={i === 0}
-									class:voted={i > 0 && i <= slide.vote!.needed}
-									style="left:{p.x}%;top:{p.y}%"
-								></span>
+						<div class="disc" role="img" aria-label={slide.vote?.caption} use:sweep={alive}>
+							<span class="hand" data-hand aria-hidden="true"></span>
+							{#each Array.from({ length: alive }) as _, i (i)}
+								{@const p = seat(i, alive)}
+								<span class="seat" class:nominee={i === 0} style="left:{p.x}%;top:{p.y}%">
+									{#if i === 0}
+										<b>!</b>
+									{:else if tl.voters.includes(i)}
+										<span class="fill" data-voter>
+											<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+										</span>
+									{/if}
+								</span>
 							{/each}
-							<span class="needed">{slide.vote?.needed}</span>
+							<span class="count" aria-hidden="true">
+								{#each tl.voters as _, j (j)}
+									<span data-n class:last={j === tl.voters.length - 1}>{j + 1}</span>
+								{/each}
+							</span>
 						</div>
 						<figcaption>{slide.vote?.caption}</figcaption>
 					</figure>
@@ -515,6 +568,8 @@
 
 	.seat {
 		position: absolute;
+		display: grid;
+		place-items: center;
 		width: 10%;
 		aspect-ratio: 1;
 		transform: translate(-50%, -50%);
@@ -522,24 +577,61 @@
 		border-radius: 50%;
 	}
 
-	.seat.voted {
-		background: var(--clocktower);
-		border-color: var(--clocktower);
-	}
-
 	.seat.nominee {
 		width: 14%;
 		border-color: var(--clocktower);
 		border-width: 3px;
+		color: var(--clocktower);
+		font-size: 22px;
 	}
 
-	.needed {
+	.fill {
+		position: absolute;
+		inset: -2px;
+		display: grid;
+		place-items: center;
+		border-radius: 50%;
+		background: var(--clocktower);
+	}
+
+	.fill svg {
+		width: 62%;
+		fill: none;
+		stroke: #1c1714;
+		stroke-width: 3.5;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+	}
+
+	.hand {
+		position: absolute;
+		left: 50%;
+		bottom: 50%;
+		width: 4px;
+		height: 30%;
+		margin-left: -2px;
+		border-radius: 2px;
+		background: var(--clocktower);
+		transform-origin: 50% 100%;
+	}
+
+	.count {
 		position: absolute;
 		inset: 0;
 		display: grid;
 		place-items: center;
 		font-family: var(--font-num);
-		font-size: 88px;
+		font-size: 72px;
+		font-variant-numeric: tabular-nums;
+	}
+
+	.count > span {
+		grid-area: 1 / 1;
+		opacity: 0;
+	}
+
+	.count > .last {
+		opacity: 1;
 		color: var(--clocktower);
 	}
 

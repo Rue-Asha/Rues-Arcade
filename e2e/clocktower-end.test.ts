@@ -49,17 +49,20 @@ test('Scenario: Reveal shows the winning team and every seat', async ({ page }) 
 	expect(same).toBe(true);
 
 	await expect(rows(page)).toHaveCount(7);
-	const got = await rows(page).evaluateAll((els) => els.map((el) => (el as HTMLElement).innerText.replace(/\s+/g, ' ').trim()));
+	const groups = live(page).getByTestId('end-group');
+	await expect(groups.getByRole('heading')).toHaveText(['Gut', 'Böse']);
+	const text = (g: string) =>
+		groups.filter({ has: page.getByRole('heading', { name: g, exact: true }) }).getByTestId('end-row').evaluateAll((els) => els.map((el) => (el as HTMLElement).innerText.replace(/\s+/g, ' ').trim()));
 	// seat 6 was the Poisoner until the starpass and is the Imp now; seat 7 died as the old Imp and spent its vote
-	expect(got).toEqual([
+	expect(await text('Gut')).toEqual([
 		'1 Alex Washerwoman lebt',
 		'2 Bo Empath lebt',
 		'3 Cleo Monk lebt',
 		'4 Dani Ravenkeeper lebt',
-		'5 Eli Drunk (glaubte: Chef) lebt',
-		'6 Fey Imp tot, Stimme übrig',
-		'7 Gus Imp tot, keine Stimme'
+		'5 Eli Drunk (glaubte: Chef) lebt'
 	]);
+	expect(await text('Böse')).toEqual(['6 Fey Imp tot, Stimme übrig', '7 Gus Imp tot, keine Stimme']);
+	await expect(rows(page).first().locator('svg')).toBeVisible();
 	await expect(live(page).getByTestId('history')).toHaveText('Nacht 2: Starpass von Gus (#7) zu Fey (#6), davor Poisoner');
 	await expect(live(page).getByRole('button', { name: 'Zurück zum Start', exact: true })).toBeVisible();
 });
@@ -84,8 +87,27 @@ test('Reveal names evil as the winner', async ({ page }) => {
 	await open(page, evilWin());
 	await weiter(page).click();
 	await expect(live(page).getByTestId('winner')).toHaveText('Das Böse gewinnt');
+	await expect(live(page).getByTestId('end-group').getByRole('heading')).toHaveText(['Böse', 'Gut']);
 	await expect(rows(page)).toHaveCount(5);
 	await expect(live(page).getByTestId('history')).toHaveText('Der Dämon blieb Dani (#4)');
+});
+
+test('Scenario: End screens have no right-aligned text', async ({ page }) => {
+	const aligns = () =>
+		live(page).evaluate((root) => [root, ...root.querySelectorAll('*')].filter((el) => el.childNodes.length && [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent!.trim())).map((el) => getComputedStyle(el).textAlign));
+	for (const state of [goodWin(), evilWin()]) {
+		await open(page, state);
+		await expect(weiter(page)).toBeVisible();
+		await expect(live(page).locator('section.panel').first()).toHaveCSS('text-align', 'center');
+		expect(await aligns()).not.toContain('right');
+		expect(await aligns()).not.toContain('end');
+		await weiter(page).click();
+		await expect(live(page).getByTestId('winner')).toBeVisible();
+		const got = await aligns();
+		expect(got.length).toBeGreaterThan(0);
+		expect(got).not.toContain('right');
+		expect(got).not.toContain('end');
+	}
 });
 
 test('Reveal winner animated once, still under reduced motion', async ({ page }) => {
