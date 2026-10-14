@@ -3,7 +3,7 @@
 	import { onNavigate } from '$app/navigation';
 	import { roster } from '#lib/roster.svelte.ts';
 	import { muted, setMuted } from '#lib/sound.ts';
-	import { applyTheme, themed } from '#lib/theme.ts';
+	import { applyTheme, reducedMotion, themed } from '#lib/theme.ts';
 	import '../app.css';
 
 	let { children }: { children: Snippet } = $props();
@@ -14,10 +14,19 @@
 		roster.ready();
 	});
 
+	// into, out of and between Clocktower routes the theme changes inside a view transition, else at once
 	onNavigate((navigation) => {
 		const from = navigation.from?.url.pathname;
 		const to = navigation.to?.url.pathname;
-		if (themed(from) || themed(to)) applyTheme(themed(to));
+		if (from === to || !(themed(from) || themed(to))) return;
+		if (!document.startViewTransition || reducedMotion()) return applyTheme(themed(to));
+		return new Promise<void>((resolve) => {
+			document.startViewTransition(async () => {
+				resolve();
+				await navigation.complete;
+				applyTheme(themed(to));
+			});
+		});
 	});
 
 	function toggle() {
