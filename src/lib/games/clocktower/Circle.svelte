@@ -1,12 +1,15 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import { angleOf, seatPositions, seatSize } from './circle.ts';
-	import type { Seat } from './types.ts';
+	import { angleOf, ornament, seatPositions, seatSize } from './circle.ts';
+	import { byId } from './characters.ts';
+	import CharacterIcon from './CharacterIcon.svelte';
+	import type { CharacterId, Seat } from './types.ts';
 
 	interface Props {
 		seats: Seat[];
 		size?: 'setup' | 'play';
 		label?: (i: number) => string | null;
+		token?: (i: number) => CharacterId | null;
 		marked?: number[];
 		block?: number | null;
 		hand?: number | null;
@@ -23,6 +26,7 @@
 		seats,
 		size = 'play',
 		label,
+		token,
 		marked = [],
 		block = null,
 		hand = null,
@@ -45,10 +49,12 @@
 	const box = $derived(Math.max(240, Math.min(width, MAX[size])));
 	const d = $derived(seatSize(count, box));
 	const at = $derived(seatPositions(count, box));
+	const deco = $derived(ornament(count, box));
 
 	function spoken(i: number): string {
 		const seat = seats[i];
-		const head = `Platz ${i + 1}, ${seat.player.name}`;
+		const character = token?.(i) ?? null;
+		const head = `Platz ${i + 1}, ${seat.player.name}${character === null ? '' : `, ${byId[character].name}`}`;
 		if (seat.alive) return head;
 		return `${head}, tot, ${seat.ghostVote ? 'Stimme' : 'keine Stimme'}`;
 	}
@@ -109,15 +115,27 @@
 
 <div class="circle" data-circle data-size={size} style:--box="{box}px" style:--seat="{d}px" style:--max="{MAX[size]}px" bind:clientWidth={width}>
 	<div class="plane" style:width="{box}px" style:height="{box}px">
+		<svg class="ornament" data-deco data-motif="circle" viewBox="0 0 {box} {box}" width={box} height={box} aria-hidden="true" focusable="false">
+			<circle class="hair" cx={box / 2} cy={box / 2} r={deco.outer} />
+			<circle class="hair" cx={box / 2} cy={box / 2} r={deco.inner} />
+			<path class="ticks" d={deco.ticks} />
+			<circle class="hair" cx={box / 2} cy={box / 2} r={deco.hub * 2.6} />
+			<path class="rosette" d={deco.rosette} />
+			{#each deco.links as link, i (i)}
+				<path class="ring" data-ring class:gap={!seats[i].alive || !seats[(i + 1) % count].alive} d={link} />
+			{/each}
+		</svg>
 		{#each seats as seat, i (seat.player.id)}
 			{@const why = disabled?.(i) ?? null}
 			{@const text = label?.(i) ?? null}
+			{@const icon = token?.(i) ?? null}
 			<button
 				type="button"
 				class="seat"
 				class:dying={dying.includes(i)}
 				class:grab={drag?.from === i}
 				class:drop={drag?.over === i}
+				class:holds={icon !== null}
 				data-seat={i + 1}
 				data-dead={seat.alive ? undefined : ''}
 				data-ghost={!seat.alive && seat.ghostVote ? '' : undefined}
@@ -138,17 +156,30 @@
 				onpointercancel={() => (drag = null)}
 			>
 				<span class="no">{i + 1}</span>
+				{#if icon}<CharacterIcon id={icon} size={Math.min(38, Math.round(d * 0.5))} />{/if}
 				<span class="name">{seat.player.name}</span>
 				{#if text}<span class="tag">{text}</span>{/if}
 				{#if !seat.alive}
-					<span class="mark" aria-hidden="true">{seat.ghostVote ? '✕ ●' : '✕ ○'}</span>
+					<span class="mark" data-spent={seat.ghostVote ? undefined : ''} aria-hidden="true">
+						<svg viewBox="0 0 48 22" preserveAspectRatio="none" focusable="false" aria-hidden="true">
+							<rect class="rim" x="1" y="1" width="46" height="20" rx="10" />
+							<rect class="notch" x="4" y="4" width="40" height="14" rx="7" />
+						</svg>
+						<span class="glyphs">{seat.ghostVote ? '✕ ●' : '✕ ○'}</span>
+					</span>
 				{/if}
 				{#if marked.includes(i)}<span class="badge hand-up" aria-hidden="true">✓</span>{/if}
 				{#if block === i}<span class="badge on-block" aria-hidden="true">▼</span>{/if}
 			</button>
 		{/each}
 		{#if hand !== null}
-			<div class="hand" data-hand style:--angle="{angleOf(hand, count)}deg" style:--ms="{handMs}ms" aria-hidden="true"></div>
+			<div class="clock" aria-hidden="true">
+				<div class="hand" data-hand style:--angle="{angleOf(hand, count)}deg" style:--ms="{handMs}ms">
+					<span class="arm"></span>
+					<span class="tip" data-hand-tip></span>
+				</div>
+				<span class="hub" data-hub></span>
+			</div>
 		{/if}
 		{#if center}
 			<div class="centre">{@render center()}</div>
@@ -171,8 +202,47 @@
 		max-width: 100%;
 	}
 
+	/* paths only, under the seats; the seats' opaque faces keep every line away from their text */
+	.ornament {
+		position: absolute;
+		inset: 0;
+		overflow: visible;
+		pointer-events: none;
+		fill: none;
+		stroke: var(--gold);
+	}
+
+	.ring {
+		stroke-width: 2;
+		stroke-opacity: 0.6;
+		stroke-linecap: round;
+	}
+
+	.ring.gap {
+		stroke-dasharray: 2 6;
+		stroke-opacity: 0.45;
+	}
+
+	.hair {
+		stroke-width: 1;
+		stroke-opacity: 0.35;
+	}
+
+	.ticks {
+		stroke-width: 1.5;
+		stroke-opacity: 0.45;
+		stroke-linecap: round;
+	}
+
+	.rosette {
+		stroke-width: 1;
+		stroke-opacity: 0.4;
+		stroke-linejoin: round;
+	}
+
 	.seat {
 		position: absolute;
+		z-index: 1;
 		width: var(--seat);
 		height: var(--seat);
 		transform: translate(-50%, -50%);
@@ -208,6 +278,22 @@
 		font-size: 15px;
 	}
 
+	/* with an icon the number moves to a corner badge, so icon and name get the seat's face */
+	.holds .no {
+		position: absolute;
+		top: -4px;
+		left: 0;
+		min-width: 18px;
+		height: 18px;
+		padding: 0 3px;
+		border: 1px solid var(--line);
+		border-radius: 9px;
+		background: var(--raised);
+		font-size: 12px;
+		line-height: 16px;
+		text-align: center;
+	}
+
 	.name {
 		max-width: 100%;
 		font-size: 11px;
@@ -236,16 +322,64 @@
 		text-decoration: line-through;
 	}
 
+	/* a wax-seal coin: its own solid face, a gold rim and a notched inner rim, so the glyphs sit on a known background;
+	   a spent token loses the notches */
 	.mark {
 		position: absolute;
-		bottom: -4px;
-		right: -6px;
-		padding: 0 4px;
-		border-radius: 8px;
-		background: var(--surface);
-		border: 1px solid var(--line);
-		font-size: 10px;
+		bottom: -8px;
+		right: -4px;
+		display: grid;
+		place-items: center;
+		min-width: 40px;
+		height: 22px;
+		padding: 0 8px;
+		border-radius: 11px;
+		background: var(--gold-tint);
+		box-shadow: 0 1px 0 var(--gold-ledge);
 		color: var(--text);
+		font-size: 12px;
+		font-weight: 700;
+		line-height: 1;
+		white-space: nowrap;
+	}
+
+	.mark[data-spent] {
+		background: var(--surface);
+		box-shadow: none;
+	}
+
+	.mark svg {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		fill: none;
+		pointer-events: none;
+	}
+
+	.rim {
+		stroke: var(--gold);
+		stroke-width: 1.5;
+		vector-effect: non-scaling-stroke;
+	}
+
+	.notch {
+		stroke: var(--gold);
+		stroke-width: 1;
+		stroke-dasharray: 1.5 2.5;
+		vector-effect: non-scaling-stroke;
+	}
+
+	.mark[data-spent] .rim {
+		stroke: var(--line);
+	}
+
+	.mark[data-spent] .notch {
+		display: none;
+	}
+
+	.glyphs {
+		position: relative;
 	}
 
 	.seat[data-ghost] {
@@ -304,6 +438,7 @@
 	   inset:0 square would widen the page while it rotates */
 	.hand {
 		position: absolute;
+		z-index: 0;
 		left: 50%;
 		top: 0;
 		width: 0;
@@ -313,15 +448,45 @@
 		transition: transform var(--ms) linear;
 	}
 
-	.hand::before {
-		content: '';
+	/* under the seats: the hand reaches from the hub to the pointed seat's rim and vanishes behind it */
+	.clock {
 		position: absolute;
-		left: -2px;
-		top: calc(var(--seat) + 4px);
-		width: 4px;
-		height: calc(50% - var(--seat) - 4px);
-		border-radius: 2px;
+		inset: 0;
+		pointer-events: none;
+	}
+
+	.arm {
+		position: absolute;
+		left: -3px;
+		top: var(--seat);
+		width: 6px;
+		height: calc(50% - var(--seat));
+		border-radius: 3px 3px 1px 1px;
 		background: var(--clocktower);
+		clip-path: polygon(30% 0, 70% 0, 100% 100%, 0 100%);
+	}
+
+	.tip {
+		position: absolute;
+		left: -6px;
+		top: calc(var(--seat) - 7px);
+		width: 12px;
+		height: 12px;
+		border-radius: 50%;
+		background: var(--clocktower);
+		box-shadow: 0 0 0 3px var(--raised);
+	}
+
+	.hub {
+		position: absolute;
+		left: 50%;
+		top: 50%;
+		width: 22px;
+		height: 22px;
+		transform: translate(-50%, -50%);
+		border-radius: 50%;
+		background: var(--clocktower);
+		box-shadow: 0 0 0 4px var(--raised), 0 0 0 5px var(--clocktower);
 	}
 
 	.centre {

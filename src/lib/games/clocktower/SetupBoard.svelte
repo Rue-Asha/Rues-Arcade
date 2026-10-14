@@ -67,6 +67,7 @@
 			seats={s.seats}
 			size="setup"
 			label={(i) => (i === picked && s.seats[i].character ? byId[s.seats[i].character!].name : null)}
+			token={(i) => s.seats[i].character}
 			marked={picked === null ? [] : [picked]}
 			onseat={tap}
 			onswap={(from, to) => send({ type: 'move', from, to })}
