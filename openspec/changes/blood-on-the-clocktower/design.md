@@ -12,7 +12,7 @@ icons, slides), `research/mobbin.md` (screen patterns).
 
 ## Goals / Non-Goals
 
-**Goals:** scope.md S1–S38 in one change, in 11 units over 4 waves: generic contract first, rules as pure tested code,
+**Goals:** scope.md S1–S38 in one change, in 11 units over 4 waves (Gate 2 revisions S39–S49: U12–U16 in 2 waves): generic contract first, rules as pure tested code,
 theme before screens, screens per phase against one state contract, the deck last.
 
 **Non-Goals:** see proposal.md → Non-Goals (Travellers, other scripts, status-effect tracking, automatic Slayer/Virgin,
@@ -86,6 +86,71 @@ a BotC demo, multi-device, CI changes, history/undo).
   exact-text and scoped to `live(page)`, every BotC screen joins `look.test.ts` through `e2e/walks/clocktower*.ts`.
 - **Variant scenario and cross-phase e2e live in U10**: night → dawn, the public-screen comparison and the full game
   need every screen merged, so they run in wave 4.
+
+### Gate 2 revisions (S39–S49, 2026-10-14)
+
+- **UI references: mobbin.md (Mobbin research for S39–S49).** Every revision unit reads
+  `openspec/changes/blood-on-the-clocktower/mobbin.md` before laying out its screens; the visual specifics (sizes,
+  stroke widths, glyph shapes, where exactly a control sits) come from there and from the decisions below, the specs
+  only fix what is checkable. Where mobbin.md and a decision below disagree, the decision wins.
+- **What the vague items mean (read from the screenshots and code).** S42 "Info Boxen": the `.panel` boxes of the
+  play screens, whose text is left-aligned today (Deal name screen, Wake with its "Vorschlag" box, the info card, the
+  Imp target note, "Schlaf wieder ein", DeathStep head, Questions, Dawn, End teaser; dusk is already centred), plus the
+  End reveal, whose character column is the only truly right-aligned text (`End.svelte` `.char { text-align: right }`).
+  Both are covered: panels centre, and the S49 regrouping removes the right-aligned column. S45 "Kommunikations
+  Buttons": the show-bar (`ShowBar.svelte`, `[data-testid="show-bar"]`), 8 chips plus a select and "Zeigen" in 3–4 rows
+  above the circle. S48 "Side Infos unten links": the bold `.facts` lines left under the circle on the day screens
+  ("Auf dem Block: Dani" in `Day.svelte`, "Nötig: n · Höchststand: h" and the sweep hint in `VoteClock.svelte`, the result
+  detail, the nominator `.why` list). mobbin.md read S48 as a legend box; that reading is not used, the facts lines are.
+  S46 "die Uhr": both the day timer (`Timer.svelte`, today a 30px "8:00" at the right of the title row) and the voting
+  clock's thin hand (`Circle.svelte` `[data-hand]`), since "Uhr" fits both and both are cheap. S44: the sticky `.dock`
+  on the night circle screen (`Wake.svelte`) and the death step (`DeathStep.svelte`); the day screens already keep their
+  buttons in flow and are regression-checked.
+- **Where decoration lives.** The page-level sky is a new motif `sky` (`src/lib/deco/Sky.svelte`, mapped in `Art.svelte`,
+  chosen by `motifFor('clocktower', 'lobby' | 'play')`), so it sits in the existing `[data-deco]` backdrop slot of the
+  lobby and play pages with the existing rules (aria-hidden, no pointer events, behind content via the `.scene`
+  stacking). It draws stars, a moon and a sun as inline SVG and shows moon and stars under
+  `html[data-variant='night']`, the sun under `[data-variant='day']`, by CSS only, so the variant morph that already
+  exists animates it and no state reaches the decoration. Decoration keeps to the margins and never under text; text
+  keeps its solid card surfaces, so the composite contrast check stays valid (scope R2). The day's "livelier" parchment
+  is gradient layers in `app.css` over the existing solid `--ground`; any token change is mirrored in `tokens.ts` with
+  its contrast pairs. The circle's ornament is not a motif: it lives inside `Circle.svelte` as an aria-hidden
+  `[data-deco][data-motif="circle"]` SVG under the seats, because it must follow `seatPositions()`; it holds no text
+  (paths only, no numerals), so the look walk's text checks see only seats. The ghost-vote token's ornament is inline
+  in the same component.
+- **Characters on the setup circle (S41)** use a new optional `Circle` prop `token?: (i) => CharacterId | null` that
+  renders `CharacterIcon` (team colour) inside the seat; only `SetupBoard` passes it, so no public circle can show one.
+  The seat's `aria-label` gains the character name only when `token` returns one.
+- **S44 against the repo learning "measure each phase's primary-action bottom on phone".** The sticky dock was the build's
+  answer to that learning (keep "Weiter" in the first viewport). Rue chose the other side: the circle and its
+  information in one piece, "Weiter" at the end. The learning still applies as measuring, not pinning: when the content
+  plus the action exceed the viewport, shrink the content (circle capped by the viewport height, compact show-bar) and
+  let the action follow below the fold; with 15 seats on a phone it may need a scroll. The cap needs no `Circle.svelte`
+  change: `Circle` measures its own width, so the night and day screens wrap it in a container of
+  `width: min(100%, <viewport height minus the measured chrome>)`. The night's Grimoire hold button moves before the
+  navigation, so the navigation is the last control (S44 spec), and is no longer below the fold on the circle screen.
+- **Show-bar (S45)**: one compact control group (mobbin.md: a segmented group with the select and "Zeigen" beside it),
+  in flow next to the circle instead of 3–4 rows above it; the items, preselection and full-screen cards are unchanged.
+- **Centred panels (S42)**: `text-align: center` with a readable measure (about 36ch, `text-wrap: balance`) per panel
+  component. mobbin.md suggests keeping label/value rows left-aligned; Rue asked for centred text, so they centre too
+  (the "Vorschlag" lines are short). No global `.panel` rule in
+  `app.css`, because the setup board, character board and sheet must keep their alignment.
+- **Day emphasis (S46, S48)**: the timer moves out of the heading row into its own block in the first viewport (larger
+  than the heading); the hand gets the presentation's red, reaches the seat, and a hub; a new `Facts.svelte`
+  (`[data-testid="day-facts"]`) boxes the facts lines on every day screen.
+- **End reveal by team (S49)**: group by `alignment()` of the seat's character at the end (the Drunk is good, a starpassed
+  Minion or Scarlet Woman holds `imp` and is evil), winning team first; rows carry `CharacterIcon`; the character stays a
+  text column but left-aligned.
+- **Voting slide animation (S40)** follows the presentation (research/design-sources.md "Voting slide (15) in detail"):
+  hand rotates linearly from the seat after the nominee to the nominee (about 0.75 s per seat), then holds about 3 s and
+  repeats; ⌈N/2⌉ voters spread around the ring turn red by an opacity step on a red fill; the centre count is stacked
+  numerals switched by opacity steps in step with the hand, red at the threshold. The timeline is pure data from
+  `deck.ts` (`voteTimeline(n)`: seats, voters, per-voter times, hand duration), so it is unit-tested and the e2e test
+  can seek WAAPI animations to a time. Under reduced motion the slide renders the end state with no animation.
+- **Look-walk budget.** The look walk takes about 2 min of its 300 s budget per project. Revision units reuse the existing
+  walk screens (they all already cover lobby, setup, night circle, death step, day, clock, end, deck); each unit adds at
+  most two shots, seeks or pauses the voting-slide animation before shooting, and reports the look test's duration
+  before and after.
 
 ## Contracts
 
@@ -297,6 +362,26 @@ setup,night,info,vote}.test.ts`; U3 `sound.test.ts`; U4 `e2e/clocktower-theme.te
 `e2e/clocktower-day.test.ts`, `walks/clocktower-day.ts`, `clocktower/timer.test.ts`; U10 `e2e/clocktower-end.test.ts`,
 `e2e/clocktower-game.test.ts`, `walks/clocktower-end.ts`; U11 `clocktower/deck.test.ts`, `e2e/clocktower-deck.test.ts`,
 `walks/clocktower-deck.ts`.
+
+**Gate 2 revision contracts [U12–U16]:**
+```ts
+// motifs.ts [U12]: Motif gains 'sky'; motifFor('clocktower', 'lobby' | 'play') === 'sky', other games unchanged
+// Sky.svelte [U12]: <svg> with [data-star] ×≥5, [data-moon], [data-sun]; visibility by html[data-variant]
+// Circle.svelte [U13], existing props and DOM unchanged ([data-seat], aria-label, data-dead/-ghost/-marked/-block, [data-hand]), plus:
+token?: (i: number) => CharacterId | null;   // setup only: CharacterIcon in the seat, name added to aria-label
+// ornament: <svg data-deco data-motif="circle" aria-hidden="true"> under the seats; ghost token .mark keeps its text
+// Facts.svelte [U15]: { children: Snippet } → <div data-testid="day-facts">
+// deck.ts [U16]:
+export function voteTimeline(n: number): { seats: number; nominee: 0; voters: number[]; at: number[]; handMs: number; holdMs: number };
+```
+Night and day screens [U14, U15] cap the circle by wrapping `Circle` in a sized container; they do not edit
+`Circle.svelte`. Revision test files: U12 `e2e/clocktower-atmosphere.test.ts`, `motifs.test.ts`, `tokens.test.ts`; U13
+`e2e/clocktower-circle.test.ts`, `circle.test.ts`, `walks/clocktower-setup.ts`; U14 `e2e/clocktower-night-layout.test.ts`,
+`clocktower-night.test.ts`, `walks/clocktower-night.ts`; U15 `e2e/clocktower-day-layout.test.ts`,
+`clocktower-day.test.ts`, `walks/clocktower-day.ts`; U16 `clocktower-end.test.ts`, `clocktower-game.test.ts`,
+`walks/clocktower-end.ts`, `deck.test.ts`, `clocktower-deck.test.ts`, `walks/clocktower-deck.ts`. Tests that need
+night or day states import the existing builders (`walks/clocktower-day.ts` exports, `e2e/clocktower-session.ts`)
+read-only.
 
 ## Risks / Trade-offs
 

@@ -211,7 +211,10 @@ The default play screen SHALL be the grimoire circle: N numbered seats in clockw
 show alive or dead, and for the dead whether the ghost vote is still available, by a symbol plus an accessible label
 (for example "✕ ●" / "✕ ○" with the label "Stimme" / "keine Stimme"), not colour only; no character SHALL be shown by
 default. A seat's death SHALL be animated (finite, transform/opacity, instant under reduced motion). 5 to 15 seats
-SHALL be legible on phone and desktop.
+SHALL be legible on phone and desktop. The circle SHALL be decorated on the setup board, the night screens and the day
+screens with an ornament layer under the seats that visibly connects them (passing under every seat), aria-hidden,
+without pointer events and without text, so it never covers a seat or lowers legibility. The ghost-vote token of a dead
+seat SHALL be decorated while its symbols ("✕ ●" / "✕ ○") stay readable and its accessible label stays unchanged.
 
 #### Scenario: Circle shows seats, alive and ghost votes
 - **WHEN** a day with 7 seats is shown where seat 2 is dead with a ghost vote and seat 5 is dead without one
@@ -237,6 +240,21 @@ SHALL be legible on phone and desktop.
 - **WHEN** dawn shows a death with motion allowed, and again with `prefers-reduced-motion: reduce`
 - **THEN** with motion the dying seat runs a finite transform/opacity animation, and under reduced motion no animation runs and the dead marker shows at once
 - **proof:** e2e
+
+#### Scenario: Circle ornament connects the seats
+- **WHEN** the setup board, the circle screen of a night step and the day grimoire are shown with 7 and with 15 seats at 390×844 and 1280×800
+- **THEN** each circle holds one aria-hidden ornament layer without pointer events and without text that passes under every seat's centre (within 4px), every seat is still at least 44px, no two seats overlap, and each seat is the element hit at its own centre
+- **proof:** e2e
+
+#### Scenario: Ghost-vote token decorated and readable
+- **WHEN** a day with 7 seats is shown where seat 2 is dead with a ghost vote and seat 5 is dead without one, at 390×844 and 1280×800
+- **THEN** seat 2's token reads "✕ ●" and seat 5's "✕ ○", each at 12px or more with a contrast of at least 4.5:1 against the token's own background, each token carries an aria-hidden ornament and lies fully inside the viewport, and the seats' accessible labels still end in "tot, Stimme" and "tot, keine Stimme"
+- **proof:** e2e
+
+#### Scenario: Circle and ghost token look approved
+- **WHEN** Rue reviews the look-walk screenshots of the setup board, a night circle screen and the day grimoire at 390px and 1280px
+- **THEN** Rue finds the circle decorated and its seats connected instead of flat, and the ghost-vote token decorated and still readable
+- **proof:** manual (visual judgement at Gate 2, on the verifier's screenshots)
 
 ### Requirement: Clocktower session
 The game state SHALL survive a reload at any point through the existing per-game session, versioned by `stateVersion`
@@ -369,7 +387,9 @@ big number 0–9, and Ja / Nein. The items a role needs SHALL be preselected (Wa
 character; Chef, Empath: the number; Fortune Teller: Ja/Nein; Minion info: "Das ist der Dämon"; Demon info: "Deine
 Minions" then the bluffs; new Imp by starpass or takeover: "Du bist" Imp; Undertaker, Ravenkeeper: the character).
 The bluffs SHALL be 3 good characters not in play, suggested as 2 Townsfolk and 1 Outsider when possible, never the
-Drunk's believed role, drawn from the seeded RNG and rerollable before they are shown.
+Drunk's believed role, drawn from the seeded RNG and rerollable before they are shown. The show-bar SHALL be compact:
+at most two rows of controls at 390px width and one row at 1280px, every control at least 44px, placed so that the
+circle and the step's navigation stay readable in one piece around it.
 
 #### Scenario: Show-bar opens full-screen cards
 - **WHEN** each show-bar item is opened on the circle screen and the card is tapped
@@ -390,6 +410,16 @@ Drunk's believed role, drawn from the seeded RNG and rerollable before they are 
 - **WHEN** "Neu würfeln" is tapped at Demon info before the bluffs card is opened
 - **THEN** the three bluffs change and still are good characters not in play
 - **proof:** e2e
+
+#### Scenario: Show-bar is compact
+- **WHEN** the circle screen of the Washerwoman's step in a 15-player night is shown at 390×844 and at 1280×800
+- **THEN** the show-bar is at most 104px tall on phone and at most 56px on desktop, every control in it is at least 44px, it overlaps no seat, and "Charakter" with the Washerwoman's Townsfolk is still preselected
+- **proof:** e2e
+
+#### Scenario: Show-bar placement approved
+- **WHEN** Rue reviews the look-walk screenshots of a night circle screen with the show-bar at 390px and 1280px
+- **THEN** Rue finds the show-bar better placed and more compact than before
+- **proof:** manual (visual judgement at Gate 2, on the verifier's screenshots)
 
 ### Requirement: Hold-to-view grimoire
 At night a "Grimoire" button SHALL show every seat's character (plus the Drunk's believed role, the red herring and the
@@ -490,7 +520,9 @@ time.
 
 ### Requirement: Day timer
 The day timer SHALL count down on the grimoire screen; at 0 it SHALL turn red and read "Zeit um" but never block; it
-SHALL keep running during nominations and votes; the day SHALL be endable at any time.
+SHALL keep running during nominations and votes; the day SHALL be endable at any time. The timer SHALL be emphasised on
+every day screen that shows it: in the first viewport without scrolling, set apart in its own element, and larger than
+the screen's heading.
 
 #### Scenario: Timer reads Zeit um at zero and never blocks
 - **WHEN** the clock passes the deadline
@@ -506,6 +538,16 @@ SHALL keep running during nominations and votes; the day SHALL be endable at any
 - **WHEN** the remaining time is computed for a deadline 125 s ahead, 0 s ahead and 30 s past
 - **THEN** it is "2:05", "Zeit um" and "Zeit um"
 - **proof:** unit
+
+#### Scenario: Day timer stands out
+- **WHEN** the day grimoire and the vote clock are shown with a running timer at 390×844 and 1280×800, and again after the deadline
+- **THEN** on each screen the timer lies inside the first viewport without scrolling, its text is larger than the screen's heading with a contrast of at least 4.5:1, it is not inside the heading element, and after the deadline it reads "Zeit um" in the evil colour
+- **proof:** e2e
+
+#### Scenario: Day clock emphasis approved
+- **WHEN** Rue reviews the look-walk screenshots of the day grimoire, the vote clock and the sweep at 390px and 1280px
+- **THEN** Rue finds the timer and the voting clock clearly visible and emphasised
+- **proof:** manual (visual judgement at Gate 2, on the verifier's screenshots)
 
 ### Requirement: Nominations
 A nomination SHALL be made by tapping the nominee, then picking the nominator. The game SHALL enforce: one open
@@ -536,7 +578,9 @@ clockwise one seat per 2.5 s (injectable for tests) from the seat after the nomi
 last (15 seats = 37.5 s). The storyteller SHALL mark the seat under the hand as voting by tapping it or pressing Space;
 marked seats light up; dead players without a ghost vote SHALL not be markable. Under reduced motion the hand SHALL jump
 seat to seat. After the sweep a confirm screen SHALL show the count prefilled from the marks, the marks editable and a
-count stepper for timing corrections; confirming SHALL spend the ghost vote of every dead player marked as voting.
+count stepper for timing corrections; confirming SHALL spend the ghost vote of every dead player marked as voting. The
+clock's hand SHALL stand out: it reaches from the circle's centre to the seat it points at, with a non-text contrast of
+at least 3:1 against the ground in both variants.
 
 #### Scenario: Clock points at the nominee
 - **WHEN** Alex (seat 1) nominates Dani (seat 4) in a 7-player day with 6 alive and a high-water mark of 3
@@ -576,6 +620,11 @@ count stepper for timing corrections; confirming SHALL spend the ghost vote of e
 #### Scenario: Reduced motion hand jumps
 - **WHEN** `prefers-reduced-motion: reduce` is set and a vote runs with a short seat time
 - **THEN** the hand moves seat by seat with no running transform animation
+- **proof:** e2e
+
+#### Scenario: Voting clock hand stands out
+- **WHEN** the clock screen points at the nominee on seat 4 of 7, and the sweep has reached seat 6, at 390×844 and 1280×800
+- **THEN** the hand runs from the circle's centre to within the radius of the seat it points at, and its colour has a contrast of at least 3:1 against the ground
 - **proof:** e2e
 
 ### Requirement: Vote result
@@ -731,8 +780,9 @@ answer stays recorded, and "Zurück" and "Weiter" pass over its screen.
 ### Requirement: End reveal
 When the game is won, the current phase SHALL finish (its announcement is shown), then a "Das Spiel ist vorbei" screen
 SHALL appear that does not name the winner (gong); "Weiter" SHALL reveal the winning team with a themed animation, then
-every seat: character (the Drunk as "Drunk (glaubte: X)"), alive, ghost vote, and the Demon history (starpass,
-takeover); then "Zurück zum Start". A reload on the teaser SHALL keep it hidden; the session SHALL be cleared only when
+every seat grouped under "Gut" and "Böse" by the alignment of its character at the end of the game (the Drunk good, a
+Minion who became the Imp evil), each row with that character's icon in its team colour, the character (the Drunk as
+"Drunk (glaubte: X)"), alive and ghost vote, and the Demon history (starpass, takeover); then "Zurück zum Start". A reload on the teaser SHALL keep it hidden; the session SHALL be cleared only when
 leaving through "Zurück zum Start".
 
 #### Scenario: Teaser names no team
@@ -742,8 +792,13 @@ leaving through "Zurück zum Start".
 
 #### Scenario: Reveal shows the winning team and every seat
 - **WHEN** "Weiter" is tapped on the teaser of a game won by good after a starpass, with the Drunk believing Chef
-- **THEN** "Das Gute gewinnt" is shown with the team's colour, then one row per seat with character, alive or dead and ghost vote, the Drunk's row reads "Drunk (glaubte: Chef)", the history reads the starpass from the old to the new Imp, and "Zurück zum Start" is offered
+- **THEN** "Das Gute gewinnt" is shown with the team's colour, then a group headed "Gut" holding exactly the good seats and a group headed "Böse" holding exactly the evil seats (the new Imp among them), one row per seat with the character's icon in its team colour, the character, alive or dead and ghost vote, the Drunk's row is in "Gut" and reads "Drunk (glaubte: Chef)", the history reads the starpass from the old to the new Imp, and "Zurück zum Start" is offered
 - **proof:** e2e
+
+#### Scenario: End reveal by team approved
+- **WHEN** Rue reviews the look-walk screenshots of the good and the evil reveal at 390px and 1280px
+- **THEN** Rue finds the seats clearly grouped by Gut and Böse with each character's symbol
+- **proof:** manual (visual judgement at Gate 2, on the verifier's screenshots)
 
 #### Scenario: Reload on the teaser keeps it hidden
 - **WHEN** the teaser is shown and the page is reloaded
@@ -871,3 +926,121 @@ component SHALL be used on the setup board.
 - **WHEN** Rue compares the sheet with her `Character Sheet.pdf` on desktop and phone
 - **THEN** Rue finds it recognisably the same sheet, readable at 14px or more on the scrolling phone pages
 - **proof:** manual (visual judgement at Gate 2)
+
+### Requirement: Characters at a glance on the setup circle
+The setup board's seating circle SHALL show, on every seat that holds a character, that character's icon in its team
+colour, updated as soon as a character is assigned or removed or seats are swapped or moved, without opening anything;
+the seat's accessible name SHALL then include the character's name. The circles of the reveal, night and day screens
+SHALL show no character icon (the hold-to-view grimoire keeps its own behaviour).
+
+#### Scenario: Setup circle shows each seat's character
+- **WHEN** a 7-player setup board has characters on seats 1–5 and none on seats 6 and 7, then the Imp is assigned to seat 6, then seats 1 and 6 are swapped by tapping
+- **THEN** at first seats 1–5 each show their character's icon in its team colour and seats 6 and 7 show none; after the assignment seat 6 shows the Imp's icon in the Demon colour; after the swap seat 1 shows the Imp's icon and seat 6 the icon of seat 1's former character; and every seat with a character names it in its accessible name
+- **proof:** e2e
+
+#### Scenario: Character icons fit fifteen seats
+- **WHEN** a complete 15-player distribution is shown on the setup board at 390×844 and 1280×800
+- **THEN** every seat shows its icon inside its own box with its number and name still visible, every seat is at least 44px, no two seats overlap and the page does not scroll horizontally
+- **proof:** e2e
+
+#### Scenario: Public circles show no character icon
+- **WHEN** the reveal name screen, the circle screen of a night step with the grimoire not held, and the day grimoire are shown
+- **THEN** no seat holds a character icon and no seat's accessible name contains a character name
+- **proof:** e2e
+
+#### Scenario: Distribution readable at a glance
+- **WHEN** Rue looks at the look-walk screenshots of a complete 7- and 15-player setup board at 390px and 1280px
+- **THEN** Rue can read every seat's character from the circle without opening anything
+- **proof:** manual (visual judgement at Gate 2, on the verifier's screenshots)
+
+### Requirement: Primary action after the content
+Every Blood on the Clocktower play screen SHALL place its primary action ("Weiter" or the screen's main button) and
+its secondary actions ("Zurück", "Überspringen") in normal flow after the screen's content (the circle and its
+information), never position sticky or fixed, so scrolling never hides content behind them; on night screens they SHALL
+be the screen's last controls. The grimoire circle SHALL be sized so that its whole height fits the viewport at one
+scroll position, with every seat still at least 44px.
+
+#### Scenario: Night screens keep Weiter after the circle
+- **WHEN** the circle screen of a night step and the death step of a 15-player game are shown at 390×844 and 1280×800 and scrolled from top to bottom
+- **THEN** neither "Weiter" nor any of its ancestors is position sticky or fixed, its top lies below the circle's bottom, the navigation ("Weiter", "Zurück", "Überspringen" where offered) is the last group of controls on the screen, and each seat, scrolled into view, is the element hit at its own centre
+- **proof:** e2e
+
+#### Scenario: Night circle seen in one piece
+- **WHEN** the circle screen of a night step and the death step are shown with 15 seats at 390×844 and 1280×800
+- **THEN** the circle's height is at most the viewport height, every seat is at least 44px and no two seats overlap
+- **proof:** e2e
+
+#### Scenario: Day screens keep the action after the circle
+- **WHEN** the day grimoire, the nominator picker, the vote clock, the confirm screen, the vote result and the execution announcement of a 15-player day are shown at 390×844 and 1280×800
+- **THEN** on each screen no button has a sticky or fixed ancestor, the screen's buttons lie below the circle's bottom, and the circle's height is at most the viewport height with every seat at least 44px
+- **proof:** e2e
+
+#### Scenario: Circle and information in one piece approved
+- **WHEN** Rue scrolls the night circle, death step and day screens of a 15-player game on a phone and a desktop browser
+- **THEN** Rue sees the circle and its information in one piece as far as the screen allows, with "Weiter" at the end
+- **proof:** manual (layout judgement at Gate 2)
+
+### Requirement: Centred text in info panels
+The text of Blood on the Clocktower's info panels SHALL be centred, never right-aligned: the reveal name screen, the
+night panels (dusk, questions, wake screen with its suggestion box, the Minion and Demon info card, the Imp step's target
+note, "Schlaf wieder ein", the death step's heading), the dawn panels and the timer dialog, and the end teaser. The end
+reveal SHALL have no right-aligned text.
+
+#### Scenario: Night and reveal panels centre their text
+- **WHEN** the reveal name screen, dusk, a dusk question, a wake screen with a suggestion, the Minion info card, the Imp step's target note, "Schlaf wieder ein" and the death step are shown at 390×844 and 1280×800
+- **THEN** every text element inside their panels has a computed `text-align` of center, none is right-aligned, and the page does not scroll horizontally
+- **proof:** e2e
+
+#### Scenario: Dawn panels centre their text
+- **WHEN** "Alle aufwachen", "Niemand ist gestorben" and the timer dialog are shown at 390×844 and 1280×800
+- **THEN** every text element inside their panels has a computed `text-align` of center and none is right-aligned
+- **proof:** e2e
+
+#### Scenario: End screens have no right-aligned text
+- **WHEN** the teaser and the reveal of a good and an evil win are shown at 390×844 and 1280×800
+- **THEN** the teaser's text is centred and no text element of the reveal has a computed `text-align` of right or end
+- **proof:** e2e
+
+### Requirement: Day facts in a box
+Each day screen SHALL group its side information ("Auf dem Block", "Nötig" and "Höchststand", the vote hint, the vote
+result's detail and the reasons a nominator is unavailable) in one small box that is set off from the
+background by its own surface or border, with text of at least 16px and a contrast of at least 4.5:1, keeping its
+wording.
+
+#### Scenario: Day facts sit in a box
+- **WHEN** the day grimoire with Dani on the block, the nominator picker with Bo ("hat heute schon nominiert") and Dani ("ist tot") unavailable, the vote clock, the sweep and a vote result are shown at 390×844 and 1280×800
+- **THEN** on each screen these texts are inside one `[data-testid="day-facts"]` element whose background colour or border differs from the ground, every text in it is at least 16px with a contrast of at least 4.5:1, and the wording is unchanged ("Auf dem Block: Dani", "Nötig: 3", "Höchststand: 3", "Bo: hat heute schon nominiert", "Dani: ist tot")
+- **proof:** e2e
+
+#### Scenario: Day facts legible
+- **WHEN** Rue reviews the look-walk screenshots of the day grimoire, the vote clock and a result at 390px and 1280px
+- **THEN** Rue finds the side information boxed and easier to read than before
+- **proof:** manual (visual judgement at Gate 2, on the verifier's screenshots)
+
+### Requirement: Animated voting slide
+The deck's voting slide SHALL animate a vote as Rue's presentation does: on a circle of N seats with the nominee marked,
+a hand sweeps clockwise from the seat after the nominee and ends at the nominee; ⌈N/2⌉ seats spread around the circle
+vote, and each turns red when the hand reaches it; the number in the centre counts up in step with the hand until it
+reaches ⌈N/2⌉, where it turns red. The animation SHALL use only transform and opacity, run while the slide is shown and
+repeat after a pause; under reduced motion it SHALL not run and the end state (⌈N/2⌉ red seats, the count ⌈N/2⌉, the
+hand on the nominee) SHALL show at once.
+
+#### Scenario: Voting slide timeline follows the count
+- **WHEN** the voting slide's timeline is computed for N = 5, 12 and 15
+- **THEN** it holds N seats with the nominee first, exactly 3, 6 and 8 voting seats that are not the nominee, each voter's time equals the hand's arrival at its seat, the count steps from 1 to ⌈N/2⌉ at the voters' times in sweep order, and the hand ends at the nominee
+- **proof:** unit
+
+#### Scenario: Voting slide sweeps and counts up
+- **WHEN** the voting slide is shown for N = 7 with motion allowed, and its animations are moved to just after the second voter's time and then to the end of the sweep
+- **THEN** every running animation on the slide touches only transform and opacity; after the second voter exactly 2 seats show red and the count reads 2; at the end 4 seats show red, the count reads 4 and the hand points at the nominee
+- **proof:** e2e
+
+#### Scenario: Voting slide shows the end state under reduced motion
+- **WHEN** the voting slide is shown for N = 7 with `prefers-reduced-motion: reduce`
+- **THEN** no animation runs on the slide, 4 seats show red, the count reads 4 and the hand points at the nominee
+- **proof:** e2e
+
+#### Scenario: Voting animation like the presentation
+- **WHEN** Rue watches the voting slide next to her presentation's voting slide on a phone and a desktop browser
+- **THEN** Rue finds the hand sweep, the seats turning red and the count-up recognisably the same animation
+- **proof:** manual (motion judgement at Gate 2)

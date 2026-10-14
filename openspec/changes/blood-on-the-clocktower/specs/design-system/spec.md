@@ -51,8 +51,8 @@ paint so a reload shows no other theme first: the server renders `data-theme` an
 on the play route a script in the page head sets the variant from the saved session before the first paint. All look rules SHALL hold in both variants: text contrast at least
 4.5:1, touch targets at least 44px, no horizontal scroll at 390px, no request to another origin, ambient loops only on
 transform/opacity and none under reduced motion. The Home tile SHALL carry its own inline-SVG badge and tile art, and
-the start banner its own art (motif `clocktower`, a clock face), under the decoration rules; the lobby uses the shared
-crew art and play the rings backdrop or the theme's own night sky.
+the start banner its own art (motif `clocktower`, a clock face), under the decoration rules; the lobby and the play
+screens use the theme's own sky (motif `sky`, requirement "Clocktower atmosphere").
 
 #### Scenario: Clocktower tokens meet contrast in both variants
 - **WHEN** every text/background pair of the Clocktower night and day token sets in `tokens.ts` is evaluated
@@ -91,7 +91,7 @@ crew art and play the rings backdrop or the theme's own night sky.
 
 #### Scenario: Clocktower gets its own motif
 - **WHEN** the motif is looked up for `clocktower` at tile, start, lobby and play
-- **THEN** tile and start return `clocktower`, lobby returns `crew` and play returns `rings`
+- **THEN** tile and start return `clocktower`, and lobby and play return `sky`; every other game still gets `crew` in the lobby and `rings` in play
 - **proof:** unit
 
 #### Scenario: Clocktower tile and start art
@@ -102,6 +102,38 @@ crew art and play the rings backdrop or the theme's own night sky.
 #### Scenario: Clocktower look approved on screenshots
 - **WHEN** Rue reviews the look-walk screenshots of every Blood on the Clocktower screen at 390px and 1280px
 - **THEN** Rue approves the theme as taken from her presentation, the parchment day screens and the use of desktop width
+- **proof:** manual (visual judgement at Gate 2, on the verifier's screenshots)
+
+### Requirement: Clocktower atmosphere
+The Blood on the Clocktower lobby and every night-variant play screen SHALL show a night sky with stars and a moon, and
+the dawn and day screens SHALL show a sun on a brighter, livelier parchment; the palette stays. The sky SHALL be inline
+decoration (no external assets, no text) behind the content: aria-hidden, without pointer events, never on top of a
+text or control, with ambient motion only on transform and opacity and none under reduced motion. It SHALL never lower
+legibility: text contrast stays at least 4.5:1 and the existing text-size floors hold.
+
+#### Scenario: Night sky in the lobby and at night
+- **WHEN** the lobby, the setup board, the reveal name screen and a night wake screen are shown at 390×844 and 1280×800
+- **THEN** each holds one `[data-deco][data-motif="sky"]` layer with at least five visible stars and one visible moon inside the viewport, aria-hidden and without pointer events, and no sun is visible
+- **proof:** e2e
+
+#### Scenario: Sun on the day screens
+- **WHEN** dawn and the day grimoire are shown at 390×844 and 1280×800
+- **THEN** the sky layer shows a visible sun inside the viewport and neither the moon nor the stars are visible
+- **proof:** e2e
+
+#### Scenario: Atmosphere keeps every screen legible
+- **WHEN** the lobby, the setup board, a night circle screen, dawn and the day grimoire are shown with the sky at 390×844 and 1280×800
+- **THEN** every text pair reaches a contrast of at least 4.5:1, every visible control is the element hit at its own centre, the sky holds no text, every request goes to the app's own origin and the page does not scroll horizontally at 390px
+- **proof:** e2e
+
+#### Scenario: Sky motion only on transform and opacity
+- **WHEN** the lobby, a night screen and the day grimoire are opened with motion allowed, and again with `prefers-reduced-motion: reduce`
+- **THEN** with motion every infinite animation inside the sky touches only transform and opacity, and under reduced motion no infinite animation runs
+- **proof:** e2e
+
+#### Scenario: Atmosphere approved
+- **WHEN** Rue reviews the look-walk screenshots of the lobby, a night screen, dawn and the day grimoire at 390px and 1280px
+- **THEN** Rue finds the lobby and nights visibly night-themed with stars and a moon, and the day subtly sunny and livelier, with nothing harder to read
 - **proof:** manual (visual judgement at Gate 2, on the verifier's screenshots)
 
 ### Requirement: Clocktower transitions
