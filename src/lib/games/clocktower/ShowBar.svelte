@@ -142,6 +142,7 @@
 	}
 
 	.chip {
+		min-width: 44px;
 		min-height: 44px;
 		padding: 0 12px;
 		border: 1px solid var(--line);

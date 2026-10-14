@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Button from '#lib/ui/Button.svelte';
 	import Circle from './Circle.svelte';
-	import { who, whoAll } from './label.ts';
+	import { whoAll } from './label.ts';
 	import type { ClocktowerAction, ClocktowerState } from './types.ts';
 
 	interface Props {
@@ -25,6 +25,9 @@
 		<span class="label">Nur für dich</span>
 		<h2 id="phase">Wer ist heute Nacht gestorben?</h2>
 		<p class="muted" data-testid="deaths">{selected.length ? whoAll(s.seats, selected) : 'Niemand'}</p>
+		<div class="row">
+			<button type="button" class="chip" aria-pressed={selected.length === 0} onclick={() => (picked = [])}>Niemand</button>
+		</div>
 	</div>
 	<Circle
 		seats={s.seats}
@@ -33,9 +36,6 @@
 		disabled={(i) => (s.seats[i].alive ? null : 'bereits tot')}
 		onseat={toggle}
 	/>
-	<div class="row none">
-		<button type="button" class="chip" aria-pressed={selected.length === 0} onclick={() => (picked = [])}>Niemand</button>
-	</div>
 	<div class="dock">
 		<div class="nav">
 			<Button variant="primary" onclick={() => dispatch({ type: 'deaths', seats: selected })}>Weiter</Button>
@@ -59,10 +59,6 @@
 	.head h2,
 	.head p {
 		margin: 0;
-	}
-
-	.none {
-		justify-content: center;
 	}
 
 	.chip {
