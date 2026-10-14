@@ -7,6 +7,26 @@ verified-at: f675175
 Unit: `npx vitest run --reporter=verbose` 469 passed lines, exit 0. Full log: /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/913b500e-2f4d-45c3-84e8-6936fe13c65c/scratchpad/full-r3.log (unit: /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/913b500e-2f4d-45c3-84e8-6936fe13c65c/scratchpad/unit-r3.log)
 
 ```
+  ✓  821 [desktop] › e2e/feud.test.ts:586:1 › Scenario: Feud motion never blocks input (3.9s)
+  ✓  822 [desktop] › e2e/feud.test.ts:617:1 › Scenario: Feud reduced motion is instant (1.9s)
+Error: attempt to write a readonly database
+    at addPlayed (src/lib/server/played.ts:22:43)
+    at POST (src/routes/api/feud/played/+server.ts:13:2)
+  ✓  823 [desktop] › e2e/feud.test.ts:667:1 › Scenario: Feud peek does not block a tile flip (3.6s)
+  ✓  824 [desktop] › e2e/feud.test.ts:697:1 › Scenario: Feud peek instant under reduced motion (1.3s)
+  ✓  687 [desktop] › e2e/look.test.ts:211:2 › look walk › Scenario: Touch targets are at least 44px (1ms)
+  ✓  825 [desktop] › e2e/look.test.ts:215:2 › look walk › Scenario: Text contrast meets 4.5:1 (0ms)
+  ✓  826 [desktop] › e2e/look.test.ts:219:2 › look walk › Scenario: Press Start 2P stays limited to logo and scores (0ms)
+  ✓  827 [desktop] › e2e/look.test.ts:224:2 › look walk › Scenario: Decoration loads no external assets (0ms)
+  ✓  828 [desktop] › e2e/look.test.ts:229:2 › look walk › Scenario: New copy has no exclamation marks (0ms)
+  -  829 [desktop] › e2e/look.test.ts:234:2 › look walk › Scenario: No horizontal scroll on phone
+  ✓  830 [desktop] › e2e/look.test.ts:239:2 › look walk › Scenario: Desktop uses the width (0ms)
+  ✓  831 [desktop] › e2e/look.test.ts:353:2 › reduced motion › Scenario: Reduced motion makes transitions instant (222ms)
+  ✓  832 [desktop] › e2e/look.test.ts:365:1 › Scenario: Motion never blocks input (253ms)
+
+  42 skipped
+  790 passed (5.6m)
+exit 0
 ```
 
 ## Layer 2: spec coverage (207 scenarios: 77 unit, 122 e2e, 8 manual, 0 gaps)
