@@ -5,6 +5,8 @@ base: main
 gate0: 2026-10-14
 gate1: 2026-10-14
 learnings:
+- Rue chose (2026-10-14, after U11): phone character sheet scrolls at ≥14px text instead of fitting one screen at 9.5px; fullscreen explanation deck (covers header and mute) accepted → the planner specced "sheet fits one phone screen" without measuring whether 22 entries fit at a legible size; dense reference screens get a fit estimate at planning time
+- the look walk grows with every unit (deck alone added ~34 screens per project; 2.0m of a 300s budget) → planner budgets look-walk time per unit (U11 friction, 2026-10-14)
 - a fixer committed on a red proof:full after the one failing test (feud-history tiebreak, shared DB) passed alone → fixer briefs say: a red full run means rerun the whole proof:full once before committing, never a scoped rerun (2026-10-14)
 - a fixer replaced a placeholder-only assertion with an unnamed `getByRole('heading')`, which broke under strict mode once the real screen had several headings → fixers assert one named, specced element, never a bare role (wave-2 fix, red again after wave 3, 2026-10-14)
 - placeholders from earlier units satisfied later scenarios (U7 drag/5-seat, U8 Wecke heading, U9 header status), so tests passed before the code → planner keeps placeholders minimal (no headings or behaviour a later scenario asserts) and the brief says a test green on the placeholder must be tightened until it fails (U7, U8, U9, 2026-10-14)
