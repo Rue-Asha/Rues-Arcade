@@ -96,7 +96,8 @@ describe('clocktower dusk questions', () => {
 		expect(yes.night!.steps.map((x) => x.kind)).toContain('scarlet-woman');
 		expect(yes.night!.steps.find((x) => x.kind === 'scarlet-woman')!.seats).toEqual([5]);
 		expect(screen(yes)).toEqual({ screen: 'wake', step: 0 });
-		expect(step(yes, { type: 'back' }, { type: 'answer', yes: false })).toEqual(step(yes, { type: 'back' }));
+		expect(screen(step(yes, { type: 'back' }))).toEqual({ screen: 'dusk' });
+		expect(step(yes, { type: 'back' }, next)).toEqual(yes);
 
 		const no = step(asked, { type: 'answer', yes: false });
 		expect(no.winner).toBe('good');
@@ -128,6 +129,14 @@ describe('clocktower dusk questions', () => {
 		expect(no.winner).toBeNull();
 		expect(no.phase).toEqual({ kind: 'night' });
 		expect(screen(no)).toEqual({ screen: 'wake', step: 0 });
+	});
+
+	it('Zurück and Weiter pass over an answered question', () => {
+		const no = step(execute(firstDay(seated(SAINT)), 4), next, next, { type: 'answer', yes: false });
+		expect(screen(no)).toEqual({ screen: 'wake', step: 0 });
+		const back = step(no, { type: 'back' });
+		expect(screen(back)).toEqual({ screen: 'dusk' });
+		expect(step(back, next)).toEqual(no);
 	});
 
 	it('a dead Saint executed asks nothing', () => {

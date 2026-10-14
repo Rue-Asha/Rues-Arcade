@@ -684,7 +684,8 @@ Scarlet Woman was alive and at least 5 players were alive just before ("Wurde di
 is the Demon and wakes as Imp tonight; no: good wins); the true Saint was executed ("Wirkte seine Fähigkeit?" — yes:
 evil wins); at dusk exactly 3 are alive, nobody was executed today and a true Mayor lives ("Mayor-Sieg?" — yes: good
 wins). A Drunk believing Mayor or Saint SHALL never trigger a question. At night the storyteller SHALL also be able to
-declare "Spiel ist entschieden" with the winning team (RB p.28).
+declare "Spiel ist entschieden" with the winning team (RB p.28). An answered question SHALL not be asked again: the
+answer stays recorded, and "Zurück" and "Weiter" pass over its screen.
 
 #### Scenario: Scarlet Woman question at the next dusk
 - **WHEN** the Imp is executed with the Scarlet Woman alive and 6 players alive before the execution, and at dusk the question is answered yes, and in a second game no

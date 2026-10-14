@@ -305,6 +305,15 @@ describe('clocktower night', () => {
 		expect(step(imp, { type: 'starpass', seat: 3 })).toBe(imp);
 	});
 
+	it("a starpass drops the new Imp's Minion step later that night", () => {
+		// F7 night 2: monk, imp, ravenkeeper, spy (seat 6)
+		const imp = next(dusk(seated(F7), 2), 5);
+		const passed = step(imp, { type: 'starpass', seat: 5 });
+		expect(passed.night!.steps.map((x) => x.kind)).toEqual(['monk', 'imp', 'new-imp', 'ravenkeeper']);
+		expect(passed.night!.steps[2].seats).toEqual([5]);
+		expect(passed.night!.screens).toHaveLength(1 + 4 * 4 + 1);
+	});
+
 	it('Scenario: Scarlet Woman forced on a starpass', () => {
 		// F15: poisoner 11, spy 12, scarlet-woman 13, imp 14
 		const six = dusk(dead(seated(F15), 0, 1, 2, 3, 4, 5, 6, 7, 12), 2);

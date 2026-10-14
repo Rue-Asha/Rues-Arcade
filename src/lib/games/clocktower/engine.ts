@@ -3,7 +3,7 @@ import type { GameDef } from '#lib/engine/types.ts';
 import { byId } from './characters.ts';
 import { believable, drawBluffs, fill, herringOptions, needsHerring, problems } from './setup.ts';
 import { nightScreens, nightSteps } from './night.ts';
-import type { ClocktowerAction, ClocktowerState, DayState, Nomination, Seat } from './types.ts';
+import type { ClocktowerAction, ClocktowerState, DayState, NightScreen, NightStep, Nomination, Seat } from './types.ts';
 import { voteResult } from './vote.ts';
 import { check, decided, duskQuestions, living, open as asking } from './win.ts';
 
@@ -147,12 +147,18 @@ function night(s: ClocktowerState, action: ClocktowerAction): ClocktowerState {
 	const here = n.screens[n.at];
 	const current = 'step' in here ? n.steps[here.step] : null;
 	const go = (at: number): ClocktowerState => ({ ...s, night: { ...n, at } });
+	// an answered question is not asked again: its answer is recorded, so the cursor passes over it
+	const shown = (x: NightScreen) => x.screen !== 'question' || asking(s, x.question);
 	switch (action.type) {
-		case 'next':
+		case 'next': {
 			if (here.screen === 'deaths' || (here.screen === 'question' && asking(s, here.question))) return s;
-			return n.at + 1 < n.screens.length ? go(n.at + 1) : dawn(s);
-		case 'back':
-			return n.at > 0 ? go(n.at - 1) : s;
+			const to = n.screens.findIndex((x, i) => i > n.at && shown(x));
+			return to < 0 ? dawn(s) : go(to);
+		}
+		case 'back': {
+			const to = n.screens.findLastIndex((x, i) => i < n.at && shown(x));
+			return to < 0 ? s : go(to);
+		}
 		case 'skip': {
 			if (!('step' in here)) return s;
 			const to = n.screens.findIndex((x, i) => i > n.at && !('step' in x && x.step === here.step));
@@ -170,8 +176,10 @@ function night(s: ClocktowerState, action: ClocktowerAction): ClocktowerState {
 			if (action.seat === null) return options.length ? s : { ...s, night: { ...n, target: from } };
 			const to = action.seat;
 			if (!options.includes(to)) return s;
-			const steps = [...n.steps];
-			steps.splice(n.steps.indexOf(current) + 1, 0, { kind: 'new-imp', seats: [to], as: 'imp', note: null });
+			// the new Imp wakes as the Imp from now on, so its Minion step later tonight goes
+			const at = n.steps.indexOf(current);
+			const later = n.steps.slice(at + 1).filter((x) => !x.seats.includes(to));
+			const steps: NightStep[] = [...n.steps.slice(0, at + 1), { kind: 'new-imp', seats: [to], as: 'imp', note: null }, ...later];
 			const questions = n.screens.flatMap((x) => (x.screen === 'question' ? [x.question] : []));
 			return {
 				...s,
