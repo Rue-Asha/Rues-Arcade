@@ -111,6 +111,8 @@ function reveal(s: ClocktowerState, action: ClocktowerAction): ClocktowerState {
 	if (s.phase.kind !== 'reveal') return s;
 	const { seat, shown } = s.phase;
 	if (action.type === 'show' && !shown) return { ...s, phase: { kind: 'reveal', seat, shown: true } };
+	// a reload shows the name screen again: the card is covered without moving on
+	if (action.type === 'back' && shown) return { ...s, phase: { kind: 'reveal', seat, shown: false } };
 	if (action.type === 'hide' && shown)
 		return seat + 1 < s.seats.length ? { ...s, phase: { kind: 'reveal', seat: seat + 1, shown: false } } : dusk(s, 1);
 	return s;

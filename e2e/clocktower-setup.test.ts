@@ -1,9 +1,11 @@
 import { expect, test, type Page } from '@playwright/test';
 import { clocktower } from '../src/lib/games/clocktower/engine.ts';
+import { byId } from '../src/lib/games/clocktower/characters.ts';
+import { F15, F5, seated } from '../src/lib/games/clocktower/fixtures.ts';
 import { required } from '../src/lib/games/clocktower/setup.ts';
 import type { CharacterId, ClocktowerAction, ClocktowerState } from '../src/lib/games/clocktower/types.ts';
 import { play, seedClocktower } from './clocktower-session.ts';
-import { live, seedRoster } from './helpers.ts';
+import { live, seedRoster, settled } from './helpers.ts';
 
 const NAMES = ['Alex', 'Bo', 'Cleo', 'Dani', 'Eli', 'Fey', 'Gus', 'Hana', 'Ida', 'Jo', 'Kai', 'Lu', 'Mo', 'Nia', 'Ole'];
 
@@ -314,5 +316,108 @@ test('Scenario: Weiter stays in the first phone screen', async ({ page }, info) 
 		await open(page, board(n));
 		const bottom = await weiter(page).evaluate((el) => el.getBoundingClientRect().bottom);
 		expect(bottom, `${n} seats`).toBeLessThanOrEqual(844);
+	}
+});
+
+const TEAM = { townsfolk: 'Dorfbewohner', outsider: 'Außenseiter', minion: 'Scherge', demon: 'Dämon' };
+
+async function reveal(page: Page, state: ClocktowerState) {
+	await seedRoster(page, state.seats.map((s) => s.player.name));
+	await seedClocktower(page, state);
+	await page.goto('/spiele/clocktower/spielen');
+}
+
+const show = (page: Page) => live(page).getByRole('button', { name: 'Rolle zeigen', exact: true });
+const hide = (page: Page) => live(page).getByRole('button', { name: 'Verbergen & weitergeben', exact: true });
+const text = (page: Page) => page.evaluate(() => document.body.textContent ?? '');
+
+test('Scenario: Reveal walks seat by seat', async ({ page }) => {
+	const state = seated(F5);
+	await reveal(page, state);
+	for (const [i, s] of state.seats.entries()) {
+		const c = byId[s.character!];
+		await expect(live(page).getByRole('heading', { name: s.player.name, exact: true })).toBeVisible();
+		await expect(live(page).getByText(`Platz ${i + 1}`, { exact: true })).toBeVisible();
+		await expect(show(page)).toBeVisible();
+		await settled(page);
+		expect(await text(page)).not.toContain(c.name);
+
+		await show(page).click();
+		const card = live(page).getByTestId('role-card');
+		await expect(card.getByRole('heading', { name: c.name, exact: true })).toBeVisible();
+		await expect(card.getByText(TEAM[c.team], { exact: true })).toBeVisible();
+		await expect(card.getByText(c.de, { exact: true })).toBeVisible();
+		await expect(card.getByText(c.ability, { exact: true })).toBeVisible();
+		await expect(card.locator('svg path')).toHaveCount(1);
+		await hide(page).click();
+	}
+	await expect(page.getByTestId('status')).toHaveText('Nacht 1 · 5 von 5 leben');
+});
+
+test('Scenario: Drunk sees the believed Townsfolk', async ({ page }) => {
+	const state = seated(['drunk', 'washerwoman', 'chef', 'poisoner', 'imp'], { believed: 'empath' });
+	await reveal(page, state);
+	await show(page).click();
+	const card = live(page).getByTestId('role-card');
+	const empath = byId.empath;
+	await expect(card.getByRole('heading', { name: 'Empath', exact: true })).toBeVisible();
+	await expect(card.getByText(TEAM.townsfolk, { exact: true })).toBeVisible();
+	await expect(card.getByText(empath.de, { exact: true })).toBeVisible();
+	await expect(card.getByText(empath.ability, { exact: true })).toBeVisible();
+	await settled(page);
+	expect(await text(page)).not.toContain('Drunk');
+});
+
+test('Scenario: Card stays until hidden', async ({ page }) => {
+	await page.clock.install();
+	await reveal(page, seated(F5));
+	await show(page).click();
+	await expect(live(page).getByTestId('role-card')).toBeVisible();
+	await page.clock.fastForward('05:00');
+	await expect(live(page).getByTestId('role-card')).toBeVisible();
+	await expect(hide(page)).toBeVisible();
+});
+
+test('Scenario: Hidden card leaves nothing readable', async ({ page }) => {
+	const state = seated(F5);
+	await reveal(page, state);
+	await show(page).click();
+	await hide(page).click();
+	await expect(live(page).getByRole('heading', { name: 'Bo', exact: true })).toBeVisible();
+	await settled(page);
+	const c = byId[state.seats[0].character!];
+	const all = await text(page);
+	for (const word of [c.name, TEAM[c.team], c.de, c.ability]) expect(all).not.toContain(word);
+	await expect(page.locator('[data-testid="role-card"]')).toHaveCount(0);
+});
+
+test('Scenario: Reload mid-reveal resumes hidden', async ({ page }) => {
+	const state = seated(F5);
+	await reveal(page, state);
+	for (let i = 0; i < 2; i++) {
+		await show(page).click();
+		await hide(page).click();
+	}
+	await show(page).click();
+	await expect(live(page).getByTestId('role-card')).toBeVisible();
+	await page.reload();
+	await expect(live(page).getByRole('heading', { name: 'Cleo', exact: true })).toBeVisible();
+	await expect(show(page)).toBeVisible();
+	await settled(page);
+	await expect(page.locator('[data-testid="role-card"]')).toHaveCount(0);
+	expect(await text(page)).not.toContain(byId[state.seats[2].character!].name);
+});
+
+test('Scenario: Reveal actions stay in the first phone screen', async ({ page }, info) => {
+	test.skip(info.project.name !== 'phone', 'phone layout');
+	const state = seated(F15);
+	await reveal(page, state);
+	for (const _ of state.seats) {
+		await settled(page);
+		expect(await show(page).evaluate((el) => el.getBoundingClientRect().bottom)).toBeLessThanOrEqual(844);
+		await show(page).click();
+		await settled(page);
+		expect(await hide(page).evaluate((el) => el.getBoundingClientRect().bottom)).toBeLessThanOrEqual(844);
+		await hide(page).click();
 	}
 });
