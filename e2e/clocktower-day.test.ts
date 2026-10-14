@@ -340,6 +340,44 @@ test('Scenario: Real short sweep marks votes', async ({ page }) => {
 	expect(await lit(page)).toEqual([5, 6]);
 });
 
+test('Scenario: Tapping any seat during the sweep toggles its vote', async ({ page }) => {
+	await shortSweep(page);
+	await frozen(page, day1(seated(F7)));
+	await toClock(page, 4, 1);
+	await live(page).getByRole('button', { name: 'Abstimmung beginnen', exact: true }).click();
+	await page.clock.runFor(1);
+	await page.clock.runFor(SHORT);
+	expect(await under(page)).toBe('6');
+
+	await seat(page, 2).click();
+	await expect(seat(page, 2)).toHaveAttribute('data-marked', '');
+	expect(await under(page)).toBe('6');
+	await seat(page, 5).click();
+	await expect(seat(page, 5)).toHaveAttribute('data-marked', '');
+	await seat(page, 5).click();
+	await expect(seat(page, 5)).not.toHaveAttribute('data-marked');
+	expect(await under(page)).toBe('6');
+
+	await page.clock.runFor(SHORT * 6);
+	await expect(live(page).getByTestId('count')).toHaveText('1');
+	expect(await lit(page)).toEqual([2]);
+});
+
+test('Scenario: Space marks only the seat under the hand', async ({ page }) => {
+	await shortSweep(page);
+	await frozen(page, day1(seated(F7)));
+	await toClock(page, 4, 1);
+	await live(page).getByRole('button', { name: 'Abstimmung beginnen', exact: true }).click();
+	await page.clock.runFor(1);
+	await page.clock.runFor(SHORT);
+	expect(await under(page)).toBe('6');
+
+	await seat(page, 2).focus();
+	await page.keyboard.press('Space');
+	await expect(seat(page, 6)).toHaveAttribute('data-marked', '');
+	await expect(seat(page, 2)).not.toHaveAttribute('data-marked');
+});
+
 test('Scenario: Dead without ghost vote cannot be marked', async ({ page }) => {
 	await shortSweep(page);
 	await frozen(page, ghostless(day1(seated(F7)), 4));
