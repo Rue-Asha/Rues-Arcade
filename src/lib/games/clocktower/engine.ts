@@ -1,8 +1,10 @@
 import { pick } from '#lib/engine/rng.ts';
 import type { GameDef } from '#lib/engine/types.ts';
+import { byId } from './characters.ts';
 import { believable, drawBluffs, fill, herringOptions, needsHerring, problems } from './setup.ts';
 import { nightScreens, nightSteps } from './night.ts';
 import type { ClocktowerAction, ClocktowerState, Seat } from './types.ts';
+import { check, living } from './win.ts';
 
 const has = (s: ClocktowerState, seat: number) => Number.isInteger(seat) && seat >= 0 && seat < s.seats.length;
 
@@ -95,7 +97,7 @@ function setup(s: ClocktowerState, action: ClocktowerAction): ClocktowerState {
 	return s;
 }
 
-function dusk(s: ClocktowerState, number: number): ClocktowerState {
+export function dusk(s: ClocktowerState, number: number): ClocktowerState {
 	const steps = nightSteps(s, number);
 	return {
 		...s,
@@ -110,6 +112,92 @@ function reveal(s: ClocktowerState, action: ClocktowerAction): ClocktowerState {
 	if (action.type === 'show' && !shown) return { ...s, phase: { kind: 'reveal', seat, shown: true } };
 	if (action.type === 'hide' && shown)
 		return seat + 1 < s.seats.length ? { ...s, phase: { kind: 'reveal', seat: seat + 1, shown: false } } : dusk(s, 1);
+	return s;
+}
+
+const over = (s: ClocktowerState): ClocktowerState => ({ ...s, phase: { kind: 'over', revealed: false } });
+
+// Living Minions by true character (never the Recluse); the Scarlet Woman alone while 5 or more are alive.
+export function heirs(s: ClocktowerState): number[] {
+	const minions = s.seats.flatMap((x, i) => (x.alive && x.character && byId[x.character].team === 'minion' ? [i] : []));
+	const sw = minions.find((i) => s.seats[i].character === 'scarlet-woman');
+	return sw !== undefined && living(s.seats) >= 5 ? [sw] : minions;
+}
+
+function kill(s: ClocktowerState, seats: number[]): ClocktowerState {
+	const after = { ...s, seats: s.seats.map((x, i) => (seats.includes(i) ? { ...x, alive: false } : x)) };
+	return { ...after, winner: s.winner ?? check(s, after) };
+}
+
+function dawn(s: ClocktowerState): ClocktowerState {
+	const { number, deaths } = s.night!;
+	return {
+		...s,
+		phase: { kind: 'dawn', screen: 'wake' },
+		today: { number, deadline: null, pending: null, nominations: [], high: 0, block: null, executed: null, closed: false, deaths }
+	};
+}
+
+function night(s: ClocktowerState, action: ClocktowerAction): ClocktowerState {
+	const n = s.night!;
+	const here = n.screens[n.at];
+	const current = 'step' in here ? n.steps[here.step] : null;
+	const go = (at: number): ClocktowerState => ({ ...s, night: { ...n, at } });
+	switch (action.type) {
+		case 'next':
+			if (here.screen === 'deaths') return s;
+			return n.at + 1 < n.screens.length ? go(n.at + 1) : dawn(s);
+		case 'back':
+			return n.at > 0 ? go(n.at - 1) : s;
+		case 'skip': {
+			if (!('step' in here)) return s;
+			const to = n.screens.findIndex((x, i) => i > n.at && !('step' in x && x.step === here.step));
+			return to < 0 ? dawn(s) : go(to);
+		}
+		case 'target': {
+			const { seat } = action;
+			if (current?.kind !== 'imp' || (seat !== null && !(has(s, seat) && s.seats[seat].alive)) || seat === n.target) return s;
+			return { ...s, night: { ...n, target: seat } };
+		}
+		case 'starpass': {
+			if (current?.kind !== 'imp' || n.starpass !== null || s.demon === null) return s;
+			const from = s.demon;
+			const options = heirs(s);
+			if (action.seat === null) return options.length ? s : { ...s, night: { ...n, target: from } };
+			const to = action.seat;
+			if (!options.includes(to)) return s;
+			const steps = [...n.steps];
+			steps.splice(n.steps.indexOf(current) + 1, 0, { kind: 'new-imp', seats: [to], as: 'imp', note: null });
+			const questions = n.screens.flatMap((x) => (x.screen === 'question' ? [x.question] : []));
+			return {
+				...s,
+				seats: s.seats.map((x, i) => (i === to ? { ...x, character: 'imp' } : x)),
+				demon: to,
+				history: [...s.history, { night: n.number, from, to, was: s.seats[to].character!, kind: 'starpass' }],
+				night: { ...n, steps, screens: nightScreens(n.number, steps, questions), target: from, starpass: to }
+			};
+		}
+		case 'bluffs': {
+			const [bluffs, rng] = drawBluffs(s.seats, s.rng);
+			return { ...s, bluffs, rng };
+		}
+		case 'deaths': {
+			const { seats } = action;
+			if (here.screen !== 'deaths' || new Set(seats).size !== seats.length) return s;
+			if (!seats.every((i) => has(s, i) && s.seats[i].alive)) return s;
+			const after = kill(s, seats);
+			return dawn({ ...after, night: { ...n, deaths: [...seats] } });
+		}
+		case 'declare':
+			return over({ ...s, winner: action.winner });
+	}
+	return s;
+}
+
+function daybreak(s: ClocktowerState, action: ClocktowerAction): ClocktowerState {
+	if (s.phase.kind !== 'dawn' || action.type !== 'next') return s;
+	if (s.phase.screen === 'wake') return { ...s, phase: { kind: 'dawn', screen: 'deaths' } };
+	if (s.phase.screen === 'deaths') return s.winner ? over(s) : { ...s, phase: { kind: 'dawn', screen: 'timer' } };
 	return s;
 }
 
@@ -143,8 +231,30 @@ export const clocktower: GameDef<ClocktowerState, ClocktowerAction, Record<strin
 				return s.locked ? s : setup(s, action);
 			case 'reveal':
 				return reveal(s, action);
+			case 'night':
+				return night(s, action);
+			case 'dawn':
+				return daybreak(s, action);
+			case 'over':
+				return action.type === 'reveal' && !s.phase.revealed ? { ...s, phase: { kind: 'over', revealed: true } } : s;
 		}
 		return s;
 	},
-	phase: (s) => s.phase.kind
+	// one key per screen, so Stage transitions each
+	phase(s) {
+		const p = s.phase;
+		switch (p.kind) {
+			case 'setup':
+				return 'setup';
+			case 'reveal':
+				return `reveal-${p.seat}-${p.shown ? 'card' : 'name'}`;
+			case 'night':
+				return `night-${s.night!.number}-${s.night!.at}`;
+			case 'dawn':
+			case 'day':
+				return `${p.kind}-${s.today!.number}-${p.screen}`;
+			case 'over':
+				return p.revealed ? 'over-reveal' : 'over';
+		}
+	}
 };
