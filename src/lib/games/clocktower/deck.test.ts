@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { characters } from './characters.ts';
-import { slides, type Slide } from './deck.ts';
+import { slides, voteTimeline, type Slide } from './deck.ts';
 import { required } from './setup.ts';
 import { threshold } from './vote.ts';
 
@@ -50,6 +50,24 @@ describe('clocktower deck', () => {
 		] as const) {
 			expect(voting(n).vote).toEqual({ alive: n, needed: threshold(n), caption: `${n} leben, ${text}` });
 			expect(voting(n).vote!.caption, `${n}`).toContain(text);
+		}
+	});
+
+	it('Scenario: Voting slide timeline follows the count', () => {
+		for (const [n, voters] of [[5, 3], [12, 6], [15, 8]] as const) {
+			const t = voteTimeline(n);
+			expect(t.seats, `${n}`).toBe(n);
+			expect(t.nominee).toBe(0);
+			expect(t.voters, `${n}`).toHaveLength(voters);
+			expect(new Set(t.voters).size).toBe(voters);
+			for (const v of t.voters) expect(v > 0 && v < n).toBe(true);
+			expect(t.voters).toEqual([...t.voters].sort((a, b) => a - b));
+			const step = t.handMs / (n - 1);
+			expect(t.at).toEqual(t.voters.map((v) => (v - 1) * step));
+			expect(t.at[0]).toBe(0);
+			expect(t.holdMs).toBeGreaterThan(0);
+			const count = t.at.map((_, i) => i + 1);
+			expect(count.at(-1)).toBe(threshold(n));
 		}
 	});
 
