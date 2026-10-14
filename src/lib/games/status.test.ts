@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import type { ContentItem } from '#lib/content/types.ts';
 import type { Survey } from '#lib/content/types.ts';
 import type { Player } from '#lib/engine/types.ts';
+import { entry as clocktower } from './clocktower/index.ts';
+import { firstDay, seated, step } from './clocktower/fixtures.ts';
 import { entry as codes } from './codes/index.ts';
 import { entry as duck } from './duck/index.ts';
 import { entry as feud } from './feud/index.ts';
@@ -117,5 +119,31 @@ describe('round status', () => {
 		expect(duck.status(withTop(0))).toEqual({ parts: ['Ziel 10 Punkte'], progress: 0 });
 		expect(duck.status(withTop(4))).toEqual({ parts: ['Ziel 10 Punkte'], progress: 0.4 });
 		expect(duck.status(withTop(12))).toEqual({ parts: ['Ziel 10 Punkte'], progress: 1 });
+	});
+
+	it('Scenario: Clocktower status per phase', () => {
+		const eight = clocktower.def.init({ players: players.concat({ id: 'g', name: 'G' }, { id: 'h', name: 'H' }), config: {}, content: [], seed: 1 });
+		expect(eight.seats).toHaveLength(8);
+		expect(clocktower.status(eight)).toEqual({ parts: ['Aufbau'], progress: null });
+
+		const locked = step(eight, { type: 'fill' }, { type: 'lock' });
+		const third = step(locked, { type: 'show' }, { type: 'hide' }, { type: 'show' }, { type: 'hide' });
+		expect(third.phase).toEqual({ kind: 'reveal', seat: 2, shown: false });
+		expect(clocktower.status(third)).toEqual({ parts: ['Rollen', 'Platz 3 / 8'], progress: null });
+
+		const day1 = step(firstDay(seated(['chef', 'investigator', 'monk', 'ravenkeeper', 'slayer', 'butler', 'spy', 'imp'])), { type: 'died', seat: 0 });
+		const night2 = step(day1, { type: 'endDay' }, { type: 'next' });
+		expect(clocktower.status(night2)).toEqual({ parts: ['Nacht 2', '7 von 8 leben'], progress: null });
+
+		let end = night2;
+		while (end.phase.kind === 'night') end = step(end, end.night!.screens[end.night!.at].screen === 'deaths' ? { type: 'deaths', seats: [1] } : { type: 'next' });
+		expect(end.phase).toEqual({ kind: 'dawn', screen: 'wake' });
+		expect(clocktower.status(end)).toEqual({ parts: ['Tag 2', '6 von 8 leben'], progress: null });
+		const day2 = step(end, { type: 'next' }, { type: 'next' }, { type: 'timer', minutes: 8, now: 0 });
+		expect(clocktower.status(day2)).toEqual({ parts: ['Tag 2', '6 von 8 leben'], progress: null });
+
+		const over = step(day2, { type: 'died', seat: 7 });
+		expect(over.phase).toEqual({ kind: 'over', revealed: false });
+		expect(clocktower.status(over)).toEqual({ parts: ['Spielende'], progress: null });
 	});
 });
