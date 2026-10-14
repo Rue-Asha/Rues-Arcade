@@ -46,6 +46,7 @@
 	};
 
 	const def = $derived(games.find((g) => g.def.slug === params.slug)!.def);
+	// the load answers 404 for a game without content
 	const type = $derived(def.contentType as ContentType);
 	const base = $derived(`/spiele/${def.slug}`);
 	const side = $derived(sides[def.contentType as ItemType]);

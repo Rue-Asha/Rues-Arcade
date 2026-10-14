@@ -117,3 +117,35 @@ test('the start panel reads the count and the roster, without a content line', a
 	await expect(page.getByText('Einträge im Inhaltspool')).toHaveCount(0);
 	await expect(page.getByText(/gibt es noch keine Inhalte/)).toHaveCount(0);
 });
+
+test('Scenario: Erklärung card instead of Demo and Inhalte', async ({ page }) => {
+	await openStart(page, crew(7));
+	const more = page.getByRole('region', { name: 'Mehr zu Blood on the Clocktower', exact: true });
+
+	await expect(more.getByRole('link')).toHaveCount(1);
+	const card = more.getByRole('link', { name: 'Erklärung', exact: true });
+	await expect(card).toHaveAttribute('href', '/spiele/clocktower/erklaerung');
+	await expect(card).toHaveAccessibleDescription('Spiel per Folien lernen, passend zur Spielerzahl');
+	await expect(page.getByRole('link', { name: 'Demo', exact: true })).toHaveCount(0);
+	await expect(page.getByRole('link', { name: 'Inhalte', exact: true })).toHaveCount(0);
+	await expect(page.getByText('Einträge im Inhaltspool')).toHaveCount(0);
+
+	await card.click();
+	await expect(page).toHaveURL(/\/spiele\/clocktower\/erklaerung$/);
+	await expect(page.getByRole('heading', { name: 'Erklärung', exact: true })).toBeVisible();
+	await page.getByRole('button', { name: 'Schließen', exact: true }).click();
+	await expect(page).toHaveURL(/\/spiele\/clocktower$/);
+	await expect(page.getByRole('heading', { name: 'Blood on the Clocktower', level: 1 })).toBeVisible();
+});
+
+test('Scenario: Clocktower demo and Inhalte are not found', async ({ page }) => {
+	for (const path of ['/spiele/clocktower/demo?from=/spiele/clocktower', '/spiele/clocktower/inhalte']) {
+		const res = await page.goto(path);
+
+		expect(res!.status(), path).toBe(404);
+		expect(page.url(), path).toMatch(new RegExp(`${path.replace(/[?/]/g, '\\$&')}$`));
+		await expect(page.getByText('Not Found', { exact: true }), path).toBeVisible();
+		await expect(page.getByRole('button', { name: 'Demo beenden' }), path).toHaveCount(0);
+		await expect(page.getByText(/^Schritt \d+\/\d+$/), path).toHaveCount(0);
+	}
+});
