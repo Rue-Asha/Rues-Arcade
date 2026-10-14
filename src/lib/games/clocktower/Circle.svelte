@@ -152,7 +152,13 @@
 				<span class="name">{seat.player.name}</span>
 				{#if text}<span class="tag">{text}</span>{/if}
 				{#if !seat.alive}
-					<span class="mark" aria-hidden="true">{seat.ghostVote ? '✕ ●' : '✕ ○'}</span>
+					<span class="mark" data-spent={seat.ghostVote ? undefined : ''} aria-hidden="true">
+						<svg viewBox="0 0 48 22" preserveAspectRatio="none" focusable="false" aria-hidden="true">
+							<rect class="rim" x="1" y="1" width="46" height="20" rx="10" />
+							<rect class="notch" x="4" y="4" width="40" height="14" rx="7" />
+						</svg>
+						<span class="glyphs">{seat.ghostVote ? '✕ ●' : '✕ ○'}</span>
+					</span>
 				{/if}
 				{#if marked.includes(i)}<span class="badge hand-up" aria-hidden="true">✓</span>{/if}
 				{#if block === i}<span class="badge on-block" aria-hidden="true">▼</span>{/if}
@@ -286,16 +292,64 @@
 		text-decoration: line-through;
 	}
 
+	/* a wax-seal coin: its own solid face, a gold rim and a notched inner rim, so the glyphs sit on a known background;
+	   a spent token loses the notches */
 	.mark {
 		position: absolute;
-		bottom: -4px;
-		right: -6px;
-		padding: 0 4px;
-		border-radius: 8px;
-		background: var(--surface);
-		border: 1px solid var(--line);
-		font-size: 10px;
+		bottom: -8px;
+		right: -4px;
+		display: grid;
+		place-items: center;
+		min-width: 40px;
+		height: 22px;
+		padding: 0 8px;
+		border-radius: 11px;
+		background: var(--gold-tint);
+		box-shadow: 0 1px 0 var(--gold-ledge);
 		color: var(--text);
+		font-size: 12px;
+		font-weight: 700;
+		line-height: 1;
+		white-space: nowrap;
+	}
+
+	.mark[data-spent] {
+		background: var(--surface);
+		box-shadow: none;
+	}
+
+	.mark svg {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		fill: none;
+		pointer-events: none;
+	}
+
+	.rim {
+		stroke: var(--gold);
+		stroke-width: 1.5;
+		vector-effect: non-scaling-stroke;
+	}
+
+	.notch {
+		stroke: var(--gold);
+		stroke-width: 1;
+		stroke-dasharray: 1.5 2.5;
+		vector-effect: non-scaling-stroke;
+	}
+
+	.mark[data-spent] .rim {
+		stroke: var(--line);
+	}
+
+	.mark[data-spent] .notch {
+		display: none;
+	}
+
+	.glyphs {
+		position: relative;
 	}
 
 	.seat[data-ghost] {
