@@ -89,7 +89,7 @@ RNG.
 
 #### Scenario: Random fill keeps manual choices
 - **WHEN** for 10 players the Empath is on seat 3 and "Zufällig" is dispatched
-- **THEN** seat 3 still holds the Empath, every seat holds a character, each character appears once and the teams are 7/0/2/1
+- **THEN** seat 3 still holds the Empath, every seat holds a character, each character appears once and the teams equal `required(10, baronInPlay)` (7/0/2/1 without the Baron, 5/2/2/1 with it, since random fill may draw the Baron)
 - **proof:** unit
 
 #### Scenario: Random fill with a manual Baron

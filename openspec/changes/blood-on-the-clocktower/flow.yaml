@@ -5,4 +5,5 @@ base: main
 gate0: 2026-10-14
 gate1: 2026-10-14
 learnings:
+- spec scenarios with exact team counts after a random fill are seed-dependent once a setup-modifying character (Baron) can be drawn → planner states the seed or the required(n, …) form in the scenario (U2 friction, 2026-10-14)
 - explore extracted the deck's fonts/icons only into the session scratchpad → U2/U4 must re-extract; when explore extracts assets builders need, store them (or the extraction recipe) in the change dir
