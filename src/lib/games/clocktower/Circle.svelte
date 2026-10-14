@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import { angleOf, seatPositions, seatSize } from './circle.ts';
+	import { angleOf, ornament, seatPositions, seatSize } from './circle.ts';
 	import type { Seat } from './types.ts';
 
 	interface Props {
@@ -45,6 +45,7 @@
 	const box = $derived(Math.max(240, Math.min(width, MAX[size])));
 	const d = $derived(seatSize(count, box));
 	const at = $derived(seatPositions(count, box));
+	const deco = $derived(ornament(count, box));
 
 	function spoken(i: number): string {
 		const seat = seats[i];
@@ -109,6 +110,16 @@
 
 <div class="circle" data-circle data-size={size} style:--box="{box}px" style:--seat="{d}px" style:--max="{MAX[size]}px" bind:clientWidth={width}>
 	<div class="plane" style:width="{box}px" style:height="{box}px">
+		<svg class="ornament" data-deco data-motif="circle" viewBox="0 0 {box} {box}" width={box} height={box} aria-hidden="true" focusable="false">
+			<circle class="hair" cx={box / 2} cy={box / 2} r={deco.outer} />
+			<circle class="hair" cx={box / 2} cy={box / 2} r={deco.inner} />
+			<path class="ticks" d={deco.ticks} />
+			<circle class="hair" cx={box / 2} cy={box / 2} r={deco.hub * 2.6} />
+			<path class="rosette" d={deco.rosette} />
+			{#each deco.links as link, i (i)}
+				<path class="ring" data-ring class:gap={!seats[i].alive || !seats[(i + 1) % count].alive} d={link} />
+			{/each}
+		</svg>
 		{#each seats as seat, i (seat.player.id)}
 			{@const why = disabled?.(i) ?? null}
 			{@const text = label?.(i) ?? null}
@@ -171,8 +182,47 @@
 		max-width: 100%;
 	}
 
+	/* paths only, under the seats; the seats' opaque faces keep every line away from their text */
+	.ornament {
+		position: absolute;
+		inset: 0;
+		overflow: visible;
+		pointer-events: none;
+		fill: none;
+		stroke: var(--gold);
+	}
+
+	.ring {
+		stroke-width: 2;
+		stroke-opacity: 0.6;
+		stroke-linecap: round;
+	}
+
+	.ring.gap {
+		stroke-dasharray: 2 6;
+		stroke-opacity: 0.45;
+	}
+
+	.hair {
+		stroke-width: 1;
+		stroke-opacity: 0.35;
+	}
+
+	.ticks {
+		stroke-width: 1.5;
+		stroke-opacity: 0.45;
+		stroke-linecap: round;
+	}
+
+	.rosette {
+		stroke-width: 1;
+		stroke-opacity: 0.4;
+		stroke-linejoin: round;
+	}
+
 	.seat {
 		position: absolute;
+		z-index: 1;
 		width: var(--seat);
 		height: var(--seat);
 		transform: translate(-50%, -50%);

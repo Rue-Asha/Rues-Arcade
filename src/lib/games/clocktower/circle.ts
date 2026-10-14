@@ -34,3 +34,35 @@ export function seatSize(count: number, box: number): number {
 export function seatPositions(count: number, box: number): Point[] {
 	return around(count, box, seatSize(count, box));
 }
+
+const f = (n: number) => Math.round(n * 100) / 100;
+
+function polar(centre: number, r: number, deg: number): Point {
+	const a = (deg * Math.PI) / 180;
+	return { x: centre + r * Math.sin(a), y: centre - r * Math.cos(a) };
+}
+
+// the ornament under the seats, in the plane's own pixels: one arc of the ring per pair of neighbouring seats (so a dead
+// seat can dash its two), a hairline ring hugging the seats' outer edge, one just inside them, twelve clock ticks
+// between that and the centre, and a small star for the hub
+export function ornament(count: number, box: number) {
+	const d = seatSize(count, box);
+	const at = around(count, box, d);
+	const centre = box / 2;
+	const r = (box - d) / 2;
+	const inner = r - d / 2 - 6;
+	const links = at.map((p, i) => {
+		const q = at[(i + 1) % count];
+		return `M${f(p.x)} ${f(p.y)}A${f(r)} ${f(r)} 0 0 1 ${f(q.x)} ${f(q.y)}`;
+	});
+	const ticks = Array.from({ length: 12 }, (_, k) => {
+		const long = k % 3 === 0;
+		const a = polar(centre, inner - 2, k * 30);
+		const b = polar(centre, inner - (long ? 14 : 8), k * 30);
+		return `M${f(a.x)} ${f(a.y)}L${f(b.x)} ${f(b.y)}`;
+	}).join('');
+	const hub = Math.max(10, inner * 0.16);
+	const star = Array.from({ length: 16 }, (_, k) => polar(centre, k % 2 === 0 ? hub * 1.8 : hub, k * 22.5));
+	const rosette = `M${star.map((p) => `${f(p.x)} ${f(p.y)}`).join('L')}Z`;
+	return { r, outer: box / 2 - 1, inner, links, ticks, rosette, hub };
+}
