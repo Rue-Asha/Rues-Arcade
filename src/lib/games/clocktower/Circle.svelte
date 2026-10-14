@@ -1,12 +1,15 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import { angleOf, ornament, seatPositions, seatSize } from './circle.ts';
-	import type { Seat } from './types.ts';
+	import { byId } from './characters.ts';
+	import CharacterIcon from './CharacterIcon.svelte';
+	import type { CharacterId, Seat } from './types.ts';
 
 	interface Props {
 		seats: Seat[];
 		size?: 'setup' | 'play';
 		label?: (i: number) => string | null;
+		token?: (i: number) => CharacterId | null;
 		marked?: number[];
 		block?: number | null;
 		hand?: number | null;
@@ -23,6 +26,7 @@
 		seats,
 		size = 'play',
 		label,
+		token,
 		marked = [],
 		block = null,
 		hand = null,
@@ -49,7 +53,8 @@
 
 	function spoken(i: number): string {
 		const seat = seats[i];
-		const head = `Platz ${i + 1}, ${seat.player.name}`;
+		const character = token?.(i) ?? null;
+		const head = `Platz ${i + 1}, ${seat.player.name}${character === null ? '' : `, ${byId[character].name}`}`;
 		if (seat.alive) return head;
 		return `${head}, tot, ${seat.ghostVote ? 'Stimme' : 'keine Stimme'}`;
 	}
@@ -123,12 +128,14 @@
 		{#each seats as seat, i (seat.player.id)}
 			{@const why = disabled?.(i) ?? null}
 			{@const text = label?.(i) ?? null}
+			{@const icon = token?.(i) ?? null}
 			<button
 				type="button"
 				class="seat"
 				class:dying={dying.includes(i)}
 				class:grab={drag?.from === i}
 				class:drop={drag?.over === i}
+				class:holds={icon !== null}
 				data-seat={i + 1}
 				data-dead={seat.alive ? undefined : ''}
 				data-ghost={!seat.alive && seat.ghostVote ? '' : undefined}
@@ -149,6 +156,7 @@
 				onpointercancel={() => (drag = null)}
 			>
 				<span class="no">{i + 1}</span>
+				{#if icon}<CharacterIcon id={icon} size={Math.min(38, Math.round(d * 0.5))} />{/if}
 				<span class="name">{seat.player.name}</span>
 				{#if text}<span class="tag">{text}</span>{/if}
 				{#if !seat.alive}
@@ -268,6 +276,22 @@
 	.no {
 		font-weight: 800;
 		font-size: 15px;
+	}
+
+	/* with an icon the number moves to a corner badge, so icon and name get the seat's face */
+	.holds .no {
+		position: absolute;
+		top: -4px;
+		left: 0;
+		min-width: 18px;
+		height: 18px;
+		padding: 0 3px;
+		border: 1px solid var(--line);
+		border-radius: 9px;
+		background: var(--raised);
+		font-size: 12px;
+		line-height: 16px;
+		text-align: center;
 	}
 
 	.name {

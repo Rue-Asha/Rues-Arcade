@@ -1,7 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
+import { byId, characters } from '../src/lib/games/clocktower/characters.ts';
 import { clocktower } from '../src/lib/games/clocktower/engine.ts';
 import { F15, F7, seated } from '../src/lib/games/clocktower/fixtures.ts';
-import type { ClocktowerState } from '../src/lib/games/clocktower/types.ts';
+import type { CharacterId, ClocktowerAction, ClocktowerState } from '../src/lib/games/clocktower/types.ts';
 import { play, seedClocktower } from './clocktower-session.ts';
 import { live, seedRoster, settled } from './helpers.ts';
 import { day1, ghost, ghostless } from './walks/clocktower-day.ts';
@@ -230,4 +231,124 @@ test('Scenario: Voting clock hand stands out', async ({ page }) => {
 	expect(swept.tipToSeat).toBeLessThan(swept.radius);
 	expect(swept.contrast).toBeGreaterThanOrEqual(3);
 	expect(swept.scroll).toBe(true);
+});
+
+const assign = (...ids: CharacterId[]): ClocktowerAction[] => ids.map((character, seat) => ({ type: 'assign', seat, character }));
+
+const TEAM_TOKEN = { townsfolk: 'good', outsider: 'outsider', minion: 'evil', demon: 'demon' } as const;
+
+// the icon in a seat with its colour and the colour the team token resolves to
+const iconOf = (page: Page, n: number, id: CharacterId | null) =>
+	seat(page, n).evaluate((el, token) => {
+		const icon = el.querySelector<SVGElement>('svg.icon');
+		if (icon === null) return null;
+		const probe = document.createElement('i');
+		probe.style.color = token === null ? '' : `var(--${token})`;
+		el.append(probe);
+		const want = getComputedStyle(probe).color;
+		probe.remove();
+		const box = el.getBoundingClientRect();
+		const r = icon.getBoundingClientRect();
+		return {
+			colour: getComputedStyle(icon).color === want,
+			inside: r.left >= box.left && r.right <= box.right && r.top >= box.top && r.bottom <= box.bottom,
+			path: icon.querySelector('path')!.getAttribute('d')
+		};
+	}, id === null ? null : TEAM_TOKEN[byId[id].team]);
+
+const sheet = (page: Page, n: number) => seat(page, n).getAttribute('aria-label');
+
+test("Scenario: Setup circle shows each seat's character", async ({ page }) => {
+	const first: CharacterId[] = ['washerwoman', 'saint', 'poisoner', 'chef', 'empath'];
+	await open(page, play(board(7), assign(...first)));
+
+	for (const [i, id] of first.entries()) {
+		const got = await iconOf(page, i + 1, id);
+		expect(got, `seat ${i + 1}`).not.toBeNull();
+		expect(got!.colour, `seat ${i + 1}`).toBe(true);
+		expect(got!.path, `seat ${i + 1}`).toBe(byId[id].icon);
+		expect(await sheet(page, i + 1)).toContain(byId[id].name);
+	}
+	for (const n of [6, 7]) {
+		expect(await iconOf(page, n, null)).toBeNull();
+		expect(await sheet(page, n)).not.toMatch(/Imp|Washerwoman|Saint|Poisoner|Chef|Empath/);
+	}
+
+	await live(page).locator('[data-character="imp"]').click();
+	await seat(page, 6).click();
+	const imp = await iconOf(page, 6, 'imp');
+	expect(imp!.colour).toBe(true);
+	expect(imp!.path).toBe(byId.imp.icon);
+	expect(await sheet(page, 6)).toContain('Imp');
+
+	await seat(page, 1).click();
+	await seat(page, 6).click();
+	expect((await iconOf(page, 1, 'imp'))!.path).toBe(byId.imp.icon);
+	expect((await iconOf(page, 1, 'imp'))!.colour).toBe(true);
+	expect((await iconOf(page, 6, 'washerwoman'))!.path).toBe(byId.washerwoman.icon);
+	expect((await iconOf(page, 6, 'washerwoman'))!.colour).toBe(true);
+	expect(await sheet(page, 1)).toContain('Imp');
+	expect(await sheet(page, 6)).toContain('Washerwoman');
+});
+
+test('Scenario: Character icons fit fifteen seats', async ({ page }) => {
+	const roles: CharacterId[] = [
+		'washerwoman', 'librarian', 'investigator', 'chef', 'empath', 'fortune-teller', 'undertaker', 'monk', 'ravenkeeper',
+		'butler', 'saint', 'poisoner', 'spy', 'scarlet-woman', 'imp'
+	];
+	await open(page, play(board(15), assign(...roles)));
+	const got = await live(page).locator('[data-circle]').evaluate((circle) => {
+		const seats = [...circle.querySelectorAll<HTMLElement>('[data-seat]')];
+		const boxes = seats.map((el) => el.getBoundingClientRect());
+		let overlap = false;
+		for (let i = 0; i < boxes.length; i++)
+			for (let j = i + 1; j < boxes.length; j++) {
+				const a = boxes[i];
+				const b = boxes[j];
+				if (a.left < b.right - 0.5 && b.left < a.right - 0.5 && a.top < b.bottom - 0.5 && b.top < a.bottom - 0.5) overlap = true;
+			}
+		return {
+			seats: seats.length,
+			icons: seats.map((el, i) => {
+				const icon = el.querySelector<SVGElement>('svg.icon');
+				const r = icon?.getBoundingClientRect();
+				const no = el.querySelector<HTMLElement>('.no')!;
+				const name = el.querySelector<HTMLElement>('.name')!;
+				const box = boxes[i];
+				return {
+					icon: r !== undefined && r.width > 0 && r.left >= box.left && r.right <= box.right && r.top >= box.top && r.bottom <= box.bottom,
+					no: no.checkVisibility() && no.textContent!.trim() === el.dataset.seat,
+					name: name.checkVisibility() && name.textContent!.trim().length > 0,
+					big: box.width >= 44 && box.height >= 44
+				};
+			}),
+			overlap,
+			scroll: document.documentElement.scrollWidth <= innerWidth
+		};
+	});
+	expect(got.seats).toBe(15);
+	got.icons.forEach((s, i) => expect(s, `seat ${i + 1}`).toEqual({ icon: true, no: true, name: true, big: true }));
+	expect(got.overlap).toBe(false);
+	expect(got.scroll).toBe(true);
+});
+
+test('Scenario: Public circles show no character icon', async ({ page }) => {
+	const locked = seated(F7);
+	const states: [string, ClocktowerState][] = [
+		['reveal', locked],
+		['night', atCircle(seated(F7))],
+		['day', day1(seated(F7))]
+	];
+	for (const [name, state] of states) {
+		await seedRoster(page, NAMES.slice(0, 7));
+		await seedClocktower(page, state);
+		await page.goto('/spiele/clocktower/spielen');
+		await settled(page);
+		const named = live(page).locator('[data-seat]');
+		if (name === 'reveal') await expect(live(page).getByRole('button', { name: 'Rolle zeigen', exact: true })).toBeVisible();
+		else await expect(named.first()).toBeVisible();
+		await expect(live(page).locator('[data-seat] svg.icon')).toHaveCount(0);
+		const labels = await named.evaluateAll((els) => els.map((el) => el.getAttribute('aria-label') ?? ''));
+		for (const label of labels) for (const c of characters) expect(label, `${name}: ${label}`).not.toContain(c.name);
+	}
 });
