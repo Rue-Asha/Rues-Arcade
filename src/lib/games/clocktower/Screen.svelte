@@ -1,39 +1,25 @@
 <script lang="ts">
 	import type { ScreenProps } from '#lib/games/registry.ts';
+	import Day from './Day.svelte';
+	import Deal from './Deal.svelte';
+	import End from './End.svelte';
+	import Night from './Night.svelte';
+	import SetupBoard from './SetupBoard.svelte';
+	import type { ClocktowerState } from './types.ts';
 
-	let { state: game }: ScreenProps = $props();
+	let { state: game, dispatch }: ScreenProps = $props();
 
-	const seats = $derived((game as { seats: { player: { id: string; name: string } }[] }).seats);
+	const kind = $derived((game as ClocktowerState).phase.kind);
 </script>
 
-<section class="panel stack gap" aria-labelledby="setup">
-	<h2 id="setup">Aufbau</h2>
-	<ol class="chips">
-		{#each seats as seat (seat.player.id)}
-			<li>{seat.player.name}</li>
-		{/each}
-	</ol>
-</section>
-
-<style>
-	.gap {
-		padding: 20px;
-	}
-
-	.chips {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 8px;
-		margin: 0;
-		padding: 0;
-		list-style: none;
-	}
-
-	.chips li {
-		padding: 8px 14px;
-		border-radius: var(--radius-sm);
-		background: var(--raised);
-		font-weight: 700;
-		overflow-wrap: anywhere;
-	}
-</style>
+{#if kind === 'setup'}
+	<SetupBoard state={game} {dispatch} />
+{:else if kind === 'reveal'}
+	<Deal state={game} {dispatch} />
+{:else if kind === 'night'}
+	<Night state={game} {dispatch} />
+{:else if kind === 'dawn' || kind === 'day'}
+	<Day state={game} {dispatch} />
+{:else}
+	<End state={game} {dispatch} />
+{/if}
