@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { clocktower } from '../src/lib/games/clocktower/engine.ts';
-import { byId } from '../src/lib/games/clocktower/characters.ts';
+import { byId, characters } from '../src/lib/games/clocktower/characters.ts';
 import { F15, F5, seated } from '../src/lib/games/clocktower/fixtures.ts';
 import { required } from '../src/lib/games/clocktower/setup.ts';
 import type { CharacterId, ClocktowerAction, ClocktowerState } from '../src/lib/games/clocktower/types.ts';
@@ -241,12 +241,10 @@ test('Scenario: Drunk and red herring on the board', async ({ page }) => {
 
 	const glaubt = live(page).getByLabel('Drunk glaubt');
 	const herring = live(page).getByLabel('Red Herring');
-	const believable = await glaubt.locator('option').allInnerTexts();
-	expect(believable).toContain('Washerwoman');
-	expect(believable).not.toContain('Chef');
-	expect(believable).not.toContain('Fortune Teller');
-	expect(believable).not.toContain('Drunk');
-	expect(believable).not.toContain('Imp');
+	const believable = await glaubt.locator('option:not([disabled])').allInnerTexts();
+	const free = characters.filter((c) => c.team === 'townsfolk' && c.id !== 'chef' && c.id !== 'fortune-teller').map((c) => c.name);
+	expect(free).toHaveLength(11);
+	expect([...believable].sort()).toEqual([...free].sort());
 	const options = await herring.locator('option').allInnerTexts();
 	expect(options.join('|')).toContain('Platz 2');
 	expect(options.join('|')).toContain('Platz 4');
@@ -288,6 +286,10 @@ test('Scenario: Confirm before the reveal', async ({ page }) => {
 
 	await weiter(page).click();
 	await dialog.getByRole('button', { name: 'Ja, weiter', exact: true }).click();
+	await expect(live(page).getByRole('heading', { name: 'Alex', exact: true })).toBeVisible();
+	await expect(live(page).getByText('Platz 1', { exact: true })).toBeVisible();
+	await expect(show(page)).toBeVisible();
+	await expect(page.getByRole('heading', { name: 'Sitzordnung' })).toHaveCount(0);
 	const after = await saved(page);
 	expect(after.locked).toBe(true);
 	expect(after.phase).toEqual({ kind: 'reveal', seat: 0, shown: false });
@@ -301,12 +303,14 @@ test('Scenario: Setup board shows the character sheet', async ({ page }, info) =
 	const below = await sheet.evaluate((el) => {
 		const mine = el.getBoundingClientRect().top;
 		const circle = document.querySelector('[data-circle]')!.getBoundingClientRect().bottom;
-		return { below: mine > circle, items: el.querySelectorAll('li').length, text: el.textContent ?? '' };
+		const items = [...el.querySelectorAll('li')].map((li) => [li.querySelector('.name')?.textContent?.trim(), li.querySelector('.ability')?.textContent?.trim()]);
+		return { below: mine > circle, items, text: el.textContent ?? '' };
 	});
 	expect(below.below).toBe(true);
-	expect(below.items).toBe(22);
+	const sheetOrder = (['townsfolk', 'outsider', 'minion', 'demon'] as const).flatMap((team) => characters.filter((c) => c.team === team));
+	expect(sheetOrder).toHaveLength(22);
+	expect(below.items).toEqual(sheetOrder.map((c) => [c.name, c.ability]));
 	expect(below.text).toContain('So gewinnt ihr');
-	expect(below.text).toContain('Each night*, choose a player: they die.');
 	if (info.project.name === 'desktop') await expect(sheet.getByText('So gewinnt ihr', { exact: true })).toBeVisible();
 });
 
@@ -330,6 +334,21 @@ async function reveal(page: Page, state: ClocktowerState) {
 const show = (page: Page) => live(page).getByRole('button', { name: 'Rolle zeigen', exact: true });
 const hide = (page: Page) => live(page).getByRole('button', { name: 'Verbergen & weitergeben', exact: true });
 const text = (page: Page) => page.evaluate(() => document.body.textContent ?? '');
+// the name screen's visible texts (as written, not as CSS cases them), and any of the 22 character names in the page
+async function nameScreen(page: Page) {
+	const lines = await live(page).evaluate((el) => {
+		const out: string[] = [];
+		const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+		for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+			const line = node.textContent!.trim();
+			if (line && node.parentElement!.checkVisibility()) out.push(line);
+		}
+		return out;
+	});
+	const all = await text(page);
+	return { lines, names: characters.map((c) => c.name).filter((name) => all.includes(name)) };
+}
+const HINT = 'Nur diese Person schaut auf das Gerät.';
 
 test('Scenario: Reveal walks seat by seat', async ({ page }) => {
 	const state = seated(F5);
@@ -340,7 +359,7 @@ test('Scenario: Reveal walks seat by seat', async ({ page }) => {
 		await expect(live(page).getByText(`Platz ${i + 1}`, { exact: true })).toBeVisible();
 		await expect(show(page)).toBeVisible();
 		await settled(page);
-		expect(await text(page)).not.toContain(c.name);
+		expect(await nameScreen(page)).toEqual({ lines: [`Platz ${i + 1}`, s.player.name, HINT, 'Rolle zeigen'], names: [] });
 
 		await show(page).click();
 		const card = live(page).getByTestId('role-card');
@@ -388,6 +407,7 @@ test('Scenario: Hidden card leaves nothing readable', async ({ page }) => {
 	const c = byId[state.seats[0].character!];
 	const all = await text(page);
 	for (const word of [c.name, TEAM[c.team], c.de, c.ability]) expect(all).not.toContain(word);
+	expect(await nameScreen(page)).toEqual({ lines: ['Platz 2', 'Bo', HINT, 'Rolle zeigen'], names: [] });
 	await expect(page.locator('[data-testid="role-card"]')).toHaveCount(0);
 });
 

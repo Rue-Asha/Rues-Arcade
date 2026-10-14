@@ -174,16 +174,16 @@ The setup board SHALL show the character sheet (the same component as the deck's
 - **proof:** e2e
 
 ### Requirement: Private role reveal
-After the lock the game SHALL walk the seats in seat order: a screen with only the player's name and seat number and
-"Rolle zeigen"; then an animated role card with the character's icon, English name, team, German explanation and the
-original ability text, and "Verbergen & weitergeben"; then the next seat. The Drunk SHALL see their believed
+After the lock the game SHALL walk the seats in seat order: a screen with only the player's name, seat number, the hint
+"Nur diese Person schaut auf das Gerät." and "Rolle zeigen"; then an animated role card with the character's icon,
+English name, team, German explanation and the original ability text, and "Verbergen & weitergeben"; then the next seat. The Drunk SHALL see their believed
 Townsfolk's card and never "Drunk". The card SHALL stay until hidden (no timer), a hidden card SHALL leave no character
 text in the page, a reload SHALL resume at the same seat with the card hidden, and after the last seat the game SHALL
 move to night 1.
 
 #### Scenario: Reveal walks seat by seat
 - **WHEN** a locked 5-player game reaches the reveal and each seat's card is shown and hidden
-- **THEN** each seat starts with only "<Name>", "Platz n" and "Rolle zeigen" and no character name, the card shows icon, name, team, German explanation and ability text, and hiding seat 5's card starts night 1 (header "Nacht 1 · 5 von 5 leben")
+- **THEN** each seat starts with only "Platz n", "<Name>", "Nur diese Person schaut auf das Gerät." and "Rolle zeigen" and no character name anywhere in the page, the card shows icon, name, team, German explanation and ability text, and hiding seat 5's card starts night 1 (header "Nacht 1 · 5 von 5 leben")
 - **proof:** e2e
 
 #### Scenario: Drunk sees the believed Townsfolk
