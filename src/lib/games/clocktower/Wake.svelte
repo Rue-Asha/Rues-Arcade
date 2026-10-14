@@ -1,8 +1,10 @@
 <script lang="ts">
 	import Button from '#lib/ui/Button.svelte';
+	import Modal from '#lib/ui/Modal.svelte';
 	import { byId } from './characters.ts';
 	import CharacterIcon from './CharacterIcon.svelte';
 	import Circle from './Circle.svelte';
+	import { heirs } from './engine.ts';
 	import { info } from './info.ts';
 	import { who, whoAll } from './label.ts';
 	import RoleCard from './RoleCard.svelte';
@@ -17,7 +19,12 @@
 
 	let { state: s, dispatch, at }: Props = $props();
 
+	let choosing = $state(false);
+
 	const step = $derived(s.night!.steps[at.step]);
+	const target = $derived(s.night!.target);
+	const starpass = $derived(s.night!.starpass);
+	const candidates = $derived(heirs(s));
 	const role = $derived(step.as ? byId[step.as] : null);
 	const woken = $derived(whoAll(s.seats, step.seats));
 	const drunk = $derived(s.seats[step.seats[0]].character === 'drunk' && role !== null);
@@ -67,6 +74,11 @@
 				return null;
 		}
 	});
+
+	function pass(seat: number | null) {
+		choosing = false;
+		dispatch({ type: 'starpass', seat });
+	}
 </script>
 
 {#snippet nav()}
@@ -85,7 +97,7 @@
 		<h2 id="phase">Wecke {woken}</h2>
 		<p class="role">
 			{#if role}<CharacterIcon id={role.id} size={28} />{/if}
-			<strong>{role?.name ?? intro?.name ?? 'Neuer Imp'}</strong>
+			<strong>{step.kind === 'new-imp' ? 'Du bist: Imp' : (role?.name ?? intro?.name)}</strong>
 			{#if step.note}<span class="muted">· {step.note}</span>{/if}
 		</p>
 		<p class="hint">{hint}</p>
@@ -116,7 +128,22 @@
 	<section class="stack circle" aria-labelledby="phase">
 		<h2 id="phase" class="sr">Grimoire</h2>
 		<ShowBar state={s} {dispatch} {step} />
-		<Circle seats={s.seats} marked={step.seats} />
+		{#if step.kind === 'imp'}
+			<div class="panel stack imp">
+				<span class="label">Ziel notieren</span>
+				<p>{starpass === null ? (target === null ? 'Tippe auf den Platz des Ziels.' : `Ziel: ${who(s.seats, target)}`) : `Der Imp wählt sich selbst: ${who(s.seats, starpass)} wird der neue Imp.`}</p>
+				<Button variant="secondary" size="sm" disabled={starpass !== null} onclick={() => (choosing = true)}>Imp wählt sich selbst</Button>
+			</div>
+			<Circle
+				seats={s.seats}
+				marked={target === null ? [] : [target]}
+				label={(i) => (i === target && starpass === null ? 'Ziel' : null)}
+				disabled={(i) => (starpass !== null ? 'Der Imp hat sich selbst gewählt' : s.seats[i].alive ? null : 'bereits tot')}
+				onseat={(i) => dispatch({ type: 'target', seat: i === target ? null : i })}
+			/>
+		{:else}
+			<Circle seats={s.seats} marked={step.seats} />
+		{/if}
 		<div class="dock">{@render nav()}</div>
 	</section>
 {:else}
@@ -126,6 +153,22 @@
 		{@render nav()}
 	</section>
 {/if}
+
+<Modal open={choosing} title="Imp wählt sich selbst" onclose={() => (choosing = false)}>
+	{#if candidates.length}
+		<p class="muted">Wer wird der neue Imp?{#if s.seats[candidates[0]].character === 'scarlet-woman'} Die Scarlet Woman muss übernehmen.{/if}</p>
+		<div class="row">
+			{#each candidates as i (i)}
+				<Button variant="secondary" onclick={() => pass(i)}>{who(s.seats, i)}</Button>
+			{/each}
+		</div>
+	{:else}
+		<p class="muted">Kein Minion lebt. Der Imp stirbt.</p>
+		<div class="row">
+			<Button variant="danger" onclick={() => pass(null)}>Der Imp stirbt</Button>
+		</div>
+	{/if}
+</Modal>
 
 <style>
 	.wake,
@@ -151,6 +194,16 @@
 	.drunk {
 		color: var(--gold);
 		font-weight: 700;
+	}
+
+	.imp {
+		padding: 12px;
+		gap: 8px;
+		align-items: flex-start;
+	}
+
+	.imp p {
+		margin: 0;
 	}
 
 	.facts {

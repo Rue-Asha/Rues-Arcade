@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { F15, F5, firstDay, seated, voted } from '../src/lib/games/clocktower/fixtures.ts';
+import { dead, F15, F5, F7, firstDay, seated, voted } from '../src/lib/games/clocktower/fixtures.ts';
 import type { ClocktowerState } from '../src/lib/games/clocktower/types.ts';
 import { play, seedClocktower } from './clocktower-session.ts';
 import { byId } from '../src/lib/games/clocktower/characters.ts';
@@ -314,4 +314,84 @@ test('Scenario: No grimoire by day', async ({ page }) => {
 	const night = night1();
 	await open(page, night);
 	await expect(page.getByRole('button', { name: 'Grimoire', exact: true })).toHaveCount(0);
+});
+
+const saved = (page: Page) =>
+	page.evaluate(() => JSON.parse(localStorage.getItem('arcade:session:clocktower')!).state as import('../src/lib/games/clocktower/types.ts').ClocktowerState);
+const seat = (page: Page, name: string) => live(page).getByRole('button', { name, exact: true });
+const skip = (page: Page) => live(page).getByRole('button', { name: 'Überspringen', exact: true });
+
+// F5, night 2 at the Imp's circle screen (Dani on seat 4): Poisoner screens 1-4, Imp wake 5, card 6, circle 7
+const atImp = () => play(night2(), next(7));
+
+test('Scenario: Noted target prefills the death step', async ({ page }) => {
+	await open(page, atImp());
+	await expect(live(page).getByText('Ziel notieren', { exact: true })).toBeVisible();
+	await seat(page, 'Platz 2, Bo').click();
+	await expect(live(page).getByText('Ziel: Bo (#2)', { exact: true })).toBeVisible();
+	expect((await saved(page)).night!.target).toBe(1);
+
+	for (let i = 0; i < 3; i++) await skip(page).click();
+	await expect(live(page).getByRole('heading', { name: 'Wer ist heute Nacht gestorben?', exact: true })).toBeVisible();
+	await expect(live(page).locator('[data-seat="2"][data-marked]')).toHaveCount(1);
+	await expect(live(page).locator('[data-seat][data-marked]')).toHaveCount(1);
+
+	await seat(page, 'Platz 5, Eli').click();
+	await expect(live(page).locator('[data-seat][data-marked]')).toHaveCount(2);
+	await seat(page, 'Platz 5, Eli').click();
+	await expect(live(page).locator('[data-seat][data-marked]')).toHaveCount(1);
+
+	await live(page).getByRole('button', { name: 'Niemand', exact: true }).click();
+	await expect(live(page).locator('[data-seat][data-marked]')).toHaveCount(0);
+	await seat(page, 'Platz 3, Cleo').click();
+	await live(page).getByRole('button', { name: 'Weiter', exact: true }).click();
+	const after = await saved(page);
+	expect(after.phase.kind).toBe('dawn');
+	expect(after.night!.deaths).toEqual([2]);
+	expect(after.seats[2].alive).toBe(false);
+});
+
+test('Scenario: Imp wählt sich selbst wakes the new Imp', async ({ page }) => {
+	await open(page, atImp());
+	await live(page).getByRole('button', { name: 'Imp wählt sich selbst', exact: true }).click();
+	const dialog = page.getByRole('dialog');
+	await expect(dialog.getByRole('button', { name: 'Cleo (#3)', exact: true })).toBeVisible();
+	await expect(dialog.getByRole('button')).toHaveCount(2);
+	await dialog.getByRole('button', { name: 'Cleo (#3)', exact: true }).click();
+	await expect(dialog).toHaveCount(0);
+	const after = await saved(page);
+	expect(after.demon).toBe(2);
+	expect(after.night!.starpass).toBe(2);
+
+	await live(page).getByRole('button', { name: 'Weiter', exact: true }).click();
+	await expect(live(page).getByRole('heading', { name: 'Schlaf wieder ein', exact: true })).toBeVisible();
+	await live(page).getByRole('button', { name: 'Weiter', exact: true }).click();
+	await expect(live(page).getByRole('heading', { name: 'Wecke Cleo (#3)', exact: true })).toBeVisible();
+	await expect(live(page).getByText('Du bist: Imp', { exact: true })).toBeVisible();
+	await live(page).getByRole('button', { name: 'Weiter', exact: true }).click();
+	await live(page).getByRole('button', { name: 'Weiter', exact: true }).click();
+	await expect(chip(page, 'Du bist')).toHaveAttribute('aria-pressed', 'true');
+	await expect(bar(page).getByLabel('Du bist', { exact: true })).toHaveValue('imp');
+});
+
+test('Imp wählt sich selbst without a living Minion lets the Imp die', async ({ page }) => {
+	const lonely = dead(firstDay(reveal(seated(F5))), 2);
+	await open(page, play(lonely, [{ type: 'endDay' }, { type: 'next' }, ...next(3)]));
+	await live(page).getByRole('button', { name: 'Imp wählt sich selbst', exact: true }).click();
+	await expect(page.getByRole('dialog').getByText('Kein Minion lebt', { exact: false })).toBeVisible();
+	await page.getByRole('dialog').getByRole('button', { name: 'Der Imp stirbt', exact: true }).click();
+	expect((await saved(page)).night!.target).toBe(3);
+});
+
+test('Scenario: Dead seats cannot be selected', async ({ page }) => {
+	const day = dead(firstDay(reveal(seated(F7))), 5);
+	await open(page, play(day, [{ type: 'endDay' }, { type: 'next' }, ...next(13)]));
+	await expect(live(page).getByRole('heading', { name: 'Wer ist heute Nacht gestorben?', exact: true })).toBeVisible();
+	const six = live(page).locator('[data-seat="6"]');
+	await expect(six).toHaveAttribute('aria-disabled', 'true');
+	await expect(live(page).getByText('bereits tot', { exact: true })).toBeVisible();
+	await six.click({ force: true });
+	await expect(live(page).locator('[data-seat][data-marked]')).toHaveCount(0);
+	await live(page).getByRole('button', { name: 'Weiter', exact: true }).click();
+	expect((await saved(page)).night!.deaths).toEqual([]);
 });

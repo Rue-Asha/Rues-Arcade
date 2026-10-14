@@ -2,6 +2,7 @@
 	import type { ScreenProps } from '#lib/games/registry.ts';
 	import { play } from '#lib/sound.ts';
 	import Button from '#lib/ui/Button.svelte';
+	import DeathStep from './DeathStep.svelte';
 	import HoldGrimoire from './HoldGrimoire.svelte';
 	import Questions from './Questions.svelte';
 	import Wake from './Wake.svelte';
@@ -29,6 +30,8 @@
 	<Questions state={s} {dispatch} />
 {:else if here.screen === 'question'}
 	<Questions state={s} {dispatch} question={here.question} />
+{:else if here.screen === 'deaths'}
+	<DeathStep state={s} {dispatch} />
 {:else if 'step' in here}
 	<Wake state={s} {dispatch} at={here} />
 {/if}
