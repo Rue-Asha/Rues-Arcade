@@ -1,46 +1,28 @@
-import type { GameDef, Player } from '#lib/engine/types.ts';
-import type { GameEntry } from '#lib/games/registry.ts';
+import type { GameEntry, Status } from '#lib/games/registry.ts';
 import Deck from './Deck.svelte';
+import { clocktower as def, shape } from './engine.ts';
 import Screen from './Screen.svelte';
 import Setup from './Setup.svelte';
+import type { ClocktowerState } from './types.ts';
+import { living } from './win.ts';
 
-// placeholder until the reducer lands; shaped like the real state's seats and setup phase
-interface Seat {
-	player: Player;
-	character: string | null;
-	believed: string | null;
-	alive: boolean;
-	ghostVote: boolean;
+function status(s: ClocktowerState): Status {
+	const n = s.seats.length;
+	const alive = `${living(s.seats)} von ${n} leben`;
+	switch (s.phase.kind) {
+		case 'setup':
+			return { parts: ['Aufbau'], progress: null };
+		case 'reveal':
+			return { parts: ['Rollen', `Platz ${s.phase.seat + 1} / ${n}`], progress: null };
+		case 'night':
+			return { parts: [`Nacht ${s.night!.number}`, alive], progress: null };
+		case 'dawn':
+		case 'day':
+			return { parts: [`Tag ${s.today!.number}`, alive], progress: null };
+		case 'over':
+			return { parts: ['Spielende'], progress: null };
+	}
 }
-
-interface ClocktowerState {
-	seats: Seat[];
-	phase: { kind: 'setup' };
-}
-
-const def: GameDef<ClocktowerState, { type: string }, Record<string, never>> = {
-	slug: 'clocktower',
-	name: 'Blood on the Clocktower',
-	colour: 'clocktower',
-	minPlayers: 5,
-	maxPlayers: 15,
-	minContent: 0,
-	contentType: 'none',
-	stateVersion: 1,
-	init: ({ players }) => ({
-		seats: players.map((player) => ({ player, character: null, believed: null, alive: true, ghostVote: true })),
-		phase: { kind: 'setup' }
-	}),
-	reduce: (state) => state,
-	phase: (state) => state.phase.kind
-};
-
-const shape: ClocktowerState = def.init({
-	players: [{ id: '', name: '' }],
-	config: {},
-	content: [],
-	seed: 0
-});
 
 export const entry: GameEntry = {
 	def,
@@ -49,6 +31,7 @@ export const entry: GameEntry = {
 	Explanation: Deck,
 	shape,
 	countFirst: true,
-	status: () => ({ parts: ['Aufbau'], progress: null }),
+	status,
+	variant: (s: ClocktowerState) => (s.phase.kind === 'dawn' || s.phase.kind === 'day' ? 'day' : 'night'),
 	pitch: 'Eine Stadt sucht ihren Dämon, die Bösen lügen, eine Person erzählt.'
 };

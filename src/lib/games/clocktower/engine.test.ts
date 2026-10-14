@@ -1,8 +1,17 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { start as runDemo } from '#lib/demo/runner.ts';
+import { loadGameSession } from '#lib/games/registry.ts';
+import { saveSession } from '#lib/session.ts';
 import { alignment, byId } from './characters.ts';
-import { clocktower, dusk, heirs } from './engine.ts';
+import { clocktower, dusk, heirs, shape } from './engine.ts';
 import { dead, F15, F5, F7, firstDay, seated, step, voted } from './fixtures.ts';
+import { entry } from './index.ts';
 import { info } from './info.ts';
+
+vi.mock('#lib/demo/runner.ts', async (original) => {
+	const actual = await original<typeof import('#lib/demo/runner.ts')>();
+	return { ...actual, start: vi.fn(actual.start) };
+});
 import { believable, counts, herringOptions, problems, required } from './setup.ts';
 import type { CharacterId, ClocktowerAction, ClocktowerState } from './types.ts';
 
@@ -579,5 +588,87 @@ describe('clocktower day', () => {
 		expect(n2.phase).toEqual({ kind: 'night' });
 		expect(n2.night!.number).toBe(2);
 		expect(n2.night!.steps.map((x) => x.kind)).toEqual(['monk', 'imp', 'spy']);
+	});
+});
+
+describe('clocktower session', () => {
+	const items = new Map<string, string>();
+	beforeEach(() => {
+		items.clear();
+		vi.stubGlobal('window', {
+			localStorage: {
+				getItem: (k: string) => items.get(k) ?? null,
+				setItem: (k: string, v: string) => items.set(k, v),
+				removeItem: (k: string) => items.delete(k)
+			}
+		});
+	});
+	afterEach(() => vi.unstubAllGlobals());
+
+	const resume = (state: unknown) => {
+		saveSession('clocktower', clocktower.stateVersion, state);
+		return loadGameSession(entry);
+	};
+
+	it('Scenario: Every phase survives a reload', () => {
+		const states: [string, ClocktowerState][] = [];
+		const add = (label: string, s: ClocktowerState) => states.push([label, s]);
+		add('setup', start(7));
+		add('setup assigned', step(assign(start(8), ['drunk', 'fortune-teller']), { type: 'believe', character: 'monk' }, { type: 'herring', seat: 1 }));
+		add('reveal', step(seated(F7), { type: 'show' }));
+
+		const sw = firstDay(dead(seated(['chef', 'investigator', 'monk', 'ravenkeeper', 'slayer', 'scarlet-woman', 'imp']), 0));
+		let n = step(voted(sw, 6, 1, 3), { type: 'endDay' }, { type: 'next' });
+		const kinds = new Set<string>();
+		while (n.phase.kind === 'night') {
+			const here = screen(n).screen;
+			if (!kinds.has(here)) add(`night ${here}`, n);
+			kinds.add(here);
+			if (here === 'question') n = step(n, { type: 'answer', yes: true });
+			else if (here === 'deaths') n = step(n, { type: 'deaths', seats: [1] });
+			else if ('step' in screen(n) && n.night!.steps[(screen(n) as { step: number }).step].kind === 'imp' && n.night!.target === null)
+				n = step(n, { type: 'target', seat: 2 });
+			else n = step(n, { type: 'next' });
+		}
+		expect([...kinds].sort()).toEqual(['card', 'circle', 'deaths', 'dusk', 'question', 'sleep', 'wake']);
+		add('dawn', n);
+		const day = step(n, { type: 'next' }, { type: 'next' }, { type: 'timer', minutes: 8, now: 1_000 });
+		add('day nomination', step(day, { type: 'nominee', seat: 3 }, { type: 'nominate', nominator: 2 }));
+		add('vote', step(day, { type: 'nominee', seat: 3 }, { type: 'nominate', nominator: 2 }, { type: 'vote' }, { type: 'mark', seat: 0, on: true }, { type: 'mark', seat: 4, on: true }));
+		const over = step(day, { type: 'died', seat: 5 });
+		expect(over.phase.kind).toBe('over');
+		add('over', over);
+		add('over revealed', step(over, { type: 'reveal' }));
+
+		for (const [label, s] of states) {
+			expect(resume(s), label).toEqual({ state: JSON.parse(JSON.stringify(s)) });
+			expect(JSON.parse(JSON.stringify(s)), label).toEqual(s);
+		}
+	});
+
+	it('Scenario: Game without a demo checks its explicit template', () => {
+		expect(entry.demo).toBeUndefined();
+		expect(entry.shape).toBe(shape);
+		const valid = firstDay(seated(F7));
+		expect(resume(valid)).toEqual({ state: valid });
+
+		const { seats: _, ...seatless } = valid;
+		expect(resume(seatless)).toEqual({ discarded: true });
+		expect(items.size).toBe(0);
+
+		const ghostly = { ...valid, seats: valid.seats.map(({ alive: _, ...rest }) => rest) };
+		expect(resume(ghostly)).toEqual({ discarded: true });
+		expect(runDemo).not.toHaveBeenCalled();
+	});
+});
+
+describe('clocktower variant', () => {
+	it('is day from dawn to the end of the day, night otherwise', () => {
+		const n1 = reveal(seated(F5));
+		const dawn = step(next(n1, n1.night!.screens.length));
+		const day = firstDay(seated(F5));
+		const over = step(day, { type: 'died', seat: 3 });
+		expect([seated(F5), n1, dawn, day, over].map((s) => entry.variant!(s))).toEqual(['night', 'night', 'day', 'day', 'night']);
+		expect(entry.variant!(start(5))).toBe('night');
 	});
 });

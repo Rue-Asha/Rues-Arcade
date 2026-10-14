@@ -383,3 +383,7 @@ export const clocktower: GameDef<ClocktowerState, ClocktowerAction, Record<strin
 		}
 	}
 };
+
+// The session template: seats need every field, null stands for the fields that are sometimes null, and the empty
+// lists (bluffs, history, questions) take any list.
+export const shape: ClocktowerState = clocktower.init({ players: [{ id: '', name: '' }], config: {}, content: [], seed: 0 });
