@@ -10,7 +10,8 @@ export type Motif =
 	| 'codes'
 	| 'duck'
 	| 'most-likely'
-	| 'feud';
+	| 'feud'
+	| 'clocktower';
 
 const own: Record<string, Motif> = {
 	imposter: 'masks',
@@ -18,7 +19,8 @@ const own: Record<string, Motif> = {
 	codes: 'codes',
 	duck: 'duck',
 	'most-likely': 'most-likely',
-	'family-feud': 'feud'
+	'family-feud': 'feud',
+	clocktower: 'clocktower'
 };
 
 export function motifFor(slug: string | undefined, place: Place): Motif {

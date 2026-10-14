@@ -2,6 +2,7 @@
 	import { motifFor, type Place } from '#lib/deco/motifs.ts';
 	import Codes from './Codes.svelte';
 	import Corner from './Corner.svelte';
+	import Clocktower from './Clocktower.svelte';
 	import Crew from './Crew.svelte';
 	import Dial from './Dial.svelte';
 	import Duck from './Duck.svelte';
@@ -41,6 +42,8 @@
 		<MostLikely {place} />
 	{:else if motif === 'feud'}
 		<Feud {place} />
+	{:else if motif === 'clocktower'}
+		<Clocktower {place} />
 	{:else if motif === 'corner'}
 		<Corner />
 	{:else}

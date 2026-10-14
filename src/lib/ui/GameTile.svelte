@@ -49,6 +49,10 @@
 						<rect x="3" y="5" width="18" height="5" rx="1.5"></rect>
 						<rect x="3" y="12" width="11" height="5" rx="1.5"></rect>
 						<path d="M17 14.5h4"></path>
+					{:else if def.slug === 'clocktower'}
+						<circle cx="12" cy="12" r="9"></circle>
+						<path d="M12 7v5l3.5 2"></path>
+						<path d="M12 3.5V5M12 19v1.5M3.5 12H5M19 12h1.5"></path>
 					{:else}
 						<rect x="3" y="7" width="18" height="11" rx="3"></rect>
 						<path d="M8 11v3M6.5 12.5h3"></path>
