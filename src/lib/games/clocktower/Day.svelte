@@ -4,6 +4,7 @@
 	import Circle from './Circle.svelte';
 	import Modal from '#lib/ui/Modal.svelte';
 	import Dawn from './Dawn.svelte';
+	import Facts from './Facts.svelte';
 	import SeatActions from './SeatActions.svelte';
 	import Timer from './Timer.svelte';
 	import VoteClock from './VoteClock.svelte';
@@ -49,8 +50,8 @@
 {:else if screen === 'grimoire'}
 	<section class="stack" aria-labelledby="phase">
 		{@render head(`Tag ${today.number}`)}
-		<Circle seats={s.seats} block={today.block} onseat={(i) => (sheet = i)} />
-		{#if today.block !== null}<p class="facts">Auf dem Block: {name(today.block)}</p>{/if}
+		<div class="cap"><Circle seats={s.seats} block={today.block} onseat={(i) => (sheet = i)} /></div>
+		{#if today.block !== null}<Facts><p>Auf dem Block: {name(today.block)}</p></Facts>{/if}
 		<div class="row">
 			<Button variant="primary" onclick={() => (ending = true)}>Tag beenden</Button>
 		</div>
@@ -58,11 +59,13 @@
 {:else if screen === 'nominator'}
 	<section class="stack" aria-labelledby="phase">
 		{@render head(`Wer nominiert ${name(nominee)}?`)}
-		<Circle seats={s.seats} block={today.block} disabled={barred} onseat={(i) => send({ type: 'nominate', nominator: i })} />
+		<div class="cap"><Circle seats={s.seats} block={today.block} disabled={barred} onseat={(i) => send({ type: 'nominate', nominator: i })} /></div>
 		{#if barredSeats.length}
-			<ul class="muted why">
-				{#each barredSeats as i (i)}<li>{name(i)}: {barred(i)}</li>{/each}
-			</ul>
+			<Facts>
+				<ul>
+					{#each barredSeats as i (i)}<li>{name(i)}: {barred(i)}</li>{/each}
+				</ul>
+			</Facts>
 		{/if}
 		<div class="row">
 			<Button variant="secondary" onclick={() => send({ type: 'cancel' })}>Zurück</Button>
@@ -73,8 +76,8 @@
 {:else if screen === 'result'}
 	<section class="stack" aria-labelledby="phase">
 		{@render head(result.title)}
-		<Circle seats={s.seats} block={today.block} marked={last.voters} hand={last.nominee} />
-		<p class="facts">{result.detail}</p>
+		<div class="cap"><Circle seats={s.seats} block={today.block} marked={last.voters} hand={last.nominee} /></div>
+		<Facts><p>{result.detail}</p></Facts>
 		<div class="row">
 			<Button variant="primary" onclick={() => send({ type: 'next' })}>Weiter</Button>
 		</div>
@@ -84,7 +87,7 @@
 		<div class="head">
 			<h2 id="phase">{today.executed === null ? 'Heute wird niemand hingerichtet' : `${name(today.executed)} wird hingerichtet`}</h2>
 		</div>
-		<Circle seats={s.seats} />
+		<div class="cap"><Circle seats={s.seats} /></div>
 		<div class="row">
 			<Button variant="primary" onclick={() => send({ type: 'next' })}>Weiter</Button>
 		</div>
@@ -120,28 +123,29 @@
 <style>
 	.head {
 		display: flex;
-		align-items: baseline;
-		justify-content: space-between;
-		gap: 12px;
+		flex-direction: column;
+		align-items: stretch;
+		gap: 10px;
+		text-align: center;
 	}
 
 	.head :global(h2) {
 		font-size: 22px;
 	}
 
-	.facts {
-		margin: 0;
-		font-weight: 700;
-	}
-
-	.why {
-		margin: 0;
-		padding: 0;
-		list-style: none;
-		font-size: 15px;
+	/* the circle measures its own width, so a narrower box is how the viewport height caps it */
+	.cap {
+		width: min(100%, calc(100svh - 380px));
+		min-width: min(100%, 320px);
+		margin-inline: auto;
 	}
 
 	.pad {
 		padding: 20px;
+		text-align: center;
+	}
+
+	.pad :global(.row) {
+		justify-content: center;
 	}
 </style>
