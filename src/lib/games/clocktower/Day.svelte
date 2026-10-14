@@ -2,6 +2,7 @@
 	import type { ScreenProps } from '#lib/games/registry.ts';
 	import Button from '#lib/ui/Button.svelte';
 	import Circle from './Circle.svelte';
+	import Modal from '#lib/ui/Modal.svelte';
 	import Dawn from './Dawn.svelte';
 	import SeatActions from './SeatActions.svelte';
 	import Timer from './Timer.svelte';
@@ -16,6 +17,7 @@
 	const s = $derived(game as ClocktowerState);
 	const today = $derived(s.today!);
 	let sheet = $state<number | null>(null);
+	let ending = $state(false);
 	const nominee = $derived(today.pending ?? s.today!.nominations.at(-1)?.nominee ?? null);
 	const nominator = $derived(s.today!.nominations.at(-1)?.nominator ?? null);
 	const name = (i: number | null) => (i === null ? '' : s.seats[i].player.name);
@@ -49,6 +51,9 @@
 		{@render head(`Tag ${today.number}`)}
 		<Circle seats={s.seats} block={today.block} onseat={(i) => (sheet = i)} />
 		{#if today.block !== null}<p class="facts">Auf dem Block: {name(today.block)}</p>{/if}
+		<div class="row">
+			<Button variant="primary" onclick={() => (ending = true)}>Tag beenden</Button>
+		</div>
 	</section>
 {:else if screen === 'nominator'}
 	<section class="stack" aria-labelledby="phase">
@@ -74,6 +79,16 @@
 			<Button variant="primary" onclick={() => send({ type: 'next' })}>Weiter</Button>
 		</div>
 	</section>
+{:else if screen === 'execution'}
+	<section class="stack" aria-labelledby="phase">
+		<div class="head">
+			<h2 id="phase">{today.executed === null ? 'Heute wird niemand hingerichtet' : `${name(today.executed)} wird hingerichtet`}</h2>
+		</div>
+		<Circle seats={s.seats} />
+		<div class="row">
+			<Button variant="primary" onclick={() => send({ type: 'next' })}>Weiter</Button>
+		</div>
+	</section>
 {:else}
 	<section class="panel stack pad" aria-labelledby="phase">
 		<h2 id="phase">Tag {s.phase.kind}</h2>
@@ -82,6 +97,16 @@
 		</div>
 	</section>
 {/if}
+
+<Modal open={ending} title="Tag beenden?" onclose={() => (ending = false)}>
+	<p class="muted">
+		{today.block === null ? 'Niemand ist auf dem Block, heute wird niemand hingerichtet.' : `${name(today.block)} wird hingerichtet.`}
+	</p>
+	<div class="row">
+		<Button variant="danger" onclick={() => { ending = false; send({ type: 'endDay' }); }}>Ja, Tag beenden</Button>
+		<Button variant="ghost" onclick={() => (ending = false)}>Weiter beraten</Button>
+	</div>
+</Modal>
 
 {#snippet head(title: string)}
 	<div class="head">

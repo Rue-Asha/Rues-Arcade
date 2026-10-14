@@ -199,6 +199,10 @@ test('Scenario: Timer reads Zeit um at zero and never blocks', async ({ page }) 
 	});
 	expect(color).toBe(evil);
 	await expect(seat(page, 1)).toBeEnabled();
+	await seat(page, 1).click();
+	await expect(dialog(page).getByRole('button', { name: 'Nominieren', exact: true })).toBeEnabled();
+	await dialog(page).getByRole('button', { name: 'Schließen', exact: true }).click();
+	await expect(live(page).getByRole('button', { name: 'Tag beenden', exact: true })).toBeEnabled();
 });
 
 const live_ = (page: Page) => live(page);
@@ -404,4 +408,82 @@ test('Scenario: Block holder marked on the circle', async ({ page }) => {
 	await expect(live(page).locator('[data-block]')).toHaveCount(1);
 	await expect(seat(page, 6)).toHaveAttribute('data-block', '');
 	await expect(live(page).getByText('Auf dem Block: Fey', { exact: true })).toBeVisible();
+});
+
+const noNames = async (page: Page) => {
+	const text = (await dialog(page).innerText()).toLowerCase();
+	for (const c of characters) expect(text, c.name).not.toContain(c.name.toLowerCase());
+};
+
+test('Scenario: Seat actions name no character', async ({ page }) => {
+	await open(page, ghost(day1(seated(F7)), 1));
+	await seat(page, 1).click();
+	for (const name of ['Nominieren', 'Sofort hinrichten', 'Ist gestorben'])
+		await expect(dialog(page).getByRole('button', { name, exact: true })).toBeVisible();
+	await expect(dialog(page).getByRole('button', { name: 'Lebt doch', exact: true })).toHaveCount(0);
+	await noNames(page);
+	await dialog(page).getByRole('button', { name: 'Schließen', exact: true }).click();
+
+	await seat(page, 2).click();
+	for (const name of ['Lebt doch', 'Geisterstimme weg'])
+		await expect(dialog(page).getByRole('button', { name, exact: true })).toBeVisible();
+	await expect(dialog(page).getByRole('button', { name: 'Sofort hinrichten', exact: true })).toHaveCount(0);
+	await noNames(page);
+
+	await dialog(page).getByRole('button', { name: 'Geisterstimme weg', exact: true }).click();
+	await expect(seat(page, 2)).not.toHaveAttribute('data-ghost');
+	await seat(page, 2).click();
+	await dialog(page).getByRole('button', { name: 'Geisterstimme zurück', exact: true }).click();
+	await expect(seat(page, 2)).toHaveAttribute('data-ghost', '');
+	await seat(page, 2).click();
+	await dialog(page).getByRole('button', { name: 'Lebt doch', exact: true }).click();
+	await expect(seat(page, 2)).not.toHaveAttribute('data-dead');
+
+	await seat(page, 3).click();
+	await dialog(page).getByRole('button', { name: 'Ist gestorben', exact: true }).click();
+	await expect(seat(page, 3)).toHaveAttribute('data-dead', '');
+	await expect(live(page).getByRole('button', { name: 'Tag beenden', exact: true })).toBeVisible();
+
+	await seat(page, 4).click();
+	await dialog(page).getByRole('button', { name: 'Sofort hinrichten', exact: true }).click();
+	await expect(live(page).getByRole('heading', { name: 'Dani wird hingerichtet', exact: true })).toBeVisible();
+	await expect(seat(page, 4)).toHaveAttribute('data-dead', '');
+});
+
+const withBlock = () => play(day1(seated(F7)), [
+	{ type: 'nominee', seat: 3 }, { type: 'nominate', nominator: 0 }, { type: 'vote' }, { type: 'swept' },
+	{ type: 'count', votes: 4 }, { type: 'confirm' }, { type: 'next' }
+]);
+
+async function endDay(page: Page) {
+	await live(page).getByRole('button', { name: 'Tag beenden', exact: true }).click();
+	await dialog(page).getByRole('button', { name: 'Ja, Tag beenden', exact: true }).click();
+}
+
+test('Scenario: Tag beenden executes the block holder', async ({ page }) => {
+	await open(page, withBlock());
+	await live(page).getByRole('button', { name: 'Tag beenden', exact: true }).click();
+	await expect(dialog(page).getByText('Dani wird hingerichtet.', { exact: true })).toBeVisible();
+	await dialog(page).getByRole('button', { name: 'Ja, Tag beenden', exact: true }).click();
+	await expect(live(page).getByRole('heading', { name: 'Dani wird hingerichtet', exact: true })).toBeVisible();
+	await expect(seat(page, 4)).toHaveAttribute('data-dead', '');
+	await live(page).getByRole('button', { name: 'Weiter', exact: true }).click();
+	await expect(page.getByTestId('status')).toHaveText('Nacht 2 · 6 von 7 leben');
+});
+
+test('Scenario: No execution after a tie or without nominations', async ({ page }) => {
+	const tie = play(withBlock(), [
+		{ type: 'nominee', seat: 5 }, { type: 'nominate', nominator: 1 }, { type: 'vote' }, { type: 'swept' },
+		{ type: 'count', votes: 4 }, { type: 'confirm' }, { type: 'next' }
+	]);
+	await open(page, tie);
+	await expect(live(page).locator('[data-block]')).toHaveCount(0);
+	await endDay(page);
+	await expect(live(page).getByRole('heading', { name: 'Heute wird niemand hingerichtet', exact: true })).toBeVisible();
+	await expect(live(page).locator('[data-dead]')).toHaveCount(0);
+
+	await open(page, day1(seated(F7)));
+	await endDay(page);
+	await expect(live(page).getByRole('heading', { name: 'Heute wird niemand hingerichtet', exact: true })).toBeVisible();
+	await expect(live(page).locator('[data-dead]')).toHaveCount(0);
 });
