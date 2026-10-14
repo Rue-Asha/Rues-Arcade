@@ -118,6 +118,30 @@ Rue hosts Blood on the Clocktower game nights with no physical grimoire and runs
 - **S38** The deck ends with a character sheet in the look of `Character Sheet.pdf` (not a copy): all 22 characters with icon, name, team and a more detailed German explanation plus the original ability text, re-proportioned so it fits one desktop viewport and, on phone, two swipeable pages (Gut / Böse) whose text is at least 14px and that scroll vertically within the page, with no horizontal scroll (changed 2026-10-14, user decision: was "each fit one screen for a photo"). The same component is reused by S13.
   - edges: "how to win" box with the official rules; icon attribution line (CC BY 3.0) on the sheet and a credits slide.
 
+### Gate 2 revisions (2026-10-14, user feedback after looking at the build)
+Verbatim feedback is in `gate2-feedback.md`. The palette stays; nothing here may lower legibility (contrast ≥ 4.5:1, existing text-size floors).
+- **S39** Atmosphere: the lobby and the nights are visibly night-themed (e.g. stars and a moon in the background); the day screen subtly shows a sun and is brighter and livelier. Decoration is inline (no external assets), behind content, and never reduces legibility.
+
+- **S40** The deck's voting slide gets the reference animation from `~/Documents/Daddelei/Blood on the Clocktower - Game Night.html`: a clock hand sweeps around the circle, the nodes it passes turn red as votes, and a vote count counts up. Reduced motion shows the end state.
+
+- **S41** Setup: the storyteller sees every seat's character at a glance, in or under the circle, as the character icon in its team colour, without opening anything.
+
+- **S42** The info boxes center their text instead of aligning it right.
+
+- **S43** The grimoire circle (setup, night, day) looks less flat: decorated with ornament and visibly connected seats (e.g. a ring linking them), on the livelier background from S39.
+
+- **S44** When a screen has to scroll, "Weiter" (the primary action) sits at the very end of the content instead of a sticky bar that cuts it off; the circle with the players and the info should be visible in one piece as far as possible.
+
+- **S45** The communication buttons (show-bar) get a better placement and a more compact form.
+
+- **S46** During the day the clock/timer is more visible and more emphasised.
+
+- **S47** The ghost-vote token is more decorated (still ✕ ● / ✕ ○ readable, accessible label unchanged).
+
+- **S48** The side info at the bottom left goes into a small box and becomes more legible.
+
+- **S49** End screen: seats are grouped by Good and Evil, each with its character's icon.
+
 ## Non-goals
 - Travellers, exile votes, Fabled — 5–15 players only (more than 15 needs Travellers).
 - Other scripts (Bad Moon Rising, Sects & Violets, custom scripts).
