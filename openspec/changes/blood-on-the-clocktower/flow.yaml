@@ -5,6 +5,8 @@ base: main
 gate0: 2026-10-14
 gate1: 2026-10-14
 learnings:
+- Rue chose in Verify r1 (2026-10-14): desktop sheet slide keeps ≥12px as an exception to the deck's 16px rule (one-screen overview); ghost vote stays symbol-only (✕ ●/✕ ○) with the words in the accessible label → spec wording "shape and label" and "every slide ≥16px" were ambiguous or infeasible for dense reference screens; planner states legibility exceptions explicitly
+- review r1 found 3 reproduced reducer bugs (duplicate history key on end reveal, Zurück onto an answered dusk question traps the guide, starpass leaves the new Imp's old Minion step) that unit tests per action missed → planner adds cross-action sequence scenarios (SW takeover + starpass same night, back across answered questions) for state machines (2026-10-14)
 - Rue chose (2026-10-14, after U11): phone character sheet scrolls at ≥14px text instead of fitting one screen at 9.5px; fullscreen explanation deck (covers header and mute) accepted → the planner specced "sheet fits one phone screen" without measuring whether 22 entries fit at a legible size; dense reference screens get a fit estimate at planning time
 - the look walk grows with every unit (deck alone added ~34 screens per project; 2.0m of a 300s budget) → planner budgets look-walk time per unit (U11 friction, 2026-10-14)
 - a fixer committed on a red proof:full after the one failing test (feud-history tiebreak, shared DB) passed alone → fixer briefs say: a red full run means rerun the whole proof:full once before committing, never a scoped rerun (2026-10-14)
