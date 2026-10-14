@@ -1,12 +1,17 @@
 import { expect, test, type Page } from '@playwright/test';
 import { readdirSync } from 'node:fs';
-import { ambient, seedRoster } from './helpers.ts';
+import { F7, seated } from '../src/lib/games/clocktower/fixtures.ts';
+import { seedClocktower } from './clocktower-session.ts';
+import { ambient, live, seedRoster } from './helpers.ts';
+import { day1 } from './walks/clocktower-day.ts';
 
 // Blood on the Clocktower keeps roster and count in localStorage only, so phone and desktop never share state.
 const crew = (n: number) => Array.from({ length: n }, (_, i) => `Spieler ${i + 1}`);
 const html = (page: Page) => page.locator('html');
 const NIGHT_GROUND = 'rgb(16, 14, 20)';
 const ARCADE_GROUND = 'rgb(17, 18, 52)';
+const DAY_GROUND = 'rgb(232, 223, 203)';
+const firstPaint = (page: Page) => page.evaluate(() => (window as unknown as { firstPaint?: string[] }).firstPaint);
 
 async function toPlay(page: Page) {
 	await seedRoster(page, crew(5));
@@ -64,7 +69,10 @@ test('Scenario: No theme flash on reload', async ({ page, request }) => {
 	await page.addInitScript(() => {
 		const look = () => {
 			if (!document.body) return requestAnimationFrame(look);
-			(window as unknown as { firstPaint: string }).firstPaint = getComputedStyle(document.body).backgroundColor;
+			(window as unknown as { firstPaint: string[] }).firstPaint = [
+				getComputedStyle(document.body).backgroundColor,
+				document.documentElement.dataset.variant ?? ''
+			];
 		};
 		look();
 	});
@@ -74,7 +82,15 @@ test('Scenario: No theme flash on reload', async ({ page, request }) => {
 	await expect(page.getByRole('heading', { level: 1, name: 'Blood on the Clocktower' })).toBeVisible();
 	await expect(html(page)).toHaveAttribute('data-theme', 'clocktower');
 	await expect(html(page)).toHaveAttribute('data-variant', 'night');
-	await expect.poll(() => page.evaluate(() => (window as unknown as { firstPaint?: string }).firstPaint)).toBe(NIGHT_GROUND);
+	await expect.poll(() => firstPaint(page)).toEqual([NIGHT_GROUND, 'night']);
+
+	// by day the variant comes from the saved session, before the app hydrates
+	await seedClocktower(page, day1(seated(F7)));
+	await page.goto('/spiele/clocktower/spielen');
+	await page.reload();
+	await expect(live(page).getByRole('button', { name: 'Tag beenden', exact: true })).toBeVisible();
+	await expect(html(page)).toHaveAttribute('data-variant', 'day');
+	await expect.poll(() => firstPaint(page)).toEqual([DAY_GROUND, 'day']);
 });
 
 test('Scenario: Clocktower fonts are self-hosted', async ({ page, baseURL }) => {
@@ -153,6 +169,15 @@ test('Scenario: Other games keep the Arcade-Abend look', async ({ page }) => {
 	// by link: the layout takes the theme off again without a reload
 	await page.getByRole('link', { name: "Rue's Arcade" }).click();
 	await expect(page).toHaveURL(/\/$/);
+	await expect(page.getByRole('link', { name: /Imposter/ })).toBeVisible();
+	await expect(html(page)).not.toHaveAttribute('data-theme');
+	await expect(html(page)).not.toHaveAttribute('data-variant');
+	await expect.poll(() => fonts(page)).toMatchObject({ bg: ARCADE_GROUND, body: expect.stringContaining('Sora') });
+	await page.getByRole('link', { name: /Imposter/ }).click();
+	await expect(page).toHaveURL(/\/spiele\/imposter$/);
+	await expect(page.getByRole('heading', { level: 1, name: 'Imposter' })).toBeVisible();
+	await expect(html(page)).not.toHaveAttribute('data-theme');
+	await expect.poll(() => fonts(page)).toMatchObject({ bg: ARCADE_GROUND, body: expect.stringContaining('Sora') });
 
 	for (const path of ['/', '/spieler', '/spiele/imposter', '/spiele/imposter/lobby', '/spiele/imposter/spielen']) {
 		await page.goto(path);

@@ -46,8 +46,9 @@ use IM Fell English SC, body text Alegreya Sans, numerals IM Fell English, all s
 their OFL licence texts in `static/fonts/`; Press Start 2P SHALL NOT be used on any Blood on the Clocktower screen.
 The start, lobby, deck, setup, reveal, night and end screens SHALL use the night variant, dawn and day screens the day
 variant, and the change between them SHALL be animated (view transition or a finite opacity animation), instant under
-reduced motion. Textures SHALL be CSS layers over a solid background colour. The attribute SHALL be rendered by the
-server so a reload shows no other theme first. All look rules SHALL hold in both variants: text contrast at least
+reduced motion. Textures SHALL be CSS layers over a solid background colour. The theme SHALL be set before the first
+paint so a reload shows no other theme first: the server renders `data-theme` and the night variant into `<html>`, and
+on the play route a script in the page head sets the variant from the saved session before the first paint. All look rules SHALL hold in both variants: text contrast at least
 4.5:1, touch targets at least 44px, no horizontal scroll at 390px, no request to another origin, ambient loops only on
 transform/opacity and none under reduced motion. The Home tile SHALL carry its own inline-SVG badge and tile art, and
 the start banner its own art (motif `clocktower`, a clock face), under the decoration rules; the lobby uses the shared
@@ -64,8 +65,8 @@ crew art and play the rings backdrop or the theme's own night sky.
 - **proof:** e2e
 
 #### Scenario: No theme flash on reload
-- **WHEN** the raw HTML of `/spiele/clocktower` is fetched from the server and the page is reloaded
-- **THEN** the served `<html>` tag already carries `data-theme="clocktower"` and `data-variant="night"`, and the first painted body background is the night ground
+- **WHEN** the raw HTML of `/spiele/clocktower` is fetched from the server and the page is reloaded, and then `/spiele/clocktower/spielen` is reloaded with a saved day-phase session
+- **THEN** the served `<html>` tag already carries `data-theme="clocktower"` and `data-variant="night"`, the first painted body background on the start screen is the night ground, and on the play route the first painted frame already has `data-variant="day"` and the day ground
 - **proof:** e2e
 
 #### Scenario: Clocktower fonts are self-hosted
