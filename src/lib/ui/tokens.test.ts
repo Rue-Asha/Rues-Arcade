@@ -79,6 +79,17 @@ describe('design tokens', () => {
 			expect(rule("[data-theme='clocktower']"), font).toMatch(new RegExp(font));
 	});
 
+	it('Scenario: Atmosphere keeps every screen legible (tokens)', () => {
+		const css = readFileSync('src/app.css', 'utf8');
+		for (const [name, set] of [['night', clocktowerNight], ['day', clocktowerDay]] as const)
+			for (const text of ['text', 'text-soft', 'muted'] as const)
+				expect(contrast(set[text], set.sky), `${name} ${text} on the sky`).toBeGreaterThanOrEqual(4.5);
+		expect(clocktowerDay.ground).toBe('#e8dfcb');
+		const body = css.slice(css.indexOf("[data-theme='clocktower'][data-variant='day'] body {"));
+		const layers = body.slice(0, body.indexOf('}')).match(/radial-gradient\(/g) ?? [];
+		expect(layers.length, 'day gradient layers over the solid ground').toBeGreaterThanOrEqual(3);
+	});
+
 	it('every Clocktower font file has a face and an OFL text', () => {
 		const css = readFileSync('src/app.css', 'utf8');
 		for (const file of [

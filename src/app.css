@@ -176,7 +176,8 @@
 	--font-data: 'IM Fell English', Georgia, serif;
 	--font-display: 'IM Fell English SC', 'IM Fell English', Georgia, serif;
 	--font-num: 'IM Fell English', Georgia, serif;
-	--sky: #1f1a26;
+	--sky: #221d3a;
+	--sun: #e1ad63;
 }
 
 [data-theme='clocktower'][data-variant='day'] {
@@ -215,7 +216,8 @@
 	--evil: #a12f2f;
 	--evil-tint: #e6cfc2;
 	--demon: #8a1f22;
-	--sky: #f3ecdc;
+	--sky: #fbf1d6;
+	--sun: #d4912a;
 }
 
 [data-theme='clocktower'] body {
@@ -223,6 +225,16 @@
 	background-repeat: no-repeat;
 	background-size: 100% 100dvh;
 	font-size: 18px;
+}
+
+/* the day's gradient layers sit over the solid --ground: a warm glow where the sun is and a second one low on the left */
+[data-theme='clocktower'][data-variant='day'] body {
+	background-image:
+		radial-gradient(circle 420px at 78% 0%, color-mix(in srgb, var(--sun) 34%, transparent), transparent 70%),
+		radial-gradient(ellipse 70% 45% at 0% 100%, color-mix(in srgb, var(--sun) 16%, transparent), transparent),
+		radial-gradient(ellipse 120% 70% at 50% 0%, var(--sky), transparent 75%);
+	background-repeat: no-repeat;
+	background-size: 100% 100dvh;
 }
 
 [data-theme='clocktower'] h1,

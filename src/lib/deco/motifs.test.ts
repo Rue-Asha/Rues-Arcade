@@ -123,6 +123,16 @@ describe('Art', () => {
 		}
 	});
 
+	it('the Clocktower sky draws stars, a moon and a sun as inline SVG without text', () => {
+		for (const place of ['lobby', 'play'] as const) {
+			const body = html('clocktower', place);
+			expect(body.match(/data-star/g)?.length, place).toBeGreaterThanOrEqual(5);
+			expect(body.match(/data-moon/g), place).toHaveLength(1);
+			expect(body.match(/data-sun/g), place).toHaveLength(1);
+			expect(body, place).not.toContain('<text');
+		}
+	});
+
 	it('the Imposter masks have one odd mask, the start dial is labelled Kalt and Heiß', () => {
 		for (const place of ['tile', 'start'] as const) {
 			expect(html('imposter', place).match(/class="mask/g)?.length, place).toBeGreaterThanOrEqual(4);
@@ -223,6 +233,7 @@ describe('ambient motion', () => {
 		expect(all['Mask.svelte'].inside).toMatch(/\.odd\s*\{[^}]*animation:[^;]*\binfinite\b/);
 		expect(all['Rings.svelte'].inside).toMatch(/animation:[^;]*\binfinite\b/);
 		expect(all['Clocktower.svelte'].inside).toMatch(/\.minute\s*\{[^}]*animation:[^;]*\binfinite\b/);
+		expect(all['Sky.svelte'].inside).toMatch(/animation:[^;]*\binfinite\b/);
 	});
 
 	it('keyframes animate transform or opacity only', () => {

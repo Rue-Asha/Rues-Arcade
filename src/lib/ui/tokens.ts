@@ -131,7 +131,9 @@ export const clocktowerNight = {
 	outsider: '#99cedf',
 	evil: '#e66e68',
 	'evil-tint': '#2a1618',
-	demon: '#f05653'
+	demon: '#f05653',
+	sky: '#221d3a',
+	sun: '#e1ad63'
 } as const;
 
 // on parchment the fills are dark, so ink (text on a fill) turns light
@@ -168,7 +170,9 @@ export const clocktowerDay: Record<keyof typeof clocktowerNight, string> = {
 	outsider: '#1f5c70',
 	evil: '#a12f2f',
 	'evil-tint': '#e6cfc2',
-	demon: '#8a1f22'
+	demon: '#8a1f22',
+	sky: '#fbf1d6',
+	sun: '#d4912a'
 };
 
 export type ClocktowerToken = keyof typeof clocktowerNight;

@@ -24,7 +24,7 @@
 	const motif = $derived(motifFor(slug, place));
 </script>
 
-<div class="deco" data-deco data-motif={motif} aria-hidden="true">
+<div class="deco" class:open={motif === 'sky' && place === 'play'} data-deco data-motif={motif} aria-hidden="true">
 	{#if motif === 'home'}
 		<Home />
 	{:else if motif === 'dial'}
@@ -46,7 +46,7 @@
 	{:else if motif === 'clocktower'}
 		<Clocktower {place} />
 	{:else if motif === 'sky'}
-		<Sky />
+		<Sky {place} />
 	{:else if motif === 'corner'}
 		<Corner />
 	{:else}
@@ -60,5 +60,9 @@
 		inset: 0;
 		overflow: hidden;
 		pointer-events: none;
+	}
+
+	.open {
+		overflow: visible;
 	}
 </style>
