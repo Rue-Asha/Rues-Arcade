@@ -420,8 +420,8 @@ export function slides(count: number): Slide[] {
 			title: 'Die Nacht in der App',
 			lead: 'Der private Nachtführer geht jede Rolle in vier Bildschirmen durch.',
 			steps: [
-				{ n: '1', title: 'Wecken', text: 'Die App nennt, wen ihr weckt, und wie ihr die Rolle leitet.' },
-				{ n: '2', title: 'Karte', text: 'Nur für euch: der Vorschlag für die Information, den ihr ändern dürft.' },
+				{ n: '1', title: 'Wecken', text: 'Nur für euch: wen ihr weckt, wie ihr die Rolle leitet, und der Vorschlag für die Information.' },
+				{ n: '2', title: 'Karte', text: 'Die Rollenkarte mit Team und Fähigkeit zum Nachlesen.' },
 				{ n: '3', title: 'Kreis', text: 'Im Grimoire tippt ihr das Ziel an oder zeigt der Person ihre Karte.' },
 				{ n: '4', title: 'Schlafen', text: 'Die Person schließt die Augen, weiter zur nächsten Rolle.' }
 			]
