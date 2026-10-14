@@ -2,17 +2,23 @@
 	import type { ScreenProps } from '#lib/games/registry.ts';
 	import Button from '#lib/ui/Button.svelte';
 	import Circle from './Circle.svelte';
+	import Dawn from './Dawn.svelte';
+	import Timer from './Timer.svelte';
 	import type { ClocktowerState } from './types.ts';
 
 	let { state: game, dispatch }: ScreenProps = $props();
 
 	const s = $derived(game as ClocktowerState);
 	const today = $derived(s.today!);
+	const screen = $derived(s.phase.kind === 'day' ? s.phase.screen : null);
 </script>
 
-{#if s.phase.kind === 'day' && s.phase.screen === 'grimoire'}
+{#if s.phase.kind === 'dawn'}
+	<Dawn state={s} {dispatch} />
+{:else if screen === 'grimoire'}
 	<section class="stack" aria-labelledby="phase">
 		<h2 id="phase" class="sr-only">Tag {today.number}</h2>
+		{#if today.deadline !== null}<Timer deadline={today.deadline} />{/if}
 		<Circle seats={s.seats} block={today.block} />
 	</section>
 {:else}

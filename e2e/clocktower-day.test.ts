@@ -109,3 +109,94 @@ test('Scenario: No grimoire by day', async ({ page }) => {
 	await expect(page.getByText(/Grimoire/i)).toHaveCount(0);
 	await expect(page.getByRole('button', { name: /Grimoire/i })).toHaveCount(0);
 });
+
+// day 2 after night 2: the dawn of the second morning, `deaths` recorded
+function dawn2(deaths: number[]): ClocktowerState {
+	const night2 = play(day1(seated(F8)), [{ type: 'execute', seat: 1 }, { type: 'next' }]);
+	return nightEnd(night2, deaths);
+}
+
+test('Scenario: Dawn shows the night\'s deaths', async ({ page }) => {
+	await open(page, dawn2([2]));
+	await expect(live(page).getByRole('heading', { name: 'Alle aufwachen', exact: true })).toBeVisible();
+	await live(page).getByRole('button', { name: 'Weiter', exact: true }).click();
+	await expect(live(page).getByRole('heading', { name: 'Cleo ist gestorben', exact: true })).toBeVisible();
+	await expect(seat(page, 3)).toHaveAttribute('data-dead', '');
+	await expect(seat(page, 3)).toHaveClass(/dying/);
+
+	await open(page, dawn2([]));
+	await live(page).getByRole('button', { name: 'Weiter', exact: true }).click();
+	await expect(live(page).getByRole('heading', { name: 'Niemand ist gestorben', exact: true })).toBeVisible();
+	await expect(live(page).locator('.dying')).toHaveCount(0);
+});
+
+test('Scenario: Death on the circle is animated', async ({ page }) => {
+	const toDeaths = async () => {
+		await open(page, dawn2([2]));
+		await live(page).getByRole('button', { name: 'Weiter', exact: true }).click();
+		await expect(seat(page, 3)).toHaveAttribute('data-dead', '');
+	};
+	const running = () =>
+		seat(page, 3).evaluate((el) => el.getAnimations().filter((a) => a.playState === 'running' && a.effect?.getTiming().iterations !== Infinity).length);
+
+	await toDeaths();
+	expect(await running()).toBeGreaterThan(0);
+
+	await page.emulateMedia({ reducedMotion: 'reduce' });
+	await toDeaths();
+	expect(await running()).toBe(0);
+	await expect(seat(page, 3).locator('.mark')).toBeVisible();
+});
+
+test('Scenario: Day timer dialog', async ({ page }) => {
+	await open(page, atTimer(seated(F7)));
+	const minutes = live(page).getByTestId('minutes');
+	await expect(minutes).toHaveText('8 min');
+	const less = live(page).getByRole('button', { name: 'Minute weniger', exact: true });
+	const more = live(page).getByRole('button', { name: 'Minute mehr', exact: true });
+	for (let i = 0; i < 8; i++) await less.click();
+	await expect(minutes).toHaveText('1 min');
+	for (let i = 0; i < 60; i++) await more.click();
+	await expect(minutes).toHaveText('59 min');
+
+	await live(page).getByRole('button', { name: 'Ohne Timer', exact: true }).click();
+	await expect(seat(page, 1)).toBeVisible();
+	await expect(page.getByTestId('timer')).toHaveCount(0);
+});
+
+test('Scenario: Reload keeps the remaining time', async ({ page }) => {
+	await page.clock.install({ time: T0 });
+	await open(page, atTimer(seated(F7)));
+	const minutes = live(page).getByTestId('minutes');
+	const less = live(page).getByRole('button', { name: 'Minute weniger', exact: true });
+	for (let i = 0; i < 3; i++) await less.click();
+	await expect(minutes).toHaveText('5 min');
+	await live(page).getByRole('button', { name: 'Timer starten', exact: true }).click();
+	await expect(page.getByTestId('timer')).toHaveText('5:00');
+
+	await page.clock.runFor(120_000);
+	await page.reload();
+	const left = await page.getByTestId('timer').textContent();
+	const [m, sec] = left!.split(':').map(Number);
+	expect(m * 60 + sec).toBeLessThanOrEqual(180);
+	expect(m * 60 + sec).toBeGreaterThan(175);
+});
+
+test('Scenario: Timer reads Zeit um at zero and never blocks', async ({ page }) => {
+	await page.clock.install({ time: T0 });
+	await open(page, day1(seated(F7), 1));
+	await expect(page.getByTestId('timer')).toHaveText('1:00');
+	await page.clock.runFor(61_000);
+	const timer = page.getByTestId('timer');
+	await expect(timer).toHaveText('Zeit um');
+	const [color, evil] = await timer.evaluate((el) => {
+		const probe = document.createElement('span');
+		probe.style.color = 'var(--evil)';
+		document.body.append(probe);
+		const evil = getComputedStyle(probe).color;
+		probe.remove();
+		return [getComputedStyle(el).color, evil];
+	});
+	expect(color).toBe(evil);
+	await expect(seat(page, 1)).toBeEnabled();
+});
