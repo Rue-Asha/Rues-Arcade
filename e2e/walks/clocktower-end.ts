@@ -1,7 +1,8 @@
-import type { Page } from '@playwright/test';
-import { F5, seated } from '../../src/lib/games/clocktower/fixtures.ts';
+import { expect, type Page } from '@playwright/test';
+import { F15, F5, seated } from '../../src/lib/games/clocktower/fixtures.ts';
 import type { CharacterId, ClocktowerState } from '../../src/lib/games/clocktower/types.ts';
-import { play } from '../clocktower-session.ts';
+import { play, seedClocktower } from '../clocktower-session.ts';
+import { live, settled } from '../helpers.ts';
 import { day1, nightEnd } from './clocktower-day.ts';
 
 // Good wins: the Imp (seat 7) passes the demon to the Poisoner (seat 6) on night 2 and the new Imp is executed on
@@ -34,5 +35,25 @@ export function evilWin(): ClocktowerState {
 	return play(toDay(nightEnd(night2, [0])), [{ type: 'execute', seat: 4 }, { type: 'next' }]);
 }
 
-// filled by task 10.3; seeds its own state
-export async function walk(page: Page, check: (slug: string) => Promise<void>) {}
+// A finished 15-seat game with a few dead seats, for the longest reveal list.
+function long(): ClocktowerState {
+	const s = seated(F15);
+	const seats = s.seats.map((x, i) => ({ ...x, alive: i % 4 !== 3, ghostVote: i % 8 !== 3 }));
+	return { ...s, seats, winner: 'good', phase: { kind: 'over', revealed: false } };
+}
+
+// The teaser and the reveal of a good win (starpass history, the Drunk), an evil win and a 15-seat game.
+export async function walk(page: Page, check: (slug: string) => Promise<void>) {
+	for (const [name, state] of [['good', goodWin()], ['evil', evilWin()], ['15', long()]] as const) {
+		await seedClocktower(page, state);
+		await page.goto('/spiele/clocktower/spielen');
+		await expect(live(page).getByRole('heading', { name: 'Das Spiel ist vorbei', exact: true })).toBeVisible();
+		await settled(page);
+		await check(`clocktower-end-teaser-${name}`);
+
+		await live(page).getByRole('button', { name: 'Weiter', exact: true }).click();
+		await expect(live(page).getByTestId('winner')).toBeVisible();
+		await settled(page);
+		await check(`clocktower-end-reveal-${name}`);
+	}
+}
