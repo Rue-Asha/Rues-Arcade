@@ -1,5 +1,6 @@
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
 import { seedRoster, settled } from './helpers.ts';
+import { walk as walkClocktower } from './walks/clocktower.ts';
 import { walk as walkCodes } from './walks/codes.ts';
 import { walk as walkDuck } from './walks/duck.ts';
 import { walk as walkFeud } from './walks/feud.ts';
@@ -40,6 +41,7 @@ async function walk(page: Page, info: TestInfo, check: Check) {
 	await walkDuck(page, check);
 	await walkMostLikely(page, check);
 	await walkFeud(page, check);
+	await walkClocktower(page, check);
 
 	await seedRoster(page, Array.from({ length: 13 }, (_, i) => `Spieler ${i + 1}`));
 	await page.goto('/spiele/imposter/lobby');

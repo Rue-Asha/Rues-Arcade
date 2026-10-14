@@ -7,5 +7,6 @@ import type { PageServerLoad } from './$types';
 export const load: PageServerLoad = ({ params }) => {
 	const entry = games.find((g) => g.def.slug === params.slug);
 	if (!entry) error(404, 'Dieses Spiel gibt es nicht.');
-	return { count: count(getDb(), entry.def.contentType) };
+	const type = entry.def.contentType;
+	return { count: type === 'none' ? 0 : count(getDb(), type) };
 };

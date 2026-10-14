@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import type { ContentItem } from '#lib/content/types.ts';
+	import { loadCount } from '#lib/count.ts';
 	import Banner from '#lib/deco/Banner.svelte';
 	import { games } from '#lib/games/registry.ts';
 	import { roster } from '#lib/roster.svelte.ts';
@@ -17,17 +18,28 @@
 	let picking = $state(false);
 	let picked = $state<string[]>([]);
 	let failure = $state('');
+	// count-first games: exactly this many play, read on every visit so a count changed on the start screen applies
+	let n = $state(0);
 
 	onMount(async () => {
 		await roster.ready();
-		picked = roster.players.map((p) => p.id);
-		picking = entry !== undefined && picked.length > entry.def.maxPlayers;
+		if (entry?.countFirst) {
+			const { def } = entry;
+			n = loadCount(def.slug, { min: def.minPlayers, max: def.maxPlayers }, roster.players.length);
+			picked = roster.players.slice(0, n).map((p) => p.id);
+			picking = roster.players.length > n;
+		} else {
+			picked = roster.players.map((p) => p.id);
+			picking = entry !== undefined && picked.length > entry.def.maxPlayers;
+		}
 		ready = true;
 	});
 
 	const players = $derived(ready ? roster.players : []);
 	const chosen = $derived(players.filter((p) => picked.includes(p.id)));
 	const guests = $derived(entry?.savedOnly ? chosen.filter((p) => roster.isGuest(p)) : []);
+	const most = $derived(entry?.countFirst ? n : (entry?.def.maxPlayers ?? 0));
+	const full = $derived(entry?.countFirst === true && chosen.length >= n);
 
 	function toggle(id: string) {
 		picked = picked.includes(id) ? picked.filter((p) => p !== id) : [...picked, id];
@@ -37,8 +49,11 @@
 		if (!entry) return;
 		const { def } = entry;
 		failure = '';
-		const res = await fetch(`/api/content/${def.contentType}`);
-		const content: ContentItem[] = res.ok ? await res.json() : [];
+		let content: ContentItem[] = [];
+		if (def.contentType !== 'none') {
+			const res = await fetch(`/api/content/${def.contentType}`);
+			content = res.ok ? await res.json() : [];
+		}
 		if (content.length < def.minContent) {
 			failure = `Für ${def.name} gibt es noch keine Inhalte.`;
 			return;
@@ -74,7 +89,12 @@
 			</Banner>
 		</header>
 
-		{#if players.length < def.minPlayers}
+		{#if entry.countFirst && players.length < n}
+			<div class="panel stack gap">
+				<p>Für {n} Spieler fehlen noch {n - players.length} im Kader.</p>
+				<a class="more" href="/spieler?from=/spiele/{def.slug}/lobby">Spieler hinzufügen</a>
+			</div>
+		{:else if players.length < def.minPlayers}
 			<div class="panel stack gap">
 				<p>
 					Für {def.name} braucht ihr mind. {def.minPlayers} Spieler, im Kader
@@ -83,19 +103,28 @@
 				<a class="more" href="/spieler?from=/spiele/{def.slug}/lobby">Spieler hinzufügen</a>
 			</div>
 		{:else if picking}
-			{@const within = chosen.length >= def.minPlayers && chosen.length <= def.maxPlayers}
+			{@const within = entry.countFirst ? chosen.length === n : chosen.length >= def.minPlayers && chosen.length <= def.maxPlayers}
 			<section class="stack" aria-labelledby="who">
 				<div class="pick-head">
 					<h2 id="who">Wer spielt mit?</h2>
 					<p class="muted" class:over={!within}>
-						{chosen.length} gewählt · mind. {def.minPlayers}, höchstens {def.maxPlayers}
+						{#if entry.countFirst}
+							{chosen.length} von {n} gewählt
+						{:else}
+							{chosen.length} gewählt · mind. {def.minPlayers}, höchstens {def.maxPlayers}
+						{/if}
 					</p>
 				</div>
 				<ul class="slots">
 					{#each players as p (p.id)}
 						<li>
 							<label class="slot" class:on={picked.includes(p.id)}>
-								<input type="checkbox" checked={picked.includes(p.id)} onchange={() => toggle(p.id)} />
+								<input
+									type="checkbox"
+									checked={picked.includes(p.id)}
+									disabled={full && !picked.includes(p.id)}
+									onchange={() => toggle(p.id)}
+								/>
 								<span class="box" aria-hidden="true">
 									<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>
 								</span>
@@ -113,7 +142,7 @@
 				<p>{def.name} braucht gespeicherte Spieler.</p>
 				<p class="muted">Nicht gespeichert: {guests.map((p) => p.name).join(', ')}.</p>
 				<a class="more" href="/spieler?from=/spiele/{def.slug}/lobby">Spieler speichern</a>
-				{#if players.length > def.maxPlayers}
+				{#if players.length > most}
 					<div class="row">
 						<Button variant="ghost" size="sm" onclick={() => (picking = true)}>Andere Spieler wählen</Button>
 					</div>
@@ -127,7 +156,7 @@
 					</p>
 				{/if}
 				<entry.Setup players={chosen} onstart={start} />
-				{#if players.length > def.maxPlayers}
+				{#if players.length > most}
 					<div class="row">
 						<Button variant="ghost" size="sm" onclick={() => (picking = true)}>Andere Spieler wählen</Button>
 					</div>
@@ -198,6 +227,15 @@
 		transition:
 			border-color 0.1s,
 			background-color 0.1s;
+	}
+
+	.slot:has(input:disabled),
+	.slot:has(input:disabled) input {
+		cursor: not-allowed;
+	}
+
+	.slot:has(input:disabled) {
+		color: var(--muted);
 	}
 
 	.slot.on {

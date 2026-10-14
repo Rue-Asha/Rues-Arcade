@@ -2,7 +2,7 @@
 	import { tick } from 'svelte';
 	import { MediaQuery } from 'svelte/reactivity';
 	import { invalidateAll } from '$app/navigation';
-	import { isSingle, isSurvey, type ContentItem, type ImportReport, type ItemType } from '#lib/content/types.ts';
+	import { isSingle, isSurvey, type ContentItem, type ContentType, type ImportReport, type ItemType } from '#lib/content/types.ts';
 	import { games } from '#lib/games/registry.ts';
 	import { roster } from '#lib/roster.svelte.ts';
 	import Button from '#lib/ui/Button.svelte';
@@ -46,9 +46,11 @@
 	};
 
 	const def = $derived(games.find((g) => g.def.slug === params.slug)!.def);
+	// the load answers 404 for a game without content
+	const type = $derived(def.contentType as ContentType);
 	const base = $derived(`/spiele/${def.slug}`);
 	const side = $derived(sides[def.contentType as ItemType]);
-	const single = $derived(isSingle(def.contentType));
+	const single = $derived(isSingle(type));
 	const api = $derived(`/api/content/${def.contentType}`);
 	const items = $derived(data.items);
 
@@ -178,7 +180,7 @@
 	<title>Inhalte · {def.name} · Rue's Arcade</title>
 </svelte:head>
 
-{#if isSurvey(def.contentType)}
+{#if isSurvey(type)}
 	<SurveyEditor {def} surveys={data.surveys} />
 {:else}
 	<div class="stack rise" style="--c: var(--{def.colour})">

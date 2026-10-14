@@ -22,20 +22,20 @@
 
 	// raw: the reducer returns a fresh object per action, a deep proxy would only wrap it
 	let demo = $state.raw<{ entry: GameEntry; run: DemoRun } | null>(null);
-	const tip = $derived(demo && view(demo.entry.demo, demo.run));
+	const tip = $derived(demo && view(demo.entry.demo!, demo.run));
 
 	// reads the state itself, not `tip`: a derived dies with this page, and the next page's buttons must see null
-	setDemo(() => demo && view(demo.entry.demo, demo.run));
+	setDemo(() => demo && view(demo.entry.demo!, demo.run));
 	onDestroy(() => (demo = null));
 
 	// nothing is persisted, so arriving by reload or a direct visit lands on the start screen
 	afterNavigate(({ type }) => {
 		if (!entry || type === 'enter') goto(base, { replace: true });
-		else demo = { entry, run: start(entry.def, entry.demo) };
+		else demo = { entry, run: start(entry.def, entry.demo!) };
 	});
 
 	function dispatch(action: { type: string }) {
-		if (demo) demo = { entry: demo.entry, run: next(demo.entry.def, demo.entry.demo, demo.run, action) };
+		if (demo) demo = { entry: demo.entry, run: next(demo.entry.def, demo.entry.demo!, demo.run, action) };
 	}
 </script>
 

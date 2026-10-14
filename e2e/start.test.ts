@@ -188,7 +188,8 @@ test('Scenario: Start panel first on phone, right column on desktop', async ({ p
 		['codes', 'Codes'],
 		['duck', 'What Rhymes with Duck'],
 		['most-likely', 'Most Likely To'],
-		['family-feud', 'Family Feud']
+		['family-feud', 'Family Feud'],
+		['clocktower', 'Blood on the Clocktower']
 	]) {
 		await page.goto(`/spiele/${slug}`);
 		// the page rises in; measure once it has landed
