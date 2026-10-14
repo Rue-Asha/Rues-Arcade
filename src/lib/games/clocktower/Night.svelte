@@ -2,6 +2,7 @@
 	import type { ScreenProps } from '#lib/games/registry.ts';
 	import { play } from '#lib/sound.ts';
 	import Button from '#lib/ui/Button.svelte';
+	import HoldGrimoire from './HoldGrimoire.svelte';
 	import Questions from './Questions.svelte';
 	import Wake from './Wake.svelte';
 	import type { ClocktowerState } from './types.ts';
@@ -32,7 +33,16 @@
 	<Wake state={s} {dispatch} at={here} />
 {/if}
 
+{#if here.screen !== 'dusk'}
+	<div class="peek"><HoldGrimoire state={s} /></div>
+{/if}
+
 <style>
+	.peek {
+		display: flex;
+		justify-content: flex-end;
+	}
+
 	.dusk {
 		padding: 20px;
 		text-align: center;

@@ -260,3 +260,58 @@ test('Scenario: Bluffs can be rerolled before showing', async ({ page }) => {
 	await card(page).click();
 	await expect(bar(page).getByRole('button', { name: 'Neu würfeln', exact: true })).toBeDisabled();
 });
+
+// The Drunk (seat 2, Bo) believes Empath; seat 1 is the red herring, seat 4 the Demon. Screen 1 is the Poisoner's wake.
+const drunkNight = () => play(night1(seated(['washerwoman', 'drunk', 'poisoner', 'imp', 'fortune-teller'], { believed: 'empath', redHerring: 0 })), next(1));
+const grimoireTexts = ['Washerwoman · Red Herring', 'Drunk (glaubt: Empath)', 'Poisoner', 'Imp · Dämon', 'Fortune Teller'];
+const hidden = ['Washerwoman · Red Herring', 'Drunk (glaubt: Empath)', 'Imp · Dämon', 'Fortune Teller'];
+
+async function centre(page: Page) {
+	const box = (await page.getByRole('button', { name: 'Grimoire', exact: true }).boundingBox())!;
+	return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+}
+
+test('Scenario: Grimoire visible only while held', async ({ page }) => {
+	await open(page, drunkNight());
+	for (const t of hidden) await expect(page.getByText(t, { exact: true })).toHaveCount(0);
+
+	const { x, y } = await centre(page);
+	await page.mouse.move(x, y);
+	await page.mouse.down();
+	for (const t of grimoireTexts) await expect(page.getByText(t, { exact: true }).first()).toBeVisible();
+	await page.mouse.up();
+	for (const t of hidden) await expect(page.getByText(t, { exact: true })).toHaveCount(0);
+});
+
+test('Scenario: Release outside the button hides the grimoire', async ({ page }) => {
+	await open(page, drunkNight());
+	const { x, y } = await centre(page);
+	await page.mouse.move(x, y);
+	await page.mouse.down();
+	await expect(page.getByText('Drunk (glaubt: Empath)', { exact: true })).toBeVisible();
+	await page.mouse.move(x, Math.max(10, y - 300), { steps: 4 });
+	await page.mouse.up();
+	await expect(page.getByText('Drunk (glaubt: Empath)', { exact: true })).toHaveCount(0);
+});
+
+test('Scenario: Grimoire by keyboard', async ({ page }) => {
+	await page.emulateMedia({ reducedMotion: 'reduce' });
+	await open(page, drunkNight());
+	await page.getByRole('button', { name: 'Grimoire', exact: true }).focus();
+	await page.keyboard.down('Space');
+	await expect(page.getByText('Drunk (glaubt: Empath)', { exact: true })).toBeVisible();
+	const running = await page.evaluate(() => document.getAnimations().filter((a) => a.playState === 'running').length);
+	expect(running).toBe(0);
+	await page.keyboard.up('Space');
+	await expect(page.getByText('Drunk (glaubt: Empath)', { exact: true })).toHaveCount(0);
+});
+
+test('Scenario: No grimoire by day', async ({ page }) => {
+	const dawn = play(firstDay(night1()), []);
+	await open(page, dawn);
+	await expect(page.getByTestId('status')).toHaveText('Tag 1 · 5 von 5 leben');
+	await expect(page.getByRole('button', { name: 'Grimoire', exact: true })).toHaveCount(0);
+	const night = night1();
+	await open(page, night);
+	await expect(page.getByRole('button', { name: 'Grimoire', exact: true })).toHaveCount(0);
+});
