@@ -198,6 +198,32 @@ test('Scenario: Show-bar opens full-screen cards', async ({ page }) => {
 	}
 });
 
+test('Scenario: Show-bar is compact', async ({ page }, project) => {
+	const state = play(fifteen(), next(circle(3)));
+	await open(page, state);
+	await expect(bar(page)).toBeVisible();
+	const m = await bar(page).evaluate((el) => {
+		const r = el.getBoundingClientRect();
+		const controls = [...el.querySelectorAll<HTMLElement>('button, select')].map((c) => c.getBoundingClientRect());
+		const seats = [...document.querySelectorAll<HTMLElement>('[data-seat]')].map((c) => c.getBoundingClientRect());
+		const hit = (a: DOMRect, b: DOMRect) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+		return {
+			height: r.height,
+			small: controls.filter((c) => c.width < 44 || c.height < 44).length,
+			overlap: seats.filter((c) => hit(c, r)).length,
+			wide: document.documentElement.scrollWidth > innerWidth
+		};
+	});
+	expect(m.height).toBeLessThanOrEqual(project.project.name === 'phone' ? 104 : 56);
+	expect(m.small).toBe(0);
+	expect(m.overlap).toBe(0);
+	expect(m.wide).toBe(false);
+	await expect(chip(page, 'Charakter')).toHaveAttribute('aria-pressed', 'true');
+	const ww = info(state, state.night!.steps[3]);
+	if (ww.kind !== 'pair') throw new Error('washerwoman info');
+	await expect(bar(page).getByLabel('Charakter', { exact: true })).toHaveValue(ww.character);
+});
+
 test('Scenario: Role preselects its cards', async ({ page }) => {
 	const base = fifteen();
 	const pressed = async (name: string) => expect(chip(page, name)).toHaveAttribute('aria-pressed', 'true');

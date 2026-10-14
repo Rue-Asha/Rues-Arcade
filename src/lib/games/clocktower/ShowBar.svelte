@@ -15,15 +15,15 @@
 
 	type Item = 'character' | 'demon' | 'minions' | 'bluffs' | 'youare' | 'number' | 'yes' | 'no';
 
-	const items: [Item, string][] = [
-		['character', 'Charakter'],
-		['demon', 'Das ist der Dämon'],
-		['minions', 'Deine Minions'],
-		['bluffs', 'Bluffs'],
-		['youare', 'Du bist'],
-		['number', 'Zahl'],
-		['yes', 'Ja'],
-		['no', 'Nein']
+	const items: [Item, string, string][] = [
+		['character', 'Charakter', '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>'],
+		['demon', 'Das ist der Dämon', '<path d="M5 3c1 4 3 5 7 5s6-1 7-5v9a7 7 0 0 1-14 0z"/><path d="M9 13h.01M15 13h.01"/>'],
+		['minions', 'Deine Minions', '<circle cx="8" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M2 20a6 6 0 0 1 12 0M15 15a5 5 0 0 1 7 5"/>'],
+		['bluffs', 'Bluffs', '<rect x="3" y="6" width="11" height="15" rx="2"/><path d="M17 4l4 1-3 14"/>'],
+		['youare', 'Du bist', '<path d="M12 3v13M6 11l6 6 6-6M5 21h14"/>'],
+		['number', 'Zahl', '<path d="M9 4L7 20M17 4l-2 16M4 9h17M3 15h17"/>'],
+		['yes', 'Ja', '<path d="M4 12l5 5L20 6"/>'],
+		['no', 'Nein', '<path d="M5 5l14 14M19 5L5 19"/>']
 	];
 
 	// what the role needs: the item and its value, from the true info (the storyteller can change both)
@@ -97,12 +97,16 @@
 </script>
 
 <div class="bar" data-testid="show-bar" role="group" aria-label="Zeigen">
-	<div class="chips">
-		{#each items as [id, name] (id)}
-			<button type="button" class="chip" aria-pressed={item === id} onclick={() => (picked = id)}>{name}</button>
+	<div class="pill">
+		{#each items as [id, name, icon] (id)}
+			<button type="button" class="seg" aria-pressed={item === id} title={name} onclick={() => (picked = id)}>
+				<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{@html icon}</svg>
+				<span class="sr">{name}</span>
+			</button>
 		{/each}
 	</div>
 	<div class="act">
+		<span class="now">{items.find(([id]) => id === item)?.[1] ?? 'Zeigen'}</span>
 		{#if item === 'character' || item === 'youare'}
 			<select
 				aria-label={item === 'character' ? 'Charakter' : 'Du bist'}
@@ -130,39 +134,57 @@
 <style>
 	.bar {
 		display: flex;
-		flex-direction: column;
-		gap: 8px;
-	}
-
-	.chips,
-	.act {
-		display: flex;
 		flex-wrap: wrap;
 		align-items: center;
+		justify-content: center;
 		gap: 8px;
 	}
 
-	.chip {
-		min-width: 44px;
-		min-height: 44px;
-		padding: 0 12px;
+	.pill {
+		display: flex;
+		overflow: hidden;
 		border: 1px solid var(--line);
-		border-radius: var(--radius);
+		border-radius: 999px;
 		background: var(--raised);
+	}
+
+	.seg {
+		display: grid;
+		place-items: center;
+		width: 44px;
+		height: 44px;
+		padding: 0;
+		border: 0;
+		border-radius: 999px;
+		background: transparent;
 		color: var(--text);
-		font: 600 15px/1.1 var(--font-ui);
 		cursor: pointer;
 		touch-action: manipulation;
 	}
 
-	.chip[aria-pressed='true'] {
-		border-color: var(--gold);
+	.seg[aria-pressed='true'] {
 		background: var(--gold-tint);
-		box-shadow: inset 0 0 0 1px var(--gold);
+		color: var(--gold);
+		box-shadow: inset 0 0 0 1.5px var(--gold);
+	}
+
+	.act {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		min-width: 0;
+	}
+
+	.now {
+		font: 700 13px/1.15 var(--font-ui);
+		color: var(--text-soft);
+		text-align: center;
+		max-width: 9ch;
 	}
 
 	select {
-		min-height: 46px;
+		min-height: 44px;
+		min-width: 0;
 		max-width: 100%;
 		padding: 0 12px;
 		border: 1px solid var(--line);
@@ -173,9 +195,18 @@
 	}
 
 	.bluffs {
-		flex: 1 1 100%;
 		margin: 0;
+		font-size: 14px;
 		color: var(--text-soft);
+		text-align: center;
 		overflow-wrap: anywhere;
+	}
+
+	.sr {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip-path: inset(50%);
 	}
 </style>

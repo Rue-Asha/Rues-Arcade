@@ -129,7 +129,6 @@
 {:else if at.screen === 'circle'}
 	<section class="stack circle" aria-labelledby="phase">
 		<h2 id="phase" class="sr">Grimoire</h2>
-		<ShowBar state={s} {dispatch} {step} />
 		{#if step.kind === 'imp'}
 			<div class="panel stack imp">
 				<span class="label">Ziel notieren</span>
@@ -148,6 +147,7 @@
 		{:else}
 			<div class="fit"><Circle seats={s.seats} marked={step.seats} /></div>
 		{/if}
+		<ShowBar state={s} {dispatch} {step} />
 		{@render peek?.()}
 		{@render nav()}
 	</section>
