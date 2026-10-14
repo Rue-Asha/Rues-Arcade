@@ -59,5 +59,7 @@
 	.dusk h2,
 	.dusk p {
 		margin: 0;
+		max-width: 36ch;
+		text-wrap: balance;
 	}
 </style>

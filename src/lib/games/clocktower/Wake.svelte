@@ -180,6 +180,8 @@
 	.info {
 		padding: 20px;
 		gap: 12px;
+		align-items: center;
+		text-align: center;
 	}
 
 	.wake h2,
@@ -187,10 +189,13 @@
 	.wake p,
 	.info p {
 		margin: 0;
+		max-width: 36ch;
+		text-wrap: balance;
 	}
 
 	.role {
 		display: flex;
+		justify-content: center;
 		align-items: center;
 		gap: 8px;
 		flex-wrap: wrap;
@@ -204,16 +209,21 @@
 	.imp {
 		padding: 12px;
 		gap: 8px;
-		align-items: flex-start;
+		align-items: center;
+		text-align: center;
 	}
 
 	.imp p {
 		margin: 0;
+		max-width: 36ch;
+		text-wrap: balance;
 	}
 
 	.facts {
 		display: flex;
 		flex-direction: column;
+		align-self: stretch;
+		align-items: center;
 		gap: 4px;
 		padding: 12px;
 		border-radius: var(--radius);
@@ -231,6 +241,7 @@
 	.nav {
 		display: flex;
 		flex-direction: column;
+		align-self: stretch;
 		gap: 8px;
 	}
 

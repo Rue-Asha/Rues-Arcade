@@ -57,11 +57,19 @@
 	.head {
 		padding: 20px;
 		gap: 8px;
+		align-items: center;
+		text-align: center;
 	}
 
 	.head h2,
 	.head p {
 		margin: 0;
+		max-width: 36ch;
+		text-wrap: balance;
+	}
+
+	.head .row {
+		justify-content: center;
 	}
 
 	.chip {

@@ -433,3 +433,39 @@ test('Scenario: Dead seats cannot be selected', async ({ page }) => {
 	await live(page).getByRole('button', { name: 'Weiter', exact: true }).click();
 	expect((await saved(page)).night!.deaths).toEqual([]);
 });
+
+// every element with text of its own inside the live panels, and the ones that are not centred
+async function offCentre(page: Page) {
+	return live(page).evaluate((stage) => {
+		const bad: string[] = [];
+		for (const el of stage.querySelectorAll<HTMLElement>('.panel, .panel *')) {
+			const own = [...el.childNodes].some((n) => n.nodeType === Node.TEXT_NODE && n.textContent!.trim() !== '');
+			if (own && getComputedStyle(el).textAlign !== 'center') bad.push(`${el.tagName}.${el.className}: ${el.textContent!.trim().slice(0, 30)}`);
+		}
+		return { bad, panels: stage.querySelectorAll('.panel').length, wide: document.documentElement.scrollWidth > innerWidth };
+	});
+}
+
+test('Scenario: Night and reveal panels centre their text', async ({ page }) => {
+	const base = fifteen();
+	const two = play(dead(firstDay(base), 9), [{ type: 'endDay' }, { type: 'next' }]);
+	const saint = play(voted(firstDay(base), 10, 0, 8), [{ type: 'endDay' }, { type: 'next' }, ...next(1)]);
+	const screens: [string, ClocktowerState][] = [
+		['reveal name', seated(F15)],
+		['dusk', base],
+		['question', saint],
+		['wake with suggestion', play(base, next(13))],
+		['info card', play(base, next(2))],
+		['imp target', play(two, next(11))],
+		['sleep', play(base, next(4))],
+		['deaths', play(two, next(29))]
+	];
+	for (const [name, state] of screens) {
+		await open(page, state);
+		await page.waitForTimeout(400);
+		const m = await offCentre(page);
+		expect(m.panels, name).toBeGreaterThan(0);
+		expect(m.bad, name).toEqual([]);
+		expect(m.wide, name).toBe(false);
+	}
+});

@@ -58,6 +58,18 @@
 <style>
 	.deal {
 		padding: 20px;
+		align-items: center;
+		text-align: center;
+	}
+
+	.deal p,
+	.deal h2 {
+		max-width: 36ch;
+		text-wrap: balance;
+	}
+
+	.deal .row {
+		justify-content: center;
 	}
 
 	.name {
