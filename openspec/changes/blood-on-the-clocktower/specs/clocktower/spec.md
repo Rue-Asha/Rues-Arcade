@@ -772,7 +772,7 @@ to the start screen. A deep link to a single slide is not required.
 
 #### Scenario: Deck readable without horizontal scroll
 - **WHEN** every slide is shown at 390×844 and 1280×800
-- **THEN** no slide scrolls horizontally, body text is at least 16px and each slide's content fits the viewport or scrolls vertically inside it
+- **THEN** no slide scrolls horizontally, body text is at least 16px on every slide except the character sheet (at least 14px on phone, at least 12px including the credit line on desktop) and each slide's content fits the viewport or scrolls vertically inside it
 - **proof:** e2e
 
 #### Scenario: Deck closes to the start screen
@@ -835,10 +835,11 @@ Space), and the end reveal.
 The deck SHALL end with a character sheet in the look of Rue's `Character Sheet.pdf` (not a copy): all 22 characters
 with icon, name, team and a more detailed German explanation plus the original ability text, a "So gewinnt ihr" box
 with the official win rules, and an icon attribution line (game-icons.net, CC BY 3.0); it SHALL fit one desktop
-viewport (1280×800) without scrolling and on phone be two swipeable pages, Gut and Böse, whose text is at least 14px and
-that each scroll vertically within the page, never horizontally. A credits slide SHALL
-carry the icon attribution and the note that the characters belong to The Pandemonium Institute. The same component
-SHALL be used on the setup board.
+viewport (1280×800) without scrolling, with text of at least 12px there (the attribution line included) as an
+exception to the deck's 16px body text, so it stays a one-screen overview, and on phone be two swipeable pages, Gut and
+Böse, whose text is at least 14px and that each scroll vertically within the page, never horizontally. A credits slide
+SHALL carry the icon attribution and the note that the characters belong to The Pandemonium Institute. The same
+component SHALL be used on the setup board.
 
 #### Scenario: Sheet lists all characters
 - **WHEN** the sheet component is rendered on the server

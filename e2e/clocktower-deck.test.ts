@@ -72,31 +72,19 @@ test('Scenario: Deck readable without horizontal scroll', async ({ page }, info)
 		const found = await page.evaluate(() => {
 			const el = document.querySelector<HTMLElement>('[data-slide]')!;
 			const st = document.querySelector<HTMLElement>('[data-testid="deck-stage"]')!;
-			const small: string[] = [];
+			const texts: [string, number][] = [];
 			const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
 			for (let node = walker.nextNode(); node; node = walker.nextNode()) {
 				const parent = node.parentElement!;
 				if (!(node as Text).data.trim() || !parent.checkVisibility()) continue;
-				const size = parseFloat(getComputedStyle(parent).fontSize);
-				if (size < 16) small.push(`${(node as Text).data.trim().slice(0, 24)} ${size}px`);
-			}
-			const small14: string[] = [];
-			if (el.dataset.slide === 'sheet') {
-				const w2 = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
-				for (let node = w2.nextNode(); node; node = w2.nextNode()) {
-					const parent = node.parentElement!;
-					if (!(node as Text).data.trim() || !parent.checkVisibility()) continue;
-					const size = parseFloat(getComputedStyle(parent).fontSize);
-					if (size < 14) small14.push(`${(node as Text).data.trim().slice(0, 24)} ${size}px`);
-				}
+				texts.push([(node as Text).data.trim().slice(0, 24), parseFloat(getComputedStyle(parent).fontSize)]);
 			}
 			const r = st.getBoundingClientRect();
 			const overflowY = getComputedStyle(el).overflowY;
 			return {
 				page: document.documentElement.scrollWidth,
 				sideways: Math.max(el.scrollWidth - el.clientWidth, st.scrollWidth - st.clientWidth),
-				small,
-				small14,
+				texts,
 				inside: r.left >= 0 && r.right <= innerWidth && r.bottom <= innerHeight,
 				fits: el.scrollHeight <= el.clientHeight + 1 || overflowY === 'auto' || overflowY === 'scroll'
 			};
@@ -105,10 +93,10 @@ test('Scenario: Deck readable without horizontal scroll', async ({ page }, info)
 		if (found.sideways > 0) failures.push(`${id}: slide scrolls sideways by ${found.sideways}px`);
 		if (!found.inside) failures.push(`${id}: stage leaves the viewport`);
 		if (!found.fits) failures.push(`${id}: content neither fits nor scrolls`);
-		// the sheet reads at 14px on phone, every other slide at 16px or more
-		const sheetPhone = id === 'sheet' && width < 900;
-		if (id !== 'sheet' && found.small.length) failures.push(`${id}: ${found.small.join(', ')}`);
-		if (sheetPhone && found.small14.length) failures.push(`${id}: ${found.small14.join(', ')}`);
+		// the sheet reads at 14px on phone and 12px on desktop (one screen), every other slide at 16px or more
+		const least = id !== 'sheet' ? 16 : width < 900 ? 14 : 12;
+		const small = found.texts.filter(([, size]) => size < least).map(([text, size]) => `${text} ${size}px`);
+		if (small.length) failures.push(`${id}: ${small.join(', ')}`);
 		if (i < M - 1) await forward(page, 1);
 	}
 	expect(failures, info.project.name).toEqual([]);
