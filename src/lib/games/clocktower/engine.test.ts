@@ -220,6 +220,13 @@ describe('clocktower reveal', () => {
 		expect(night.night).toMatchObject({ number: 1, at: 0, target: null, starpass: null, deaths: [] });
 		expect(night.night?.screens[0]).toEqual({ screen: 'dusk' });
 	});
+
+	it('covers a shown card again on back without moving on', () => {
+		const s = step(assign(start(5), ['washerwoman', 'empath', 'poisoner', 'imp', 'chef']), { type: 'lock' });
+		expect(step(s, { type: 'back' })).toBe(s);
+		const shown = step(s, { type: 'show' }, { type: 'hide' }, { type: 'show' });
+		expect(step(shown, { type: 'back' }).phase).toEqual({ kind: 'reveal', seat: 1, shown: false });
+	});
 });
 
 const screen = (s: ClocktowerState) => s.night!.screens[s.night!.at];
