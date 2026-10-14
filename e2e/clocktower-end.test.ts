@@ -1,10 +1,11 @@
 import { expect, test, type Page } from '@playwright/test';
 import { characters } from '../src/lib/games/clocktower/characters.ts';
 import type { ClocktowerState } from '../src/lib/games/clocktower/types.ts';
-import { seedClocktower } from './clocktower-session.ts';
+import { seated } from '../src/lib/games/clocktower/fixtures.ts';
+import { play, seedClocktower } from './clocktower-session.ts';
 import { live } from './helpers.ts';
-import { ghostless } from './walks/clocktower-day.ts';
-import { evilWin, goodWin } from './walks/clocktower-end.ts';
+import { day1, ghostless, nightEnd } from './walks/clocktower-day.ts';
+import { evilWin, goodWin, starpass } from './walks/clocktower-end.ts';
 
 async function open(page: Page, state: ClocktowerState) {
 	await seedClocktower(page, state);
@@ -63,7 +64,23 @@ test('Scenario: Reveal shows the winning team and every seat', async ({ page }) 
 	await expect(live(page).getByRole('button', { name: 'Zurück zum Start', exact: true })).toBeVisible();
 });
 
-test('Scenario: Reveal names evil as the winner', async ({ page }) => {
+test('Reveal lists a takeover and a starpass of the same night', async ({ page }) => {
+	// the Imp (seat 8) is executed, the Scarlet Woman (seat 7) takes over at dusk and passes on to the Poisoner (seat 6)
+	const roles = ['chef', 'investigator', 'monk', 'ravenkeeper', 'slayer', 'poisoner', 'scarlet-woman', 'imp'] as const;
+	const dusk = play(day1(seated([...roles])), [{ type: 'execute', seat: 7 }, { type: 'next' }, { type: 'next' }]);
+	const taken = play(dusk, [{ type: 'answer', yes: true }]);
+	const day2 = play(nightEnd(starpass(taken, 5), [6]), [{ type: 'next' }, { type: 'next' }, { type: 'timer', minutes: null, now: 0 }]);
+	await open(page, play(day2, [{ type: 'execute', seat: 5 }, { type: 'next' }]));
+	await weiter(page).click();
+
+	await expect(live(page).getByTestId('winner')).toHaveText('Das Gute gewinnt');
+	await expect(live(page).getByTestId('history').locator('p')).toHaveText([
+		'Nacht 2: Scarlet Woman Gus (#7) wird zum Imp, davor Hana (#8)',
+		'Nacht 2: Starpass von Gus (#7) zu Fey (#6), davor Poisoner'
+	]);
+});
+
+test('Reveal names evil as the winner', async ({ page }) => {
 	await open(page, evilWin());
 	await weiter(page).click();
 	await expect(live(page).getByTestId('winner')).toHaveText('Das Böse gewinnt');
@@ -71,7 +88,7 @@ test('Scenario: Reveal names evil as the winner', async ({ page }) => {
 	await expect(live(page).getByTestId('history')).toHaveText('Der Dämon blieb Dani (#4)');
 });
 
-test('Scenario: Reveal winner animated once, still under reduced motion', async ({ page }) => {
+test('Reveal winner animated once, still under reduced motion', async ({ page }) => {
 	await open(page, evilWin());
 	await weiter(page).click();
 	const winner = live(page).getByTestId('winner');

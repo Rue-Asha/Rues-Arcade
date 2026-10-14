@@ -10,7 +10,7 @@ import { day1, nightEnd } from './clocktower-day.ts';
 export const GOOD: CharacterId[] = ['washerwoman', 'empath', 'monk', 'ravenkeeper', 'drunk', 'poisoner', 'imp'];
 
 // Tonight's Imp step is open and the Imp passes the demon to `to`.
-function starpass(s: ClocktowerState, to: number): ClocktowerState {
+export function starpass(s: ClocktowerState, to: number): ClocktowerState {
 	let t = s;
 	for (;;) {
 		const n = t.night!;

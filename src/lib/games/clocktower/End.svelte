@@ -62,7 +62,7 @@
 		</ul>
 		<div class="panel history" data-testid="history">
 			{#if s.history.length}
-				{#each s.history as e (e.night)}<p>{event(e)}</p>{/each}
+				{#each s.history as e, i (i)}<p>{event(e)}</p>{/each}
 			{:else if s.demon !== null}
 				<p>Der Dämon blieb {who(s.seats, s.demon)}</p>
 			{/if}
