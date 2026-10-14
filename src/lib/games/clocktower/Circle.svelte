@@ -165,7 +165,13 @@
 			</button>
 		{/each}
 		{#if hand !== null}
-			<div class="hand" data-hand style:--angle="{angleOf(hand, count)}deg" style:--ms="{handMs}ms" aria-hidden="true"></div>
+			<div class="clock" aria-hidden="true">
+				<div class="hand" data-hand style:--angle="{angleOf(hand, count)}deg" style:--ms="{handMs}ms">
+					<span class="arm"></span>
+					<span class="tip" data-hand-tip></span>
+				</div>
+				<span class="hub" data-hub></span>
+			</div>
 		{/if}
 		{#if center}
 			<div class="centre">{@render center()}</div>
@@ -408,6 +414,7 @@
 	   inset:0 square would widen the page while it rotates */
 	.hand {
 		position: absolute;
+		z-index: 0;
 		left: 50%;
 		top: 0;
 		width: 0;
@@ -417,15 +424,45 @@
 		transition: transform var(--ms) linear;
 	}
 
-	.hand::before {
-		content: '';
+	/* under the seats: the hand reaches from the hub to the pointed seat's rim and vanishes behind it */
+	.clock {
 		position: absolute;
-		left: -2px;
-		top: calc(var(--seat) + 4px);
-		width: 4px;
-		height: calc(50% - var(--seat) - 4px);
-		border-radius: 2px;
+		inset: 0;
+		pointer-events: none;
+	}
+
+	.arm {
+		position: absolute;
+		left: -3px;
+		top: var(--seat);
+		width: 6px;
+		height: calc(50% - var(--seat));
+		border-radius: 3px 3px 1px 1px;
 		background: var(--clocktower);
+		clip-path: polygon(30% 0, 70% 0, 100% 100%, 0 100%);
+	}
+
+	.tip {
+		position: absolute;
+		left: -6px;
+		top: calc(var(--seat) - 7px);
+		width: 12px;
+		height: 12px;
+		border-radius: 50%;
+		background: var(--clocktower);
+		box-shadow: 0 0 0 3px var(--raised);
+	}
+
+	.hub {
+		position: absolute;
+		left: 50%;
+		top: 50%;
+		width: 22px;
+		height: 22px;
+		transform: translate(-50%, -50%);
+		border-radius: 50%;
+		background: var(--clocktower);
+		box-shadow: 0 0 0 4px var(--raised), 0 0 0 5px var(--clocktower);
 	}
 
 	.centre {

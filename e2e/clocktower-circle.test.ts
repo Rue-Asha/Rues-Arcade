@@ -150,3 +150,84 @@ test('Scenario: Ghost-vote token decorated and readable', async ({ page }) => {
 	await expect(page.getByRole('button', { name: 'Platz 2, Bo, tot, Stimme', exact: true })).toBeVisible();
 	await expect(page.getByRole('button', { name: 'Platz 5, Eli, tot, keine Stimme', exact: true })).toBeVisible();
 });
+
+const SHORT = 300;
+
+// the clock stands still until the test moves it; the sweep's timers fire only when it is run
+async function frozen(page: Page, state: ClocktowerState) {
+	const T0 = Date.UTC(2026, 9, 14, 20, 0, 0);
+	await page.addInitScript((ms) => ((window as unknown as { clocktowerSeatMs: number }).clocktowerSeatMs = ms), SHORT);
+	await page.clock.install({ time: T0 });
+	await seedClocktower(page, state);
+	await page.goto('/spiele/clocktower/spielen');
+	await expect(seat(page, 1)).toBeVisible();
+	await page.clock.pauseAt(T0 + 5_000);
+}
+
+const handAudit = (page: Page, pointed: number) =>
+	live(page).locator('[data-circle]').evaluate(async (circle, pointed) => {
+		const hand = circle.querySelector<HTMLElement>('[data-hand]')!;
+		await Promise.all(hand.getAnimations().map((a) => a.finished));
+		const arm = hand.querySelector<HTMLElement>('.arm')!;
+		const tip = hand.querySelector<HTMLElement>('[data-hand-tip]')!;
+		const hub = circle.querySelector<HTMLElement>('[data-hub]')!;
+		const plane = circle.querySelector<HTMLElement>('.plane')!.getBoundingClientRect();
+		const mid = (el: Element) => {
+			const r = el.getBoundingClientRect();
+			return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+		};
+		const target = circle.querySelector<HTMLElement>(`[data-seat="${pointed}"]`)!;
+		const t = target.getBoundingClientRect();
+		const c = mid(hub);
+		const p = mid(tip);
+		const channels = (css: string) => {
+			const ctx = document.createElement('canvas').getContext('2d', { willReadFrequently: true })!;
+			ctx.fillStyle = css;
+			ctx.fillRect(0, 0, 1, 1);
+			const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
+			return { r, g, b };
+		};
+		const lum = ({ r, g, b }: { r: number; g: number; b: number }) => {
+			const lin = (v: number) => ((v /= 255) <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
+			return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+		};
+		const ground = getComputedStyle(document.documentElement).getPropertyValue('--ground').trim();
+		const [hi, lo] = [lum(channels(getComputedStyle(arm).backgroundColor)), lum(channels(ground))].sort((a, b) => b - a);
+		const seatMid = mid(target);
+		return {
+			hubAtCentre: Math.hypot(c.x - (plane.left + plane.width / 2), c.y - (plane.top + plane.height / 2)),
+			tipToSeat: Math.hypot(p.x - seatMid.x, p.y - seatMid.y),
+			radius: t.width / 2,
+			length: arm.offsetHeight,
+			reach: Math.hypot(p.x - c.x, p.y - c.y),
+			width: arm.offsetWidth,
+			contrast: (hi + 0.05) / (lo + 0.05),
+			scroll: document.documentElement.scrollWidth <= innerWidth
+		};
+	}, pointed);
+
+test('Scenario: Voting clock hand stands out', async ({ page }) => {
+	await frozen(page, day1(seated(F7)));
+	await seat(page, 4).click();
+	await page.getByRole('dialog').getByRole('button', { name: 'Nominieren', exact: true }).click();
+	await seat(page, 1).click();
+	await expect(live(page).getByRole('button', { name: 'Abstimmung beginnen', exact: true })).toBeVisible();
+
+	const at = await handAudit(page, 4);
+	expect(at.hubAtCentre).toBeLessThan(2);
+	expect(at.tipToSeat).toBeLessThan(at.radius);
+	expect(at.reach).toBeGreaterThan(at.length * 0.8);
+	expect(at.width).toBeGreaterThanOrEqual(4);
+	expect(at.contrast).toBeGreaterThanOrEqual(3);
+
+	await live(page).getByRole('button', { name: 'Abstimmung beginnen', exact: true }).click();
+	await expect(live(page).locator('[data-sweep]')).toBeVisible();
+	await page.clock.runFor(1);
+	await page.clock.runFor(SHORT);
+	await expect(live(page).locator('[data-under]')).toHaveAttribute('data-under', '6');
+	const swept = await handAudit(page, 6);
+	expect(swept.hubAtCentre).toBeLessThan(2);
+	expect(swept.tipToSeat).toBeLessThan(swept.radius);
+	expect(swept.contrast).toBeGreaterThanOrEqual(3);
+	expect(swept.scroll).toBe(true);
+});
