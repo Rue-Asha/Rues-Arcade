@@ -97,9 +97,13 @@
 		const { from } = drag;
 		const to = overOf(e);
 		const dragged = drag.over !== null || Math.hypot(e.clientX - drag.x, e.clientY - drag.y) >= 8;
+		if (!dragged) {
+			drag = null;
+			return;
+		}
 		// the click that follows the pointerup of a drag must not count as a tap
 		setTimeout(() => (drag = null), 0);
-		if (dragged && to !== null && to !== from) onswap?.(from, to);
+		if (to !== null && to !== from) onswap?.(from, to);
 	}
 </script>
 
