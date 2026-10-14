@@ -33,7 +33,7 @@ async function open(page: Page, state: ClocktowerState) {
 	await page.goto('/spiele/clocktower/spielen');
 }
 
-// Setup board with 7 and 15 seats, empty, partly assigned with an error (one Minion too many), complete, the confirm dialog; the reveal.
+// Setup board with 7 and 15 seats, empty, partly assigned with an error (one Minion too many), complete (15: its circle with every icon), the confirm dialog; the reveal.
 export async function walk(page: Page, check: Check) {
 	for (const n of [7, 15]) {
 		await open(page, empty(n));
@@ -47,6 +47,12 @@ export async function walk(page: Page, check: Check) {
 		await open(page, done(n));
 		await expect(live(page).getByLabel('Red Herring')).toHaveValue('0');
 		await check(`clocktower-setup-${n}-complete`);
+
+		if (n === 15) {
+			await expect(live(page).locator('[data-seat] svg.icon')).toHaveCount(15);
+			await live(page).locator('[data-circle]').scrollIntoViewIfNeeded();
+			await check('clocktower-setup-15-distribution');
+		}
 
 		await live(page).getByRole('button', { name: 'Weiter', exact: true }).click();
 		await expect(page.getByRole('dialog').getByRole('heading', { name: 'Rollen sind verteilt und notiert?' })).toBeVisible();
