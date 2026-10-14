@@ -1,6 +1,6 @@
 import { read, write } from '#lib/storage.ts';
 
-export type Sfx = 'press' | 'reveal' | 'correct' | 'wrong' | 'win';
+export type Sfx = 'press' | 'reveal' | 'correct' | 'wrong' | 'win' | 'bell' | 'tick' | 'chime' | 'gong';
 
 const KEY = 'arcade:muted';
 
@@ -80,6 +80,22 @@ const effects: Record<Sfx, (ac: AudioContext) => void> = {
 			tone(ac, { type: 'square', from: f, at: i * 0.1, dur: i === 3 ? 0.55 : 0.16, gain: 0.07, cutoff: 2600 })
 		);
 		tone(ac, { type: 'triangle', from: 261.63, at: 0.3, dur: 0.6, gain: 0.1 });
+	},
+	bell: (ac) => {
+		tone(ac, { type: 'sine', from: 392, dur: 1.6, gain: 0.14 });
+		tone(ac, { type: 'sine', from: 392 * 2.76, dur: 0.9, gain: 0.05 });
+		tone(ac, { type: 'sine', from: 392 * 5.4, dur: 0.4, gain: 0.02 });
+	},
+	tick: (ac) => tone(ac, { type: 'sine', from: 220, to: 150, dur: 0.05, gain: 0.1, cutoff: 700 }),
+	chime: (ac) => {
+		tone(ac, { type: 'sine', from: 880, dur: 0.7, gain: 0.08 });
+		tone(ac, { type: 'sine', from: 1318.5, at: 0.12, dur: 0.9, gain: 0.07 });
+		tone(ac, { type: 'sine', from: 1760, at: 0.24, dur: 1.1, gain: 0.05 });
+	},
+	gong: (ac) => {
+		tone(ac, { type: 'sine', from: 98, to: 92, dur: 2.6, gain: 0.2 });
+		tone(ac, { type: 'triangle', from: 147, to: 140, dur: 2, gain: 0.08, cutoff: 900 });
+		tone(ac, { type: 'sine', from: 98 * 2.3, dur: 1.4, gain: 0.05 });
 	}
 };
 
