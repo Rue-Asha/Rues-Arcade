@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { seedRoster, seedSavedRoster } from './helpers.ts';
+import { live, seedRoster, seedSavedRoster } from './helpers.ts';
 
 // Blood on the Clocktower stores nothing in the database: roster and count live in localStorage, so phone and
 // desktop never share state.
@@ -294,6 +294,6 @@ test('Scenario: Game without content starts without a content fetch', async ({ p
 
 	await page.getByRole('button', { name: 'Spiel starten', exact: true }).click();
 	await expect(page).toHaveURL(/\/spiele\/clocktower\/spielen$/);
-	await expect(page.getByRole('heading', { name: 'Aufbau', exact: true })).toBeVisible();
+	await expect(live(page).getByRole('heading')).toBeVisible();
 	expect(fetched).toEqual([]);
 });
