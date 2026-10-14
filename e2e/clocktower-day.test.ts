@@ -212,11 +212,12 @@ test('Scenario: Timer reads Zeit um at zero and never blocks', async ({ page }) 
 		return [getComputedStyle(el).color, evil];
 	});
 	expect(color).toBe(evil);
-	await expect(seat(page, 1)).toBeEnabled();
-	await seat(page, 1).click();
-	await expect(dialog(page).getByRole('button', { name: 'Nominieren', exact: true })).toBeEnabled();
-	await dialog(page).getByRole('button', { name: 'Schließen', exact: true }).click();
-	await expect(live(page).getByRole('button', { name: 'Tag beenden', exact: true })).toBeEnabled();
+	await toClock(page, 3, 1);
+	await expect(live(page).getByRole('heading', { name: 'Alex nominiert Cleo', exact: true })).toBeVisible();
+	await expect(live(page).getByTestId('timer')).toHaveText('Zeit um');
+	await live(page).getByRole('button', { name: 'Zurück', exact: true }).click();
+	await endDay(page);
+	await expect(live(page).getByRole('heading', { name: 'Heute wird niemand hingerichtet', exact: true })).toBeVisible();
 });
 
 const live_ = (page: Page) => live(page);
@@ -401,8 +402,16 @@ test('Scenario: Timer keeps running during a vote', async ({ page }) => {
 		const [m, s] = (await live(page).getByTestId('timer').textContent())!.split(':').map(Number);
 		return m * 60 + s;
 	};
+	await live(page).getByRole('button', { name: 'Abstimmung beginnen', exact: true }).click();
+	await page.clock.runFor(1);
+	await expect(live(page).locator('[data-sweep]')).toBeVisible();
 	const before = await secs();
-	await page.clock.runFor(60_000);
+	await page.clock.runFor(5_000);
+	await expect.poll(secs).toBe(before - 5);
+	await expect(live(page).locator('[data-sweep]')).toBeVisible();
+	// the sweep of 7 seats ends inside the minute, the count is still part of the vote
+	await page.clock.runFor(55_000);
+	await expect(live(page).getByRole('heading', { name: 'Stimmen zählen', exact: true })).toBeVisible();
 	await expect.poll(secs).toBe(before - 60);
 });
 
