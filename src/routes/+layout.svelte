@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { onMount, type Snippet } from 'svelte';
+	import { onNavigate } from '$app/navigation';
 	import { roster } from '#lib/roster.svelte.ts';
 	import { muted, setMuted } from '#lib/sound.ts';
+	import { applyTheme, themed } from '#lib/theme.ts';
 	import '../app.css';
 
 	let { children }: { children: Snippet } = $props();
@@ -10,6 +12,12 @@
 	onMount(() => {
 		silent = muted.value;
 		roster.ready();
+	});
+
+	onNavigate((navigation) => {
+		const from = navigation.from?.url.pathname;
+		const to = navigation.to?.url.pathname;
+		if (themed(from) || themed(to)) applyTheme(themed(to));
 	});
 
 	function toggle() {
