@@ -200,3 +200,59 @@ test('Scenario: Timer reads Zeit um at zero and never blocks', async ({ page }) 
 	expect(color).toBe(evil);
 	await expect(seat(page, 1)).toBeEnabled();
 });
+
+const live_ = (page: Page) => live(page);
+const dialog = (page: Page) => page.getByRole('dialog');
+
+// Alex..Bo..: Bo nominated Cleo today (voted, 0 votes), Dani is dead
+function nominated(): ClocktowerState {
+	return ghost(play(day1(seated(F7)), [
+		{ type: 'nominee', seat: 2 }, { type: 'nominate', nominator: 1 }, { type: 'vote' }, { type: 'swept' },
+		{ type: 'confirm' }, { type: 'next' }
+	]), 3);
+}
+
+async function nominate(page: Page, nominee: number) {
+	await seat(page, nominee).click();
+	await dialog(page).getByRole('button', { name: 'Nominieren', exact: true }).click();
+}
+
+test('Scenario: Unavailable choices show a reason', async ({ page }) => {
+	await open(page, nominated());
+	await seat(page, 3).click();
+	await expect(dialog(page).getByRole('button', { name: 'Nominieren', exact: true })).toBeDisabled();
+	await expect(dialog(page).getByText('heute schon nominiert', { exact: true })).toBeVisible();
+	await dialog(page).getByRole('button', { name: 'Schließen', exact: true }).click();
+	await expect(dialog(page)).toHaveCount(0);
+
+	await nominate(page, 5);
+	await expect(live_(page).getByRole('heading', { name: 'Wer nominiert Eli?', exact: true })).toBeVisible();
+	await expect(seat(page, 2)).toHaveAttribute('aria-disabled', 'true');
+	await expect(seat(page, 2)).toHaveAttribute('title', 'hat heute schon nominiert');
+	await expect(seat(page, 4)).toHaveAttribute('aria-disabled', 'true');
+	await expect(seat(page, 4)).toHaveAttribute('title', 'ist tot');
+	await expect(seat(page, 1)).toHaveAttribute('aria-disabled', 'false');
+	await expect(live_(page).getByText('Bo: hat heute schon nominiert', { exact: true })).toBeVisible();
+	await expect(live_(page).getByText('Dani: ist tot', { exact: true })).toBeVisible();
+
+	await seat(page, 4).click({ force: true });
+	await expect(live_(page).getByRole('heading', { name: 'Wer nominiert Eli?', exact: true })).toBeVisible();
+});
+
+test('Scenario: Zurück cancels the nomination unused', async ({ page }) => {
+	await open(page, day1(seated(F7)));
+	await nominate(page, 2);
+	await live_(page).getByRole('button', { name: 'Zurück', exact: true }).click();
+	await expect(seat(page, 2)).toBeEnabled();
+
+	await nominate(page, 2);
+	await seat(page, 1).click();
+	await expect(live_(page).getByRole('button', { name: 'Abstimmung beginnen', exact: true })).toBeVisible();
+	await live_(page).getByRole('button', { name: 'Zurück', exact: true }).click();
+
+	await seat(page, 2).click();
+	await expect(dialog(page).getByRole('button', { name: 'Nominieren', exact: true })).toBeEnabled();
+	await dialog(page).getByRole('button', { name: 'Nominieren', exact: true }).click();
+	await expect(seat(page, 1)).toHaveAttribute('aria-disabled', 'false');
+	await expect(live_(page).getByText('Alex: hat heute schon nominiert', { exact: true })).toHaveCount(0);
+});
