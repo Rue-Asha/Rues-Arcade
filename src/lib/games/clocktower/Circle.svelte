@@ -293,11 +293,10 @@
 	@keyframes dying {
 		from {
 			transform: translate(-50%, -50%) scale(1.25);
-			filter: brightness(1.8);
+			opacity: 0.4;
 		}
 		to {
 			transform: translate(-50%, -50%) scale(1);
-			filter: none;
 		}
 	}
 

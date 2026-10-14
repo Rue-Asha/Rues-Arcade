@@ -136,15 +136,29 @@ test('Scenario: Death on the circle is animated', async ({ page }) => {
 		await live(page).getByRole('button', { name: 'Weiter', exact: true }).click();
 		await expect(seat(page, 3)).toHaveAttribute('data-dead', '');
 	};
+	// the properties each running finite animation of the seat animates
 	const running = () =>
-		seat(page, 3).evaluate((el) => el.getAnimations().filter((a) => a.playState === 'running' && a.effect?.getTiming().iterations !== Infinity).length);
+		seat(page, 3).evaluate((el) =>
+			el
+				.getAnimations()
+				.filter((a) => a.playState === 'running' && a.effect?.getTiming().iterations !== Infinity)
+				.map((a) => {
+					const keys = (a.effect as KeyframeEffect).getKeyframes().flatMap((k) => Object.keys(k));
+					return [...new Set(keys)].filter((k) => !['offset', 'computedOffset', 'easing', 'composite'].includes(k)).sort();
+				})
+		);
 
 	await toDeaths();
-	expect(await running()).toBeGreaterThan(0);
+	const motion = await running();
+	expect(motion.length).toBeGreaterThan(0);
+	for (const props of motion) {
+		expect(props.length).toBeGreaterThan(0);
+		for (const prop of props) expect(['transform', 'opacity'], prop).toContain(prop);
+	}
 
 	await page.emulateMedia({ reducedMotion: 'reduce' });
 	await toDeaths();
-	expect(await running()).toBe(0);
+	expect(await running()).toEqual([]);
 	await expect(seat(page, 3).locator('.mark')).toBeVisible();
 });
 

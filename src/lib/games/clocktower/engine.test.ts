@@ -520,11 +520,11 @@ describe('clocktower day', () => {
 		const s = firstDay(dead(seated(ten), 0, 1));
 		const first = voted(s, 2, 3, 3);
 		expect(last(first).result).toBe('none');
-		const fewer = step(first, { type: 'died', seat: 2 });
-		expect(fewer.seats.filter((x) => x.alive)).toHaveLength(7);
-		const marks: ClocktowerAction[] = [0, 1, 4, 5].map((seat) => ({ type: 'mark', seat, on: true }));
+		const fewer = step(first, { type: 'died', seat: 2 }, { type: 'died', seat: 3 });
+		expect(fewer.seats.filter((x) => x.alive)).toHaveLength(6);
+		const marks: ClocktowerAction[] = [0, 1, 4].map((seat) => ({ type: 'mark', seat, on: true }));
 		const second = step(nominate(fewer, 4, 4), { type: 'vote' }, ...marks, { type: 'swept' }, { type: 'confirm' });
-		expect(last(second)).toMatchObject({ votes: 4, result: 'block' });
+		expect(last(second)).toMatchObject({ votes: 3, result: 'block' });
 		expect(second.today!.block).toBe(4);
 		expect(second.seats[0].ghostVote || second.seats[1].ghostVote).toBe(false);
 		const short = step(nominate(fewer, 4, 4), { type: 'vote' }, ...marks.slice(1), { type: 'swept' }, { type: 'confirm' });

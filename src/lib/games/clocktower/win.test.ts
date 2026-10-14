@@ -176,9 +176,17 @@ describe('clocktower dusk questions', () => {
 
 		winners.push(execute(firstDay(seated(SAINT)), 6).winner);
 
-		let starpass = step(firstDay(seated(F5)), { type: 'endDay' }, next, next, next, next, next, next);
-		starpass = throughNight(step(starpass, { type: 'starpass', seat: 2 }), [3]);
-		winners.push(execute(starpass, 2).winner);
+		// F5: the Imp on seat 4 passes to the Poisoner on seat 3, who is executed on day 2
+		const impStep = step(firstDay(seated(F5)), { type: 'endDay' }, next, next, next, next, next, next);
+		const here = screen(impStep);
+		expect('step' in here && impStep.night!.steps[here.step].kind).toBe('imp');
+		const passed = step(impStep, { type: 'starpass', seat: 2 });
+		expect(passed.demon).toBe(2);
+		expect(passed.history).toEqual([{ night: 2, from: 3, to: 2, was: 'poisoner', kind: 'starpass' }]);
+		const passedDay = throughNight(passed, [3]);
+		expect(passedDay.winner).toBeNull();
+		expect(passedDay.seats[2].alive).toBe(true);
+		winners.push(execute(passedDay, 2).winner);
 
 		const taken = step(execute(swDay(), 6), next, next, { type: 'answer', yes: true });
 		const day2 = throughNight(taken, [1]);

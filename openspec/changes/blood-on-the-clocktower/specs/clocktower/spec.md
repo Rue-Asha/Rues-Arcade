@@ -208,14 +208,14 @@ move to night 1.
 
 ### Requirement: Grimoire circle
 The default play screen SHALL be the grimoire circle: N numbered seats in clockwise order with names; each seat SHALL
-show alive or dead, and for the dead whether the ghost vote is still available, by shape and label (for example a
-shroud and "Stimme" / "keine Stimme"), not colour only; no character SHALL be shown by default. A seat's death SHALL be
-animated (finite, transform/opacity, instant under reduced motion). 5 to 15 seats SHALL be legible on phone and
-desktop.
+show alive or dead, and for the dead whether the ghost vote is still available, by a symbol plus an accessible label
+(for example "✕ ●" / "✕ ○" with the label "Stimme" / "keine Stimme"), not colour only; no character SHALL be shown by
+default. A seat's death SHALL be animated (finite, transform/opacity, instant under reduced motion). 5 to 15 seats
+SHALL be legible on phone and desktop.
 
 #### Scenario: Circle shows seats, alive and ghost votes
 - **WHEN** a day with 7 seats is shown where seat 2 is dead with a ghost vote and seat 5 is dead without one
-- **THEN** seats 1–7 are numbered clockwise from the top with their names, seat 2 shows the dead marker and "Stimme", seat 5 the dead marker and "keine Stimme", the markers differ in shape, and no character name is in the page
+- **THEN** seats 1–7 are numbered clockwise from the top with their names, seat 2 shows the dead symbol with the accessible label "Stimme", seat 5 the dead symbol with the accessible label "keine Stimme", the symbols differ in shape, and no character name is in the page
 - **proof:** e2e
 
 #### Scenario: Circle geometry for five to fifteen seats
@@ -590,8 +590,8 @@ The block holder SHALL be marked on the circle.
 - **proof:** unit
 
 #### Scenario: Threshold uses living players at vote time
-- **WHEN** 8 players are alive at the first vote and 7 at a later vote the same day, and 2 of the 4 votes come from dead players
-- **THEN** the thresholds are 4 and 4, and the dead votes count toward the total
+- **WHEN** 8 players are alive at the first vote and 6 at a later vote the same day, and 2 of the 3 votes come from dead players
+- **THEN** the thresholds are 4 and 3, and the dead votes count toward the total
 - **proof:** unit
 
 #### Scenario: Block holder marked on the circle
