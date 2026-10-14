@@ -12,7 +12,8 @@ test('Scenario: Tiles for registered games', async ({ page }) => {
 		['Codes', 'codes', '4–20 Spieler'],
 		['What Rhymes with Duck', 'duck', '4–16 Spieler'],
 		['Most Likely To', 'most-likely', '4–20 Spieler'],
-		['Family Feud', 'family-feud', '4–20 Spieler']
+		['Family Feud', 'family-feud', '4–20 Spieler'],
+		['Blood on the Clocktower', 'clocktower', '5–15 Spieler']
 	]) {
 		const tile = page.getByRole('link', { name: new RegExp(name) });
 		await expect(tile).toHaveAttribute('href', `/spiele/${slug}`);
