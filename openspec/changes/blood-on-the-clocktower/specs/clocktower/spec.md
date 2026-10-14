@@ -576,7 +576,8 @@ After a nomination the circle SHALL become a clock whose hand points from the ce
 beginnen" and "Zurück", the threshold ⌈alive/2⌉ and today's high-water mark shown. On start the hand SHALL sweep
 clockwise one seat per 2.5 s (injectable for tests) from the seat after the nominee and end at the nominee, who votes
 last (15 seats = 37.5 s). The storyteller SHALL mark the seat under the hand as voting by tapping it or pressing Space;
-marked seats light up; dead players without a ghost vote SHALL not be markable. Under reduced motion the hand SHALL jump
+during the sweep tapping any other markable seat SHALL also toggle its vote (for corrections), while Space SHALL act
+only on the seat under the hand; marked seats light up; dead players without a ghost vote SHALL not be markable. Under reduced motion the hand SHALL jump
 seat to seat. After the sweep a confirm screen SHALL show the count prefilled from the marks, the marks editable and a
 count stepper for timing corrections; confirming SHALL spend the ghost vote of every dead player marked as voting. The
 clock's hand SHALL stand out: it reaches from the circle's centre to the seat it points at, with a non-text contrast of
@@ -600,6 +601,16 @@ at least 3:1 against the ground in both variants.
 #### Scenario: Real short sweep marks votes
 - **WHEN** the seat time is set to 300 ms for the test, a vote is started, seat 5 is tapped and Space is pressed while the hand is on seat 6
 - **THEN** seats 5 and 6 light up as voting, the hand ends on the nominee, and the confirm screen shows the count 2
+- **proof:** e2e
+
+#### Scenario: Tapping any seat during the sweep toggles its vote
+- **WHEN** a 7-player vote on seat 4 is sweeping with a short seat time, and while the hand is on seat 6 seat 2 (not yet reached) is tapped, then seat 5 (already passed) is tapped twice
+- **THEN** seat 2 lights up as voting while the hand stays on seat 6, seat 5 is marked after the first tap and unmarked after the second, and the confirm screen's count includes seat 2 and not seat 5
+- **proof:** e2e
+
+#### Scenario: Space marks only the seat under the hand
+- **WHEN** during the sweep seat 2 has keyboard focus and Space is pressed while the hand is on seat 6
+- **THEN** seat 6 lights up as voting and seat 2 does not
 - **proof:** e2e
 
 #### Scenario: Dead without ghost vote cannot be marked
