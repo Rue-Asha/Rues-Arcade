@@ -12,7 +12,8 @@ icons, slides), `research/mobbin.md` (screen patterns).
 
 ## Goals / Non-Goals
 
-**Goals:** scope.md S1–S38 in one change, in 11 units over 4 waves (Gate 2 revisions S39–S49: U12–U16 in 2 waves): generic contract first, rules as pure tested code,
+**Goals:** scope.md S1–S38 in one change, in 11 units over 4 waves (Gate 2 revisions S39–S49: U12–U16 in 2 waves;
+round 2 S50–S66: U17–U22 in 3 waves): generic contract first, rules as pure tested code,
 theme before screens, screens per phase against one state contract, the deck last.
 
 **Non-Goals:** see proposal.md → Non-Goals (Travellers, other scripts, status-effect tracking, automatic Slayer/Virgin,
@@ -151,6 +152,145 @@ a BotC demo, multi-device, CI changes, history/undo).
   walk screens (they all already cover lobby, setup, night circle, death step, day, clock, end, deck); each unit adds at
   most two shots, seeks or pauses the voting-slide animation before shooting, and reports the look test's duration
   before and after.
+
+### Gate 2 revisions, round 2 (S50–S66, 2026-10-15)
+
+- **Inputs: feedback-2026-10-15.md and mobbin-r2.md.** Every round-2 unit reads Rue's verbatim feedback and explore
+  answers (`feedback-2026-10-15.md`) and the Mobbin references (`mobbin-r2.md`, Rue: every UI/UX item gets Mobbin)
+  before it lays out a screen. The visual specifics below cite mobbin-r2.md by section; where mobbin-r2.md and Rue's
+  words or scope.md disagree, Rue wins: sectors are centred on their seat (Rue, S53), not `[i, i+1)·360/n` (mobbin-r2
+  §5); marking has no select-all/clear pair (round-2 non-goal) and no "N markiert" line (it does not fit the centre at
+  5–9 seats, see the fit estimate); the dawn death uses the same ~1 s animation as the execution (S64 "the same"), not
+  mobbin-r2 §6's slower 1.4 s variant.
+- **One owner for `Circle.svelte`.** Ten S-items land on the shared circle (S52, S53, S54, S57, S58, S59, S60, S63, S64,
+  S65). U17 makes every `Circle.svelte` and `circle.ts` change in wave 1 — node face, badges, rings, marks, sector
+  wedge, n ticks, press feedback, death animation and the centre slot — behind the props in Contracts; U18–U22 only
+  pass props. No later unit edits `Circle.svelte`; a needed change there is a deviation the unit reports.
+- **Seat node (S52; mobbin-r2 §1, §3).** Number on a small pill on the node's top rim (12px, bold); without an icon the
+  name fills the node's face (Alegreya Sans 600, `clamp(15px, 0.3·d, 20px)`, one line, ellipsis); with an icon (setup,
+  held grimoire) the icon sits in the face's upper part (≈ 0.47·d) and the name on a ribbon over the lower rim (own
+  surface, same size, max width `min(56px, neighbour distance − 8px)`). Badge slots on the rim, each a disc of ≈ 0.4·d
+  with a 2px ring in the node's background colour to cut it off (Clubhouse, Discord in §3): block at 45° (top right),
+  ghost vote at 135° (bottom right; on icon nodes at 45°, where no block ever shows), mark/vote check at 225° (bottom
+  left). Glyphs are inline SVG paths: an axe for the block (§3 "axe/guillotine"), a raised hand for the ghost vote (§3
+  "hand/ballot"), a check for marks.
+- **Ghost-vote badge (S60; mobbin-r2 §3 Clubhouse muted badge).** Unused: light-blue disc (`--ghost`) with the hand
+  glyph (`--ghost-ink`). Spent: grey (`--spent`), hollow (outline only) and the glyph struck through, so the two states
+  differ in shape as well as colour (S15 "not colour only"). The seat keeps `data-ghost` and its accessible label; the
+  "✕ ●"/"✕ ○" pill and its text go (Rue's S47 "still readable ✕ ●/✕ ○" is superseded by S60).
+- **Block badge (S59).** Blood-red disc (`--clocktower`) with the axe in `--ink`; the seat keeps `data-block`, loses the
+  red border/box-shadow and the "▼" badge.
+- **Nomination rings (S58; mobbin-r2 §3 Jomo ring-as-state).** Two 2px rings outside the node: inner solid turquoise
+  (`--nominee`) at d/2 + 3px, outer dashed orange (`--nominator`) at d/2 + 7px, partial opacity but ≥ 3:1 against the
+  day ground; badges sit on top of them. Solid vs dashed and inner vs outer keep them apart without colour. Availability
+  comes from two engine helpers that the reducer's nomination guards also use, so rings and rules cannot disagree.
+- **Press feedback (S57; mobbin-r2 §1).** pointerdown: scale 0.93 plus a short gold glow; release: spring to 1.06 then 1
+  and a one-shot ripple ring from the node centre; ≤ 500 ms, on the `scale`/`transform`/`opacity` properties only (the
+  seat's `translate(-50%, -50%)` placement stays untouched by using the individual `scale` property or a child layer).
+  `navigator.vibrate?.(10)` on an enabled seat's click; disabled seats neither animate nor vibrate. Reduced motion: no
+  scale, spring or ripple. Vibration ignores the sound mute flag (it is touch feedback, not sound).
+- **Marks while a text is shown (S65; mobbin-r2 §2 Badoo/Bond/Deezer).** A marked seat gets a gold ring and the check
+  badge (`pointed` prop, distinct from `marked`, which keeps meaning "woken / voting / target"). State machine, all UI
+  state in `Wake.svelte`, nothing stored: `card` (lifted out of `ShowBar` via `onshow`) and `pointed: number[]`.
+  Seat tap → `card ? toggle pointed : step behaviour` (the Imp's `target`); the target's `disabled` reasons ("bereits
+  tot", starpass) apply only while no text is shown. Close (tap on the text, Escape) → `card = null, pointed = []`.
+  "Zeigen" while a text is shown → replace `card`, keep `pointed`. Leaving the screen or a reload unmounts both. The
+  Minion info → bluffs preselection on close stays.
+- **Show texts in the circle's centre (S65).** `ShowCard` renders inside `Circle`'s centre slot (`[data-centre]`, a disc
+  inside the inner ring) on its own solid surface disc, so the composite contrast check stays valid; it keeps
+  `data-testid="show-card"`, closes on tap or Escape, and is no `<dialog>`. Sizes from the fit estimate below.
+- **Blind bluffs (S66).** `ShowBar` drops the `[data-testid="bluffs"]` preview; "Neu würfeln" stays and dispatches
+  `bluffs` blind until the bluffs were shown once (`seen`, as today). `drawBluffs` excludes the Drunk from the Outsider
+  pool (it already excludes the believed role); with no other Outsider free it returns 3 Townsfolk.
+- **Held grimoire (S51).** `HoldGrimoire` passes `token` (the true character; the Drunk shows the Drunk's icon) instead
+  of `label`; the extras that the text tag carried ("Drunk (glaubt: X)", "Red Herring", "Dämon") move to short notes
+  under the circle inside the held card, naming their seats with `who()`.
+- **Vote sweep (S53; mobbin-r2 §5).** Time stays out of the reducer. `VoteClock` keeps one `setTimeout` per seat time
+  (so Playwright's clock drives it) and on entering sector k sets the hand to that sector's end boundary with a linear
+  transition of exactly one seat time, so the hand turns at a constant speed (360/N degrees per seat time) and never
+  rests. At "Abstimmung beginnen" the hand jumps without transition from the nominee's centre to the start boundary
+  (180/N degrees on); after the sweep it returns to the nominee's centre. The lit sector is a wedge at ≈ 15% of
+  `--clocktower` under the seats (seat faces are opaque, so seat text contrast is unchanged). During the sweep seats
+  outside the hand's sector are `disabled` ("Zeiger ist woanders"): dimmed by Circle's disabled style, no press
+  feedback, tap ignored — the spotlight effect of mobbin-r2 §1 (Apple Games: the active disc full colour, siblings
+  desaturated). Tap or Space on the in-sector seat toggles its vote; dead seats without a ghost vote stay
+  unmarkable. Reduced motion: no transition, the hand jumps to the centre of the in-sector seat. The tick sound plays
+  per sector entry (sound spec unchanged: "each seat the vote hand reaches").
+- **Confirm by tapping (S53), smaller design.** The UI drops the ± stepper; the reducer already keeps `votes` equal to
+  the marks in the UI flow (`swept` sets it to `voters.length`, `mark` on confirm moves it by one), so the reducer is
+  unchanged and the `count` action stays for fixtures and tests (`fixtures.voted()`, the day walk builders). The bigger
+  design — dropping `count` so the reducer enforces `votes = voters.length` — would touch `fixtures.ts`, the walks'
+  exported builders and five test files for no visible difference.
+- **Execution death (S63).** `DayState` gains `killed: number | null` (the seat today's execution killed; null when the
+  executed seat was already dead or nobody was executed), set by `execute` and `endDay`. `stateVersion` stays 1 (not
+  shipped); `shape` follows `init`. The execution announcement passes `dying={killed === null ? [] : [killed]}` (empty
+  under reduced motion, as `Dawn` does). Death keyframes (mobbin-r2 §6 Duolingo capture ring): a red ring pulses out,
+  the node sinks 4px and fades into the dead style; 1000 ms, transform/opacity only; dawn reuses them (S64).
+- **Block card (S61; mobbin-r2 §7 Runbuds/Premier League).** `BlockCard.svelte` replaces the "Auf dem Block: X" facts
+  line on the grimoire: parchment card, thin gold frame, a blood-red header strip with the axe glyph, "Auf dem Block",
+  the name in IM Fell English SC, and "<v> Stimmen" as the largest text; votes from the last nomination with result
+  `block` whose nominee is the holder. No "needs N" line (the vote screens' facts box shows "Nötig").
+- **Timer top right (S56; mobbin-r2 §4).** The head becomes a wrapping flex row: heading, then the unchanged `Timer`
+  pushed to the right edge, top-aligned; neither sticky nor fixed. On every day screen that shows it (grimoire,
+  nominator, clock, sweep, confirm, result).
+- **No text selection, one background tone (S50, S62).** `app.css`: `html { user-select: none; -webkit-user-select:
+  none; -webkit-touch-callout: none; cursor: default }`, with `input, textarea, [contenteditable]` restoring `text`
+  selection and the text cursor (buttons keep `pointer`). The Clocktower body's gradient layers move to a fixed
+  full-viewport layer (`body::before`, `position: fixed; inset: 0; z-index: -1`; `background-attachment: fixed` is
+  ignored by iOS Safari) over the solid `--ground`, so every scroll position shows the same tone.
+- **Deck voting slide (S55).** `voteTimeline` uses `sweepAt` with the deck's own 750 ms seat time: the hand starts on
+  the boundary after the nominee (0.5 seat units), turns N sectors at constant speed, voters turn red on sector entry;
+  the lit wedge steps sector by sector (opacity/transform steps); N ticks at `tickAngles(N)`. The app mechanics slides
+  are reworded for the round-2 mechanics (badges and rings, sector rule, confirm by tapping, centre texts and marks).
+- **Fit estimates (repo learning: measure before layouting; flow learning: dense screens get a fit estimate).**
+  Phone 390×844: the content column is 358px (16px gutters), and every circle's box is 358px (setup cap 360, night
+  `min(100%, 100svh − 120px)`, day/vote `min(100%, 100svh − 380px)` = 464 → 358). Desktop 1280×800: setup 360, day and
+  vote 420, night 640. `seatSize`: 15 seats → 47px (phone), 48 (desktop setup), 56 (desktop day), 76 (desktop night);
+  5–8 seats → 76px everywhere. Ring radius r = (box − d)/2; neighbour distance 2r·sin(180°/N) = 64.7px at 15 seats on
+  phone. The held grimoire's card is `min(560px, 100% − 32px)` with its padding given back to the circle: 358px on
+  phone (15 seats → 47px), 560px on desktop (→ 74px); its 70svh (591px) height holds the 358px circle plus three note
+  lines.
+  - **S52, 15 seats on phone (d = 47px):** face 39px across. Name at 15px (≥ 1.25 × the 12px number): 4-letter fixture
+    names ≈ 26–30px fit; about 5 characters fit before the ellipsis (6–7 on the 56px ribbon). Icon nodes: icon 22px in
+    the upper face, ribbon 18px tall from 14px to 32px below the centre, clearing every neighbour by ≥ 1px (tightest at
+    the 24°/48° diagonal pair with the 56px cap). Badges 19px, reaching ≤ 3px past the node's square. Rings at 26.5 and
+    30.5px radius → 63px footprint < 64.7px neighbour distance, so neighbouring rings never touch. **Legibility
+    exception:** at 15 seats on a phone names longer than about 5 characters (6 on a ribbon) end in an ellipsis
+    (before: about 7 at 11px, which was under the 12px floor); the full name stays in the accessible name and `title`.
+  - **S65 centre:** the slot is a disc of radius `ornament().inner − 4` = r − d/2 − 10. Phone: 5–9 seats (d = 76) →
+    186px across — the binding case, smaller than at 15 seats (244px), because fewer seats get bigger nodes; desktop
+    night → 468px. Fitting a 186px disc (bounding-box half-diagonal ≤ 93px): digit 96px (≈ 52×96 → 55 ✓), "Ja"/"Nein"
+    40px (≈ 90×46 → 51 ✓), "Das ist der Dämon" 20px on two balanced lines (≈ 120×48 → 65 ✓), "Deine Minions" 20px
+    (≈ 140×24 → 71 ✓), character icon 40px + name 20px ("Fortune Teller" ≈ 146px; 146×68 → 81 ✓), "Du bist" 16px +
+    icon + name (146×92 → 86.5 ✓), bluffs as three rows of icon 24px + name 16px (≈ 142×80 → 81.5 ✓). **Legibility
+    exception:** the centre character text shows icon and name only (no team line, German explanation or ability text;
+    those stay on the step's role card screen), the bluffs text drops the lead "Diese Charaktere sind nicht im Spiel",
+    and there is no "N markiert" line — none of them fit 186px at the 16px floor. No text is shrunk below its floor.
+  - **S56 head on phone:** the timer pill is ≈ 194px wide for "8:00" (52px digits) and ≈ 270px for "Zeit um", leaving
+    ≈ 152px (2–3 lines of the 22px heading) or less beside it; below ~140px the heading wraps under the timer, which
+    stays top right.
+- **Superseded and modified scenarios (round 2).** A changed behaviour is a spec change: each is rewritten in
+  `specs/clocktower/spec.md` and its test changed by the named unit, never silently. Superseded (old title removed, new
+  title in its place): "Tapping any seat during the sweep toggles its vote" → "Only the seat in the hand's sector can
+  vote" (U19); "Space marks only the seat under the hand" → "Space votes only for the seat in the hand's sector" (U19);
+  "Confirm corrects missed timing" → "Confirm toggles votes by tapping seats" (U19); "Ghost-vote token decorated and
+  readable" → "Ghost-vote badge shows whether the vote is left" (U17); "Show-bar opens full-screen cards" → "Show texts
+  appear in the circle's centre" (U18); "Bluffs can be rerolled before showing" → "Bluffs stay hidden until shown"
+  (U18); manual "Circle and ghost token look approved" → "Circle look approved" (the badge goes to "Seat nodes
+  approved"); manual "Voting animation like the presentation" → "Voting slide like the game" (U22). Modified THEN, same
+  title: Circle shows seats, alive and ghost votes · Circle legible on phone and desktop · Death on the circle is
+  animated · Character icons fit fifteen seats · Block holder marked on the circle (U17); Bluffs are good characters not
+  in play · Grimoire visible only while held (U18); Real short sweep marks votes · Reduced motion hand jumps · Voting
+  clock hand stands out (U19); Day timer stands out · Day facts sit in a box (U21); Voting slide timeline follows the
+  count · Voting slide sweeps and counts up · Voting slide shows the end state under reduced motion · Deck explains the
+  app (U22); manual Day clock emphasis approved. Same scenario, test steps or locators change: Dawn shows the night's
+  deaths and Public screen gives nothing away (U17, `.mark` → badge), Full Clocktower game (U19, votes by confirm taps
+  instead of "Stimme mehr").
+- **Look-walk budget (round 2).** The look walk is ≈ 2 min of its 300 s per project. U17 adds no shot (its node changes
+  show in the existing setup, night, day and clock shots), U18 at most two (centre text with marks at 15 seats on
+  phone; held grimoire with icons), U19 none (the sweep shot shows the sector), U20 none, U21 at most one (15-seat
+  grimoire with rings, block card and badges), U22 none (seeks the voting slide to its end). Expected growth ≤ 15 s per
+  project; each unit reports the look test's duration before and after.
 
 ## Contracts
 
@@ -383,6 +523,46 @@ Night and day screens [U14, U15] cap the circle by wrapping `Circle` in a sized 
 night or day states import the existing builders (`walks/clocktower-day.ts` exports, `e2e/clocktower-session.ts`)
 read-only.
 
+**Gate 2 round 2 contracts [U17–U22]** (angles in degrees clockwise from the top; seat indices 0-based; sizes in px;
+times in ms):
+```ts
+// circle.ts [U17]
+export function tickAngles(count: number): number[];          // count angles, (k + 0.5) · 360 / count — the sector boundaries
+export function sectorOf(deg: number, count: number): number; // seat whose sector [angleOf(i) − 180/count, angleOf(i) + 180/count) holds deg (any real); a boundary belongs to the next seat clockwise
+export function wedge(seat: number, count: number, box: number): string; // SVG path d of the seat's sector, from the centre to the outer ring, in the box's px
+ornament(count, box)                                           // as before; ticks = tickAngles(count) (was 12 fixed), drawn as <path data-ticks={count}>
+// Circle.svelte [U17] — existing props and DOM kept ([data-seat], aria-label, data-dead/-ghost/-marked/-block, [data-hand], label, token), plus:
+hand?: number | null;      // seat units, fractional allowed: angle = hand · 360 / count; k + 0.5 = boundary after seat k; values ≥ count keep turning clockwise
+handMs?: number;           // ms of the hand's linear transition (0 = jump)
+sector?: number | null;    // lit sector: <path data-sector={i + 1} aria-hidden> under the seats, fill ≈ 15% --clocktower
+rings?: (i: number) => { nominee: boolean; nominator: boolean };  // <span data-avail="nominee"> (inner, solid, --nominee) / <span data-avail="nominator"> (outer, dashed, --nominator), outside the node
+pointed?: number[];        // storyteller's marks (S65): data-pointed on the seat, gold ring + check badge
+center?: Snippet;          // rendered in <div data-centre>: a disc of diameter 2 · (ornament().inner − 4) px, centred; its diameter as --centre
+// node: <span class="no"> on the top rim, <span class="name"> (face, or ribbon under an icon); badges <span data-badge="block|ghost|check" aria-hidden>, ghost with data-spent when used up
+// press: enabled seat → scale/ripple ≤ 500 ms + navigator.vibrate?.(10) on click, then onseat; disabled seat → nothing; reduced motion → no animation
+// dying: the death keyframes, 1000 ms, transform/opacity only, once on mount of the seat in `dying`
+// tokens [U17] in app.css (both variants) and tokens.ts with non-text pairs ≥ 3:1: --ghost, --ghost-ink, --spent, --nominee, --nominator
+// vote.ts [U19]
+export function sweepAt(ms: number, nominee: number, count: number, perSeat?: number): { hand: number; seat: number } | null;
+// hand = nominee + 0.5 + ms / perSeat (seat units), seat = the seat whose sector holds it (= voteOrder(nominee, count)[⌊ms / perSeat⌋]); null once ms ≥ sweepMs(count, perSeat)
+// ShowBar.svelte [U18]: { state, dispatch, step, onshow: (card: Card) => void } — renders no ShowCard and no bluff names
+// ShowCard.svelte [U18]: { card: Card; onclose(): void } — rendered by Wake in Circle's center slot, data-testid="show-card", no <dialog>
+// engine.ts [U21]
+export function canBeNominated(s: ClocktowerState, seat: number): boolean; // a day with nominations open and the seat not yet nominated today (a pending nominee still counts as not nominated)
+export function canNominate(s: ClocktowerState, seat: number): boolean;    // a day with nominations open, the seat alive and not yet nominated anyone today
+// types.ts [U21]: DayState gains killed: number | null — the seat today's execution killed (null: nobody, or already dead)
+// BlockCard.svelte [U21]: { name: string; votes: number } → <section data-testid="block-card">
+// deck.ts [U22]: voteTimeline(n) → { seats, nominee: 0, voters, at, handMs: n · SEAT_MS, holdMs, start: 0.5 }  // at[j]: entry into voter j's sector
+```
+Round-2 test files: U17 `circle.test.ts`, `tokens.test.ts`, new `e2e/clocktower-node.test.ts`, `e2e/clocktower-circle.test.ts`,
+`e2e/clocktower-day.test.ts`, `e2e/clocktower-game.test.ts`; U18 `setup.test.ts`, `e2e/clocktower-night.test.ts`, new
+`e2e/clocktower-show.test.ts`, `walks/clocktower-night.ts`; U19 `vote.test.ts`, new `e2e/clocktower-vote.test.ts`,
+`e2e/clocktower-day.test.ts`, `e2e/clocktower-circle.test.ts`, `e2e/clocktower-game.test.ts`; U20 new `e2e/ui-text.test.ts`,
+`e2e/clocktower-atmosphere.test.ts`; U21 `engine.test.ts`, `e2e/clocktower-day-layout.test.ts`, new
+`e2e/clocktower-day-marks.test.ts`, `walks/clocktower-day.ts`; U22 `deck.test.ts`, `e2e/clocktower-deck.test.ts`,
+`walks/clocktower-deck.ts`. Builders in `walks/clocktower-day.ts`, `e2e/clocktower-session.ts` and `fixtures.ts` are
+imported read-only and keep their signatures.
+
 ## Risks / Trade-offs
 
 - [Generic contract change breaks six games' tests] → U1 owns every generic file and test; "unchanged and green"
@@ -401,6 +581,10 @@ read-only.
   placeholder has a named owner unit.
 - [Wave-3 units each need state that later screens produce] → every phase e2e seeds its own state from `play(…)`;
   cross-phase flows (variant switch, public-screen comparison, full game) are U10's.
+- [Ten round-2 S-items meet in `Circle.svelte`] → U17 owns it alone in wave 1 and exposes every new look as a prop;
+  later units only pass props and report a needed Circle change as a deviation.
+- [CSS transitions run in real time, Playwright's clock does not drive them] → the sweep's sector logic runs on timers
+  (clock-driven), the hand's constancy is proven by its per-sector target angle and linear transition, not by sampling.
 - [State shape grows while U7–U10 build] → the contract above is fixed at U2; a needed change is a deviation reported
   by the unit and merged by the orchestrator, `stateVersion` stays 1 until the change ships.
 

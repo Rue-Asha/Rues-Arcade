@@ -46,7 +46,9 @@ use IM Fell English SC, body text Alegreya Sans, numerals IM Fell English, all s
 their OFL licence texts in `static/fonts/`; Press Start 2P SHALL NOT be used on any Blood on the Clocktower screen.
 The start, lobby, deck, setup, reveal, night and end screens SHALL use the night variant, dawn and day screens the day
 variant, and the change between them SHALL be animated (view transition or a finite opacity animation), instant under
-reduced motion. Textures SHALL be CSS layers over a solid background colour. The theme SHALL be set before the first
+reduced motion. Textures SHALL be CSS layers over a solid background colour, and every Blood on the Clocktower page SHALL
+keep one continuous background tone over its full height in both variants: the decorative gradient layers stay fixed to
+the viewport, so that no cut and no second shade appears below the first viewport. The theme SHALL be set before the first
 paint so a reload shows no other theme first: the server renders `data-theme` and the night variant into `<html>`, and
 on the play route a script in the page head sets the variant from the saved session before the first paint. All look rules SHALL hold in both variants: text contrast at least
 4.5:1, touch targets at least 44px, no horizontal scroll at 390px, no request to another origin, ambient loops only on
@@ -67,6 +69,11 @@ screens use the theme's own sky (motif `sky`, requirement "Clocktower atmosphere
 #### Scenario: No theme flash on reload
 - **WHEN** the raw HTML of `/spiele/clocktower` is fetched from the server and the page is reloaded, and then `/spiele/clocktower/spielen` is reloaded with a saved day-phase session
 - **THEN** the served `<html>` tag already carries `data-theme="clocktower"` and `data-variant="night"`, the first painted body background on the start screen is the night ground, and on the play route the first painted frame already has `data-variant="day"` and the day ground
+- **proof:** e2e
+
+#### Scenario: Background keeps one tone over the whole page
+- **WHEN** the setup board (night) and the day grimoire are shown with 15 seats at 390×600, so that each page is taller than the viewport, with the sky layer hidden, and scrolled from the top to the bottom
+- **THEN** the background painted at the same viewport points in the side margins differs by at most 3 per colour channel between the top and the bottom scroll position, in both variants
 - **proof:** e2e
 
 #### Scenario: Clocktower fonts are self-hosted
@@ -166,3 +173,19 @@ without an error; under reduced motion no transition SHALL run. The browser's ba
 - **WHEN** Rue navigates Home → Clocktower → lobby → deck → back on a phone and a desktop browser
 - **THEN** Rue finds the morph smooth and not in the way
 - **proof:** manual (motion feel is a visual judgement, at Gate 2)
+
+### Requirement: UI text is not selectable
+The app SHALL not let UI text be selected or show a text cursor on it anywhere (every game, Home, Spieler, headings,
+info boxes, show texts, timers, counts, seat names): UI text SHALL have `user-select: none` (with the `-webkit-` prefix),
+`-webkit-touch-callout: none`, and a default or pointer cursor instead of the I-beam. Text inputs, text areas and other
+editable fields SHALL keep their caret, the text cursor and selection.
+
+#### Scenario: UI text cannot be selected
+- **WHEN** Home, the Spieler page, the Imposter start screen, a Clocktower night circle screen with a shown text and the Clocktower day grimoire with a running timer are opened, and a heading, a paragraph, a seat name, the shown text and the timer are each double-clicked and triple-clicked
+- **THEN** the page's selection stays empty after every click, those elements compute `user-select: none` and `-webkit-touch-callout: none` where the browser supports it, and none of them shows the text cursor
+- **proof:** e2e
+
+#### Scenario: Inputs keep caret and selection
+- **WHEN** a name is typed into the Spieler page's name input and the input is triple-clicked
+- **THEN** the typed name is selected, the input does not compute `user-select: none`, and its cursor is the text cursor
+- **proof:** e2e

@@ -209,16 +209,18 @@ move to night 1.
 ### Requirement: Grimoire circle
 The default play screen SHALL be the grimoire circle: N numbered seats in clockwise order with names; each seat SHALL
 show alive or dead, and for the dead whether the ghost vote is still available, by a symbol plus an accessible label
-(for example "✕ ●" / "✕ ○" with the label "Stimme" / "keine Stimme"), not colour only; no character SHALL be shown by
-default. A seat's death SHALL be animated (finite, transform/opacity, instant under reduced motion). 5 to 15 seats
-SHALL be legible on phone and desktop. The circle SHALL be decorated on the setup board, the night screens and the day
-screens with an ornament layer under the seats that visibly connects them (passing under every seat), aria-hidden,
-without pointer events and without text, so it never covers a seat or lowers legibility. The ghost-vote token of a dead
-seat SHALL be decorated while its symbols ("✕ ●" / "✕ ○") stay readable and its accessible label stays unchanged.
+(the ghost-vote badge of requirement "Seat nodes", with the label "Stimme" / "keine Stimme"), not colour only; no
+character SHALL be shown by default. A seat's death SHALL play the death animation of requirement "Death animation"
+(instant under reduced motion). 5 to 15 seats SHALL be legible on phone and desktop. The circle SHALL be decorated on
+the setup board, the night screens and the day screens with an ornament layer under the seats that visibly connects
+them (passing under every seat), aria-hidden, without pointer events and without text, so it never covers a seat or
+lowers legibility. The ornament's tick marks SHALL be computed from N on every circle: exactly N subtle ticks, one on
+each boundary between two neighbouring seats' sectors (requirement "Voting clock"), so that the ticks divide the circle
+into the N sectors the vote sweep lights up.
 
 #### Scenario: Circle shows seats, alive and ghost votes
 - **WHEN** a day with 7 seats is shown where seat 2 is dead with a ghost vote and seat 5 is dead without one
-- **THEN** seats 1–7 are numbered clockwise from the top with their names, seat 2 shows the dead symbol with the accessible label "Stimme", seat 5 the dead symbol with the accessible label "keine Stimme", the symbols differ in shape, and no character name is in the page
+- **THEN** seats 1–7 are numbered clockwise from the top with their names, seat 2 shows the unused ghost-vote badge and seat 5 the spent one, the two badges differ in fill and glyph and not only in colour, the seats' accessible labels end in "tot, Stimme" and "tot, keine Stimme", and no character name is in the page
 - **proof:** e2e
 
 #### Scenario: Circle geometry for five to fifteen seats
@@ -228,7 +230,7 @@ seat SHALL be decorated while its symbols ("✕ ●" / "✕ ○") stay readable 
 
 #### Scenario: Circle legible on phone and desktop
 - **WHEN** the day grimoire is rendered with 5 and with 15 seats at 390×844 and 1280×800
-- **THEN** every seat is at least 44px with its number and name visible, and the page does not scroll horizontally
+- **THEN** every seat is at least 44px with its number and name visible and the name larger than the number, and the page does not scroll horizontally
 - **proof:** e2e
 
 #### Scenario: Header shows the night or day and the alive count
@@ -237,8 +239,8 @@ seat SHALL be decorated while its symbols ("✕ ●" / "✕ ○") stay readable 
 - **proof:** e2e
 
 #### Scenario: Death on the circle is animated
-- **WHEN** dawn shows a death with motion allowed, and again with `prefers-reduced-motion: reduce`
-- **THEN** with motion the dying seat runs a finite transform/opacity animation, and under reduced motion no animation runs and the dead marker shows at once
+- **WHEN** dawn shows seat 3's night death with motion allowed, and again with `prefers-reduced-motion: reduce`
+- **THEN** with motion seat 3 runs the death animation (one finite animation of 800–1200 ms on transform and opacity only, the same keyframes as on the execution announcement) and ends in the dead style with its ghost-vote badge, and under reduced motion no animation runs and the dead style shows at once
 - **proof:** e2e
 
 #### Scenario: Circle ornament connects the seats
@@ -246,14 +248,19 @@ seat SHALL be decorated while its symbols ("✕ ●" / "✕ ○") stay readable 
 - **THEN** each circle holds one aria-hidden ornament layer without pointer events and without text that passes under every seat's centre (within 4px), every seat is still at least 44px, no two seats overlap, and each seat is the element hit at its own centre
 - **proof:** e2e
 
-#### Scenario: Ghost-vote token decorated and readable
-- **WHEN** a day with 7 seats is shown where seat 2 is dead with a ghost vote and seat 5 is dead without one, at 390×844 and 1280×800
-- **THEN** seat 2's token reads "✕ ●" and seat 5's "✕ ○", each at 12px or more with a contrast of at least 4.5:1 against the token's own background, each token carries an aria-hidden ornament and lies fully inside the viewport, and the seats' accessible labels still end in "tot, Stimme" and "tot, keine Stimme"
+#### Scenario: Ticks divide the circle into n sectors
+- **WHEN** the ornament is computed for 5 to 15 seats in a 358px and a 640px box
+- **THEN** it holds exactly n ticks, tick k lies at (k + 0.5) · 360/n degrees clockwise from the top, halfway between seats k + 1 and k + 2, and every tick lies between the inner ring and the centre
+- **proof:** unit
+
+#### Scenario: Every circle draws n ticks
+- **WHEN** the setup board, the circle screen of a night step, the day grimoire and the vote clock are shown with 7 and with 15 seats
+- **THEN** each circle's ornament draws exactly 7 and 15 ticks respectively, aria-hidden and without text
 - **proof:** e2e
 
-#### Scenario: Circle and ghost token look approved
+#### Scenario: Circle look approved
 - **WHEN** Rue reviews the look-walk screenshots of the setup board, a night circle screen and the day grimoire at 390px and 1280px
-- **THEN** Rue finds the circle decorated and its seats connected instead of flat, and the ghost-vote token decorated and still readable
+- **THEN** Rue finds the circle decorated and its seats connected instead of flat
 - **proof:** manual (visual judgement at Gate 2, on the verifier's screenshots)
 
 ### Requirement: Clocktower session
@@ -381,19 +388,27 @@ is the Drunk. Chef and Empath SHALL use the current seating and alive state.
 - **proof:** e2e
 
 ### Requirement: Show-bar
-Screen (3) of a waking step SHALL offer a show-bar whose items open a full-screen card that closes on tap: a character
-card (picker over all 22 characters), "Das ist der Dämon", "Deine Minions", the 3 bluffs, "Du bist" plus a character, a
-big number 0–9, and Ja / Nein. The items a role needs SHALL be preselected (Washerwoman, Librarian, Investigator: the
-character; Chef, Empath: the number; Fortune Teller: Ja/Nein; Minion info: "Das ist der Dämon"; Demon info: "Deine
-Minions" then the bluffs; new Imp by starpass or takeover: "Du bist" Imp; Undertaker, Ravenkeeper: the character).
-The bluffs SHALL be 3 good characters not in play, suggested as 2 Townsfolk and 1 Outsider when possible, never the
-Drunk's believed role, drawn from the seeded RNG and rerollable before they are shown. The show-bar SHALL be compact:
+Screen (3) of a waking step SHALL offer a show-bar whose items show their text in the centre of the circle, inside its
+inner ring, so that the circle and its seats stay visible (no full-screen card): a character (picker over all 22
+characters), "Das ist der Dämon", "Deine Minions", the 3 bluffs, "Du bist" plus a character, a big number 0–9, and Ja /
+Nein. A shown text SHALL close on a tap on it or on Escape, and showing another item SHALL replace it. The items a
+role needs SHALL be preselected (Washerwoman, Librarian, Investigator: the character; Chef, Empath: the number;
+Fortune Teller: Ja/Nein; Minion info: "Das ist der Dämon"; Demon info: "Deine Minions" then the bluffs; new Imp by
+starpass or takeover: "Du bist" Imp; Undertaker, Ravenkeeper: the character). The bluffs SHALL be 3 good characters
+not in play, suggested as 2 Townsfolk and 1 Outsider when possible, never the Drunk's believed role and never the
+Drunk, drawn from the seeded RNG; their names SHALL not appear anywhere on the screen before the bluffs are shown, and
+"Neu würfeln" SHALL draw them again blind until they have been shown. The show-bar itself SHALL be compact:
 at most two rows of controls at 390px width and one row at 1280px, every control at least 44px, placed so that the
 circle and the step's navigation stay readable in one piece around it.
 
-#### Scenario: Show-bar opens full-screen cards
-- **WHEN** each show-bar item is opened on the circle screen and the card is tapped
-- **THEN** each opens a card covering the viewport with its content (a character, "Das ist der Dämon", "Deine Minions", three bluff characters, "Du bist" with a character, a digit, "Ja" or "Nein") and the tap closes it
+#### Scenario: Show texts appear in the circle's centre
+- **WHEN** each show-bar item is shown on the circle screen of a 7-player night and the shown text is tapped
+- **THEN** each text (a character's icon and name, "Das ist der Dämon", "Deine Minions", three bluff characters, "Du bist" with a character, a digit, "Ja" or "Nein") appears inside the circle's inner ring while every seat stays visible and is the element hit at its own centre, no dialog or full-screen layer opens, and the tap closes the text
+- **proof:** e2e
+
+#### Scenario: Centre texts fit the circle
+- **WHEN** each text is shown on the circle screen with 5, 7 and 15 seats at 390×844 and 1280×800
+- **THEN** every text lies inside the circle's inner ring and overlaps no seat, has a contrast of at least 4.5:1 on its own surface, and renders at 16px or more for bluff names, 20px or more for character names and phrases, 40px or more for "Ja" and "Nein" and 96px or more for the digit
 - **proof:** e2e
 
 #### Scenario: Role preselects its cards
@@ -402,13 +417,13 @@ circle and the step's navigation stay readable in one piece around it.
 - **proof:** e2e
 
 #### Scenario: Bluffs are good characters not in play
-- **WHEN** bluffs are drawn for many seeds with the Drunk believing Monk
-- **THEN** each draw has 3 distinct good characters, none in play and never the Monk, 2 Townsfolk and 1 Outsider whenever an Outsider is free, and the same seed gives the same bluffs
+- **WHEN** bluffs are drawn for many seeds with the Drunk believing Monk, and for many seeds with no Drunk in play
+- **THEN** each draw has 3 distinct good characters, none in play, never the Monk and never the Drunk, 2 Townsfolk and 1 Outsider whenever an Outsider other than the Drunk is free and 3 Townsfolk otherwise, and the same seed gives the same bluffs
 - **proof:** unit
 
-#### Scenario: Bluffs can be rerolled before showing
-- **WHEN** "Neu würfeln" is tapped at Demon info before the bluffs card is opened
-- **THEN** the three bluffs change and still are good characters not in play
+#### Scenario: Bluffs stay hidden until shown
+- **WHEN** the Demon info circle screen is shown, "Neu würfeln" is tapped, and then the bluffs are shown
+- **THEN** before showing no bluff character's name is in the page, after "Neu würfeln" the stored bluffs have changed (still good, not in play, not the Drunk) and still no name is shown, showing puts the three stored names in the circle's centre, and "Neu würfeln" is unavailable once they have been shown
 - **proof:** e2e
 
 #### Scenario: Show-bar is compact
@@ -421,14 +436,26 @@ circle and the step's navigation stay readable in one piece around it.
 - **THEN** Rue finds the show-bar better placed and more compact than before
 - **proof:** manual (visual judgement at Gate 2, on the verifier's screenshots)
 
+#### Scenario: Show texts and marks approved
+- **WHEN** Rue runs a night step on a phone and a desktop browser, shows each text and marks players while it is shown
+- **THEN** Rue finds every text readable in the circle's centre with the marked players visible around it
+- **proof:** manual (visual and handling judgement at Gate 2)
+
 ### Requirement: Hold-to-view grimoire
-At night a "Grimoire" button SHALL show every seat's character (plus the Drunk's believed role, the red herring and the
-Demon marker) only while it is held, and hide them on release, also when released outside the button, and by keyboard
-(Space held). It SHALL not exist during the day.
+At night a "Grimoire" button SHALL show, only while it is held, every seat's character as its icon in its team colour on
+the seat (laid out as on the setup board, requirement "Seat nodes", with the character's name in the seat's accessible
+name and no text tag) and, below the circle, the Drunk's believed role, the red herring and the Demon marker as short
+notes naming their seats. It SHALL hide them on release, also when released outside the button, and by keyboard (Space
+held). It SHALL not exist during the day.
 
 #### Scenario: Grimoire visible only while held
 - **WHEN** "Grimoire" is held on a night screen and released
-- **THEN** while held every seat shows its character, the Drunk's seat "Drunk (glaubt: <X>)", the red herring and the Demon marker, and after release none of that text is in the page
+- **THEN** while held every seat shows its character's icon in its team colour with the character's name in its accessible name and no character text tag, and the notes below the circle read "Drunk (glaubt: <X>)", "Red Herring" and "Dämon" with their seats; after release no character icon and none of that text is in the page
+- **proof:** e2e
+
+#### Scenario: Held grimoire icons fit fifteen seats
+- **WHEN** the Grimoire is held in a 15-player night at 390×844 and 1280×800
+- **THEN** every seat shows its icon in the node with the seat number above and the name below it, every seat is at least 44px, no two seats overlap, and the page does not scroll horizontally
 - **proof:** e2e
 
 #### Scenario: Release outside the button hides the grimoire
@@ -521,8 +548,9 @@ time.
 ### Requirement: Day timer
 The day timer SHALL count down on the grimoire screen; at 0 it SHALL turn red and read "Zeit um" but never block; it
 SHALL keep running during nominations and votes; the day SHALL be endable at any time. The timer SHALL be emphasised on
-every day screen that shows it: in the first viewport without scrolling, set apart in its own element, and larger than
-the screen's heading. In the last 60 seconds the timer SHALL show a warning state (a pulsing ring that animates only
+every day screen that shows it (grimoire, nominator picker, vote clock, sweep, confirm, result): in the top right corner
+of the screen's head next to the heading, below the app header and in normal flow so that it scrolls with the content,
+set apart in its own element, larger than the screen's heading, with its size and look unchanged. In the last 60 seconds the timer SHALL show a warning state (a pulsing ring that animates only
 transform and opacity, and does not loop under reduced motion) that never blocks input.
 
 #### Scenario: Last minute warns without blocking
@@ -546,13 +574,13 @@ transform and opacity, and does not loop under reduced motion) that never blocks
 - **proof:** unit
 
 #### Scenario: Day timer stands out
-- **WHEN** the day grimoire and the vote clock are shown with a running timer at 390×844 and 1280×800, and again after the deadline
-- **THEN** on each screen the timer lies inside the first viewport without scrolling, its text is larger than the screen's heading with a contrast of at least 4.5:1, it is not inside the heading element, and after the deadline it reads "Zeit um" in the evil colour
+- **WHEN** the day grimoire, the nominator picker, the vote clock, the sweep, the confirm screen and the result are shown with a running timer at 390×844 and 1280×800, and again after the deadline
+- **THEN** on each screen the timer lies inside the first viewport without scrolling, in the head's top right corner (its right edge within 4px of the head's right edge, its top within 4px of the head's top), neither it nor an ancestor is sticky or fixed, it is not inside the heading element and overlaps no heading text, its text is larger than the screen's heading with a contrast of at least 4.5:1, and after the deadline it reads "Zeit um" in the evil colour
 - **proof:** e2e
 
 #### Scenario: Day clock emphasis approved
 - **WHEN** Rue reviews the look-walk screenshots of the day grimoire, the vote clock and the sweep at 390px and 1280px
-- **THEN** Rue finds the timer and the voting clock clearly visible and emphasised
+- **THEN** Rue finds the timer clearly visible in the top right corner and the voting clock emphasised
 - **proof:** manual (visual judgement at Gate 2, on the verifier's screenshots)
 
 ### Requirement: Nominations
@@ -579,15 +607,18 @@ without using it up.
 
 ### Requirement: Voting clock
 After a nomination the circle SHALL become a clock whose hand points from the centre at the nominee, with "Abstimmung
-beginnen" and "Zurück", the threshold ⌈alive/2⌉ and today's high-water mark shown. On start the hand SHALL sweep
-clockwise one seat per 2.5 s (injectable for tests) from the seat after the nominee and end at the nominee, who votes
-last (15 seats = 37.5 s). The storyteller SHALL mark the seat under the hand as voting by tapping it or pressing Space;
-during the sweep tapping any other markable seat SHALL also toggle its vote (for corrections), while Space SHALL act
-only on the seat under the hand; marked seats light up; dead players without a ghost vote SHALL not be markable. Under reduced motion the hand SHALL jump
-seat to seat. After the sweep a confirm screen SHALL show the count prefilled from the marks, the marks editable and a
-count stepper for timing corrections; confirming SHALL spend the ghost vote of every dead player marked as voting. The
-clock's hand SHALL stand out: it reaches from the circle's centre to the seat it points at, with a non-text contrast of
-at least 3:1 against the ground in both variants.
+beginnen" and "Zurück", the threshold ⌈alive/2⌉ and today's high-water mark shown. The circle SHALL be divided into N
+equal sectors, one per seat, each 360/N degrees wide and centred on its seat (a boundary belongs to the next seat
+clockwise). On start the hand SHALL turn clockwise at a constant speed of one sector per 2.5 s (injectable for tests),
+from the boundary between the nominee's sector and the next seat's through every sector, ending with the nominee's
+sector, so the nominee votes last (15 seats = 37.5 s); the sector the hand is in SHALL light up in a light red. A tap on
+a seat or Space SHALL cast or toggle a vote only for the seat whose sector holds the hand; during the sweep the other
+seats SHALL show as unavailable and taps on them SHALL do nothing. Marked seats light up; dead players without a ghost
+vote SHALL not be markable. Under reduced motion the hand SHALL jump from seat to seat, still lighting each sector in
+turn. After the sweep a confirm screen SHALL show the marks with a count that follows them: tapping a seat toggles its
+vote and the count changes with it, with no count stepper; "Bestätigen" confirms and SHALL spend the ghost vote of every
+dead player marked as voting. The clock's hand SHALL stand out: it reaches from the circle's centre to the seats' ring,
+with a non-text contrast of at least 3:1 against the ground in both variants.
 
 #### Scenario: Clock points at the nominee
 - **WHEN** Alex (seat 1) nominates Dani (seat 4) in a 7-player day with 6 alive and a high-water mark of 3
@@ -604,18 +635,38 @@ at least 3:1 against the ground in both variants.
 - **THEN** it is 12.5 s and 37.5 s
 - **proof:** unit
 
+#### Scenario: Sector of an angle
+- **WHEN** the sector is looked up for 7 seats at 0°, 25.7°, 25.72°, 359° and −10°, and for 15 seats at exactly 12°
+- **THEN** 0°, 25.7°, 359° and −10° lie in seat 1's sector, 25.72° in seat 2's, and with 15 seats the boundary 12° belongs to seat 2
+- **proof:** unit
+
+#### Scenario: Hand position over the sweep
+- **WHEN** the hand's position is computed for a vote on seat 4 of 7 with 2500 ms per seat at 0, 1250, 2500 and 17,499 ms, and at 17,500 ms
+- **THEN** it starts at 180° (seat 4's angle plus 180/7 degrees) in seat 5's sector, points at seat 5's angle at 1250 ms, enters seat 6's sector at 2500 ms, lies in seat 4's sector at 17,499 ms, turns exactly 360/7 degrees per 2500 ms throughout, and the sweep is over at 17,500 ms
+- **proof:** unit
+
+#### Scenario: Hand turns at a constant speed
+- **WHEN** a 7-player vote on seat 4 sweeps with a seat time of 400 ms
+- **THEN** in every sector the hand's target angle is that sector's end boundary, consecutive targets differ by exactly 360/7 degrees, and the hand's transition is linear and lasts 400 ms, so it never rests on a seat
+- **proof:** e2e
+
+#### Scenario: The hand's sector lights up
+- **WHEN** the same sweep is in seat 6's sector, and then in seat 7's
+- **THEN** exactly one light red sector is drawn under the seats, aria-hidden and without pointer events, spanning 360/7 degrees centred on seat 6, then on seat 7, and every seat's text keeps a contrast of at least 4.5:1
+- **proof:** e2e
+
 #### Scenario: Real short sweep marks votes
-- **WHEN** the seat time is set to 300 ms for the test, a vote is started, seat 5 is tapped and Space is pressed while the hand is on seat 6
-- **THEN** seats 5 and 6 light up as voting, the hand ends on the nominee, and the confirm screen shows the count 2
+- **WHEN** the seat time is set to 300 ms for the test, a vote on seat 4 of 7 is started, seat 5 is tapped while the hand is in seat 5's sector and Space is pressed while it is in seat 6's
+- **THEN** seats 5 and 6 light up as voting, the hand ends in the nominee's sector, and the confirm screen shows the count 2
 - **proof:** e2e
 
-#### Scenario: Tapping any seat during the sweep toggles its vote
-- **WHEN** a 7-player vote on seat 4 is sweeping with a short seat time, and while the hand is on seat 6 seat 2 (not yet reached) is tapped, then seat 5 (already passed) is tapped twice
-- **THEN** seat 2 lights up as voting while the hand stays on seat 6, seat 5 is marked after the first tap and unmarked after the second, and the confirm screen's count includes seat 2 and not seat 5
+#### Scenario: Only the seat in the hand's sector can vote
+- **WHEN** a 7-player vote on seat 4 sweeps with a short seat time, and while the hand is in seat 6's sector seat 2 (not yet reached) and seat 5 (already passed) are tapped, then seat 6 is tapped three times
+- **THEN** seats 2 and 5 show as unavailable and do not light up, seat 6 is marked after the first tap, unmarked after the second and marked after the third, and the confirm screen's count is 1 with seat 6 as the only voter
 - **proof:** e2e
 
-#### Scenario: Space marks only the seat under the hand
-- **WHEN** during the sweep seat 2 has keyboard focus and Space is pressed while the hand is on seat 6
+#### Scenario: Space votes only for the seat in the hand's sector
+- **WHEN** during the sweep seat 2 has keyboard focus and Space is pressed while the hand is in seat 6's sector
 - **THEN** seat 6 lights up as voting and seat 2 does not
 - **proof:** e2e
 
@@ -624,9 +675,14 @@ at least 3:1 against the ground in both variants.
 - **THEN** it does not light up and is labelled "keine Stimme"
 - **proof:** e2e
 
-#### Scenario: Confirm corrects missed timing
-- **WHEN** on the confirm screen seat 2 is marked additionally and the count stepper is raised by one
-- **THEN** the count reads 4 and the confirmed vote records 4 votes and the marked voters
+#### Scenario: Confirm toggles votes by tapping seats
+- **WHEN** the confirm screen shows seats 5 and 6 as voters with the count 2, seat 2 is tapped, then seat 5, then "Bestätigen"
+- **THEN** after the first tap the count reads 3, after the second 2, no count stepper ("Stimme mehr" / "Stimme weniger") is offered, and the confirmed vote records 2 votes from seats 2 and 6
+- **proof:** e2e
+
+#### Scenario: Missed tap in the sweep is corrected in the confirm step
+- **WHEN** during the sweep seat 3 is tapped while the hand is in seat 6's sector, the sweep ends, and on the confirm screen seat 3 is tapped and the vote confirmed
+- **THEN** the sweep tap leaves seat 3 unmarked and the count after the sweep excludes it, the confirm tap marks it and the count rises by one, and the confirmed vote counts seat 3
 - **proof:** e2e
 
 #### Scenario: Dead voters spend their ghost vote
@@ -636,19 +692,24 @@ at least 3:1 against the ground in both variants.
 
 #### Scenario: Reduced motion hand jumps
 - **WHEN** `prefers-reduced-motion: reduce` is set and a vote runs with a short seat time
-- **THEN** the hand moves seat by seat with no running transform animation
+- **THEN** the hand points at the centre of the seat whose sector is lit and moves seat by seat with no running transform animation
 - **proof:** e2e
 
 #### Scenario: Voting clock hand stands out
-- **WHEN** the clock screen points at the nominee on seat 4 of 7, and the sweep has reached seat 6, at 390×844 and 1280×800
-- **THEN** the hand runs from the circle's centre to within the radius of the seat it points at, and its colour has a contrast of at least 3:1 against the ground
+- **WHEN** the clock screen points at the nominee on seat 4 of 7, and the sweep is in seat 6's sector, at 390×844 and 1280×800
+- **THEN** the hand runs from the circle's centre to within the seats' ring radius, and its colour has a contrast of at least 3:1 against the ground
 - **proof:** e2e
+
+#### Scenario: Vote sweep approved
+- **WHEN** Rue runs a vote with 7 and with 15 seats on a phone and a desktop browser
+- **THEN** Rue finds the hand turning evenly, the light red sector showing clearly whose vote counts, and the ticks in line with the sectors
+- **proof:** manual (motion judgement at Gate 2)
 
 ### Requirement: Vote result
 A confirmed vote SHALL put the nominee on the block, replacing any previous holder, when its votes are at least
 ⌈alive/2⌉ (living players at vote time) and more than today's high-water mark; votes equal to the high-water mark SHALL
 be a tie that clears the block while the mark stays; otherwise nothing SHALL change. Dead players' votes count fully.
-The block holder SHALL be marked on the circle.
+The block holder SHALL be marked on the circle with the block badge (requirement "Seat nodes").
 
 #### Scenario: Vote result by threshold and high-water mark
 - **WHEN** with 7 alive votes of 3, 4, then 5, then 5 again, then 4 are confirmed for five nominees
@@ -662,7 +723,7 @@ The block holder SHALL be marked on the circle.
 
 #### Scenario: Block holder marked on the circle
 - **WHEN** a vote puts seat 4 on the block and a later vote puts seat 6 on it
-- **THEN** the circle marks seat 4 "auf dem Block", then only seat 6
+- **THEN** the circle shows the block badge on seat 4, then only on seat 6
 - **proof:** e2e
 
 ### Requirement: Seat actions by day
@@ -897,11 +958,13 @@ opening the deck SHALL update the deck the next time it is opened.
 ### Requirement: App mechanics in the deck
 The deck SHALL add slides explaining this app's mechanics: the grimoire circle and ghost-vote markers, the private
 night guide (wake → card → circle → sleep), the show-bar, the day timer, nominations and the voting clock (tap or
-Space), and the end reveal.
+Space), and the end reveal, as the app works now: round badges and nomination rings on the circle, a vote counting only
+in the seat's sector with corrections by tapping in the confirm step, and show texts in the circle's centre with
+players marked by tapping.
 
 #### Scenario: Deck explains the app
 - **WHEN** the deck is paged through
-- **THEN** slides with the headings "Das Grimoire", "Die Nacht in der App", "Karten zeigen", "Der Tag-Timer", "Nominieren und abstimmen" and "Das Ende" exist, the voting slide names tapping and the Space key
+- **THEN** slides with the headings "Das Grimoire", "Die Nacht in der App", "Karten zeigen", "Der Tag-Timer", "Nominieren und abstimmen" and "Das Ende" exist, the voting slide names tapping and the Space key while the hand is in the seat's sector and correcting votes by tapping in the confirm step, and the "Karten zeigen" slide names marking players by tapping while a text is shown
 - **proof:** e2e
 
 #### Scenario: App slides read clearly
@@ -948,7 +1011,7 @@ component SHALL be used on the setup board.
 The setup board's seating circle SHALL show, on every seat that holds a character, that character's icon in its team
 colour, updated as soon as a character is assigned or removed or seats are swapped or moved, without opening anything;
 the seat's accessible name SHALL then include the character's name. The circles of the reveal, night and day screens
-SHALL show no character icon (the hold-to-view grimoire keeps its own behaviour).
+SHALL show no character icon (only the held grimoire does, requirement "Hold-to-view grimoire").
 
 #### Scenario: Setup circle shows each seat's character
 - **WHEN** a 7-player setup board has characters on seats 1–5 and none on seats 6 and 7, then the Imp is assigned to seat 6, then seats 1 and 6 are swapped by tapping
@@ -957,7 +1020,7 @@ SHALL show no character icon (the hold-to-view grimoire keeps its own behaviour)
 
 #### Scenario: Character icons fit fifteen seats
 - **WHEN** a complete 15-player distribution is shown on the setup board at 390×844 and 1280×800
-- **THEN** every seat shows its icon inside its own box with its number and name still visible, every seat is at least 44px, no two seats overlap and the page does not scroll horizontally
+- **THEN** every seat shows its icon inside the node with the seat number above the icon and the name below it, the name at 15px or more and at least 1.25 times the number's size, the name's box overlaps no other seat, every seat is at least 44px, no two seats overlap and the page does not scroll horizontally
 - **proof:** e2e
 
 #### Scenario: Public circles show no character icon
@@ -1024,14 +1087,15 @@ reveal SHALL have no right-aligned text.
 - **proof:** e2e
 
 ### Requirement: Day facts in a box
-Each day screen SHALL group its side information ("Auf dem Block", "Nötig" and "Höchststand", the vote hint, the vote
-result's detail and the reasons a nominator is unavailable) in one small box that is set off from the
-background by its own surface or border, with text of at least 16px and a contrast of at least 4.5:1, keeping its
-wording.
+Each day screen SHALL group its side information ("Nötig" and "Höchststand", the vote hint, the vote result's detail
+and the reasons a nominator is unavailable) in one small box that is set off from the background by its own surface or
+border, with text of at least 16px and a contrast of at least 4.5:1, keeping its wording (only the sweep hint now
+names the hand's sector, requirement "Voting clock"); who is on the block is shown by the block card (requirement
+"Block card").
 
 #### Scenario: Day facts sit in a box
-- **WHEN** the day grimoire with Dani on the block, the nominator picker with Bo ("hat heute schon nominiert") and Dani ("ist tot") unavailable, the vote clock, the sweep and a vote result are shown at 390×844 and 1280×800
-- **THEN** on each screen these texts are inside one `[data-testid="day-facts"]` element whose background colour or border differs from the ground, every text in it is at least 16px with a contrast of at least 4.5:1, and the wording is unchanged ("Auf dem Block: Dani", "Nötig: 3", "Höchststand: 3", "Bo: hat heute schon nominiert", "Dani: ist tot")
+- **WHEN** the nominator picker with Bo ("hat heute schon nominiert") and Dani ("ist tot") unavailable, the vote clock, the sweep and a vote result are shown at 390×844 and 1280×800
+- **THEN** on each screen these texts are inside one `[data-testid="day-facts"]` element whose background colour or border differs from the ground, every text in it is at least 16px with a contrast of at least 4.5:1, and the wording is unchanged ("Nötig: 3", "Höchststand: 3", "Bo: hat heute schon nominiert", "Dani: ist tot")
 - **proof:** e2e
 
 #### Scenario: Day facts legible
@@ -1040,29 +1104,187 @@ wording.
 - **proof:** manual (visual judgement at Gate 2, on the verifier's screenshots)
 
 ### Requirement: Animated voting slide
-The deck's voting slide SHALL animate a vote as Rue's presentation does: on a circle of N seats with the nominee marked,
-a hand sweeps clockwise from the seat after the nominee and ends at the nominee; ⌈N/2⌉ seats spread around the circle
-vote, and each turns red when the hand reaches it; the number in the centre counts up in step with the hand until it
-reaches ⌈N/2⌉, where it turns red. The animation SHALL use only transform and opacity, run while the slide is shown and
-repeat after a pause; under reduced motion it SHALL not run and the end state (⌈N/2⌉ red seats, the count ⌈N/2⌉, the
-hand on the nominee) SHALL show at once.
+The deck's voting slide SHALL animate a vote the way the game's voting clock runs (requirement "Voting clock"): on a
+circle of N seats with the nominee marked and N subtle ticks on the sector boundaries, a hand turns clockwise at a
+constant speed from the boundary after the nominee's sector through every sector and ends in the nominee's sector; the
+sector the hand is in lights up in a light red; ⌈N/2⌉ seats spread around the circle vote, and each turns red when the
+hand enters its sector; the number in the centre counts up with them until it reaches ⌈N/2⌉, where it turns red. The
+animation SHALL use only transform and opacity, run while the slide is shown and repeat after a pause; under reduced
+motion it SHALL not run and the end state (⌈N/2⌉ red seats, the count ⌈N/2⌉, the hand and the lit sector in the
+nominee's sector) SHALL show at once.
 
 #### Scenario: Voting slide timeline follows the count
 - **WHEN** the voting slide's timeline is computed for N = 5, 12 and 15
-- **THEN** it holds N seats with the nominee first, exactly 3, 6 and 8 voting seats that are not the nominee, each voter's time equals the hand's arrival at its seat, the count steps from 1 to ⌈N/2⌉ at the voters' times in sweep order, and the hand ends at the nominee
+- **THEN** it holds N seats with the nominee first, exactly 3, 6 and 8 voting seats that are not the nominee, the hand starts at the boundary after the nominee's sector and turns 360° at a constant speed through N equal sectors, each voter's time equals the hand's entry into its sector, the count steps from 1 to ⌈N/2⌉ at the voters' times in sweep order, and the hand ends in the nominee's sector
 - **proof:** unit
 
 #### Scenario: Voting slide sweeps and counts up
 - **WHEN** the voting slide is shown for N = 7 with motion allowed, and its animations are moved to just after the second voter's time and then to the end of the sweep
-- **THEN** every running animation on the slide touches only transform and opacity; after the second voter exactly 2 seats show red and the count reads 2; at the end 4 seats show red, the count reads 4 and the hand points at the nominee
+- **THEN** every running animation on the slide touches only transform and opacity and the slide draws 7 ticks; after the second voter exactly 2 seats show red, the count reads 2 and the lit sector is the second voter's; at the end 4 seats show red, the count reads 4 and the hand and the lit sector are in the nominee's sector
 - **proof:** e2e
 
 #### Scenario: Voting slide shows the end state under reduced motion
 - **WHEN** the voting slide is shown for N = 7 with `prefers-reduced-motion: reduce`
-- **THEN** no animation runs on the slide, 4 seats show red, the count reads 4 and the hand points at the nominee
+- **THEN** no animation runs on the slide, 7 ticks are drawn, 4 seats show red, the count reads 4 and the hand and the lit sector are in the nominee's sector
 - **proof:** e2e
 
-#### Scenario: Voting animation like the presentation
-- **WHEN** Rue watches the voting slide next to her presentation's voting slide on a phone and a desktop browser
-- **THEN** Rue finds the hand sweep, the seats turning red and the count-up recognisably the same animation
+#### Scenario: Voting slide like the game
+- **WHEN** Rue watches the voting slide next to a vote in the game on a phone and a desktop browser
+- **THEN** Rue finds the slide's sweep the same as the game's (constant hand, light red sector, ticks), with the seats turning red and the count going up
 - **proof:** manual (motion judgement at Gate 2)
+
+### Requirement: Seat nodes
+Every seat node (setup board, night screens, death step, dawn, day screens, vote clock, held grimoire) SHALL show the
+player's name large and the seat number small: the name at 15px or more and at least 1.25 times the number's size, the
+number at 12px or more. On a node without a character icon the name SHALL sit inside the node and the number in a small
+badge on the node's top rim; on a node with an icon (setup board, held grimoire) the icon SHALL sit inside the node, the
+number above it on the top rim and the name below it on a ribbon over the node's lower rim. A name that does not fit
+SHALL end in an ellipsis and stay complete in the seat's accessible name. Status SHALL show as round badges on the
+node's rim, each about 40% of the node's diameter, with an aria-hidden glyph whose non-text contrast against its disc is
+at least 3:1: the block holder carries a blood-red badge with an axe (replacing the red outline and the "▼"), and a dead
+seat carries a ghost-vote badge that is light blue with a raised hand while the ghost vote is unused and grey, hollow
+and struck through once it is spent (replacing the "✕ ●" / "✕ ○" token). The seats' accessible labels SHALL stay
+unchanged. Number, name, icon and badges SHALL not cover one another, and no two seats SHALL overlap.
+
+#### Scenario: Seat node shows the name large and the number small
+- **WHEN** the setup board without characters, the circle screen of a night step, the death step, dawn with a death, the day grimoire and the vote clock are shown with 7 and with 15 seats at 390×844 and 1280×800
+- **THEN** on every seat the name renders at 15px or more and at least 1.25 times the number's size, the number at 12px or more sits on the node's top rim above the name, the name lies inside the node and ends in an ellipsis when too long while the seat's accessible name holds the full name, every seat is at least 44px, no two seats overlap and the page does not scroll horizontally
+- **proof:** e2e
+
+#### Scenario: Block badge replaces the outline
+- **WHEN** a vote puts seat 4 of 7 on the block and the day grimoire, the nominator picker and the vote clock are shown at 390×844 and 1280×800
+- **THEN** seat 4 carries one round block badge (width and height within 1px, fully rounded) in the blood-red colour with an aria-hidden axe glyph of at least 3:1 non-text contrast against it, covering neither seat 4's name nor its number, seat 4 has no red outline or ring shadow, and no "▼" is in the page
+- **proof:** e2e
+
+#### Scenario: Ghost-vote badge shows whether the vote is left
+- **WHEN** a day with 7 seats is shown where seat 2 is dead with a ghost vote and seat 5 is dead without one, at 390×844 and 1280×800
+- **THEN** seat 2 carries a round light-blue ghost-vote badge with an aria-hidden glyph of at least 3:1 non-text contrast against it, seat 5 the same badge greyed out (grey, hollow and struck through), both lie fully inside the viewport and cover neither name nor number, the seats' accessible labels still end in "tot, Stimme" and "tot, keine Stimme", and neither "✕ ●" nor "✕ ○" is in the page
+- **proof:** e2e
+
+#### Scenario: Seat nodes approved
+- **WHEN** Rue reviews the look-walk screenshots of the setup board, a night circle screen, the day grimoire with a block holder and dead seats, and the vote clock at 390px and 1280px
+- **THEN** Rue finds the names large and the numbers small, the block and ghost-vote badges round and fitting the game, the nomination rings subtle, and the ticks in line with the seats' sectors
+- **proof:** manual (visual judgement at Gate 2, on the verifier's screenshots)
+
+### Requirement: Seat press feedback
+Tapping an enabled seat on any circle SHALL give clear feedback: on press the node SHALL scale in (to about 0.93), and
+on release spring back past its size to rest, with a short glow ring expanding from the node, all finite, on transform
+and opacity only and over within 500 ms. Where the browser offers `navigator.vibrate` the device SHALL vibrate once for
+10 ms per tap (Android; iOS has no vibration API and stays silent without an error). A disabled seat SHALL neither
+animate nor vibrate. Under reduced motion there SHALL be no scale, spring or ripple, and the change the tap causes
+SHALL show at once.
+
+#### Scenario: Seat press springs back with a ripple
+- **WHEN** an enabled seat on the day grimoire is pressed and released with motion allowed
+- **THEN** while pressed the seat is scaled to between 0.9 and 0.96, after release a finite animation scales it past 1 and back to 1 and a ripple ring appears around the seat and is gone again, every animation touches only transform, scale, translate or opacity, and all of them end within 500 ms
+- **proof:** e2e
+
+#### Scenario: Seat tap vibrates where supported
+- **WHEN** `navigator.vibrate` is recorded and an enabled seat, then a disabled seat (the nominator picker's "ist tot"), is tapped, and again with `navigator.vibrate` absent
+- **THEN** the enabled tap calls it once with 10, the disabled tap calls it never and runs no press animation, and without the API the tap still works and no page error is logged
+- **proof:** e2e
+
+#### Scenario: Seat press under reduced motion
+- **WHEN** `prefers-reduced-motion: reduce` is set and a seat is tapped on the vote confirm screen
+- **THEN** no scale, spring or ripple animation runs and the seat's vote mark shows at once
+- **proof:** e2e
+
+#### Scenario: Seat taps feel responsive
+- **WHEN** Rue taps seats on the setup board, a night circle and the day screens on an Android phone and an iPhone
+- **THEN** Rue feels a clear press and spring-back on every tap, a short vibration on Android, and nothing breaks on the iPhone
+- **proof:** manual (touch and vibration need real hardware)
+
+### Requirement: Marking seats while a text is shown
+While a show-bar text is shown in the circle's centre, tapping a seat SHALL mark or unmark it (any seat, alive or dead,
+several up to all) with the press feedback of requirement "Seat press feedback", and the step's own seat behaviour (the
+Imp's target) SHALL be suspended; a marked seat shows a gold ring and a check badge. Closing the text SHALL clear every
+mark and give seat taps back to the step; showing another item SHALL keep the marks; leaving the screen or reloading
+SHALL clear the text and the marks. Marks are not stored and change no game state.
+
+#### Scenario: Seats are marked while a text is shown
+- **WHEN** at the Washerwoman's circle screen of a 7-player night "Charakter" is shown, seats 2, 3 and 6 are tapped, then seat 3 again
+- **THEN** the text stays in the circle's centre, seats 2 and 6 carry the mark (gold ring and check badge) and seat 3 does not, and the stored session is unchanged
+- **proof:** e2e
+
+#### Scenario: Closing the text gives taps back to the Imp's target
+- **WHEN** at the Imp's circle screen of night 2 "Ja" is shown, seats 2 and 5 are tapped, the text is closed by tapping it, and then seat 4 is tapped
+- **THEN** while the text is shown seats 2 and 5 are marked and no target is noted ("Tippe auf den Platz des Ziels."), after closing no seat is marked, and the tap on seat 4 notes it as the target ("Ziel: Dani (#4)") without marking it
+- **proof:** e2e
+
+#### Scenario: Dead seats can be marked but not targeted
+- **WHEN** at the Imp's circle screen with seat 6 dead a text is shown, seat 6 is tapped, the text is closed and seat 6 is tapped again
+- **THEN** seat 6 is marked while the text is shown, and afterwards it is not marked and no target is noted
+- **proof:** e2e
+
+#### Scenario: Another text keeps the marks
+- **WHEN** a number is shown, seat 3 is marked, and then "Ja" is shown
+- **THEN** the centre shows "Ja" and seat 3 is still marked
+- **proof:** e2e
+
+#### Scenario: Leaving the step or reloading clears text and marks
+- **WHEN** at the Imp's circle screen with seat 4 noted as the target a text is shown with seat 3 marked, then "Weiter" and "Zurück" are tapped, and in a second run the page is reloaded instead
+- **THEN** each time the circle screen shows no text and no mark, and seat 4 is still the noted target
+- **proof:** e2e
+
+### Requirement: Nomination rings
+During the day (grimoire, nominator picker, vote clock, sweep, confirm, result) each seat SHALL show up to two subtle
+rings outside its node: an inner, solid turquoise ring while the player can still be nominated today and an outer,
+dashed orange ring while the player can still nominate today (alive and not yet nominated anyone). A ring SHALL
+disappear as soon as the nomination is recorded and come back when that nomination is cancelled with "Zurück"; no ring
+SHALL show once nominations are closed (immediate execution) or on dawn and night screens, and both SHALL reset at the
+next day. Dead players SHALL get only the turquoise ring. The rings SHALL take no pointer events, stay outside the
+node and keep a non-text contrast of at least 3:1 against the day ground.
+
+#### Scenario: Nomination availability per seat
+- **WHEN** availability is computed for a 7-player day where Alex (1) has nominated Dani (4), Bo (2) is dead, Cleo (3) is the pending nominee of an open picker, and again after an immediate execution
+- **THEN** Dani cannot be nominated and Alex cannot nominate, Bo can be nominated but cannot nominate, Cleo can still be nominated, every other living seat can do both, and after the execution no seat can do either
+- **proof:** unit
+
+#### Scenario: Rings follow the day's nominations
+- **WHEN** on a 7-player day with Bo dead Alex nominates Dani, "Zurück" is tapped on the clock, Alex nominates Dani again and the vote is confirmed, then the day ends and the next day begins
+- **THEN** at first every living seat shows both rings and Bo only the turquoise one; after the nomination Dani's turquoise and Alex's orange ring are gone; after "Zurück" both are back; after the confirmed vote both are gone on the result and the grimoire; dusk, the night screens and dawn show no rings; and on the next day's grimoire every living seat shows both rings again
+- **proof:** e2e
+
+#### Scenario: Rings stay subtle and outside the nodes
+- **WHEN** the day grimoire of a 15-player day with a block holder and dead seats is shown at 390×844 and 1280×800
+- **THEN** each ring lies outside its node, takes no pointer events and has a non-text contrast of at least 3:1 against the ground, the turquoise ring is solid and inside the dashed orange one, no ring overlaps another seat's node, and every seat is the element hit at its own centre
+- **proof:** e2e
+
+### Requirement: Block card
+While someone is on the block, the day grimoire SHALL show a block card instead of a plain "Auf dem Block" line: a
+decorated card in the game's look (parchment surface, gold frame, a blood-red header carrying the block badge's axe)
+reading "Auf dem Block", the player's name in the display type and the number of votes that put them there as the
+card's largest text ("<v> Stimmen"), every text at least 16px with a contrast of at least 4.5:1. With nobody on the
+block no card SHALL show.
+
+#### Scenario: Block card names the player and the votes
+- **WHEN** a vote with 4 votes puts Dani on the block, a later vote with 5 puts Eli on it, and a third ends in a tie, each time back on the day grimoire, at 390×844 and 1280×800
+- **THEN** first one `[data-testid="block-card"]` reads "Auf dem Block", "Dani" and "4 Stimmen", then "Eli" and "5 Stimmen", and after the tie no block card is shown; the vote count is the card's largest text, every text in it is at least 16px with a contrast of at least 4.5:1, it carries the axe glyph, and its background or border differs from the ground
+- **proof:** e2e
+
+### Requirement: Death animation
+A seat that dies SHALL play one death animation of about 1 s (800–1200 ms, finite, on transform and opacity only: a
+red ring pulses out from the node, the node sinks a few pixels and fades into the dead style) at two moments: on the
+execution announcement for the seat the execution killed, and at dawn for every seat that died in the night, with the
+same keyframes. An executed seat that was already dead SHALL not play it. Under reduced motion no animation SHALL run
+and the dead style SHALL show at once.
+
+#### Scenario: Execution records whom it killed
+- **WHEN** "Tag beenden" executes the living block holder, "Sofort hinrichten" executes a living seat, and in a third day "Tag beenden" executes a block holder who is already dead
+- **THEN** today's killed seat is the executed seat in the first two cases and none in the third
+- **proof:** unit
+
+#### Scenario: Execution plays the death animation
+- **WHEN** Dani is executed by "Tag beenden" and the announcement is shown with motion allowed, and again with `prefers-reduced-motion: reduce`
+- **THEN** with motion Dani's seat runs the death animation once (one finite animation of 800–1200 ms on transform and opacity only, the same keyframes as at dawn) and ends dead, and under reduced motion none runs and the seat shows dead at once
+- **proof:** e2e
+
+#### Scenario: Executing a dead player plays no death animation
+- **WHEN** a dead player on the block is executed and the announcement is shown
+- **THEN** no seat runs a death animation
+- **proof:** e2e
+
+#### Scenario: Day screens of round 2 approved
+- **WHEN** Rue reviews the look-walk screenshots of the day grimoire with a block holder, the vote clock and the execution announcement at 390px and 1280px, and watches an execution and a dawn death on a phone
+- **THEN** Rue finds the timer in the top right corner, the nomination rings readable, the block card fitting the game and the death animations short and clear
+- **proof:** manual (visual and motion judgement at Gate 2)

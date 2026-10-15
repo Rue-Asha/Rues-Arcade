@@ -5,7 +5,8 @@ notes. The storyteller has to juggle role distribution, the night order, nominat
 by hand, and players have no shared view of who is alive and who still has a ghost vote.
 
 Appetite: one change, multi-session (≈ 10–12 units in 4–5 waves), the explanation deck and character sheet in the last
-wave. Exceeding it means renegotiating scope.
+wave. Exceeding it means renegotiating scope. Gate 2 revisions round 2 (S50–S66, 2026-10-15): about 5–6 units in 3
+waves (U17–U22), then Verify and Gate 2 again.
 
 ## What Changes
 
@@ -36,6 +37,14 @@ wave. Exceeding it means renegotiating scope.
   two-step end reveal (S32–S34).
 - An "Erklärung" deck rebuilt from Rue's presentation, adapted to N, plus slides on the app's mechanics and a character
   sheet in the look of her PDF, reused on the setup board (S35–S38).
+- Gate 2 revisions, round 2 (S50–S66): no text selection or I-beam on UI text in the whole app (S50); the held night
+  grimoire shows character icons (S51); every seat node shows the name large and the number small (S52); the vote hand
+  turns at a constant speed, the hand's sector lights up and a vote counts only in that sector, confirmed by tapping
+  seats instead of a count stepper (S53); n ticks on the sector boundaries of every circle and the same look on the
+  deck's voting slide (S54, S55); the day timer top right (S56); press feedback and vibration on seat taps (S57);
+  nomination rings (S58); round block and ghost-vote badges (S59, S60); a block card with the votes (S61); one
+  background tone over the whole page (S62); death animations at the execution and at dawn (S63, S64); show texts in
+  the circle's centre with seats marked by tapping (S65); bluffs hidden until shown and never the Drunk (S66).
 
 ## Non-Goals
 
@@ -49,6 +58,7 @@ wave. Exceeding it means renegotiating scope.
 - Multi-device play, player phones, remote viewers.
 - Any CI workflow change — speed-ups belong to `faster-ci`; this change only follows its e2e idioms.
 - A day/night history log or undo beyond the night guide's "Zurück" and the seat corrections.
+- Round 2: a select-all control for marking players (S65) and vibration on iOS (no vibration API there).
 
 ## Done criteria
 
@@ -58,7 +68,9 @@ wave. Exceeding it means renegotiating scope.
 - [ ] The night guide wakes exactly the right characters in the official order on night 1 and later nights for 5, 7
       and 15 players.
 - [ ] `npm run proof:full` is green, and the look walk covers every BotC screen on phone and desktop.
-- [ ] Other games look and behave as before.
+- [ ] In a vote only the seat whose sector holds the hand can vote, and corrections are made by tapping seats in the
+      confirm step; show texts appear in the circle's centre while tapped players are marked around it.
+- [ ] Other games look and behave as before, except that no UI text can be selected anywhere (S50).
 
 ## Capabilities
 
@@ -66,7 +78,9 @@ wave. Exceeding it means renegotiating scope.
 
 - `clocktower`: Blood on the Clocktower (Trouble Brewing) — rules data, setup board, role reveal, grimoire circle,
   session, night guide, day with nominations and voting clock, win detection, end reveal, explanation deck and
-  character sheet (S8–S38 except the look and sounds).
+  character sheet (S8–S38 except the look and sounds); Gate 2 revisions S40–S49 and, in round 2, seat nodes, press
+  feedback, nomination rings, badges, block card, death animation, the vote sector rule, centre show texts with marks
+  and blind bluffs (S51–S61, S63–S66).
 
 ### Modified Capabilities
 
@@ -77,7 +91,8 @@ wave. Exceeding it means renegotiating scope.
 - `game-engine`: games without content (`'none'`), explicit session shape template per game, BotC's round status (S3,
   S15, S16).
 - `design-system`: the Arcade-Abend look is scoped to every route except BotC's; BotC's own theme with day and night
-  variants, fonts and themed transitions; BotC tile look (S1, S5, S6).
+  variants, fonts and themed transitions, one background tone over the whole page; BotC tile look; no selectable UI
+  text in the whole app (S1, S5, S6, S50, S62).
 - `sound`: BotC's own effects — bell, tick, role reveal, gong (S7).
 
 ## Impact
