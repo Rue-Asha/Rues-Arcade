@@ -33,6 +33,7 @@ const measure = (page: Page) =>
 				h: r.height,
 				no: no.checkVisibility() && no.textContent!.trim() === s.dataset.seat,
 				name: name.checkVisibility() && name.textContent!.trim().length > 0,
+				larger: Number.parseFloat(getComputedStyle(name).fontSize) > Number.parseFloat(getComputedStyle(no).fontSize),
 				x: r.left + r.width / 2,
 				y: r.top + r.height / 2
 			};
@@ -86,6 +87,7 @@ test('Scenario: Circle legible on phone and desktop', async ({ page }) => {
 			expect(r.h).toBeGreaterThanOrEqual(44);
 			expect(r.no).toBe(true);
 			expect(r.name).toBe(true);
+			expect(r.larger).toBe(true);
 		}
 	}
 });

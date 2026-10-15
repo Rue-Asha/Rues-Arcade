@@ -50,6 +50,8 @@
 	const d = $derived(seatSize(count, box));
 	const at = $derived(seatPositions(count, box));
 	const deco = $derived(ornament(count, box));
+	// a name ribbon under an icon may be wider than its node but must keep clear of the neighbours
+	const ribbon = $derived(Math.min(56, (box - d) * Math.sin(Math.PI / count) - 8));
 
 	function spoken(i: number): string {
 		const seat = seats[i];
@@ -113,7 +115,7 @@
 	}
 </script>
 
-<div class="circle" data-circle data-size={size} style:--box="{box}px" style:--seat="{d}px" style:--max="{MAX[size]}px" bind:clientWidth={width}>
+<div class="circle" data-circle data-size={size} style:--box="{box}px" style:--seat="{d}px" style:--ribbon="{ribbon}px" style:--max="{MAX[size]}px" bind:clientWidth={width}>
 	<div class="plane" style:width="{box}px" style:height="{box}px">
 		<svg class="ornament" data-deco data-motif="circle" viewBox="0 0 {box} {box}" width={box} height={box} aria-hidden="true" focusable="false">
 			<circle class="hair" cx={box / 2} cy={box / 2} r={deco.outer} />
@@ -156,8 +158,8 @@
 				onpointercancel={() => (drag = null)}
 			>
 				<span class="no">{i + 1}</span>
-				{#if icon}<CharacterIcon id={icon} size={Math.min(38, Math.round(d * 0.5))} />{/if}
-				<span class="name">{seat.player.name}</span>
+				{#if icon}<CharacterIcon id={icon} size={Math.round(d * 0.47)} />{/if}
+				<span class="name" title={seat.player.name}>{seat.player.name}</span>
 				{#if text}<span class="tag">{text}</span>{/if}
 				{#if !seat.alive}
 					<span class="mark" data-spent={seat.ghostVote ? undefined : ''} aria-hidden="true">
@@ -188,10 +190,12 @@
 </div>
 
 <style>
+	/* room for the number pills over the top seats and the name ribbons under the bottom ones */
 	.circle {
 		width: 100%;
 		max-width: var(--max);
 		margin-inline: auto;
+		padding-block: 8px;
 		display: flex;
 		justify-content: center;
 	}
@@ -258,6 +262,7 @@
 		color: var(--text);
 		font: inherit;
 		line-height: 1.05;
+		--name: clamp(15px, calc(var(--seat) * 0.3), 20px);
 		cursor: pointer;
 		touch-action: manipulation;
 		user-select: none;
@@ -273,43 +278,67 @@
 		outline-offset: 2px;
 	}
 
+	/* a small pill straddling the top rim, narrow enough to stay clear of the badge slot at 45° */
 	.no {
-		font-weight: 800;
-		font-size: 15px;
-	}
-
-	/* with an icon the number moves to a corner badge, so icon and name get the seat's face */
-	.holds .no {
 		position: absolute;
-		top: -4px;
-		left: 0;
-		min-width: 18px;
-		height: 18px;
-		padding: 0 3px;
-		border: 1px solid var(--line);
-		border-radius: 9px;
+		top: -2px;
+		left: 50%;
+		z-index: 1;
+		min-width: 14px;
+		height: 14px;
+		padding: 0 2px;
+		transform: translate(-50%, -50%);
+		border-radius: 7px;
 		background: var(--raised);
+		box-shadow: 0 0 0 1px var(--line);
 		font-size: 12px;
-		line-height: 16px;
+		font-weight: 700;
+		line-height: 14px;
 		text-align: center;
 	}
 
 	.name {
-		max-width: 100%;
-		font-size: 11px;
+		max-width: calc(var(--seat) - 8px);
+		font-size: var(--name);
 		font-weight: 600;
+		line-height: 1.1;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
 	}
 
+	/* with an icon the icon takes the face and the name moves to a ribbon over the lower rim */
+	.holds :global(svg.icon) {
+		position: absolute;
+		left: 50%;
+		top: calc(50% - var(--seat) * 0.04);
+		transform: translate(-50%, -50%);
+	}
+
+	.holds .name {
+		position: absolute;
+		top: calc(50% + var(--seat) * 0.28);
+		left: 50%;
+		max-width: var(--ribbon);
+		line-height: 1.05;
+		padding: 0 4px;
+		transform: translateX(-50%);
+		border: 1px solid var(--line);
+		border-radius: 4px;
+		background: var(--raised);
+	}
+
 	.tag {
 		position: absolute;
 		top: 100%;
-		margin-top: 2px;
+		margin-top: 4px;
 		font-size: 11px;
 		color: var(--muted);
 		white-space: nowrap;
+	}
+
+	.holds .tag {
+		top: calc(50% + var(--seat) * 0.28 + var(--name) * 1.05 + 6px);
 	}
 
 	.seat[data-dead] {

@@ -4,7 +4,7 @@ import { F15, F7, seated } from '../src/lib/games/clocktower/fixtures.ts';
 import type { ClocktowerState } from '../src/lib/games/clocktower/types.ts';
 import { play, seedClocktower } from './clocktower-session.ts';
 import { live, seedRoster, settled } from './helpers.ts';
-import { day1 } from './walks/clocktower-day.ts';
+import { day1, nightEnd } from './walks/clocktower-day.ts';
 
 const NAMES = ['Alex', 'Bo', 'Cleo', 'Dani', 'Eli', 'Fey', 'Gus', 'Hana', 'Ida', 'Jo', 'Kai', 'Lu', 'Mo', 'Nia', 'Ole'];
 
@@ -56,6 +56,103 @@ test('Scenario: Every circle draws n ticks', async ({ page }) => {
 			});
 			const label = `${name} with ${n} seats`;
 			expect(got, label).toEqual({ paths: 1, attr: String(n), drawn: n, hidden: true, text: 0 });
+		}
+	}
+});
+
+// night 2 after Bo's execution, on the death step
+function deathStep(s: ClocktowerState): ClocktowerState {
+	let t = play(day1(s), [{ type: 'execute', seat: 1 }, { type: 'next' }]);
+	while (t.night!.screens[t.night!.at].screen !== 'deaths') t = play(t, [{ type: 'next' }]);
+	return t;
+}
+
+// dawn of day 2 with Cleo (seat 3) dead in the night, past "Alle aufwachen"
+const dawn = (s: ClocktowerState) => play(nightEnd(play(day1(s), [{ type: 'execute', seat: 1 }, { type: 'next' }]), [2]), [{ type: 'next' }]);
+
+const LONG = 'Bartholomäus';
+// seat 7 gets a name too long for any node
+const long = (s: ClocktowerState): ClocktowerState => ({
+	...s,
+	seats: s.seats.map((x, i) => (i === 6 ? { ...x, player: { ...x.player, name: LONG } } : x))
+});
+
+// every seat's box, its number and name boxes and fonts, measured in one go
+const faces = (page: Page) =>
+	live(page).locator('[data-circle]').evaluate((circle) => {
+		const seats = [...circle.querySelectorAll<HTMLElement>('[data-seat]')];
+		const boxes = seats.map((el) => el.getBoundingClientRect());
+		let overlap = false;
+		for (let i = 0; i < boxes.length; i++)
+			for (let j = i + 1; j < boxes.length; j++) {
+				const a = boxes[i];
+				const b = boxes[j];
+				if (a.left < b.right - 0.5 && b.left < a.right - 0.5 && a.top < b.bottom - 0.5 && b.top < a.bottom - 0.5) overlap = true;
+			}
+		return {
+			seats: seats.map((el, i) => {
+				const box = boxes[i];
+				const no = el.querySelector<HTMLElement>('.no')!;
+				const name = el.querySelector<HTMLElement>('.name')!;
+				const n = no.getBoundingClientRect();
+				const m = name.getBoundingClientRect();
+				const style = getComputedStyle(name);
+				return {
+					seat: Number(el.dataset.seat),
+					label: el.getAttribute('aria-label')!,
+					title: name.title,
+					text: name.textContent!.trim(),
+					noText: no.textContent!.trim(),
+					noSize: Number.parseFloat(getComputedStyle(no).fontSize),
+					nameSize: Number.parseFloat(style.fontSize),
+					// the number's middle on the node's top edge, the number wholly above the name
+					rim: Math.abs(n.top + n.height / 2 - box.top) <= n.height / 2 && n.bottom <= m.top + 0.5,
+					inside: m.left >= box.left - 0.5 && m.right <= box.right + 0.5 && m.top >= box.top - 0.5 && m.bottom <= box.bottom + 0.5,
+					ellipsis: style.textOverflow === 'ellipsis' && style.whiteSpace === 'nowrap' && style.overflow === 'hidden',
+					cut: name.scrollWidth > name.clientWidth,
+					small: Math.min(box.width, box.height)
+				};
+			}),
+			overlap,
+			scroll: document.documentElement.scrollWidth <= innerWidth
+		};
+	});
+
+test('Scenario: Seat node shows the name large and the number small', async ({ page }) => {
+	test.setTimeout(60_000);
+	for (const n of [7, 15]) {
+		const roles = n === 7 ? F7 : F15;
+		const list: [string, ClocktowerState][] = [
+			['setup', long(board(n))],
+			['night', long(atCircle(seated(roles)))],
+			['death step', long(deathStep(seated(roles)))],
+			['dawn', long(dawn(seated(roles)))],
+			['day', long(day1(seated(roles)))],
+			['clock', long(clock(seated(roles)))]
+		];
+		for (const [name, state] of list) {
+			await open(page, state);
+			const got = await faces(page);
+			const label = `${name} with ${n} seats`;
+			expect(got.seats, label).toHaveLength(n);
+			expect(got.overlap, label).toBe(false);
+			expect(got.scroll, label).toBe(true);
+			for (const s of got.seats) {
+				const at = `${label}, seat ${s.seat}`;
+				expect(s.noText, at).toBe(String(s.seat));
+				expect(s.noSize, at).toBeGreaterThanOrEqual(12);
+				expect(s.nameSize, at).toBeGreaterThanOrEqual(15);
+				expect(s.nameSize, at).toBeGreaterThanOrEqual(1.25 * s.noSize);
+				expect(s.rim, at).toBe(true);
+				expect(s.inside, at).toBe(true);
+				expect(s.ellipsis, at).toBe(true);
+				expect(s.small, at).toBeGreaterThanOrEqual(44);
+				const full = s.seat === 7 ? LONG : NAMES[s.seat - 1];
+				expect(s.text, at).toBe(full);
+				expect(s.title, at).toBe(full);
+				expect(s.label, at).toContain(`Platz ${s.seat}, ${full}`);
+			}
+			expect(got.seats[6].cut, `${label}: the long name ends in an ellipsis`).toBe(true);
 		}
 	}
 });

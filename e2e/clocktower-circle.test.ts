@@ -315,10 +315,16 @@ test('Scenario: Character icons fit fifteen seats', async ({ page }) => {
 				const no = el.querySelector<HTMLElement>('.no')!;
 				const name = el.querySelector<HTMLElement>('.name')!;
 				const box = boxes[i];
+				const n = no.getBoundingClientRect();
+				const m = name.getBoundingClientRect();
+				const [noSize, nameSize] = [no, name].map((x) => Number.parseFloat(getComputedStyle(x).fontSize));
 				return {
 					icon: r !== undefined && r.width > 0 && r.left >= box.left && r.right <= box.right && r.top >= box.top && r.bottom <= box.bottom,
-					no: no.checkVisibility() && no.textContent!.trim() === el.dataset.seat,
-					name: name.checkVisibility() && name.textContent!.trim().length > 0,
+					no: no.checkVisibility() && no.textContent!.trim() === el.dataset.seat && r !== undefined && n.bottom <= r.top + 0.5,
+					name: name.checkVisibility() && name.textContent!.trim().length > 0 && r !== undefined && m.top >= r.bottom - 0.5,
+					size: nameSize >= 15 && nameSize >= 1.25 * noSize,
+					// the name's box against every other seat's box
+					clear: boxes.every((b, j) => j === i || m.right <= b.left + 0.5 || b.right <= m.left + 0.5 || m.bottom <= b.top + 0.5 || b.bottom <= m.top + 0.5),
 					big: box.width >= 44 && box.height >= 44
 				};
 			}),
@@ -327,7 +333,7 @@ test('Scenario: Character icons fit fifteen seats', async ({ page }) => {
 		};
 	});
 	expect(got.seats).toBe(15);
-	got.icons.forEach((s, i) => expect(s, `seat ${i + 1}`).toEqual({ icon: true, no: true, name: true, big: true }));
+	got.icons.forEach((s, i) => expect(s, `seat ${i + 1}`).toEqual({ icon: true, no: true, name: true, size: true, clear: true, big: true }));
 	expect(got.overlap).toBe(false);
 	expect(got.scroll).toBe(true);
 });
