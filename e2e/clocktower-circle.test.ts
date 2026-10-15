@@ -5,7 +5,7 @@ import { F15, F7, seated } from '../src/lib/games/clocktower/fixtures.ts';
 import type { CharacterId, ClocktowerAction, ClocktowerState } from '../src/lib/games/clocktower/types.ts';
 import { play, seedClocktower } from './clocktower-session.ts';
 import { live, seedRoster, settled } from './helpers.ts';
-import { day1, ghost, ghostless } from './walks/clocktower-day.ts';
+import { day1 } from './walks/clocktower-day.ts';
 
 const NAMES = ['Alex', 'Bo', 'Cleo', 'Dani', 'Eli', 'Fey', 'Gus', 'Hana', 'Ida', 'Jo', 'Kai', 'Lu', 'Mo', 'Nia', 'Ole'];
 
@@ -101,55 +101,6 @@ test('Scenario: Circle ornament connects the seats', async ({ page }) => {
 			expect(got.scroll, label).toBe(true);
 		}
 	}
-});
-
-const tokenOf = (page: Page, n: number) =>
-	seat(page, n).locator('.mark').evaluate((el) => {
-		el.scrollIntoView({ block: 'center', inline: 'center' });
-		const channels = (css: string) => {
-			const ctx = document.createElement('canvas').getContext('2d', { willReadFrequently: true })!;
-			ctx.clearRect(0, 0, 1, 1);
-			ctx.fillStyle = css;
-			ctx.fillRect(0, 0, 1, 1);
-			const [r, g, b, a] = ctx.getImageData(0, 0, 1, 1).data;
-			return { r, g, b, a: a / 255 };
-		};
-		const lum = ({ r, g, b }: { r: number; g: number; b: number }) => {
-			const lin = (v: number) => ((v /= 255) <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
-			return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
-		};
-		const style = getComputedStyle(el);
-		const fg = channels(style.color);
-		const bg = channels(style.backgroundColor);
-		const [hi, lo] = [lum(fg), lum(bg)].sort((a, b) => b - a);
-		const r = el.getBoundingClientRect();
-		const deco = el.querySelector('svg[aria-hidden="true"]');
-		return {
-			text: (el as HTMLElement).innerText.replace(/\s+/g, ' ').trim(),
-			size: Number.parseFloat(style.fontSize),
-			solid: bg.a === 1,
-			contrast: (hi + 0.05) / (lo + 0.05),
-			ornament: deco !== null && getComputedStyle(deco).pointerEvents === 'none',
-			inside: r.left >= 0 && r.top >= 0 && r.right <= innerWidth && r.bottom <= innerHeight
-		};
-	});
-
-test('Scenario: Ghost-vote token decorated and readable', async ({ page }) => {
-	await open(page, ghostless(ghost(day1(seated(F7)), 1), 4));
-	const [with_, without] = [await tokenOf(page, 2), await tokenOf(page, 5)];
-	expect(with_.text).toBe('✕ ●');
-	expect(without.text).toBe('✕ ○');
-	for (const t of [with_, without]) {
-		expect(t.size).toBeGreaterThanOrEqual(12);
-		expect(t.solid).toBe(true);
-		expect(t.contrast).toBeGreaterThanOrEqual(4.5);
-		expect(t.ornament).toBe(true);
-		expect(t.inside).toBe(true);
-	}
-	await expect(page.getByRole('button', { name: /tot, Stimme$/ })).toHaveCount(1);
-	await expect(page.getByRole('button', { name: /tot, keine Stimme$/ })).toHaveCount(1);
-	await expect(page.getByRole('button', { name: 'Platz 2, Bo, tot, Stimme', exact: true })).toBeVisible();
-	await expect(page.getByRole('button', { name: 'Platz 5, Eli, tot, keine Stimme', exact: true })).toBeVisible();
 });
 
 const SHORT = 300;

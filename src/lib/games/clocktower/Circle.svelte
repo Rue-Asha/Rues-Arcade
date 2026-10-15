@@ -115,6 +115,26 @@
 	}
 </script>
 
+{#snippet glyph(kind: 'axe' | 'hand' | 'check', struck = false)}
+	<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
+		{#if kind === 'axe'}
+			<g transform="rotate(45 12 12)">
+				<rect x="11" y="3" width="2.4" height="19" rx="1.2" />
+				<path d="M13 3.5H9.5C6 3.5 3.5 5.5 3 8.2C3.5 11 6 13 9.5 13H13Z" />
+			</g>
+		{:else if kind === 'hand'}
+			<path d="M8.5 12V6M11.5 11V4.5M14.5 11V5M17.5 12V7.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" />
+			<path d="M7.2 11h11.6v3.5c0 4-2.8 6.8-6.3 6.8-2.4 0-4-1-5.3-2.8L4.6 14.4a1.4 1.4 0 0 1 2.2-1.7z" />
+			{#if struck}
+				<path class="gap" d="M4 20L20 4" />
+				<path data-strike d="M4 20L20 4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" />
+			{/if}
+		{:else}
+			<path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+		{/if}
+	</svg>
+{/snippet}
+
 <div class="circle" data-circle data-size={size} style:--box="{box}px" style:--seat="{d}px" style:--ribbon="{ribbon}px" style:--max="{MAX[size]}px" bind:clientWidth={width}>
 	<div class="plane" style:width="{box}px" style:height="{box}px">
 		<svg class="ornament" data-deco data-motif="circle" viewBox="0 0 {box} {box}" width={box} height={box} aria-hidden="true" focusable="false">
@@ -161,17 +181,13 @@
 				{#if icon}<CharacterIcon id={icon} size={Math.round(d * 0.47)} />{/if}
 				<span class="name" title={seat.player.name}>{seat.player.name}</span>
 				{#if text}<span class="tag">{text}</span>{/if}
+				{#if block === i}<span class="badge block" data-badge="block" aria-hidden="true">{@render glyph('axe')}</span>{/if}
 				{#if !seat.alive}
-					<span class="mark" data-spent={seat.ghostVote ? undefined : ''} aria-hidden="true">
-						<svg viewBox="0 0 48 22" preserveAspectRatio="none" focusable="false" aria-hidden="true">
-							<rect class="rim" x="1" y="1" width="46" height="20" rx="10" />
-							<rect class="notch" x="4" y="4" width="40" height="14" rx="7" />
-						</svg>
-						<span class="glyphs">{seat.ghostVote ? '✕ ●' : '✕ ○'}</span>
+					<span class="badge ghost" data-badge="ghost" data-spent={seat.ghostVote ? undefined : ''} aria-hidden="true">
+						{@render glyph('hand', !seat.ghostVote)}
 					</span>
 				{/if}
-				{#if marked.includes(i)}<span class="badge hand-up" aria-hidden="true">✓</span>{/if}
-				{#if block === i}<span class="badge on-block" aria-hidden="true">▼</span>{/if}
+				{#if marked.includes(i)}<span class="badge check" data-badge="check" aria-hidden="true">{@render glyph('check')}</span>{/if}
 			</button>
 		{/each}
 		{#if hand !== null}
@@ -263,6 +279,7 @@
 		font: inherit;
 		line-height: 1.05;
 		--name: clamp(15px, calc(var(--seat) * 0.3), 20px);
+		--cut: var(--raised);
 		cursor: pointer;
 		touch-action: manipulation;
 		user-select: none;
@@ -345,70 +362,11 @@
 		border-style: dashed;
 		background: var(--surface);
 		color: var(--muted);
+		--cut: var(--surface);
 	}
 
 	.seat[data-dead] .name {
 		text-decoration: line-through;
-	}
-
-	/* a wax-seal coin: its own solid face, a gold rim and a notched inner rim, so the glyphs sit on a known background;
-	   a spent token loses the notches */
-	.mark {
-		position: absolute;
-		bottom: -8px;
-		right: -4px;
-		display: grid;
-		place-items: center;
-		min-width: 40px;
-		height: 22px;
-		padding: 0 8px;
-		border-radius: 11px;
-		background: var(--gold-tint);
-		box-shadow: 0 1px 0 var(--gold-ledge);
-		color: var(--text);
-		font-size: 12px;
-		font-weight: 700;
-		line-height: 1;
-		white-space: nowrap;
-	}
-
-	.mark[data-spent] {
-		background: var(--surface);
-		box-shadow: none;
-	}
-
-	.mark svg {
-		position: absolute;
-		inset: 0;
-		width: 100%;
-		height: 100%;
-		fill: none;
-		pointer-events: none;
-	}
-
-	.rim {
-		stroke: var(--gold);
-		stroke-width: 1.5;
-		vector-effect: non-scaling-stroke;
-	}
-
-	.notch {
-		stroke: var(--gold);
-		stroke-width: 1;
-		stroke-dasharray: 1.5 2.5;
-		vector-effect: non-scaling-stroke;
-	}
-
-	.mark[data-spent] .rim {
-		stroke: var(--line);
-	}
-
-	.mark[data-spent] .notch {
-		display: none;
-	}
-
-	.glyphs {
-		position: relative;
 	}
 
 	.seat[data-ghost] {
@@ -419,25 +377,68 @@
 		border-color: var(--clocktower);
 		background: var(--clocktower-tint);
 		color: var(--text);
+		--cut: var(--clocktower-tint);
 	}
 
-	.seat[data-block] {
-		border-color: var(--clocktower);
-		box-shadow: 0 0 0 3px var(--clocktower);
-	}
-
+	/* round badges docked just outside the rim, cut off the node by a ring in its face colour: the block at 45°, the
+	   ghost vote at 135° and the check at 225°; under an icon the ribbon takes the lower rim, so they move to 45° */
 	.badge {
+		--b: calc(var(--seat) * 0.4);
+		--diag: calc((var(--seat) / 2 + 2px) * 0.7071);
+		--dx: var(--diag);
+		--dy: calc(var(--diag) * -1);
 		position: absolute;
-		top: -6px;
-		right: -6px;
-		min-width: 20px;
-		padding: 0 4px;
-		border-radius: 10px;
+		z-index: 2;
+		left: calc(50% + var(--dx) - var(--b) / 2);
+		top: calc(50% + var(--dy) - var(--b) / 2);
+		display: grid;
+		place-items: center;
+		width: var(--b);
+		height: var(--b);
+		border-radius: 50%;
+		box-shadow: 0 0 0 2px var(--cut);
+		pointer-events: none;
+	}
+
+	.badge svg {
+		width: 72%;
+		height: 72%;
+	}
+
+	.block {
 		background: var(--clocktower);
 		color: var(--ink);
-		font-size: 12px;
-		font-weight: 800;
-		text-align: center;
+	}
+
+	.ghost {
+		--dy: var(--diag);
+		background: var(--ghost);
+		color: var(--ghost-ink);
+	}
+
+	.ghost[data-spent] {
+		border: 2px solid var(--spent);
+		background: var(--cut);
+		color: var(--spent);
+	}
+
+	.gap {
+		fill: none;
+		stroke: var(--cut);
+		stroke-width: 5.5;
+		stroke-linecap: round;
+	}
+
+	.check {
+		--dx: calc(var(--diag) * -1);
+		--dy: var(--diag);
+		background: var(--gold);
+		color: var(--ink);
+	}
+
+	.holds .badge {
+		--dx: var(--diag);
+		--dy: calc(var(--diag) * -1);
 	}
 
 	.grab {

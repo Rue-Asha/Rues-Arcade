@@ -4,7 +4,7 @@ import { F15, F7, seated } from '../src/lib/games/clocktower/fixtures.ts';
 import type { ClocktowerState } from '../src/lib/games/clocktower/types.ts';
 import { play, seedClocktower } from './clocktower-session.ts';
 import { live, seedRoster, settled } from './helpers.ts';
-import { day1, nightEnd } from './walks/clocktower-day.ts';
+import { day1, ghost, ghostless, nightEnd } from './walks/clocktower-day.ts';
 
 const NAMES = ['Alex', 'Bo', 'Cleo', 'Dani', 'Eli', 'Fey', 'Gus', 'Hana', 'Ida', 'Jo', 'Kai', 'Lu', 'Mo', 'Nia', 'Ole'];
 
@@ -155,4 +155,136 @@ test('Scenario: Seat node shows the name large and the number small', async ({ p
 			expect(got.seats[6].cut, `${label}: the long name ends in an ellipsis`).toBe(true);
 		}
 	}
+});
+
+// A seat's badge measured against its seat: the disc, its colours resolved from the theme tokens, the glyph's contrast
+// against the disc, and whether the disc touches the number pill or the name's text.
+const badgeOf = (page: Page, n: number, kind: string) =>
+	live(page).locator(`[data-seat="${n}"]`).evaluate((el, kind) => {
+		const badges = el.querySelectorAll<HTMLElement>(`[data-badge="${kind}"]`);
+		const badge = badges[0];
+		if (badge === undefined) return null;
+		const channels = (css: string) => {
+			const ctx = document.createElement('canvas').getContext('2d', { willReadFrequently: true })!;
+			ctx.clearRect(0, 0, 1, 1);
+			ctx.fillStyle = css;
+			ctx.fillRect(0, 0, 1, 1);
+			const [r, g, b, a] = ctx.getImageData(0, 0, 1, 1).data;
+			return { r, g, b, a };
+		};
+		const lum = ({ r, g, b }: { r: number; g: number; b: number }) => {
+			const lin = (v: number) => ((v /= 255) <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
+			return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+		};
+		const ratio = (a: string, b: string) => {
+			const [hi, lo] = [lum(channels(a)), lum(channels(b))].sort((x, y) => y - x);
+			return (hi + 0.05) / (lo + 0.05);
+		};
+		const token = (name: string) => {
+			const probe = document.createElement('i');
+			probe.style.color = `var(--${name})`;
+			el.append(probe);
+			const c = getComputedStyle(probe).color;
+			probe.remove();
+			return c;
+		};
+		const style = getComputedStyle(badge);
+		const glyph = badge.querySelector<SVGSVGElement>('svg')!;
+		const seatStyle = getComputedStyle(el);
+		// a fill that shows nothing of its own is the node's face behind it
+		const fill = channels(style.backgroundColor).a === 0 ? seatStyle.backgroundColor : style.backgroundColor;
+		const r = badge.getBoundingClientRect();
+		const disc = { x: r.left + r.width / 2, y: r.top + r.height / 2, r: r.width / 2 };
+		const touches = (b: DOMRect) => {
+			const x = Math.max(b.left, Math.min(disc.x, b.right));
+			const y = Math.max(b.top, Math.min(disc.y, b.bottom));
+			return Math.hypot(x - disc.x, y - disc.y) < disc.r - 0.5;
+		};
+		const range = document.createRange();
+		range.selectNodeContents(el.querySelector('.name')!);
+		return {
+			count: badges.length,
+			round: Math.abs(r.width - r.height) <= 1 && Number.parseFloat(style.borderTopLeftRadius) >= r.width / 2 - 0.5,
+			fill,
+			face: seatStyle.backgroundColor,
+			ring: style.borderTopColor,
+			spent: badge.hasAttribute('data-spent'),
+			strike: badge.querySelector('[data-strike]') !== null,
+			hidden: badge.getAttribute('aria-hidden') === 'true' && glyph.getAttribute('aria-hidden') === 'true',
+			glyph: ratio(getComputedStyle(glyph).color, fill),
+			ink: getComputedStyle(glyph).color,
+			shape: glyph.innerHTML,
+			covers: touches(el.querySelector('.no')!.getBoundingClientRect()) || touches(range.getBoundingClientRect()),
+			inside: r.left >= 0 && r.top >= 0 && r.right <= innerWidth && r.bottom <= innerHeight,
+			tokens: { clocktower: token('clocktower'), ghost: token('ghost'), spent: token('spent') },
+			outline: { shadow: seatStyle.boxShadow, border: seatStyle.borderTopColor, outline: seatStyle.outlineStyle }
+		};
+	}, kind);
+
+// Dani (seat 4) on the block with 4 votes
+const blocked = () =>
+	play(day1(seated(F7)), [
+		{ type: 'nominee', seat: 3 }, { type: 'nominate', nominator: 0 }, { type: 'vote' }, { type: 'swept' },
+		{ type: 'count', votes: 4 }, { type: 'confirm' }, { type: 'next' }
+	]);
+
+test('Scenario: Block badge replaces the outline', async ({ page }) => {
+	const picker = play(blocked(), [{ type: 'nominee', seat: 5 }]);
+	const screens: [string, ClocktowerState][] = [
+		['grimoire', blocked()],
+		['picker', picker],
+		['clock', play(picker, [{ type: 'nominate', nominator: 1 }])]
+	];
+	for (const [name, state] of screens) {
+		await open(page, state);
+		await expect(live(page).locator('[data-badge="block"]'), name).toHaveCount(1);
+		const got = (await badgeOf(page, 4, 'block'))!;
+		expect(got, name).not.toBeNull();
+		expect(got.count, name).toBe(1);
+		expect(got.round, name).toBe(true);
+		expect(got.fill, name).toBe(got.tokens.clocktower);
+		expect(got.hidden, name).toBe(true);
+		expect(got.glyph, name).toBeGreaterThanOrEqual(3);
+		expect(got.covers, name).toBe(false);
+		expect(got.outline.shadow, name).toBe('none');
+		expect(got.outline.border, name).not.toBe(got.tokens.clocktower);
+		expect(got.outline.outline, name).toBe('none');
+		expect(await live(page).innerText(), name).not.toContain('▼');
+	}
+});
+
+test('Scenario: Ghost-vote badge shows whether the vote is left', async ({ page }) => {
+	await open(page, ghostless(ghost(day1(seated(F7)), 1), 4));
+	const left = (await badgeOf(page, 2, 'ghost'))!;
+	const spent = (await badgeOf(page, 5, 'ghost'))!;
+	expect(left).not.toBeNull();
+	expect(spent).not.toBeNull();
+
+	expect(left.round).toBe(true);
+	expect(left.spent).toBe(false);
+	expect(left.fill).not.toBe(left.face);
+	expect(left.fill).toBe(left.tokens.ghost);
+	expect(left.strike).toBe(false);
+	expect(left.glyph).toBeGreaterThanOrEqual(3);
+
+	// greyed out: grey, hollow (only a ring on the node's face) and struck through
+	expect(spent.round).toBe(true);
+	expect(spent.spent).toBe(true);
+	expect(spent.fill).toBe(spent.face);
+	expect(spent.ring).toBe(spent.tokens.spent);
+	expect(spent.ink).toBe(spent.tokens.spent);
+	expect(spent.strike).toBe(true);
+	expect(spent.glyph).toBeGreaterThanOrEqual(3);
+
+	for (const b of [left, spent]) {
+		expect(b.count).toBe(1);
+		expect(b.hidden).toBe(true);
+		expect(b.inside).toBe(true);
+		expect(b.covers).toBe(false);
+	}
+	await expect(page.getByRole('button', { name: 'Platz 2, Bo, tot, Stimme', exact: true })).toBeVisible();
+	await expect(page.getByRole('button', { name: 'Platz 5, Eli, tot, keine Stimme', exact: true })).toBeVisible();
+	const text = await page.locator('body').innerText();
+	expect(text).not.toContain('✕ ●');
+	expect(text).not.toContain('✕ ○');
 });

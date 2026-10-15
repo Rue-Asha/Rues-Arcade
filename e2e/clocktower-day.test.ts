@@ -65,8 +65,19 @@ test('Scenario: Circle shows seats, alive and ghost votes', async ({ page }) => 
 
 	await expect(page.getByRole('button', { name: 'Platz 2, Bo, tot, Stimme', exact: true })).toBeVisible();
 	await expect(page.getByRole('button', { name: 'Platz 5, Eli, tot, keine Stimme', exact: true })).toBeVisible();
-	const marks = await Promise.all([2, 5].map((n) => seat(page, n).locator('.mark').textContent()));
-	expect(marks[0]).not.toEqual(marks[1]);
+	// the unused badge is filled and shows the plain glyph, the spent one is hollow and struck through
+	const badges = await Promise.all(
+		[2, 5].map((n) =>
+			seat(page, n).locator('[data-badge="ghost"]').evaluate((el) => ({
+				spent: el.hasAttribute('data-spent'),
+				fill: getComputedStyle(el).backgroundColor,
+				glyph: el.querySelector('svg')!.innerHTML
+			}))
+		)
+	);
+	expect(badges.map((b) => b.spent)).toEqual([false, true]);
+	expect(badges[0].fill).not.toEqual(badges[1].fill);
+	expect(badges[0].glyph).not.toEqual(badges[1].glyph);
 	await expect(seat(page, 2)).toHaveAttribute('data-ghost', '');
 	await expect(seat(page, 5)).not.toHaveAttribute('data-ghost');
 
@@ -161,7 +172,7 @@ test('Scenario: Death on the circle is animated', async ({ page }) => {
 	await page.emulateMedia({ reducedMotion: 'reduce' });
 	await toDeaths();
 	expect(await running()).toEqual([]);
-	await expect(seat(page, 3).locator('.mark')).toBeVisible();
+	await expect(seat(page, 3).locator('[data-badge="ghost"]')).toBeVisible();
 });
 
 test('Scenario: Day timer dialog', async ({ page }) => {
@@ -463,6 +474,8 @@ test('Scenario: Block holder marked on the circle', async ({ page }) => {
 	await open(page, first);
 	await expect(live(page).locator('[data-block]')).toHaveCount(1);
 	await expect(seat(page, 4)).toHaveAttribute('data-block', '');
+	await expect(live(page).locator('[data-badge="block"]')).toHaveCount(1);
+	await expect(seat(page, 4).locator('[data-badge="block"]')).toBeVisible();
 	await expect(live(page).getByText('Auf dem Block: Dani', { exact: true })).toBeVisible();
 
 	const second = play(first, [
@@ -472,6 +485,8 @@ test('Scenario: Block holder marked on the circle', async ({ page }) => {
 	await open(page, second);
 	await expect(live(page).locator('[data-block]')).toHaveCount(1);
 	await expect(seat(page, 6)).toHaveAttribute('data-block', '');
+	await expect(live(page).locator('[data-badge="block"]')).toHaveCount(1);
+	await expect(seat(page, 6).locator('[data-badge="block"]')).toBeVisible();
 	await expect(live(page).getByText('Auf dem Block: Fey', { exact: true })).toBeVisible();
 });
 

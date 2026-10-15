@@ -133,7 +133,12 @@ export const clocktowerNight = {
 	'evil-tint': '#2a1618',
 	demon: '#f05653',
 	sky: '#221d3a',
-	sun: '#e1ad63'
+	sun: '#e1ad63',
+	ghost: '#9cc8ec',
+	'ghost-ink': '#10202e',
+	spent: '#8f887c',
+	nominee: '#4fc4bb',
+	nominator: '#f0954a'
 } as const;
 
 // on parchment the fills are dark, so ink (text on a fill) turns light
@@ -172,7 +177,12 @@ export const clocktowerDay: Record<keyof typeof clocktowerNight, string> = {
 	'evil-tint': '#e6cfc2',
 	demon: '#8a1f22',
 	sky: '#fbf1d6',
-	sun: '#d4912a'
+	sun: '#d4912a',
+	ghost: '#86b8e2',
+	'ghost-ink': '#14304a',
+	spent: '#6f675c',
+	nominee: '#1d7f7a',
+	nominator: '#b4560f'
 };
 
 export type ClocktowerToken = keyof typeof clocktowerNight;
@@ -214,6 +224,19 @@ export const clocktowerPairs: [ClocktowerToken, ClocktowerToken][] = [
 	['on-reveal', 'reveal'],
 	['primary', 'on-primary'],
 	['clocktower', 'surface']
+];
+
+// non-text pairs (badge glyphs on their discs, rings on the ground) need 3:1
+export const clocktowerMarks: [ClocktowerToken, ClocktowerToken][] = [
+	['ghost-ink', 'ghost'],
+	['spent', 'surface'],
+	['spent', 'raised'],
+	['nominee', 'ground'],
+	['nominator', 'ground'],
+	['nominee', 'surface'],
+	['nominator', 'surface'],
+	['ink', 'clocktower'],
+	['ink', 'gold']
 ];
 
 function luminance(hex: string): number {

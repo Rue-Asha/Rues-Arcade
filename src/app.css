@@ -178,6 +178,11 @@
 	--font-num: 'IM Fell English', Georgia, serif;
 	--sky: #221d3a;
 	--sun: #e1ad63;
+	--ghost: #9cc8ec;
+	--ghost-ink: #10202e;
+	--spent: #8f887c;
+	--nominee: #4fc4bb;
+	--nominator: #f0954a;
 }
 
 [data-theme='clocktower'][data-variant='day'] {
@@ -218,6 +223,11 @@
 	--demon: #8a1f22;
 	--sky: #fbf1d6;
 	--sun: #d4912a;
+	--ghost: #86b8e2;
+	--ghost-ink: #14304a;
+	--spent: #6f675c;
+	--nominee: #1d7f7a;
+	--nominator: #b4560f;
 }
 
 [data-theme='clocktower'] body {

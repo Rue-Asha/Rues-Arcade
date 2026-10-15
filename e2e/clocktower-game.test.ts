@@ -150,7 +150,7 @@ test.describe('reduced motion', () => {
 });
 
 // What a screen shows apart from the seat names: its texts without the circle, which seats look dead and the
-// executed seat's marker.
+// executed seat's ghost-vote badge.
 const read = (page: Page, seat: number) =>
 	live(page).evaluate((el, n) => {
 		const copy = el.cloneNode(true) as HTMLElement;
@@ -158,7 +158,7 @@ const read = (page: Page, seat: number) =>
 		return {
 			text: copy.innerText,
 			dead: el.querySelectorAll('[data-dead]').length,
-			mark: el.querySelector(`[data-seat="${n}"] .mark`)?.textContent ?? null
+			mark: el.querySelector(`[data-seat="${n}"] [data-badge="ghost"]`)?.outerHTML ?? null
 		};
 	}, seat);
 

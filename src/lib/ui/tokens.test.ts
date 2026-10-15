@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { clocktowerDay, clocktowerNight, clocktowerPairs, contrast, motion, textPairs, tokens } from '#lib/ui/tokens.ts';
+import { clocktowerDay, clocktowerMarks, clocktowerNight, clocktowerPairs, contrast, motion, textPairs, tokens } from '#lib/ui/tokens.ts';
 
 describe('design tokens', () => {
 	it('listed token pairs meet 4.5:1', () => {
@@ -77,6 +77,24 @@ describe('design tokens', () => {
 		expect(clocktowerDay).toMatchObject({ ground: '#e8dfcb', text: '#1c1714' });
 		for (const font of ['--font-ui:\\s*\'Alegreya Sans\'', '--font-data:\\s*\'IM Fell English\'', '--font-display:\\s*\'IM Fell English SC\''])
 			expect(rule("[data-theme='clocktower']"), font).toMatch(new RegExp(font));
+	});
+
+	it('Clocktower badge and ring colours meet 3:1 in both variants', () => {
+		const listed = (fg: string, bg: string) => clocktowerMarks.some(([f, b]) => f === fg && b === bg);
+		for (const [fg, bg] of [
+			['ghost-ink', 'ghost'],
+			['spent', 'surface'],
+			['spent', 'raised'],
+			['nominee', 'ground'],
+			['nominator', 'ground'],
+			['ink', 'clocktower'],
+			['ink', 'gold']
+		])
+			expect(listed(fg, bg), `${fg} on ${bg}`).toBe(true);
+		for (const [name, set] of [['night', clocktowerNight], ['day', clocktowerDay]] as const) {
+			const failing = clocktowerMarks.map(([fg, bg]) => ({ fg, bg, ratio: contrast(set[fg], set[bg]) })).filter((p) => p.ratio < 3);
+			expect(failing, name).toEqual([]);
+		}
 	});
 
 	it('Scenario: Atmosphere keeps every screen legible (tokens)', () => {
