@@ -53,11 +53,19 @@
 <style>
 	.ask {
 		padding: 20px;
+		align-items: center;
+		text-align: center;
 	}
 
 	.ask h2,
 	.ask p {
 		margin: 0;
+		max-width: 36ch;
+		text-wrap: balance;
+	}
+
+	.ask .row {
+		justify-content: center;
 	}
 
 	.decide {

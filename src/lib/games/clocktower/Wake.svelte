@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { Snippet } from 'svelte';
 	import Button from '#lib/ui/Button.svelte';
 	import Modal from '#lib/ui/Modal.svelte';
 	import { byId } from './characters.ts';
@@ -15,9 +16,10 @@
 		state: ClocktowerState;
 		dispatch: (action: ClocktowerAction) => void;
 		at: Extract<NightScreen, { step: number }>;
+		peek?: Snippet;
 	}
 
-	let { state: s, dispatch, at }: Props = $props();
+	let { state: s, dispatch, at, peek }: Props = $props();
 
 	let choosing = $state(false);
 
@@ -127,24 +129,27 @@
 {:else if at.screen === 'circle'}
 	<section class="stack circle" aria-labelledby="phase">
 		<h2 id="phase" class="sr">Grimoire</h2>
-		<ShowBar state={s} {dispatch} {step} />
 		{#if step.kind === 'imp'}
 			<div class="panel stack imp">
 				<span class="label">Ziel notieren</span>
 				<p>{starpass === null ? (target === null ? 'Tippe auf den Platz des Ziels.' : `Ziel: ${who(s.seats, target)}`) : `Der Imp wählt sich selbst: ${who(s.seats, starpass)} wird der neue Imp.`}</p>
 				<Button variant="secondary" size="sm" disabled={starpass !== null} onclick={() => (choosing = true)}>Imp wählt sich selbst</Button>
 			</div>
-			<Circle
-				seats={s.seats}
-				marked={target === null ? [] : [target]}
-				label={(i) => (i === target && starpass === null ? 'Ziel' : null)}
-				disabled={(i) => (starpass !== null ? 'Der Imp hat sich selbst gewählt' : s.seats[i].alive ? null : 'bereits tot')}
-				onseat={(i) => dispatch({ type: 'target', seat: i === target ? null : i })}
-			/>
+			<div class="fit">
+				<Circle
+					seats={s.seats}
+					marked={target === null ? [] : [target]}
+					label={(i) => (i === target && starpass === null ? 'Ziel' : null)}
+					disabled={(i) => (starpass !== null ? 'Der Imp hat sich selbst gewählt' : s.seats[i].alive ? null : 'bereits tot')}
+					onseat={(i) => dispatch({ type: 'target', seat: i === target ? null : i })}
+				/>
+			</div>
 		{:else}
-			<Circle seats={s.seats} marked={step.seats} />
+			<div class="fit"><Circle seats={s.seats} marked={step.seats} /></div>
 		{/if}
-		<div class="dock">{@render nav()}</div>
+		<ShowBar state={s} {dispatch} {step} />
+		{@render peek?.()}
+		{@render nav()}
 	</section>
 {:else}
 	<section class="panel stack wake" aria-labelledby="phase">
@@ -175,6 +180,8 @@
 	.info {
 		padding: 20px;
 		gap: 12px;
+		align-items: center;
+		text-align: center;
 	}
 
 	.wake h2,
@@ -182,10 +189,13 @@
 	.wake p,
 	.info p {
 		margin: 0;
+		max-width: 36ch;
+		text-wrap: balance;
 	}
 
 	.role {
 		display: flex;
+		justify-content: center;
 		align-items: center;
 		gap: 8px;
 		flex-wrap: wrap;
@@ -199,16 +209,21 @@
 	.imp {
 		padding: 12px;
 		gap: 8px;
-		align-items: flex-start;
+		align-items: center;
+		text-align: center;
 	}
 
 	.imp p {
 		margin: 0;
+		max-width: 36ch;
+		text-wrap: balance;
 	}
 
 	.facts {
 		display: flex;
 		flex-direction: column;
+		align-self: stretch;
+		align-items: center;
 		gap: 4px;
 		padding: 12px;
 		border-radius: var(--radius);
@@ -226,6 +241,7 @@
 	.nav {
 		display: flex;
 		flex-direction: column;
+		align-self: stretch;
 		gap: 8px;
 	}
 
@@ -238,13 +254,10 @@
 		gap: 16px;
 	}
 
-	/* the circle screen is the tallest, so its buttons stay at the bottom of the viewport */
-	.dock {
-		position: sticky;
-		bottom: 0;
-		z-index: 2;
-		padding: 8px 0 4px;
-		background: var(--ground);
+	/* Circle measures its own width, so capping the width caps the height */
+	.fit {
+		width: min(100%, calc(100svh - 120px));
+		margin-inline: auto;
 	}
 
 	.sr {

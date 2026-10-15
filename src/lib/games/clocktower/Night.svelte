@@ -19,6 +19,10 @@
 	});
 </script>
 
+{#snippet peek()}
+	<div class="peek"><HoldGrimoire state={s} /></div>
+{/snippet}
+
 {#if here.screen === 'dusk'}
 	<section class="panel stack dusk" aria-labelledby="phase">
 		<h2 id="phase">Alle schlafen ein</h2>
@@ -31,13 +35,13 @@
 {:else if here.screen === 'question'}
 	<Questions state={s} {dispatch} question={here.question} />
 {:else if here.screen === 'deaths'}
-	<DeathStep state={s} {dispatch} />
+	<DeathStep state={s} {dispatch} {peek} />
 {:else if 'step' in here}
-	<Wake state={s} {dispatch} at={here} />
+	<Wake state={s} {dispatch} at={here} peek={here.screen === 'circle' ? peek : undefined} />
 {/if}
 
-{#if here.screen !== 'dusk'}
-	<div class="peek"><HoldGrimoire state={s} /></div>
+{#if here.screen !== 'dusk' && here.screen !== 'deaths' && here.screen !== 'circle'}
+	{@render peek()}
 {/if}
 
 <style>
@@ -55,5 +59,7 @@
 	.dusk h2,
 	.dusk p {
 		margin: 0;
+		max-width: 36ch;
+		text-wrap: balance;
 	}
 </style>

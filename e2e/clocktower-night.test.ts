@@ -135,7 +135,7 @@ test('Überspringen and Zurück move between steps', async ({ page }) => {
 	await expect(live(page).locator('[data-circle]')).toBeVisible();
 });
 
-test('the primary action of every waking screen is in the first phone viewport', async ({ page }, info) => {
+test('the primary action of the wake, card and sleep screens is in the first phone viewport', async ({ page }, info) => {
 	test.skip(info.project.name !== 'phone', 'phone layout');
 	// F15, night 1: Washerwoman is the 4th step (minion info, demon info, poisoner first), wake screen 13
 	const fifteen = play(reveal(seated(F15)), next(13));
@@ -144,7 +144,8 @@ test('the primary action of every waking screen is in the first phone viewport',
 	for (let i = 0; i < 4; i++) {
 		await expect(weiter(page)).toBeVisible();
 		await page.waitForTimeout(500);
-		bottoms.push(await weiter(page).evaluate((el) => Math.round(el.getBoundingClientRect().bottom)));
+		// the circle screen (third) may scroll: Weiter follows the circle in flow
+		if (i !== 2) bottoms.push(await weiter(page).evaluate((el) => Math.round(el.getBoundingClientRect().bottom)));
 		await weiter(page).click();
 	}
 	expect(bottoms.filter((b) => b > 844), `Weiter bottoms ${bottoms}`).toEqual([]);
@@ -195,6 +196,32 @@ test('Scenario: Show-bar opens full-screen cards', async ({ page }) => {
 		await card(page).click();
 		await expect(card(page), item).toHaveCount(0);
 	}
+});
+
+test('Scenario: Show-bar is compact', async ({ page }, project) => {
+	const state = play(fifteen(), next(circle(3)));
+	await open(page, state);
+	await expect(bar(page)).toBeVisible();
+	const m = await bar(page).evaluate((el) => {
+		const r = el.getBoundingClientRect();
+		const controls = [...el.querySelectorAll<HTMLElement>('button, select')].map((c) => c.getBoundingClientRect());
+		const seats = [...document.querySelectorAll<HTMLElement>('[data-seat]')].map((c) => c.getBoundingClientRect());
+		const hit = (a: DOMRect, b: DOMRect) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+		return {
+			height: r.height,
+			small: controls.filter((c) => c.width < 44 || c.height < 44).length,
+			overlap: seats.filter((c) => hit(c, r)).length,
+			wide: document.documentElement.scrollWidth > innerWidth
+		};
+	});
+	expect(m.height).toBeLessThanOrEqual(project.project.name === 'phone' ? 104 : 56);
+	expect(m.small).toBe(0);
+	expect(m.overlap).toBe(0);
+	expect(m.wide).toBe(false);
+	await expect(chip(page, 'Charakter')).toHaveAttribute('aria-pressed', 'true');
+	const ww = info(state, state.night!.steps[3]);
+	if (ww.kind !== 'pair') throw new Error('washerwoman info');
+	await expect(bar(page).getByLabel('Charakter', { exact: true })).toHaveValue(ww.character);
 });
 
 test('Scenario: Role preselects its cards', async ({ page }) => {
@@ -405,4 +432,40 @@ test('Scenario: Dead seats cannot be selected', async ({ page }) => {
 	await expect(live(page).locator('[data-seat][data-marked]')).toHaveCount(0);
 	await live(page).getByRole('button', { name: 'Weiter', exact: true }).click();
 	expect((await saved(page)).night!.deaths).toEqual([]);
+});
+
+// every element with text of its own inside the live panels, and the ones that are not centred
+async function offCentre(page: Page) {
+	return live(page).evaluate((stage) => {
+		const bad: string[] = [];
+		for (const el of stage.querySelectorAll<HTMLElement>('.panel, .panel *')) {
+			const own = [...el.childNodes].some((n) => n.nodeType === Node.TEXT_NODE && n.textContent!.trim() !== '');
+			if (own && getComputedStyle(el).textAlign !== 'center') bad.push(`${el.tagName}.${el.className}: ${el.textContent!.trim().slice(0, 30)}`);
+		}
+		return { bad, panels: stage.querySelectorAll('.panel').length, wide: document.documentElement.scrollWidth > innerWidth };
+	});
+}
+
+test('Scenario: Night and reveal panels centre their text', async ({ page }) => {
+	const base = fifteen();
+	const two = play(dead(firstDay(base), 9), [{ type: 'endDay' }, { type: 'next' }]);
+	const saint = play(voted(firstDay(base), 10, 0, 8), [{ type: 'endDay' }, { type: 'next' }, ...next(1)]);
+	const screens: [string, ClocktowerState][] = [
+		['reveal name', seated(F15)],
+		['dusk', base],
+		['question', saint],
+		['wake with suggestion', play(base, next(13))],
+		['info card', play(base, next(2))],
+		['imp target', play(two, next(11))],
+		['sleep', play(base, next(4))],
+		['deaths', play(two, next(29))]
+	];
+	for (const [name, state] of screens) {
+		await open(page, state);
+		await page.waitForTimeout(400);
+		const m = await offCentre(page);
+		expect(m.panels, name).toBeGreaterThan(0);
+		expect(m.bad, name).toEqual([]);
+		expect(m.wide, name).toBe(false);
+	}
 });
