@@ -114,7 +114,16 @@ test('Scenario: Last minute warns without blocking', async ({ page }) => {
 	const got = await looping();
 	expect(got.length).toBeGreaterThan(0);
 	for (const a of got) expect(['opacity', 'transform'], a.pseudo ?? '').toEqual(expect.arrayContaining(a.props));
-	await expect(live(page).getByRole('button', { name: 'Tag beenden', exact: true })).toBeEnabled();
+	const end = live(page).getByRole('button', { name: 'Tag beenden', exact: true });
+	await end.scrollIntoViewIfNeeded();
+	expect(await end.evaluate((el) => {
+		const r = el.getBoundingClientRect();
+		const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+		return hit === el || el.contains(hit);
+	})).toBe(true);
+	await end.click();
+	await expect(page.getByRole('dialog').getByRole('heading', { name: 'Tag beenden?', exact: true })).toBeVisible();
+	await page.getByRole('dialog').getByRole('button', { name: 'Weiter beraten', exact: true }).click();
 
 	await page.emulateMedia({ reducedMotion: 'reduce' });
 	expect(await looping()).toEqual([]);
