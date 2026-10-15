@@ -7,6 +7,9 @@ gate1: 2026-10-14
 gate0_r2: 2026-10-15  # Gate 2 revisions round 2 (S50–S66) scope approved
 gate1_r2: 2026-10-15  # round 2 plan U17–U22 approved incl. additions 1–5 and both legibility exceptions
 learnings:
+- 'U21 friction (2026-10-15): the 15-seat phone grimoire with a block card puts the primary action at 872px of 844 even after compacting the card; the planner''s fit estimate covered the circle but not circle + head + card → fit estimates sum every block on the screen, not the circle alone'
+- 'U21 friction (2026-10-15): a Playwright run in a unit worktree without PORT hung until backgrounded (default port taken) → unit briefs say every playwright command carries the unit''s PORT, also scoped runs'
+- 'wave 3 (2026-10-15): the orchestrator committed flow.yaml with an unquoted '': '' in a learning, flow-status crashed → orchestrator writes learning candidates as single-quoted YAML strings and runs flow-status after committing (strengthens the ''Editing flow.yaml'' learning)'
 - 'Playwright click() treats aria-disabled="true" as not actionable → tests that tap a deliberately unavailable seat (out of sector, dead) need click({ force: true }) (U18, U19 friction, 2026-10-15)'
 - 'a CSS transition from a state change can start from the old value (hand glided from the nominee''s centre) → commit the start value with a forced layout before the first step; look walks with long seat times must finish() running transitions before settled() (U19 friction, 2026-10-15)'
 - 'builders edited one line each in files of a later unit (U19: day-layout hint string, day walk; U20: tokens.test.ts selector) to keep tests green → planner lists the e2e/walk files a behaviour change reaches, not only the ones it owns (wave 2, 2026-10-15)'
