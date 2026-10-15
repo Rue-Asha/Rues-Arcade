@@ -154,3 +154,55 @@ test("Scenario: Space votes only for the seat in the hand's sector", async ({ pa
 	await expect(seat(page, 6)).toHaveAttribute('data-marked', '');
 	await expect(seat(page, 2)).not.toHaveAttribute('data-marked');
 });
+
+// seats 5 and 6 voted in the sweep, count 2, on the confirm screen
+const counted = () => play(day1(seated(F7)), [
+	{ type: 'nominee', seat: 2 }, { type: 'nominate', nominator: 0 }, { type: 'vote' },
+	{ type: 'mark', seat: 4, on: true }, { type: 'mark', seat: 5, on: true }, { type: 'swept' }
+]);
+
+test('Scenario: Confirm toggles votes by tapping seats', async ({ page }) => {
+	await seedClocktower(page, counted());
+	await page.goto('/spiele/clocktower/spielen');
+	const count = live(page).getByTestId('count');
+	await expect(count).toHaveText('2');
+	await seat(page, 2).click();
+	await expect(seat(page, 2)).toHaveAttribute('data-marked', '');
+	await expect(count).toHaveText('3');
+	await seat(page, 5).click();
+	await expect(seat(page, 5)).not.toHaveAttribute('data-marked');
+	await expect(count).toHaveText('2');
+	await expect(live(page).getByRole('button', { name: 'Stimme mehr', exact: true })).toHaveCount(0);
+	await expect(live(page).getByRole('button', { name: 'Stimme weniger', exact: true })).toHaveCount(0);
+
+	await live(page).getByRole('button', { name: 'Bestätigen', exact: true }).click();
+	await expect(live(page).getByRole('button', { name: 'Bestätigen', exact: true })).toHaveCount(0);
+	const saved = await savedVote(page);
+	expect(saved.votes).toBe(2);
+	expect(saved.voters).toEqual([1, 5]);
+});
+
+test('Scenario: Missed tap in the sweep is corrected in the confirm step', async ({ page }) => {
+	await sweepOnSeat4(page);
+	await page.clock.runFor(SHORT);
+	expect(await under(page)).toBe('6');
+	await seat(page, 3).click({ force: true });
+	await expect(seat(page, 3)).not.toHaveAttribute('data-marked');
+	await seat(page, 6).click();
+
+	await page.clock.runFor(SHORT * 7);
+	await expect(live(page).getByRole('heading', { name: 'Stimmen zählen', exact: true })).toBeVisible();
+	const count = live(page).getByTestId('count');
+	await expect(count).toHaveText('1');
+	expect(await lit(page)).toEqual([6]);
+	await expect(live(page).getByRole('button', { name: 'Stimme mehr', exact: true })).toHaveCount(0);
+
+	await seat(page, 3).click();
+	await expect(seat(page, 3)).toHaveAttribute('data-marked', '');
+	await expect(count).toHaveText('2');
+	await live(page).getByRole('button', { name: 'Bestätigen', exact: true }).click();
+	await expect(live(page).getByRole('button', { name: 'Bestätigen', exact: true })).toHaveCount(0);
+	const saved = await savedVote(page);
+	expect(saved.votes).toBe(2);
+	expect(saved.voters).toEqual([2, 5]);
+});

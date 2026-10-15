@@ -101,13 +101,7 @@
 		</div>
 	{:else if screen !== 'sweep'}
 		<div class="row">
-			<Button variant="secondary" square label="Stimme weniger" onclick={() => dispatch({ type: 'count', votes: Math.max(0, (vote.votes ?? 0) - 1) })}>
-				<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"></path></svg>
-			</Button>
 			<output class="votes" data-testid="count">{vote.votes}</output>
-			<Button variant="secondary" square label="Stimme mehr" onclick={() => dispatch({ type: 'count', votes: Math.min(count, (vote.votes ?? 0) + 1) })}>
-				<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M12 5v14"></path></svg>
-			</Button>
 			<Button variant="primary" onclick={() => dispatch({ type: 'confirm' })}>Bestätigen</Button>
 		</div>
 	{/if}

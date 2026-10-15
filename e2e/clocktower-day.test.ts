@@ -409,29 +409,6 @@ test('Scenario: Dead without ghost vote cannot be marked', async ({ page }) => {
 	await expect(seat(page, 5)).not.toHaveAttribute('data-marked');
 });
 
-// seats 4 and 5 voted in the sweep, count 2, on the confirm screen
-const counted = () => play(day1(seated(F7)), [
-	{ type: 'nominee', seat: 2 }, { type: 'nominate', nominator: 0 }, { type: 'vote' },
-	{ type: 'mark', seat: 3, on: true }, { type: 'mark', seat: 4, on: true }, { type: 'swept' }
-]);
-
-test('Scenario: Confirm corrects missed timing', async ({ page }) => {
-	await open(page, counted());
-	const count = live(page).getByTestId('count');
-	await expect(count).toHaveText('2');
-	await seat(page, 2).click();
-	await expect(seat(page, 2)).toHaveAttribute('data-marked', '');
-	await expect(count).toHaveText('3');
-	await live(page).getByRole('button', { name: 'Stimme mehr', exact: true }).click();
-	await expect(count).toHaveText('4');
-	await live(page).getByRole('button', { name: 'Bestätigen', exact: true }).click();
-
-	await expect(live(page).getByText('Cleo kommt auf den Block', { exact: true })).toBeVisible();
-	const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('arcade:session:clocktower')!).state.today.nominations[0]);
-	expect(saved.votes).toBe(4);
-	expect(saved.voters).toEqual([1, 3, 4]);
-});
-
 test('Scenario: Reduced motion hand jumps', async ({ page }) => {
 	await page.emulateMedia({ reducedMotion: 'reduce' });
 	await shortSweep(page);

@@ -63,7 +63,7 @@ test('Scenario: Full Clocktower game', async ({ page }, info) => {
 	await live(page).locator(`[data-seat="${nominator}"]`).click();
 	await press(page, 'Abstimmung beginnen');
 	await expect(live(page).getByTestId('count')).toBeVisible();
-	for (let i = 0; i < 3; i++) await press(page, 'Stimme mehr');
+	for (const n of [1, 2, 3]) await live(page).locator(`[data-seat="${n}"]`).click();
 	await expect(live(page).getByTestId('count')).toHaveText('3');
 	await press(page, 'Bestätigen');
 	await expect(heading(page, `${NAMES[imp]} kommt auf den Block`)).toBeVisible();
