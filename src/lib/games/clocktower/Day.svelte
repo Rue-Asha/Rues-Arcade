@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { ScreenProps } from '#lib/games/registry.ts';
 	import Button from '#lib/ui/Button.svelte';
+	import BlockCard from './BlockCard.svelte';
 	import Circle from './Circle.svelte';
 	import Modal from '#lib/ui/Modal.svelte';
 	import Dawn from './Dawn.svelte';
@@ -44,6 +45,9 @@
 		};
 	});
 
+	// the votes of the nomination that put the holder on the block
+	const blockVotes = $derived(today.nominations.findLast((n) => n.result === 'block' && n.nominee === today.block)?.votes ?? 0);
+
 	const screen = $derived(s.phase.kind === 'day' ? s.phase.screen : null);
 </script>
 
@@ -53,7 +57,7 @@
 	<section class="stack" aria-labelledby="phase">
 		{@render head(`Tag ${today.number}`)}
 		<div class="cap"><Circle seats={s.seats} block={today.block} {rings} onseat={(i) => (sheet = i)} /></div>
-		{#if today.block !== null}<Facts><p>Auf dem Block: {name(today.block)}</p></Facts>{/if}
+		{#if today.block !== null}<BlockCard name={name(today.block)} votes={blockVotes} />{/if}
 		<div class="row">
 			<Button variant="primary" onclick={() => (ending = true)}>Tag beenden</Button>
 		</div>

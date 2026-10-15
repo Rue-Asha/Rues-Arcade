@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { F7, seated } from '../src/lib/games/clocktower/fixtures.ts';
-import type { CharacterId, ClocktowerState } from '../src/lib/games/clocktower/types.ts';
+import type { CharacterId, ClocktowerAction, ClocktowerState } from '../src/lib/games/clocktower/types.ts';
 import { play, seedClocktower } from './clocktower-session.ts';
 import { live } from './helpers.ts';
 import { day1, ghost, nightEnd } from './walks/clocktower-day.ts';
@@ -176,4 +176,77 @@ test('Scenario: Rings stay subtle and outside the nodes', async ({ page }) => {
 	expect(got.nested).toBe(true);
 	expect(got.clear).toBe(true);
 	expect(got.hit).toBe(true);
+});
+
+const votes = (nominee: number, nominator: number, count: number): ClocktowerAction[] => [
+	{ type: 'nominee', seat: nominee }, { type: 'nominate', nominator }, { type: 'vote' }, { type: 'swept' },
+	{ type: 'count', votes: count }, { type: 'confirm' }, { type: 'next' }
+];
+
+test('Scenario: Block card names the player and the votes', async ({ page }) => {
+	const first = play(day1(seated(F7)), votes(3, 0, 4));
+	const second = play(first, votes(4, 1, 5));
+	const tie = play(second, votes(5, 2, 5));
+	expect(tie.today!.block).toBeNull();
+	for (const [state, name, count] of [[first, 'Dani', 4], [second, 'Eli', 5]] as const) {
+		await open(page, state);
+		const card = live(page).getByTestId('block-card');
+		await expect(card).toHaveCount(1);
+		await expect(card).toContainText('Auf dem Block');
+		await expect(card).toContainText(name);
+		await expect(card).toContainText(`${count} Stimmen`);
+		const got = await card.evaluate((el, vote) => {
+			const channels = (css: string) => {
+				const ctx = document.createElement('canvas').getContext('2d', { willReadFrequently: true })!;
+				ctx.clearRect(0, 0, 1, 1);
+				ctx.fillStyle = css;
+				ctx.fillRect(0, 0, 1, 1);
+				const [r, g, b, a] = ctx.getImageData(0, 0, 1, 1).data;
+				return { r, g, b, a: a / 255 };
+			};
+			const lum = ({ r, g, b }: { r: number; g: number; b: number }) => {
+				const lin = (v: number) => ((v /= 255) <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
+				return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+			};
+			// the colour a text sits on: its nearest ancestor with an opaque background
+			const behind = (n: Element) => {
+				let at: Element | null = n;
+				while (at && channels(getComputedStyle(at).backgroundColor).a < 1) at = at.parentElement;
+				return getComputedStyle(at ?? document.body).backgroundColor;
+			};
+			const leaves = [...el.querySelectorAll('*')].filter(
+				(n) => [...n.childNodes].some((c) => c.nodeType === Node.TEXT_NODE && c.textContent!.trim() !== '')
+			);
+			const size = (n: Element) => Number.parseFloat(getComputedStyle(n).fontSize);
+			const biggest = leaves.reduce((a, b) => (size(b) > size(a) ? b : a));
+			const own = getComputedStyle(el);
+			const ground = getComputedStyle(document.body).backgroundColor;
+			const shape = (svg: Element | null) => svg?.innerHTML.replace(/<!--.*?-->|\s+|class="[^"]*"/g, '') ?? null;
+			const axe = shape(el.querySelector('svg'));
+			const badge = shape(document.querySelector('[data-stage]:not([data-leaving]) [data-badge="block"] svg'));
+			return {
+				biggest: biggest.textContent!.trim(),
+				tied: leaves.filter((n) => size(n) === size(biggest)).length,
+				min: Math.min(...leaves.map(size)),
+				contrast: Math.min(
+					...leaves.map((n) => {
+						const [hi, lo] = [lum(channels(getComputedStyle(n).color)), lum(channels(behind(n)))].sort((a, b) => b - a);
+						return (hi + 0.05) / (lo + 0.05);
+					})
+				),
+				set: own.backgroundColor !== ground || (Number.parseFloat(own.borderTopWidth) > 0 && channels(own.borderTopColor).a > 0),
+				axe: axe !== null && axe === badge,
+				vote
+			};
+		}, `${count} Stimmen`);
+		expect(got.biggest, name).toBe(got.vote);
+		expect(got.tied, name).toBe(1);
+		expect(got.min, name).toBeGreaterThanOrEqual(16);
+		expect(got.contrast, name).toBeGreaterThanOrEqual(4.5);
+		expect(got.set, name).toBe(true);
+		expect(got.axe, name).toBe(true);
+	}
+	await open(page, tie);
+	await expect(live(page).getByRole('button', { name: 'Tag beenden', exact: true })).toBeVisible();
+	await expect(live(page).getByTestId('block-card')).toHaveCount(0);
 });

@@ -152,12 +152,15 @@ const picker = () =>
 test('Scenario: Day facts sit in a box', async ({ page }) => {
 	const base = timed(seated(F7), 5);
 	const screens: [string, ClocktowerState, string[]][] = [
-		['grimoire', blocked(base), ['Auf dem Block: Dani']],
 		['picker', picker(), ['Bo: hat heute schon nominiert', 'Dani: ist tot']],
 		['clock', toClock(blocked(base), 1), ['Nötig: 4', 'Höchststand: 4']],
 		['sweep', play(toClock(blocked(base), 1), [{ type: 'vote' }]), ['Nötig: 4', 'Höchststand: 4', 'Platz antippen oder Leertaste, solange der Zeiger in seinem Kreisstück steht.']],
 		['result', toResult(base), ['4 Stimmen']]
 	];
+	// who is on the block is the block card's, not a day fact
+	await open(page, blocked(base));
+	await expect(live(page).getByTestId('block-card')).toBeVisible();
+	await expect(live(page).getByTestId('day-facts')).toHaveCount(0);
 	for (const [name, state, texts] of screens) {
 		await open(page, state);
 		const box = live(page).getByTestId('day-facts');
