@@ -166,6 +166,15 @@ Functions
 - **S65** Show-bar texts appear in the centre of the circle instead of a fullscreen dialog, so the circle stays visible; the show-bar itself stays as it is. While a text is shown, tapping seats marks or unmarks them (several, up to all, with S57 feedback) so the storyteller can show who is meant; closing the text clears the marks, and seat taps go back to the step's behaviour (e.g. the Imp's target).
 - **S66** Bluffs: the bluff names are not shown under the show-bar before "Zeigen"; "Neu würfeln" stays and draws again blind; the bluffs are visible only once shown (S65). The Drunk can never be drawn as a bluff.
 
+Accepted at Gate 1 of round 2 (2026-10-15), planner additions and legibility exceptions:
+- The held grimoire's extras ("Drunk (glaubt: X)", "Red Herring", "Dämon") move from seat tags to short notes under the circle (S51).
+- The deck's app slides are reworded for the round-2 vote and show-bar mechanics (S55).
+- During the sweep, seats outside the hand's sector are dimmed as unavailable and give no press feedback (S53, S57).
+- An executed seat that was already dead plays no death animation (`DayState.killed`, S63).
+- The reducer keeps the `count` action for fixtures and tests; only the UI drops the ± stepper (S53).
+- Exception: names longer than about 5 characters (6 on a ribbon) end in an ellipsis on the seat node; the full name is in the accessible name and title (S52).
+- Exception: a character shown in the circle's centre shows icon and name only, no ability text; bluffs drop their lead line; no "N markiert" line (S65).
+
 ## Non-goals
 - Travellers, exile votes, Fabled — 5–15 players only (more than 15 needs Travellers).
 - Other scripts (Bad Moon Rising, Sects & Violets, custom scripts).
