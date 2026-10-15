@@ -459,7 +459,7 @@ test('Scenario: Block holder marked on the circle', async ({ page }) => {
 	await expect(seat(page, 4)).toHaveAttribute('data-block', '');
 	await expect(live(page).locator('[data-badge="block"]')).toHaveCount(1);
 	await expect(seat(page, 4).locator('[data-badge="block"]')).toBeVisible();
-	await expect(live(page).getByText('Auf dem Block: Dani', { exact: true })).toBeVisible();
+	await expect(live(page).getByTestId('block-card')).toContainText('Dani');
 
 	const second = play(first, [
 		{ type: 'nominee', seat: 5 }, { type: 'nominate', nominator: 1 }, { type: 'vote' }, { type: 'swept' },
@@ -470,7 +470,7 @@ test('Scenario: Block holder marked on the circle', async ({ page }) => {
 	await expect(seat(page, 6)).toHaveAttribute('data-block', '');
 	await expect(live(page).locator('[data-badge="block"]')).toHaveCount(1);
 	await expect(seat(page, 6).locator('[data-badge="block"]')).toBeVisible();
-	await expect(live(page).getByText('Auf dem Block: Fey', { exact: true })).toBeVisible();
+	await expect(live(page).getByTestId('block-card')).toContainText('Fey');
 });
 
 const noNames = async (page: Page) => {
