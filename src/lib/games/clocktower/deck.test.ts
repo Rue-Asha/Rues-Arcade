@@ -54,20 +54,31 @@ describe('clocktower deck', () => {
 	});
 
 	it('Scenario: Voting slide timeline follows the count', () => {
-		for (const [n, voters] of [[5, 3], [12, 6], [15, 8]] as const) {
+		for (let n = 5; n <= 15; n++) {
 			const t = voteTimeline(n);
+			const need = Math.ceil(n / 2);
 			expect(t.seats, `${n}`).toBe(n);
 			expect(t.nominee).toBe(0);
-			expect(t.voters, `${n}`).toHaveLength(voters);
-			expect(new Set(t.voters).size).toBe(voters);
-			for (const v of t.voters) expect(v > 0 && v < n).toBe(true);
-			expect(t.voters).toEqual([...t.voters].sort((a, b) => a - b));
+			expect(t.voters, `${n}`).toHaveLength(need);
+			expect(t.at, `${n}`).toHaveLength(need);
+			expect(new Set(t.voters).size, `${n}`).toBe(need);
+			for (const v of t.voters) expect(v > 0 && v < n, `${n} voter ${v}`).toBe(true);
+			for (let j = 1; j < need; j++) {
+				expect(t.voters[j], `${n}`).toBeGreaterThan(t.voters[j - 1]);
+				expect(t.at[j], `${n}`).toBeGreaterThan(t.at[j - 1]);
+			}
+			// the hand starts on seat 1 and reaches seat v after v-1 steps, so the count shown at time t is the voters reached by then
 			const step = t.handMs / (n - 1);
-			expect(t.at).toEqual(t.voters.map((v) => (v - 1) * step));
+			const count = (ms: number) => t.at.filter((a) => a <= ms).length;
+			t.voters.forEach((v, j) => {
+				expect(t.at[j], `${n} voter ${v}`).toBeCloseTo((v - 1) * step, 6);
+				expect(count(t.at[j]), `${n} at voter ${v}`).toBe(j + 1);
+				if (j > 0) expect(count(t.at[j] - 1), `${n} before voter ${v}`).toBe(j);
+			});
 			expect(t.at[0]).toBe(0);
+			expect(t.at.at(-1)!, `${n}`).toBeLessThan(t.handMs);
+			expect(count(t.handMs + t.holdMs), `${n}`).toBe(threshold(n));
 			expect(t.holdMs).toBeGreaterThan(0);
-			const count = t.at.map((_, i) => i + 1);
-			expect(count.at(-1)).toBe(threshold(n));
 		}
 	});
 
