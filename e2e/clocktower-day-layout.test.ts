@@ -143,7 +143,7 @@ test('Scenario: Day facts sit in a box', async ({ page }) => {
 		['grimoire', blocked(base), ['Auf dem Block: Dani']],
 		['picker', picker(), ['Bo: hat heute schon nominiert', 'Dani: ist tot']],
 		['clock', toClock(blocked(base), 1), ['Nötig: 4', 'Höchststand: 4']],
-		['sweep', play(toClock(blocked(base), 1), [{ type: 'vote' }]), ['Nötig: 4', 'Höchststand: 4', 'Platz antippen oder Leertaste, solange der Zeiger darauf steht.']],
+		['sweep', play(toClock(blocked(base), 1), [{ type: 'vote' }]), ['Nötig: 4', 'Höchststand: 4', 'Platz antippen oder Leertaste, solange der Zeiger in seinem Kreisstück steht.']],
 		['result', toResult(base), ['4 Stimmen']]
 	];
 	for (const [name, state, texts] of screens) {
