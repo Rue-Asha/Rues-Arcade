@@ -3,7 +3,7 @@ import { start as runDemo } from '#lib/demo/runner.ts';
 import { loadGameSession } from '#lib/games/registry.ts';
 import { saveSession } from '#lib/session.ts';
 import { alignment, byId } from './characters.ts';
-import { clocktower, dusk, heirs, shape } from './engine.ts';
+import { canBeNominated, canNominate, clocktower, dusk, heirs, shape } from './engine.ts';
 import { dead, F15, F5, F7, firstDay, seated, step, voted } from './fixtures.ts';
 import { entry } from './index.ts';
 import { info } from './info.ts';
@@ -254,7 +254,7 @@ describe('clocktower night', () => {
 		expect(screen(last)).toEqual({ screen: 'sleep', step: 3 });
 		const dawn = step(last, { type: 'next' });
 		expect(dawn.phase).toEqual({ kind: 'dawn', screen: 'wake' });
-		expect(dawn.today).toEqual({ number: 1, deadline: null, pending: null, nominations: [], high: 0, block: null, executed: null, closed: false, deaths: [] });
+		expect(dawn.today).toEqual({ number: 1, deadline: null, pending: null, nominations: [], high: 0, block: null, executed: null, killed: null, closed: false, deaths: [] });
 	});
 
 	it('Scenario: Skip and back keep state', () => {
@@ -579,6 +579,42 @@ describe('clocktower day', () => {
 		expect(n2.lastExecution).toBe(3);
 		const undertaker = n2.night!.steps.find((x) => x.kind === 'undertaker')!;
 		expect(info(n2, undertaker)).toEqual({ kind: 'character', character: 'chef' });
+	});
+
+	it('Scenario: Nomination availability per seat', () => {
+		// Alex 0 nominated Dani 3, Bo 1 is dead, Cleo 2 is the pending nominee of an open picker
+		const day = nominate(firstDay(dead(seated(F7), 1)), 3, 0);
+		const picker = step(day, { type: 'cancel' }, { type: 'nominee', seat: 2 });
+		expect(picker.phase).toEqual({ kind: 'day', screen: 'nominator' });
+		const both = (s: ClocktowerState) => s.seats.map((_, i) => [canBeNominated(s, i), canNominate(s, i)]);
+		expect(both(day)).toEqual([[true, false], [true, false], [true, true], [false, true], [true, true], [true, true], [true, true]]);
+		expect(both(picker)).toEqual([[true, true], [true, false], [true, true], [true, true], [true, true], [true, true], [true, true]]);
+		const done = step(picker, { type: 'cancel' }, { type: 'execute', seat: 4 });
+		expect(both(done).flat()).not.toContain(true);
+		const night = step(done, { type: 'next' });
+		expect(both(night).flat()).not.toContain(true);
+	});
+
+	it('Scenario: Nomination availability follows the nominee and nominate guards', () => {
+		const day = nominate(firstDay(dead(seated(F7), 1)), 3, 0);
+		const back = step(day, { type: 'cancel' });
+		expect(canBeNominated(back, 3) && canNominate(back, 0)).toBe(true);
+		const grim = voted(firstDay(seated(F7)), 3, 0, 1);
+		expect(step(grim, { type: 'nominee', seat: 3 })).toBe(grim);
+		expect(step(grim, { type: 'nominee', seat: 2 }, { type: 'nominate', nominator: 0 }).today!.pending).toBe(2);
+	});
+
+	it('Scenario: Execution records whom it killed', () => {
+		const block = voted(firstDay(seated(F7)), 3, 0, 4);
+		expect(step(block, { type: 'endDay' }).today!.killed).toBe(3);
+		expect(step(block, { type: 'execute', seat: 5 }).today!.killed).toBe(5);
+		const ghost = voted(firstDay(dead(seated(F7), 3)), 3, 0, 4);
+		expect(ghost.today!.block).toBe(3);
+		expect(step(ghost, { type: 'endDay' }).today!.killed).toBeNull();
+		expect(step(ghost, { type: 'execute', seat: 3 }).today!.killed).toBeNull();
+		expect(step(firstDay(seated(F7)), { type: 'endDay' }).today!.killed).toBeNull();
+		const next = step(block, { type: 'endDay' }, { type: 'next' });
+		expect(next.today!.killed).toBe(3);
 	});
 
 	it('a day without a block holder ends without an execution', () => {
