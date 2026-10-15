@@ -288,3 +288,117 @@ test('Scenario: Ghost-vote badge shows whether the vote is left', async ({ page 
 	expect(text).not.toContain('✕ ●');
 	expect(text).not.toContain('✕ ○');
 });
+
+const seatAt = (page: Page, n: number) => live(page).locator(`[data-seat="${n}"]`);
+
+// every animation in the seat (itself, its ripple and badges): the properties it animates, when it ends, its scale steps
+const motionOf = (page: Page, n: number) =>
+	seatAt(page, n).evaluate((el) =>
+		el.getAnimations({ subtree: true }).map((a) => {
+			const effect = a.effect as KeyframeEffect;
+			const frames = effect.getKeyframes();
+			const props = [...new Set(frames.flatMap((k) => Object.keys(k)))].filter(
+				(k) => !['offset', 'computedOffset', 'easing', 'composite'].includes(k)
+			);
+			return {
+				ripple: (effect.target as HTMLElement).hasAttribute('data-ripple'),
+				seat: effect.target === el,
+				props,
+				end: Number(effect.getComputedTiming().endTime),
+				finite: effect.getTiming().iterations !== Infinity,
+				scales: frames.map((k) => k.scale).filter((v) => v !== undefined).map(Number)
+			};
+		})
+	);
+
+test('Scenario: Seat press springs back with a ripple', async ({ page }) => {
+	await open(page, day1(seated(F7)));
+	const seat = seatAt(page, 3);
+	const box = (await seat.boundingBox())!;
+	await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+	await page.mouse.down();
+	const held = await seat.evaluate(async (el) => {
+		await Promise.all(el.getAnimations().map((a) => a.finished));
+		return Number(getComputedStyle(el).scale);
+	});
+	expect(held).toBeGreaterThanOrEqual(0.9);
+	expect(held).toBeLessThanOrEqual(0.96);
+
+	await page.mouse.up();
+	const after = await motionOf(page, 3);
+	const spring = after.filter((a) => a.seat && a.scales.some((v) => v > 1));
+	expect(spring).toHaveLength(1);
+	expect(spring[0].scales.at(-1)).toBe(1);
+	expect(after.filter((a) => a.ripple)).toHaveLength(1);
+	for (const a of after) {
+		expect(a.finite).toBe(true);
+		expect(a.end).toBeLessThanOrEqual(500);
+		for (const prop of a.props) expect(['transform', 'scale', 'translate', 'opacity'], prop).toContain(prop);
+	}
+
+	const rest = await seat.evaluate(async (el) => {
+		await Promise.all(el.getAnimations({ subtree: true }).map((a) => a.finished.catch(() => {})));
+		const ripple = el.querySelector<HTMLElement>('[data-ripple]')!;
+		const scale = getComputedStyle(el).scale;
+		return { scale: scale === 'none' ? 1 : Number(scale), ripple: Number(getComputedStyle(ripple).opacity), running: el.getAnimations({ subtree: true }).length };
+	});
+	expect(rest).toEqual({ scale: 1, ripple: 0, running: 0 });
+});
+
+test('Scenario: Seat tap vibrates where supported', async ({ page, context }) => {
+	await page.addInitScript(() => {
+		const calls: unknown[] = [];
+		(window as unknown as { buzz: unknown[] }).buzz = calls;
+		Object.defineProperty(Navigator.prototype, 'vibrate', { configurable: true, value: (p: unknown) => (calls.push(p), true) });
+	});
+	const buzz = () => page.evaluate(() => (window as unknown as { buzz: unknown[] }).buzz);
+	// Dani (seat 4) is dead
+	await open(page, ghost(day1(seated(F7)), 3));
+	await seatAt(page, 2).click();
+	await expect(page.getByRole('dialog')).toBeVisible();
+	expect(await buzz()).toEqual([10]);
+
+	await page.getByRole('dialog').getByRole('button', { name: 'Nominieren', exact: true }).click();
+	await expect(seatAt(page, 4)).toHaveAttribute('title', 'ist tot');
+	await settled(page);
+	await seatAt(page, 4).click({ force: true });
+	expect(await motionOf(page, 4)).toEqual([]);
+	expect(await buzz()).toEqual([10]);
+
+	const bare = await context.newPage();
+	const errors: Error[] = [];
+	bare.on('pageerror', (e) => errors.push(e));
+	await bare.addInitScript(() => delete (Navigator.prototype as { vibrate?: unknown }).vibrate);
+	await open(bare, ghost(day1(seated(F7)), 3));
+	expect(await bare.evaluate(() => 'vibrate' in navigator)).toBe(false);
+	await seatAt(bare, 2).click();
+	await expect(bare.getByRole('dialog')).toBeVisible();
+	expect(errors).toEqual([]);
+});
+
+// seats 4 and 5 voted in the sweep; the confirm screen
+const confirming = () =>
+	play(day1(seated(F7)), [
+		{ type: 'nominee', seat: 2 }, { type: 'nominate', nominator: 0 }, { type: 'vote' },
+		{ type: 'mark', seat: 3, on: true }, { type: 'mark', seat: 4, on: true }, { type: 'swept' }
+	]);
+
+test('Scenario: Seat press under reduced motion', async ({ page }) => {
+	// with motion allowed the same tap animates, so the quiet tap below is reduced motion's doing
+	await open(page, confirming());
+	await seatAt(page, 2).click();
+	expect((await motionOf(page, 2)).length).toBeGreaterThan(0);
+
+	await page.emulateMedia({ reducedMotion: 'reduce' });
+	await open(page, confirming());
+	await expect(live(page).getByRole('heading', { name: 'Stimmen zählen', exact: true })).toBeVisible();
+	const seat = seatAt(page, 2);
+	const box = (await seat.boundingBox())!;
+	await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+	await page.mouse.down();
+	expect(await motionOf(page, 2)).toEqual([]);
+	await page.mouse.up();
+	const now = await seat.evaluate((el) => ({ marked: el.hasAttribute('data-marked'), check: el.querySelector('[data-badge="check"]') !== null }));
+	expect(now).toEqual({ marked: true, check: true });
+	expect(await motionOf(page, 2)).toEqual([]);
+});

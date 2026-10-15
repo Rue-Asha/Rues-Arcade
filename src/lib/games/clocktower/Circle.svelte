@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
+	import { reducedMotion } from '#lib/motion.ts';
 	import { angleOf, ornament, seatPositions, seatSize, wedge } from './circle.ts';
 	import { byId } from './characters.ts';
 	import CharacterIcon from './CharacterIcon.svelte';
@@ -69,8 +70,43 @@
 		return `${head}, tot, ${seat.ghostVote ? 'Stimme' : 'keine Stimme'}`;
 	}
 
+	// the press: a scale-in and a gold glow while held, a spring past full size and a ripple on the tap
+	let held: Animation[] = [];
+
+	function letGo() {
+		for (const a of held) a.cancel();
+		held = [];
+	}
+
+	function pressIn(i: number) {
+		const el = buttons[i];
+		letGo();
+		if (disabled?.(i) || reducedMotion() || typeof el.animate !== 'function') return;
+		const ripple = el.querySelector<HTMLElement>('[data-ripple]')!;
+		held = [
+			el.animate([{ scale: 1 }, { scale: 0.93 }], { duration: 90, easing: 'ease-out', fill: 'forwards' }),
+			ripple.animate([{ opacity: 0 }, { opacity: 0.6 }], { duration: 90, easing: 'ease-out', fill: 'forwards' })
+		];
+	}
+
+	function spring(i: number) {
+		const el = buttons[i];
+		letGo();
+		if (reducedMotion() || typeof el.animate !== 'function') return;
+		el.animate([{ scale: 0.93 }, { scale: 1.06, offset: 0.45 }, { scale: 1 }], { duration: 340, easing: 'ease-out' });
+		el.querySelector<HTMLElement>('[data-ripple]')!.animate(
+			[
+				{ transform: 'scale(1)', opacity: 0.7 },
+				{ transform: 'scale(1.6)', opacity: 0 }
+			],
+			{ duration: 460, easing: 'ease-out' }
+		);
+	}
+
 	function press(i: number) {
 		if (drag !== null || disabled?.(i)) return;
+		spring(i);
+		navigator.vibrate?.(10);
 		onseat?.(i);
 	}
 
@@ -91,7 +127,9 @@
 	}
 
 	function down(e: PointerEvent, i: number) {
-		if (!onswap || e.button > 0) return;
+		if (e.button > 0) return;
+		pressIn(i);
+		if (!onswap) return;
 		drag = { from: i, x: e.clientX, y: e.clientY, over: null };
 		(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
 	}
@@ -109,6 +147,7 @@
 	}
 
 	function up(e: PointerEvent) {
+		letGo();
 		if (drag === null) return;
 		const { from } = drag;
 		const to = overOf(e);
@@ -181,8 +220,8 @@
 				aria-label={spoken(i)}
 				aria-disabled={why !== null}
 				title={why ?? undefined}
-				style:left="{at[i].x}px"
-				style:top="{at[i].y}px"
+				style:left="{at[i].x - d / 2}px"
+				style:top="{at[i].y - d / 2}px"
 				style:touch-action={onswap ? 'none' : undefined}
 				bind:this={buttons[i]}
 				onclick={() => press(i)}
@@ -190,10 +229,15 @@
 				onpointerdown={(e) => down(e, i)}
 				onpointermove={moving}
 				onpointerup={up}
-				onpointercancel={() => (drag = null)}
+				onpointerleave={letGo}
+				onpointercancel={() => {
+					letGo();
+					drag = null;
+				}}
 			>
 				{#if avail?.nominee}<span class="avail nominee" data-avail="nominee" aria-hidden="true"></span>{/if}
 				{#if avail?.nominator}<span class="avail nominator" data-avail="nominator" aria-hidden="true"></span>{/if}
+				<span class="ripple" data-ripple aria-hidden="true"></span>
 				<span class="no">{i + 1}</span>
 				{#if icon}<CharacterIcon id={icon} size={Math.round(d * 0.47)} />{/if}
 				<span class="name" title={seat.player.name}>{seat.player.name}</span>
@@ -290,7 +334,6 @@
 		z-index: 1;
 		width: var(--seat);
 		height: var(--seat);
-		transform: translate(-50%, -50%);
 		display: flex;
 		flex-direction: column;
 		align-items: center;
@@ -308,6 +351,16 @@
 		cursor: pointer;
 		touch-action: manipulation;
 		user-select: none;
+	}
+
+	.ripple {
+		position: absolute;
+		inset: -4px;
+		border: 2px solid var(--gold);
+		border-radius: 50%;
+		box-shadow: 0 0 8px var(--gold);
+		opacity: 0;
+		pointer-events: none;
 	}
 
 	.seat[aria-disabled='true'] {
@@ -499,11 +552,11 @@
 
 	@keyframes dying {
 		from {
-			transform: translate(-50%, -50%) scale(1.25);
+			transform: scale(1.25);
 			opacity: 0.4;
 		}
 		to {
-			transform: translate(-50%, -50%) scale(1);
+			transform: scale(1);
 		}
 	}
 
