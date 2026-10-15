@@ -28,10 +28,10 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		gap: 14px;
+		gap: 10px;
 		align-self: center;
 		min-width: 12ch;
-		padding: 6px 22px;
+		padding: 6px 14px;
 		border: 2px solid var(--line);
 		border-radius: var(--radius-xl);
 		background: var(--surface);

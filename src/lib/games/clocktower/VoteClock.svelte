@@ -71,11 +71,11 @@
 <svelte:window onkeydown={key} onkeyup={key} />
 
 <section class="stack" aria-labelledby="phase" data-sweep={screen === 'sweep' ? '' : undefined} data-under={under === null ? undefined : under + 1}>
-	<div class="head">
+	<div class="head" class:timed={today.deadline !== null}>
 		<h2 id="phase">
 			{#if screen === 'confirm'}Stimmen zählen{:else}{name(vote.nominator)} nominiert {name(vote.nominee)}{/if}
 		</h2>
-		{#if today.deadline !== null}<Timer deadline={today.deadline} />{/if}
+		{#if today.deadline !== null}<div class="clock"><Timer deadline={today.deadline} /></div>{/if}
 	</div>
 	<div class="cap"><Circle
 		seats={s.seats}
@@ -110,14 +110,24 @@
 <style>
 	.head {
 		display: flex;
-		flex-direction: column;
-		align-items: stretch;
-		gap: 10px;
+		align-items: flex-start;
+		gap: 12px;
 		text-align: center;
 	}
 
 	.head h2 {
+		flex: 1 1 0;
+		min-width: 0;
+		overflow-wrap: anywhere;
 		font-size: 22px;
+	}
+
+	.head.timed h2 {
+		text-align: start;
+	}
+
+	.clock {
+		flex: none;
 	}
 
 	.cap {

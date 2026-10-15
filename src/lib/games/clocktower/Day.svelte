@@ -112,9 +112,9 @@
 </Modal>
 
 {#snippet head(title: string)}
-	<div class="head">
+	<div class="head" class:timed={today.deadline !== null}>
 		<h2 id="phase">{title}</h2>
-		{#if today.deadline !== null}<Timer deadline={today.deadline} />{/if}
+		{#if today.deadline !== null}<div class="clock"><Timer deadline={today.deadline} /></div>{/if}
 	</div>
 {/snippet}
 
@@ -123,14 +123,24 @@
 <style>
 	.head {
 		display: flex;
-		flex-direction: column;
-		align-items: stretch;
-		gap: 10px;
+		align-items: flex-start;
+		gap: 12px;
 		text-align: center;
 	}
 
 	.head :global(h2) {
+		flex: 1 1 0;
+		min-width: 0;
+		overflow-wrap: anywhere;
 		font-size: 22px;
+	}
+
+	.head.timed :global(h2) {
+		text-align: start;
+	}
+
+	.clock {
+		flex: none;
 	}
 
 	/* the circle measures its own width, so a narrower box is how the viewport height caps it */
