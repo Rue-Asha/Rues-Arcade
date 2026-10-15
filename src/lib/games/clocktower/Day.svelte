@@ -3,6 +3,7 @@
 	import Button from '#lib/ui/Button.svelte';
 	import BlockCard from './BlockCard.svelte';
 	import Circle from './Circle.svelte';
+	import { reducedMotion } from '#lib/theme.ts';
 	import Modal from '#lib/ui/Modal.svelte';
 	import Dawn from './Dawn.svelte';
 	import Facts from './Facts.svelte';
@@ -93,7 +94,7 @@
 		<div class="head">
 			<h2 id="phase">{today.executed === null ? 'Heute wird niemand hingerichtet' : `${name(today.executed)} wird hingerichtet`}</h2>
 		</div>
-		<div class="cap"><Circle seats={s.seats} /></div>
+		<div class="cap"><Circle seats={s.seats} dying={reducedMotion() || today.killed === null ? [] : [today.killed]} /></div>
 		<div class="row">
 			<Button variant="primary" onclick={() => send({ type: 'next' })}>Weiter</Button>
 		</div>

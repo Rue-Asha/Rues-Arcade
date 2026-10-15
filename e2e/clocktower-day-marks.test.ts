@@ -250,3 +250,68 @@ test('Scenario: Block card names the player and the votes', async ({ page }) => 
 	await expect(live(page).getByRole('button', { name: 'Tag beenden', exact: true })).toBeVisible();
 	await expect(live(page).getByTestId('block-card')).toHaveCount(0);
 });
+
+// every finite animation in a seat and its parts, with what it animates
+const motion = (page: Page, n: number) =>
+	seat(page, n).evaluate((el) =>
+		el
+			.getAnimations({ subtree: true })
+			.filter((a) => a.playState === 'running' && a.effect?.getTiming().iterations !== Infinity)
+			.map((a) => {
+				const effect = a.effect as KeyframeEffect;
+				const keys = effect.getKeyframes().flatMap((k) => Object.keys(k));
+				return {
+					seat: effect.target === el,
+					pulse: (effect.target as HTMLElement).hasAttribute('data-pulse'),
+					name: (a as CSSAnimation).animationName ?? '',
+					ms: Number(effect.getTiming().duration),
+					props: [...new Set(keys)].filter((k) => !['offset', 'computedOffset', 'easing', 'composite'].includes(k)).sort()
+				};
+			})
+	);
+
+// Dani (seat 4) on the block after 4 votes, executed by "Tag beenden"
+const executed = (s: ClocktowerState) => play(play(s, votes(3, 0, 4)), [{ type: 'endDay' }]);
+
+test('Scenario: Execution plays the death animation', async ({ page }) => {
+	await open(page, executed(day1(seated(F7))));
+	await expect(live(page).getByRole('heading', { name: 'Dani wird hingerichtet', exact: true })).toBeVisible();
+	const running = await motion(page, 4);
+	const own = running.filter((a) => a.seat);
+	expect(own).toHaveLength(1);
+	expect(own[0].name).toMatch(/death/);
+	expect(own[0].ms).toBeGreaterThanOrEqual(800);
+	expect(own[0].ms).toBeLessThanOrEqual(1200);
+	expect(running.filter((a) => a.pulse)).toHaveLength(1);
+	for (const a of running) for (const prop of a.props) expect(['transform', 'opacity'], prop).toContain(prop);
+	for (const n of [1, 2, 3, 5, 6, 7]) expect(await motion(page, n), `seat ${n}`).toEqual([]);
+	await expect(seat(page, 4)).toHaveAttribute('data-dead', '');
+	await expect(live(page).locator('[data-seat].dying')).toHaveCount(1);
+	await expect.poll(() => seat(page, 4).evaluate((el) => el.getAnimations({ subtree: true }).length)).toBe(0);
+	await expect(seat(page, 4)).toHaveAttribute('data-dead', '');
+
+	await page.emulateMedia({ reducedMotion: 'reduce' });
+	await open(page, executed(day1(seated(F7))));
+	await expect(live(page).getByRole('heading', { name: 'Dani wird hingerichtet', exact: true })).toBeVisible();
+	await expect(seat(page, 4)).toHaveAttribute('data-dead', '');
+	expect(await motion(page, 4)).toEqual([]);
+	await expect(live(page).locator('.dying')).toHaveCount(0);
+});
+
+test('Scenario: Executing a dead player plays no death animation', async ({ page }) => {
+	// control: the same execution of a living Dani does animate his seat
+	await open(page, executed(day1(seated(F7))));
+	await expect(live(page).getByRole('heading', { name: 'Dani wird hingerichtet', exact: true })).toBeVisible();
+	expect((await motion(page, 4)).filter((a) => a.seat && a.name.match(/death/))).toHaveLength(1);
+
+	// Dani died earlier today and is put on the block by Alex's nomination
+	const state = executed(ghost(day1(seated(F7)), 3));
+	expect(state.today!.executed).toBe(3);
+	expect(state.today!.killed).toBeNull();
+	await open(page, state);
+	await expect(live(page).getByRole('heading', { name: 'Dani wird hingerichtet', exact: true })).toBeVisible();
+	await expect(seat(page, 4)).toHaveAttribute('data-dead', '');
+	for (const n of [1, 2, 3, 4, 5, 6, 7]) expect(await motion(page, n), `seat ${n}`).toEqual([]);
+	await expect(live(page).locator('.dying')).toHaveCount(0);
+	await expect(live(page).locator('[data-pulse]')).toHaveCount(0);
+});
