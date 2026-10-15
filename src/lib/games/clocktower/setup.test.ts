@@ -197,5 +197,26 @@ describe('clocktower bluffs', () => {
 		const noOutsider = seats(['drunk', 'butler', 'recluse', 'saint', 'chef', 'baron', 'imp'], 'monk');
 		const [three] = drawBluffs(noOutsider, rng(4));
 		expect(three.every((id) => byId[id].team === 'townsfolk')).toBe(true);
+
+		const noDrunk = seats(['chef', 'empath', 'washerwoman', 'butler', 'spy', 'imp', 'slayer', 'monk']);
+		const noDrunkInPlay = noDrunk.map((s) => s.character);
+		for (let s = 1; s <= 50; s++) {
+			const [bluffs] = drawBluffs(noDrunk, rng(s));
+			expect(bluffs).toHaveLength(3);
+			expect(new Set(bluffs).size).toBe(3);
+			expect(bluffs).not.toContain('drunk');
+			for (const id of bluffs) {
+				expect(alignment(id)).toBe('good');
+				expect(noDrunkInPlay).not.toContain(id);
+			}
+			expect(bluffs.filter((id) => byId[id].team === 'townsfolk')).toHaveLength(2);
+			expect(bluffs.filter((id) => byId[id].team === 'outsider')).toHaveLength(1);
+		}
+		// every Outsider but the Drunk is in play: 3 Townsfolk, never the Drunk
+		const onlyDrunkFree = seats(['butler', 'recluse', 'saint', 'chef', 'empath', 'baron', 'imp']);
+		for (let s = 1; s <= 50; s++) {
+			const [bluffs] = drawBluffs(onlyDrunkFree, rng(s));
+			expect(bluffs.every((id) => byId[id].team === 'townsfolk')).toBe(true);
+		}
 	});
 });

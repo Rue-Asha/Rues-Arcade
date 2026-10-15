@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Button from '#lib/ui/Button.svelte';
-	import { byId, characters } from './characters.ts';
+	import { characters } from './characters.ts';
 	import { info } from './info.ts';
 	import ShowCard, { type Card } from './ShowCard.svelte';
 	import type { CharacterId, ClocktowerAction, ClocktowerState, NightStep } from './types.ts';
@@ -122,7 +122,6 @@
 				{#each Array.from({ length: 10 }, (_, n) => String(n)) as n (n)}<option value={n}>{n}</option>{/each}
 			</select>
 		{:else if item === 'bluffs'}
-			<p class="bluffs" data-testid="bluffs">{s.bluffs.map((id) => byId[id].name).join(' · ')}</p>
 			<Button variant="secondary" size="sm" disabled={seen} onclick={() => dispatch({ type: 'bluffs' })}>Neu würfeln</Button>
 		{/if}
 		<Button variant="secondary" size="sm" disabled={item === null || value === ''} onclick={show}>Zeigen</Button>
@@ -192,14 +191,6 @@
 		background: var(--raised);
 		color: var(--text);
 		font: 600 15px/1.1 var(--font-ui);
-	}
-
-	.bluffs {
-		margin: 0;
-		font-size: 14px;
-		color: var(--text-soft);
-		text-align: center;
-		overflow-wrap: anywhere;
 	}
 
 	.sr {

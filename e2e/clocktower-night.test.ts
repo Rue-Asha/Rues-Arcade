@@ -251,12 +251,12 @@ test('Scenario: Role preselects its cards', async ({ page }) => {
 	await at(0);
 	await pressed('Das ist der Dämon');
 
-	state = await at(1);
+	await at(1);
 	await pressed('Deine Minions');
 	await bar(page).getByRole('button', { name: 'Zeigen', exact: true }).click();
 	await card(page).click();
 	await pressed('Bluffs');
-	await expect(bar(page).getByTestId('bluffs')).toHaveText(state.bluffs.map((id) => byId[id].name).join(' · '));
+	await expect(bar(page).getByTestId('bluffs')).toHaveCount(0);
 
 	// night 2 of F5: the Imp chooses themself and the Poisoner on seat 3 becomes the Imp
 	const imp = play(night2(), [...next(5), { type: 'starpass', seat: 2 }, ...next(6)]);
@@ -274,27 +274,35 @@ test('Scenario: Role preselects its cards', async ({ page }) => {
 	await expect(bar(page).getByLabel('Du bist', { exact: true })).toHaveValue('imp');
 });
 
-test('Scenario: Bluffs can be rerolled before showing', async ({ page }) => {
+test('Scenario: Bluffs stay hidden until shown', async ({ page }) => {
 	const state = play(fifteen(), next(circle(1)));
 	await open(page, state);
-	const list = (names: string[]) => names.join(' · ');
-	const before = list(state.bluffs.map((id) => byId[id].name));
+	const inPlay = new Set<string>(F15);
+	const names = (ids: string[]) => ids.map((id) => byId[id as keyof typeof byId].name);
+	const page$ = () => page.locator('body').innerText();
+	const none = async (ids: string[]) => {
+		const body = await page$();
+		for (const name of names(ids)) expect(body, name).not.toContain(name);
+	};
+
+	await none(state.bluffs);
 	await chip(page, 'Bluffs').click();
-	const preview = bar(page).getByTestId('bluffs');
-	await expect(preview).toHaveText(before);
+	await expect(bar(page).getByTestId('bluffs')).toHaveCount(0);
+	await none(state.bluffs);
 
 	await bar(page).getByRole('button', { name: 'Neu würfeln', exact: true }).click();
-	await expect(preview).not.toHaveText(before);
-	const names = (await preview.innerText()).split(' · ');
-	expect(new Set(names).size).toBe(3);
-	const inPlay = new Set(F15.map((id) => byId[id].name));
-	for (const name of names) {
-		const found = Object.values(byId).find((c) => c.name === name)!;
-		expect(inPlay.has(name), name).toBe(false);
-		expect(found.team === 'townsfolk' || found.team === 'outsider', name).toBe(true);
+	await expect.poll(async () => (await saved(page)).bluffs).not.toEqual(state.bluffs);
+	const rerolled = (await saved(page)).bluffs;
+	expect(new Set(rerolled).size).toBe(3);
+	for (const id of rerolled) {
+		expect(inPlay.has(id), id).toBe(false);
+		expect(id).not.toBe('drunk');
+		expect(byId[id].team === 'townsfolk' || byId[id].team === 'outsider', id).toBe(true);
 	}
+	await none([...state.bluffs, ...rerolled]);
 
 	await bar(page).getByRole('button', { name: 'Zeigen', exact: true }).click();
+	for (const id of rerolled) await expect(card(page).getByText(byId[id].name, { exact: true })).toBeVisible();
 	await card(page).click();
 	await expect(bar(page).getByRole('button', { name: 'Neu würfeln', exact: true })).toBeDisabled();
 });

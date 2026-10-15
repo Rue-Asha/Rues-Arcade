@@ -128,11 +128,11 @@ export function fill(seats: Seat[], rng: Rng): [Seat[] | null, Rng] {
 	return [out, r];
 }
 
-// 2 Townsfolk + 1 Outsider when an Outsider is free, else 3 Townsfolk; never the Drunk's believed role.
+// 2 Townsfolk + 1 Outsider when an Outsider is free, else 3 Townsfolk; never the Drunk's believed role, never the Drunk.
 export function drawBluffs(seats: Seat[], rng: Rng): [CharacterId[], Rng] {
 	const taken = inPlay(seats);
 	const believed = drunkSeat(seats)?.believed ?? null;
-	const free = (team: Team) => characters.filter((c) => c.team === team && !taken.has(c.id) && c.id !== believed).map((c) => c.id);
+	const free = (team: Team) => characters.filter((c) => c.team === team && !taken.has(c.id) && c.id !== believed && c.id !== 'drunk').map((c) => c.id);
 	const outsiders = free('outsider');
 	const [townsfolk, r] = shuffle(rng, free('townsfolk'));
 	if (outsiders.length === 0) return [townsfolk.slice(0, 3), r];
