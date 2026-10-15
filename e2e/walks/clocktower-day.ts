@@ -52,8 +52,8 @@ async function show(page: Page, state: ClocktowerState, ready: () => Promise<voi
 	await settled(page);
 }
 
-// Dawn after night 2 (seat 2 executed on day 1, seat 3 died), the day with its timer, a block, the nomination,
-// the clock, the sweep on a long seat time so the hand stands still, confirm, result, seat actions and the
+// Dawn after night 2 (seat 2 executed on day 1, seat 3 died), the day with its timer in the head's top right, a block
+// card, the nomination rings, the clock, the sweep on a long seat time so the hand stands still, confirm, result, seat actions and the
 // execution announcement, for 7 and 15 seats.
 export async function walk(page: Page, check: (slug: string) => Promise<void>) {
 	for (const roles of [F7, F15]) {
@@ -88,6 +88,12 @@ export async function walk(page: Page, check: (slug: string) => Promise<void>) {
 		const onBlock = play(grimoire(8, Date.now()), vote(3, 0, Math.ceil(n / 2)).concat({ type: 'next' }));
 		await show(page, onBlock, () => expect(live(page).getByTestId('timer')).toBeVisible());
 		await check(tag('grimoire'));
+
+		// the crowded phone grimoire: both rings on the living, the turquoise one on the dead, ghost badges and the block card
+		if (n === 15 && (page.viewportSize()?.width ?? 1280) < 600) {
+			await show(page, ghost(onBlock, 1, 8), () => expect(live(page).getByTestId('block-card')).toBeVisible());
+			await check(tag('grimoire-ghosts'));
+		}
 
 		const late = play(grimoire(1, Date.now() - 120_000), vote(3, 0, Math.ceil(n / 2)).concat({ type: 'next' }));
 		await show(page, late, () => expect(live(page).getByTestId('timer')).toHaveText('Zeit um'));

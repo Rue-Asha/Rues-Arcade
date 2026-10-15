@@ -33,8 +33,8 @@ export type NightScreen =
 export interface NightState { number: number; steps: NightStep[]; screens: NightScreen[]; at: number; target: number | null; starpass: number | null; deaths: number[] }
 
 export interface Nomination { nominator: number; nominee: number; voters: number[]; votes: number | null; result: 'block' | 'tie' | 'none' | null }
-// pending: nominee tapped, nominator not yet chosen · deaths: dawn's deaths (night) shown at dawn
-export interface DayState { number: number; deadline: number | null; pending: number | null; nominations: Nomination[]; high: number; block: number | null; executed: number | null; closed: boolean; deaths: number[] }
+// pending: nominee tapped, nominator not yet chosen · killed: the seat today's execution killed (null: nobody, or already dead) · deaths: dawn's deaths (night) shown at dawn
+export interface DayState { number: number; deadline: number | null; pending: number | null; nominations: Nomination[]; high: number; block: number | null; executed: number | null; killed: number | null; closed: boolean; deaths: number[] }
 
 export type Phase =
 	| { kind: 'setup' }

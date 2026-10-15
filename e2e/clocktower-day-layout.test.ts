@@ -41,9 +41,11 @@ test('Scenario: Day timer stands out', async ({ page }) => {
 		const base = timed(seated(F7), 1, ago);
 		for (const [name, state] of [
 			['grimoire', blocked(base)],
+			['nominator', play(base, [{ type: 'nominee', seat: 2 }])],
 			['clock', toClock(base)],
 			['sweep', toSweep(base)],
-			['confirm', toConfirm(base)]
+			['confirm', toConfirm(base)],
+			['result', toResult(base)]
 		] as const) {
 			await open(page, state);
 			const timer = live(page).getByTestId('timer');
@@ -71,14 +73,21 @@ test('Scenario: Day timer stands out', async ({ page }) => {
 				document.body.append(probe);
 				const evil = getComputedStyle(probe).color;
 				probe.remove();
-				const r = el.getBoundingClientRect();
+				// the timer is its framed block (dial and text), not just the reading
+				const r = el.parentElement!.getBoundingClientRect();
+				const head = heading.parentElement!.getBoundingClientRect();
+				const range = document.createRange();
+				range.selectNodeContents(heading);
+				const text = [...range.getClientRects()];
 				return {
+					right: head.right - r.right,
+					top: r.top - head.top,
+					overlap: text.some((t) => t.left < r.right && t.right > r.left && t.top < r.bottom && t.bottom > r.top),
 					size: Number.parseFloat(getComputedStyle(el).fontSize),
 					head: Number.parseFloat(getComputedStyle(heading).fontSize),
 					inHeading: el.closest('h1, h2, h3, [role="heading"]') !== null,
 					contrast: (hi + 0.05) / (lo + 0.05),
 					first: r.top >= 0 && r.bottom <= innerHeight,
-					own: r.top >= heading.getBoundingClientRect().bottom - 1,
 					evil: getComputedStyle(el).color === evil
 				};
 			});
@@ -87,7 +96,10 @@ test('Scenario: Day timer stands out', async ({ page }) => {
 			expect(got.size, label).toBeGreaterThan(got.head);
 			expect(got.contrast, label).toBeGreaterThanOrEqual(4.5);
 			expect(got.first, label).toBe(true);
-			expect(got.own, label).toBe(true);
+			expect(got.right, label).toBeGreaterThanOrEqual(-4);
+			expect(got.right, label).toBeLessThanOrEqual(4);
+			expect(Math.abs(got.top), label).toBeLessThanOrEqual(4);
+			expect(got.overlap, label).toBe(false);
 			if (ago > 0) expect(got.evil, label).toBe(true);
 		}
 	}
@@ -140,12 +152,15 @@ const picker = () =>
 test('Scenario: Day facts sit in a box', async ({ page }) => {
 	const base = timed(seated(F7), 5);
 	const screens: [string, ClocktowerState, string[]][] = [
-		['grimoire', blocked(base), ['Auf dem Block: Dani']],
 		['picker', picker(), ['Bo: hat heute schon nominiert', 'Dani: ist tot']],
 		['clock', toClock(blocked(base), 1), ['Nötig: 4', 'Höchststand: 4']],
 		['sweep', play(toClock(blocked(base), 1), [{ type: 'vote' }]), ['Nötig: 4', 'Höchststand: 4', 'Platz antippen oder Leertaste, solange der Zeiger in seinem Kreisstück steht.']],
 		['result', toResult(base), ['4 Stimmen']]
 	];
+	// who is on the block is the block card's, not a day fact
+	await open(page, blocked(base));
+	await expect(live(page).getByTestId('block-card')).toBeVisible();
+	await expect(live(page).getByTestId('day-facts')).toHaveCount(0);
 	for (const [name, state, texts] of screens) {
 		await open(page, state);
 		const box = live(page).getByTestId('day-facts');

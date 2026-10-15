@@ -138,7 +138,7 @@ function dawn(s: ClocktowerState): ClocktowerState {
 	return {
 		...s,
 		phase: { kind: 'dawn', screen: 'wake' },
-		today: { number, deadline: null, pending: null, nominations: [], high: 0, block: null, executed: null, closed: false, deaths }
+		today: { number, deadline: null, pending: null, nominations: [], high: 0, block: null, executed: null, killed: null, closed: false, deaths }
 	};
 }
 
@@ -243,6 +243,13 @@ function daybreak(s: ClocktowerState, action: ClocktowerAction): ClocktowerState
 	return s;
 }
 
+const nominated = (s: ClocktowerState, by: 'nominee' | 'nominator', seat: number) => s.today!.nominations.some((n) => n[by] === seat);
+const nominating = (s: ClocktowerState) => s.phase.kind === 'day' && !s.today!.closed;
+
+// a pending nominee has no nomination yet, so it still counts as nominable
+export const canBeNominated = (s: ClocktowerState, seat: number) => nominating(s) && !nominated(s, 'nominee', seat);
+export const canNominate = (s: ClocktowerState, seat: number) => nominating(s) && s.seats[seat].alive && !nominated(s, 'nominator', seat);
+
 type DayScreen = Extract<ClocktowerState['phase'], { kind: 'day' }>['screen'];
 
 function day(s: ClocktowerState, action: ClocktowerAction): ClocktowerState {
@@ -262,13 +269,12 @@ function day(s: ClocktowerState, action: ClocktowerAction): ClocktowerState {
 	switch (action.type) {
 		case 'nominee': {
 			const { seat } = action;
-			if (screen !== 'grimoire' || t.closed || !has(s, seat) || t.nominations.some((n) => n.nominee === seat)) return s;
+			if (screen !== 'grimoire' || !has(s, seat) || !canBeNominated(s, seat)) return s;
 			return to('nominator', { pending: seat });
 		}
 		case 'nominate': {
 			const { nominator } = action;
-			if (screen !== 'nominator' || t.pending === null || !has(s, nominator) || !s.seats[nominator].alive) return s;
-			if (t.nominations.some((n) => n.nominator === nominator)) return s;
+			if (screen !== 'nominator' || t.pending === null || !has(s, nominator) || !canNominate(s, nominator)) return s;
 			const nomination: Nomination = { nominator, nominee: t.pending, voters: [], votes: null, result: null };
 			return to('clock', { pending: null, nominations: [...t.nominations, nomination] });
 		}
@@ -310,7 +316,7 @@ function day(s: ClocktowerState, action: ClocktowerAction): ClocktowerState {
 		case 'execute': {
 			if (!seatAction) return s;
 			const after = kill(s, [action.seat], action.seat);
-			return to('execution', { executed: action.seat, block: null, closed: true, pending: null }, after);
+			return to('execution', { executed: action.seat, killed: s.seats[action.seat].alive ? action.seat : null, block: null, closed: true, pending: null }, after);
 		}
 		case 'died': {
 			if (!seatAction || !s.seats[action.seat].alive) return s;
@@ -331,7 +337,8 @@ function day(s: ClocktowerState, action: ClocktowerAction): ClocktowerState {
 		case 'endDay': {
 			if (screen !== 'grimoire' || t.closed) return s;
 			const after = t.block === null ? s : kill(s, [t.block], t.block);
-			return to('execution', { executed: t.block, block: null, closed: true }, after);
+			const killed = t.block !== null && s.seats[t.block].alive ? t.block : null;
+			return to('execution', { executed: t.block, killed, block: null, closed: true }, after);
 		}
 	}
 	return s;

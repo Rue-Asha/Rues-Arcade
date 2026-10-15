@@ -1,13 +1,16 @@
 <script lang="ts">
 	import type { ScreenProps } from '#lib/games/registry.ts';
 	import Button from '#lib/ui/Button.svelte';
+	import BlockCard from './BlockCard.svelte';
 	import Circle from './Circle.svelte';
+	import { reducedMotion } from '#lib/theme.ts';
 	import Modal from '#lib/ui/Modal.svelte';
 	import Dawn from './Dawn.svelte';
 	import Facts from './Facts.svelte';
 	import SeatActions from './SeatActions.svelte';
 	import Timer from './Timer.svelte';
 	import VoteClock from './VoteClock.svelte';
+	import { canBeNominated, canNominate } from './engine.ts';
 	import { threshold } from './vote.ts';
 	import { living } from './win.ts';
 	import type { ClocktowerAction, ClocktowerState } from './types.ts';
@@ -28,6 +31,7 @@
 		if (!s.seats[i].alive) return 'ist tot';
 		return today.nominations.some((n) => n.nominator === i) ? 'hat heute schon nominiert' : null;
 	}
+	const rings = (i: number) => ({ nominee: canBeNominated(s, i), nominator: canNominate(s, i) });
 	const barredSeats = $derived(s.seats.flatMap((_, i) => (barred(i) === null ? [] : [i])));
 
 	const last = $derived(today.nominations.at(-1)!);
@@ -42,6 +46,9 @@
 		};
 	});
 
+	// the votes of the nomination that put the holder on the block
+	const blockVotes = $derived(today.nominations.findLast((n) => n.result === 'block' && n.nominee === today.block)?.votes ?? 0);
+
 	const screen = $derived(s.phase.kind === 'day' ? s.phase.screen : null);
 </script>
 
@@ -50,8 +57,8 @@
 {:else if screen === 'grimoire'}
 	<section class="stack" aria-labelledby="phase">
 		{@render head(`Tag ${today.number}`)}
-		<div class="cap"><Circle seats={s.seats} block={today.block} onseat={(i) => (sheet = i)} /></div>
-		{#if today.block !== null}<Facts><p>Auf dem Block: {name(today.block)}</p></Facts>{/if}
+		<div class="cap"><Circle seats={s.seats} block={today.block} {rings} onseat={(i) => (sheet = i)} /></div>
+		{#if today.block !== null}<BlockCard name={name(today.block)} votes={blockVotes} />{/if}
 		<div class="row">
 			<Button variant="primary" onclick={() => (ending = true)}>Tag beenden</Button>
 		</div>
@@ -59,7 +66,7 @@
 {:else if screen === 'nominator'}
 	<section class="stack" aria-labelledby="phase">
 		{@render head(`Wer nominiert ${name(nominee)}?`)}
-		<div class="cap"><Circle seats={s.seats} block={today.block} disabled={barred} onseat={(i) => send({ type: 'nominate', nominator: i })} /></div>
+		<div class="cap"><Circle seats={s.seats} block={today.block} {rings} disabled={barred} onseat={(i) => send({ type: 'nominate', nominator: i })} /></div>
 		{#if barredSeats.length}
 			<Facts>
 				<ul>
@@ -76,7 +83,7 @@
 {:else if screen === 'result'}
 	<section class="stack" aria-labelledby="phase">
 		{@render head(result.title)}
-		<div class="cap"><Circle seats={s.seats} block={today.block} marked={last.voters} hand={last.nominee} /></div>
+		<div class="cap"><Circle seats={s.seats} block={today.block} {rings} marked={last.voters} hand={last.nominee} /></div>
 		<Facts><p>{result.detail}</p></Facts>
 		<div class="row">
 			<Button variant="primary" onclick={() => send({ type: 'next' })}>Weiter</Button>
@@ -87,7 +94,7 @@
 		<div class="head">
 			<h2 id="phase">{today.executed === null ? 'Heute wird niemand hingerichtet' : `${name(today.executed)} wird hingerichtet`}</h2>
 		</div>
-		<div class="cap"><Circle seats={s.seats} /></div>
+		<div class="cap"><Circle seats={s.seats} dying={reducedMotion() || today.killed === null ? [] : [today.killed]} /></div>
 		<div class="row">
 			<Button variant="primary" onclick={() => send({ type: 'next' })}>Weiter</Button>
 		</div>
@@ -112,9 +119,9 @@
 </Modal>
 
 {#snippet head(title: string)}
-	<div class="head">
+	<div class="head" class:timed={today.deadline !== null}>
 		<h2 id="phase">{title}</h2>
-		{#if today.deadline !== null}<Timer deadline={today.deadline} />{/if}
+		{#if today.deadline !== null}<div class="clock"><Timer deadline={today.deadline} /></div>{/if}
 	</div>
 {/snippet}
 
@@ -123,14 +130,24 @@
 <style>
 	.head {
 		display: flex;
-		flex-direction: column;
-		align-items: stretch;
-		gap: 10px;
+		align-items: flex-start;
+		gap: 12px;
 		text-align: center;
 	}
 
 	.head :global(h2) {
+		flex: 1 1 0;
+		min-width: 0;
+		overflow-wrap: anywhere;
 		font-size: 22px;
+	}
+
+	.head.timed :global(h2) {
+		text-align: start;
+	}
+
+	.clock {
+		flex: none;
 	}
 
 	/* the circle measures its own width, so a narrower box is how the viewport height caps it */
