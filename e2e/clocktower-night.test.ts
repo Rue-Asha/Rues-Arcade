@@ -336,8 +336,14 @@ test('Scenario: Bluffs stay hidden until shown', async ({ page }) => {
 
 // The Drunk (seat 2, Bo) believes Empath; seat 1 is the red herring, seat 4 the Demon. Screen 1 is the Poisoner's wake.
 const drunkNight = () => play(night1(seated(['washerwoman', 'drunk', 'poisoner', 'imp', 'fortune-teller'], { believed: 'empath', redHerring: 0 })), next(1));
-const grimoireTexts = ['Washerwoman · Red Herring', 'Drunk (glaubt: Empath)', 'Poisoner', 'Imp · Dämon', 'Fortune Teller'];
-const hidden = ['Washerwoman · Red Herring', 'Drunk (glaubt: Empath)', 'Imp · Dämon', 'Fortune Teller'];
+// seat -> [accessible name while held, icon]
+const heldNames = ['Platz 1, Alex, Washerwoman', 'Platz 2, Bo, Drunk', 'Platz 3, Cleo, Poisoner', 'Platz 4, Dani, Imp', 'Platz 5, Eli, Fortune Teller'];
+const notes = [
+	['Drunk (glaubt: Empath)', 'Bo (#2)'],
+	['Red Herring', 'Alex (#1)'],
+	['Dämon', 'Dani (#4)']
+];
+const hidden = ['Drunk (glaubt: Empath)', 'Red Herring', 'Dämon'];
 
 async function centre(page: Page) {
 	const box = (await page.getByRole('button', { name: 'Grimoire', exact: true }).boundingBox())!;
@@ -347,13 +353,75 @@ async function centre(page: Page) {
 test('Scenario: Grimoire visible only while held', async ({ page }) => {
 	await open(page, drunkNight());
 	for (const t of hidden) await expect(page.getByText(t, { exact: true })).toHaveCount(0);
+	await expect(page.locator('[data-seat]')).toHaveCount(0);
 
 	const { x, y } = await centre(page);
 	await page.mouse.move(x, y);
 	await page.mouse.down();
-	for (const t of grimoireTexts) await expect(page.getByText(t, { exact: true }).first()).toBeVisible();
+	const grimoire = page.locator('[data-grimoire]');
+	await expect(grimoire).toBeVisible();
+	for (const name of heldNames) {
+		const seat = grimoire.getByRole('button', { name, exact: true });
+		await expect(seat, name).toBeVisible();
+		await expect(seat.locator('svg.icon'), name).toHaveCount(1);
+		await expect(seat.locator('.tag'), name).toHaveCount(0);
+	}
+	await expect(grimoire.locator('.tag')).toHaveCount(0);
+	// the Drunk shows the Drunk's icon in its team colour, not the believed Empath
+	await expect(grimoire.locator('[data-seat="2"] svg.icon')).toHaveClass(/outsider/);
+	for (const [note, seat] of notes) {
+		const line = grimoire.getByText(note, { exact: true });
+		await expect(line, note).toBeVisible();
+		await expect(line.locator('..').getByText(seat, { exact: true }), note).toBeVisible();
+	}
 	await page.mouse.up();
 	for (const t of hidden) await expect(page.getByText(t, { exact: true })).toHaveCount(0);
+	await expect(page.locator('[data-seat]')).toHaveCount(0);
+	await expect(page.locator('[data-grimoire]')).toHaveCount(0);
+});
+
+test('Scenario: Held grimoire icons fit fifteen seats', async ({ page }) => {
+	await open(page, play(fifteen(), next(1)));
+	const { x, y } = await centre(page);
+	await page.mouse.move(x, y);
+	await page.mouse.down();
+	const grimoire = page.locator('[data-grimoire]');
+	await expect(grimoire.locator('[data-seat]')).toHaveCount(15);
+	await page.waitForTimeout(400);
+	const m = await grimoire.evaluate((el) => {
+		const seats = [...el.querySelectorAll<HTMLElement>('[data-seat]')].map((s) => {
+			const r = s.getBoundingClientRect();
+			const rect = (q: string) => s.querySelector<HTMLElement | SVGElement>(q)?.getBoundingClientRect() ?? null;
+			const icon = rect('svg.icon');
+			const no = rect('.no');
+			const name = rect('.name');
+			return {
+				w: r.width,
+				h: r.height,
+				cx: r.left + r.width / 2,
+				cy: r.top + r.height / 2,
+				icon: icon !== null,
+				numberAbove: no !== null && icon !== null && no.top + no.height / 2 < icon.top,
+				nameBelow: name !== null && icon !== null && name.top + name.height / 2 > icon.top + icon.height / 2
+			};
+		});
+		let overlaps = 0;
+		for (let i = 0; i < seats.length; i++)
+			for (let j = i + 1; j < seats.length; j++)
+				if (Math.hypot(seats[i].cx - seats[j].cx, seats[i].cy - seats[j].cy) < (seats[i].w + seats[j].w) / 2) overlaps++;
+		return {
+			seats,
+			overlaps,
+			wide: document.documentElement.scrollWidth > innerWidth
+		};
+	});
+	expect(m.seats.every((s) => s.icon)).toBe(true);
+	expect(m.seats.every((s) => s.numberAbove)).toBe(true);
+	expect(m.seats.every((s) => s.nameBelow)).toBe(true);
+	expect(m.seats.filter((s) => s.w < 44 || s.h < 44)).toEqual([]);
+	expect(m.overlaps).toBe(0);
+	expect(m.wide).toBe(false);
+	await page.mouse.up();
 });
 
 test('Scenario: Release outside the button hides the grimoire', async ({ page }) => {

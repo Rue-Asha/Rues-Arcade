@@ -2,6 +2,7 @@
 	import HoldToView from '#lib/ui/HoldToView.svelte';
 	import { byId } from './characters.ts';
 	import Circle from './Circle.svelte';
+	import { who } from './label.ts';
 	import type { ClocktowerState } from './types.ts';
 
 	interface Props {
@@ -10,18 +11,26 @@
 
 	let { state: s }: Props = $props();
 
-	function label(i: number): string | null {
-		const { character, believed } = s.seats[i];
-		const parts = [character === 'drunk' && believed ? `Drunk (glaubt: ${byId[believed].name})` : character ? byId[character].name : null];
-		if (i === s.demon) parts.push('Dämon');
-		if (i === s.redHerring) parts.push('Red Herring');
-		return parts.filter(Boolean).join(' · ') || null;
-	}
+	const drunk = $derived(s.seats.findIndex((x) => x.character === 'drunk' && x.believed));
+	const notes = $derived.by(() => {
+		const out: [string, number][] = [];
+		if (drunk >= 0) out.push([`Drunk (glaubt: ${byId[s.seats[drunk].believed!].name})`, drunk]);
+		if (s.redHerring !== null) out.push(['Red Herring', s.redHerring]);
+		if (s.demon !== null) out.push(['Dämon', s.demon]);
+		return out;
+	});
 </script>
 
 <HoldToView corner label="Grimoire" onrelease={() => {}}>
 	<div class="grimoire" data-grimoire>
-		<Circle seats={s.seats} {label} />
+		<Circle seats={s.seats} token={(i) => s.seats[i].character} />
+		{#if notes.length}
+			<ul class="notes">
+				{#each notes as [name, seat] (name)}
+					<li><span class="key">{name}</span> <span>{who(s.seats, seat)}</span></li>
+				{/each}
+			</ul>
+		{/if}
 	</div>
 </HoldToView>
 
@@ -32,11 +41,19 @@
 		margin-inline: -14px;
 	}
 
-	.grimoire :global(.tag) {
-		width: max-content;
-		max-width: 84px;
-		white-space: normal;
+	.notes {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		margin: 8px 14px 0;
+		padding: 0;
+		list-style: none;
 		text-align: center;
-		line-height: 1.1;
+		font-size: 15px;
+	}
+
+	.key {
+		font-weight: 700;
+		color: var(--gold);
 	}
 </style>
