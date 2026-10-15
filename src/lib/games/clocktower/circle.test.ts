@@ -1,5 +1,9 @@
+import { createRawSnippet } from 'svelte';
+import { render } from 'svelte/server';
 import { describe, expect, it } from 'vitest';
+import Circle from './Circle.svelte';
 import { angleOf, ornament, sectorOf, seatPositions, seatSize, tickAngles, wedge } from './circle.ts';
+import { F7, seated } from './fixtures.ts';
 
 const counts = Array.from({ length: 11 }, (_, i) => i + 5);
 
@@ -124,5 +128,44 @@ describe('clocktower circle', () => {
 				}
 			}
 		}
+	});
+
+	it('Circle renders sector, rings, pointed marks and the centre slot', () => {
+		const seats = seated(F7).seats;
+		// the server renders the circle at its default width
+		const box = 340;
+		const center = createRawSnippet(() => ({ render: () => '<p>Ja</p>' }));
+		const rings = (i: number) => ({ nominee: i !== 3, nominator: i % 2 === 0 });
+		const out = render(Circle, { props: { seats, hand: 2.5, handMs: 400, sector: 3, rings, pointed: [2, 5], center } }).body;
+
+		const hand = out.match(/data-hand[^>]*style="([^"]*)"/)?.[1] ?? '';
+		expect(Number.parseFloat(hand.match(/--angle:\s*([\d.]+)deg/)![1])).toBeCloseTo((2.5 * 360) / 7, 6);
+		expect(hand).toMatch(/--ms:\s*400ms/);
+		const past = render(Circle, { props: { seats, hand: 8 } }).body.match(/--angle:\s*([\d.]+)deg/)![1];
+		expect(Number.parseFloat(past)).toBeCloseTo((8 * 360) / 7, 6);
+
+		const sectors = [...out.matchAll(/<path[^>]*data-sector="(\d+)"[^>]*>/g)];
+		expect(sectors).toHaveLength(1);
+		expect(sectors[0][1]).toBe('4');
+		expect(sectors[0][0]).toContain('aria-hidden="true"');
+		expect(sectors[0][0]).toContain(`d="${wedge(3, 7, box)}"`);
+		expect(render(Circle, { props: { seats } }).body).not.toContain('data-sector');
+
+		// one chunk per seat, from its button to the next
+		const chunks = out.split('<button').slice(1);
+		expect(chunks).toHaveLength(7);
+		chunks.forEach((chunk, i) => {
+			const seat = chunk.slice(0, chunk.indexOf('</button>'));
+			expect(seat.includes('data-avail="nominee"'), `seat ${i + 1} nominee`).toBe(rings(i).nominee);
+			expect(seat.includes('data-avail="nominator"'), `seat ${i + 1} nominator`).toBe(rings(i).nominator);
+			const pointed = [2, 5].includes(i);
+			expect(/^[^>]*data-pointed/.test(seat), `seat ${i + 1} pointed`).toBe(pointed);
+			expect(seat.includes('data-badge="check"'), `seat ${i + 1} check`).toBe(pointed);
+		});
+		expect(render(Circle, { props: { seats } }).body).not.toMatch(/data-avail|data-pointed/);
+
+		const centre = out.match(/<div[^>]*data-centre[^>]*>/)?.[0] ?? '';
+		expect(centre).toMatch(new RegExp(`--centre:\\s*${2 * (ornament(7, box).inner - 4)}px`));
+		expect(out.slice(out.indexOf(centre))).toMatch(/^<div[^>]*>\s*<p>Ja<\/p>/);
 	});
 });

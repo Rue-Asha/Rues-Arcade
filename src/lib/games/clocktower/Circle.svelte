@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import { angleOf, ornament, seatPositions, seatSize } from './circle.ts';
+	import { angleOf, ornament, seatPositions, seatSize, wedge } from './circle.ts';
 	import { byId } from './characters.ts';
 	import CharacterIcon from './CharacterIcon.svelte';
 	import type { CharacterId, Seat } from './types.ts';
@@ -11,9 +11,13 @@
 		label?: (i: number) => string | null;
 		token?: (i: number) => CharacterId | null;
 		marked?: number[];
+		pointed?: number[];
 		block?: number | null;
+		// seat units, fractional while it turns; values past the last seat keep turning clockwise
 		hand?: number | null;
 		handMs?: number;
+		sector?: number | null;
+		rings?: (i: number) => { nominee: boolean; nominator: boolean };
 		dying?: number[];
 		disabled?: (i: number) => string | null;
 		onseat?: (i: number) => void;
@@ -28,9 +32,12 @@
 		label,
 		token,
 		marked = [],
+		pointed = [],
 		block = null,
 		hand = null,
 		handMs = 0,
+		sector = null,
+		rings,
 		dying = [],
 		disabled,
 		onseat,
@@ -51,6 +58,7 @@
 	const at = $derived(seatPositions(count, box));
 	const deco = $derived(ornament(count, box));
 	// a name ribbon under an icon may be wider than its node but must keep clear of the neighbours
+	const centre = $derived(2 * (deco.inner - 4));
 	const ribbon = $derived(Math.min(56, (box - d) * Math.sin(Math.PI / count) - 8));
 
 	function spoken(i: number): string {
@@ -137,6 +145,11 @@
 
 <div class="circle" data-circle data-size={size} style:--box="{box}px" style:--seat="{d}px" style:--ribbon="{ribbon}px" style:--max="{MAX[size]}px" bind:clientWidth={width}>
 	<div class="plane" style:width="{box}px" style:height="{box}px">
+		{#if sector !== null}
+			<svg class="sector" viewBox="0 0 {box} {box}" width={box} height={box} aria-hidden="true" focusable="false">
+				<path data-sector={sector + 1} aria-hidden="true" d={wedge(sector, count, box)} />
+			</svg>
+		{/if}
 		<svg class="ornament" data-deco data-motif="circle" viewBox="0 0 {box} {box}" width={box} height={box} aria-hidden="true" focusable="false">
 			<circle class="hair" cx={box / 2} cy={box / 2} r={deco.outer} />
 			<circle class="hair" cx={box / 2} cy={box / 2} r={deco.inner} />
@@ -151,6 +164,7 @@
 			{@const why = disabled?.(i) ?? null}
 			{@const text = label?.(i) ?? null}
 			{@const icon = token?.(i) ?? null}
+			{@const avail = rings?.(i)}
 			<button
 				type="button"
 				class="seat"
@@ -162,6 +176,7 @@
 				data-dead={seat.alive ? undefined : ''}
 				data-ghost={!seat.alive && seat.ghostVote ? '' : undefined}
 				data-marked={marked.includes(i) ? '' : undefined}
+				data-pointed={pointed.includes(i) ? '' : undefined}
 				data-block={block === i ? '' : undefined}
 				aria-label={spoken(i)}
 				aria-disabled={why !== null}
@@ -177,6 +192,8 @@
 				onpointerup={up}
 				onpointercancel={() => (drag = null)}
 			>
+				{#if avail?.nominee}<span class="avail nominee" data-avail="nominee" aria-hidden="true"></span>{/if}
+				{#if avail?.nominator}<span class="avail nominator" data-avail="nominator" aria-hidden="true"></span>{/if}
 				<span class="no">{i + 1}</span>
 				{#if icon}<CharacterIcon id={icon} size={Math.round(d * 0.47)} />{/if}
 				<span class="name" title={seat.player.name}>{seat.player.name}</span>
@@ -187,7 +204,7 @@
 						{@render glyph('hand', !seat.ghostVote)}
 					</span>
 				{/if}
-				{#if marked.includes(i)}<span class="badge check" data-badge="check" aria-hidden="true">{@render glyph('check')}</span>{/if}
+				{#if marked.includes(i) || pointed.includes(i)}<span class="badge check" data-badge="check" aria-hidden="true">{@render glyph('check')}</span>{/if}
 			</button>
 		{/each}
 		{#if hand !== null}
@@ -200,7 +217,7 @@
 			</div>
 		{/if}
 		{#if center}
-			<div class="centre">{@render center()}</div>
+			<div class="centre" data-centre style:--centre="{centre}px">{@render center()}</div>
 		{/if}
 	</div>
 </div>
@@ -230,6 +247,14 @@
 		pointer-events: none;
 		fill: none;
 		stroke: var(--gold);
+	}
+
+	.sector {
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
+		fill: var(--clocktower);
+		fill-opacity: 0.15;
 	}
 
 	.ring {
@@ -380,6 +405,24 @@
 		--cut: var(--clocktower-tint);
 	}
 
+	.seat[data-pointed] {
+		box-shadow: 0 0 0 3px var(--gold);
+	}
+
+	/* nomination rings just outside the node: solid turquoise at d/2 + 3px, dashed orange at d/2 + 7px */
+	.avail {
+		position: absolute;
+		inset: -6px;
+		border: 2px solid var(--nominee);
+		border-radius: 50%;
+		pointer-events: none;
+	}
+
+	.nominator {
+		inset: -10px;
+		border: 2px dashed var(--nominator);
+	}
+
 	/* round badges docked just outside the rim, cut off the node by a ring in its face colour: the block at 45°, the
 	   ghost vote at 135° and the check at 225°; under an icon the ribbon takes the lower rim, so they move to 45° */
 	.badge {
@@ -519,9 +562,15 @@
 		box-shadow: 0 0 0 4px var(--raised), 0 0 0 5px var(--clocktower);
 	}
 
+	/* a disc just inside the inner hairline ring */
 	.centre {
 		position: absolute;
-		inset: calc(var(--seat) + 16px);
+		left: 50%;
+		top: 50%;
+		width: var(--centre);
+		height: var(--centre);
+		transform: translate(-50%, -50%);
+		border-radius: 50%;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
@@ -530,6 +579,7 @@
 		pointer-events: none;
 	}
 
+	.centre > :global(*),
 	.centre :global(button),
 	.centre :global(a) {
 		pointer-events: auto;
