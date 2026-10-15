@@ -1,17 +1,18 @@
 <script lang="ts">
 	import Button from '#lib/ui/Button.svelte';
-	import { byId, characters } from './characters.ts';
+	import { characters } from './characters.ts';
 	import { info } from './info.ts';
-	import ShowCard, { type Card } from './ShowCard.svelte';
+	import type { Card } from './ShowCard.svelte';
 	import type { CharacterId, ClocktowerAction, ClocktowerState, NightStep } from './types.ts';
 
 	interface Props {
 		state: ClocktowerState;
 		dispatch: (action: ClocktowerAction) => void;
 		step: NightStep;
+		onshow: (card: Card) => void;
 	}
 
-	let { state: s, dispatch, step }: Props = $props();
+	let { state: s, dispatch, step, onshow }: Props = $props();
 
 	type Item = 'character' | 'demon' | 'minions' | 'bluffs' | 'youare' | 'number' | 'yes' | 'no';
 
@@ -58,7 +59,6 @@
 
 	let picked = $state<Item | null>(null);
 	let chosen = $state({ character: null as string | null, youare: null as string | null, number: null as string | null });
-	let card = $state<Card | null>(null);
 	let seen = $state(false);
 
 	const item = $derived(picked ?? plan.item);
@@ -71,28 +71,27 @@
 		switch (item) {
 			case 'character':
 			case 'youare':
-				card = { kind: item, character: value as CharacterId };
+				onshow({ kind: item, character: value as CharacterId });
 				break;
 			case 'number':
-				card = { kind: 'number', n: Number(number) };
+				onshow({ kind: 'number', n: Number(number) });
 				break;
 			case 'bluffs':
-				card = { kind: 'bluffs', bluffs: s.bluffs };
+				onshow({ kind: 'bluffs', bluffs: s.bluffs });
 				seen = true;
 				break;
 			case 'demon':
 			case 'minions':
 			case 'yes':
 			case 'no':
-				card = { kind: item };
+				onshow({ kind: item });
 				break;
 		}
 	}
 
-	function close() {
-		// the Demon sees their Minions, then the bluffs
-		if (card?.kind === 'minions') picked = 'bluffs';
-		card = null;
+	// the Demon sees their Minions, then the bluffs
+	export function closed(card: Card) {
+		if (card.kind === 'minions') picked = 'bluffs';
 	}
 </script>
 
@@ -122,14 +121,11 @@
 				{#each Array.from({ length: 10 }, (_, n) => String(n)) as n (n)}<option value={n}>{n}</option>{/each}
 			</select>
 		{:else if item === 'bluffs'}
-			<p class="bluffs" data-testid="bluffs">{s.bluffs.map((id) => byId[id].name).join(' · ')}</p>
 			<Button variant="secondary" size="sm" disabled={seen} onclick={() => dispatch({ type: 'bluffs' })}>Neu würfeln</Button>
 		{/if}
 		<Button variant="secondary" size="sm" disabled={item === null || value === ''} onclick={show}>Zeigen</Button>
 	</div>
 </div>
-
-{#if card}<ShowCard {card} onclose={close} />{/if}
 
 <style>
 	.bar {
@@ -192,14 +188,6 @@
 		background: var(--raised);
 		color: var(--text);
 		font: 600 15px/1.1 var(--font-ui);
-	}
-
-	.bluffs {
-		margin: 0;
-		font-size: 14px;
-		color: var(--text-soft);
-		text-align: center;
-		overflow-wrap: anywhere;
 	}
 
 	.sr {

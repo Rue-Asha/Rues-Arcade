@@ -158,14 +158,13 @@ const chip = (page: Page, name: string) => live(page).getByRole('button', { name
 const card = (page: Page) => page.getByTestId('show-card');
 const bar = (page: Page) => live(page).getByTestId('show-bar');
 
-test('Scenario: Show-bar opens full-screen cards', async ({ page }) => {
-	const state = play(fifteen(), next(circle(3)));
+test("Scenario: Show texts appear in the circle's centre", async ({ page }) => {
+	const state = play(reveal(seated(F7)), next(circle(0)));
 	await open(page, state);
 	await expect(bar(page)).toBeVisible();
-	const viewport = page.viewportSize()!;
 
 	const cases: { item: string; value?: { label: string; option: string }; shows: (c: ReturnType<typeof card>) => Promise<void> }[] = [
-		{ item: 'Charakter', value: { label: 'Charakter', option: 'imp' }, shows: (c) => expect(c.getByTestId('role-card')).toContainText('Imp') },
+		{ item: 'Charakter', value: { label: 'Charakter', option: 'imp' }, shows: (c) => expect(c.getByText('Imp', { exact: true })).toBeVisible() },
 		{ item: 'Das ist der Dämon', shows: (c) => expect(c.getByText('Das ist der Dämon', { exact: true })).toBeVisible() },
 		{ item: 'Deine Minions', shows: (c) => expect(c.getByText('Deine Minions', { exact: true })).toBeVisible() },
 		{
@@ -192,10 +191,38 @@ test('Scenario: Show-bar opens full-screen cards', async ({ page }) => {
 		await bar(page).getByRole('button', { name: 'Zeigen', exact: true }).click();
 		await expect(card(page), item).toBeVisible();
 		await shows(card(page));
-		expect(await card(page).boundingBox(), item).toEqual({ x: 0, y: 0, ...viewport });
+		await expect(page.locator('dialog[open]')).toHaveCount(0);
+		const m = await live(page).evaluate((stage) => {
+			const c = stage.querySelector<HTMLElement>('[data-testid="show-card"]')!;
+			const ring = stage.querySelector<HTMLElement>('[data-centre]')!.getBoundingClientRect();
+			const r = c.getBoundingClientRect();
+			const mid = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+			const radius = r.width / 2;
+			const hit = document.elementFromPoint(mid.x, mid.y);
+			const seats = [...stage.querySelectorAll<HTMLElement>('[data-seat]')].map((s) => {
+				const b = s.getBoundingClientRect();
+				// seat nodes are round
+				return { shown: b.width > 0 && b.height > 0, clear: Math.hypot(b.left + b.width / 2 - mid.x, b.top + b.height / 2 - mid.y) - b.width / 2 >= radius };
+			});
+			return {
+				hit: hit !== null && c.contains(hit),
+				inside: r.left >= ring.left - 0.5 && r.right <= ring.right + 0.5 && r.top >= ring.top - 0.5 && r.bottom <= ring.bottom + 0.5,
+				seats
+			};
+		});
+		expect(m.hit, `${item} is hit at its centre`).toBe(true);
+		expect(m.inside, `${item} inside the ring`).toBe(true);
+		expect(m.seats, item).toHaveLength(7);
+		expect(m.seats.every((x) => x.shown && x.clear), `${item} leaves every seat clear`).toBe(true);
 		await card(page).click();
 		await expect(card(page), item).toHaveCount(0);
 	}
+
+	await chip(page, 'Ja').click();
+	await bar(page).getByRole('button', { name: 'Zeigen', exact: true }).click();
+	await expect(card(page)).toBeVisible();
+	await page.keyboard.press('Escape');
+	await expect(card(page)).toHaveCount(0);
 });
 
 test('Scenario: Show-bar is compact', async ({ page }, project) => {
@@ -251,12 +278,12 @@ test('Scenario: Role preselects its cards', async ({ page }) => {
 	await at(0);
 	await pressed('Das ist der Dämon');
 
-	state = await at(1);
+	await at(1);
 	await pressed('Deine Minions');
 	await bar(page).getByRole('button', { name: 'Zeigen', exact: true }).click();
 	await card(page).click();
 	await pressed('Bluffs');
-	await expect(bar(page).getByTestId('bluffs')).toHaveText(state.bluffs.map((id) => byId[id].name).join(' · '));
+	await expect(bar(page).getByTestId('bluffs')).toHaveCount(0);
 
 	// night 2 of F5: the Imp chooses themself and the Poisoner on seat 3 becomes the Imp
 	const imp = play(night2(), [...next(5), { type: 'starpass', seat: 2 }, ...next(6)]);
@@ -274,35 +301,49 @@ test('Scenario: Role preselects its cards', async ({ page }) => {
 	await expect(bar(page).getByLabel('Du bist', { exact: true })).toHaveValue('imp');
 });
 
-test('Scenario: Bluffs can be rerolled before showing', async ({ page }) => {
+test('Scenario: Bluffs stay hidden until shown', async ({ page }) => {
 	const state = play(fifteen(), next(circle(1)));
 	await open(page, state);
-	const list = (names: string[]) => names.join(' · ');
-	const before = list(state.bluffs.map((id) => byId[id].name));
+	const inPlay = new Set<string>(F15);
+	const names = (ids: string[]) => ids.map((id) => byId[id as keyof typeof byId].name);
+	const page$ = () => page.locator('body').innerText();
+	const none = async (ids: string[]) => {
+		const body = await page$();
+		for (const name of names(ids)) expect(body, name).not.toContain(name);
+	};
+
+	await none(state.bluffs);
 	await chip(page, 'Bluffs').click();
-	const preview = bar(page).getByTestId('bluffs');
-	await expect(preview).toHaveText(before);
+	await expect(bar(page).getByTestId('bluffs')).toHaveCount(0);
+	await none(state.bluffs);
 
 	await bar(page).getByRole('button', { name: 'Neu würfeln', exact: true }).click();
-	await expect(preview).not.toHaveText(before);
-	const names = (await preview.innerText()).split(' · ');
-	expect(new Set(names).size).toBe(3);
-	const inPlay = new Set(F15.map((id) => byId[id].name));
-	for (const name of names) {
-		const found = Object.values(byId).find((c) => c.name === name)!;
-		expect(inPlay.has(name), name).toBe(false);
-		expect(found.team === 'townsfolk' || found.team === 'outsider', name).toBe(true);
+	await expect.poll(async () => (await saved(page)).bluffs).not.toEqual(state.bluffs);
+	const rerolled = (await saved(page)).bluffs;
+	expect(new Set(rerolled).size).toBe(3);
+	for (const id of rerolled) {
+		expect(inPlay.has(id), id).toBe(false);
+		expect(id).not.toBe('drunk');
+		expect(byId[id].team === 'townsfolk' || byId[id].team === 'outsider', id).toBe(true);
 	}
+	await none([...state.bluffs, ...rerolled]);
 
 	await bar(page).getByRole('button', { name: 'Zeigen', exact: true }).click();
+	for (const id of rerolled) await expect(card(page).getByText(byId[id].name, { exact: true })).toBeVisible();
 	await card(page).click();
 	await expect(bar(page).getByRole('button', { name: 'Neu würfeln', exact: true })).toBeDisabled();
 });
 
 // The Drunk (seat 2, Bo) believes Empath; seat 1 is the red herring, seat 4 the Demon. Screen 1 is the Poisoner's wake.
 const drunkNight = () => play(night1(seated(['washerwoman', 'drunk', 'poisoner', 'imp', 'fortune-teller'], { believed: 'empath', redHerring: 0 })), next(1));
-const grimoireTexts = ['Washerwoman · Red Herring', 'Drunk (glaubt: Empath)', 'Poisoner', 'Imp · Dämon', 'Fortune Teller'];
-const hidden = ['Washerwoman · Red Herring', 'Drunk (glaubt: Empath)', 'Imp · Dämon', 'Fortune Teller'];
+// seat -> [accessible name while held, icon]
+const heldNames = ['Platz 1, Alex, Washerwoman', 'Platz 2, Bo, Drunk', 'Platz 3, Cleo, Poisoner', 'Platz 4, Dani, Imp', 'Platz 5, Eli, Fortune Teller'];
+const notes = [
+	['Drunk (glaubt: Empath)', 'Bo (#2)'],
+	['Red Herring', 'Alex (#1)'],
+	['Dämon', 'Dani (#4)']
+];
+const hidden = ['Drunk (glaubt: Empath)', 'Red Herring', 'Dämon'];
 
 async function centre(page: Page) {
 	const box = (await page.getByRole('button', { name: 'Grimoire', exact: true }).boundingBox())!;
@@ -312,13 +353,75 @@ async function centre(page: Page) {
 test('Scenario: Grimoire visible only while held', async ({ page }) => {
 	await open(page, drunkNight());
 	for (const t of hidden) await expect(page.getByText(t, { exact: true })).toHaveCount(0);
+	await expect(page.locator('[data-seat]')).toHaveCount(0);
 
 	const { x, y } = await centre(page);
 	await page.mouse.move(x, y);
 	await page.mouse.down();
-	for (const t of grimoireTexts) await expect(page.getByText(t, { exact: true }).first()).toBeVisible();
+	const grimoire = page.locator('[data-grimoire]');
+	await expect(grimoire).toBeVisible();
+	for (const name of heldNames) {
+		const seat = grimoire.getByRole('button', { name, exact: true });
+		await expect(seat, name).toBeVisible();
+		await expect(seat.locator('svg.icon'), name).toHaveCount(1);
+		await expect(seat.locator('.tag'), name).toHaveCount(0);
+	}
+	await expect(grimoire.locator('.tag')).toHaveCount(0);
+	// the Drunk shows the Drunk's icon in its team colour, not the believed Empath
+	await expect(grimoire.locator('[data-seat="2"] svg.icon')).toHaveClass(/outsider/);
+	for (const [note, seat] of notes) {
+		const line = grimoire.getByText(note, { exact: true });
+		await expect(line, note).toBeVisible();
+		await expect(line.locator('..').getByText(seat, { exact: true }), note).toBeVisible();
+	}
 	await page.mouse.up();
 	for (const t of hidden) await expect(page.getByText(t, { exact: true })).toHaveCount(0);
+	await expect(page.locator('[data-seat]')).toHaveCount(0);
+	await expect(page.locator('[data-grimoire]')).toHaveCount(0);
+});
+
+test('Scenario: Held grimoire icons fit fifteen seats', async ({ page }) => {
+	await open(page, play(fifteen(), next(1)));
+	const { x, y } = await centre(page);
+	await page.mouse.move(x, y);
+	await page.mouse.down();
+	const grimoire = page.locator('[data-grimoire]');
+	await expect(grimoire.locator('[data-seat]')).toHaveCount(15);
+	await page.waitForTimeout(400);
+	const m = await grimoire.evaluate((el) => {
+		const seats = [...el.querySelectorAll<HTMLElement>('[data-seat]')].map((s) => {
+			const r = s.getBoundingClientRect();
+			const rect = (q: string) => s.querySelector<HTMLElement | SVGElement>(q)?.getBoundingClientRect() ?? null;
+			const icon = rect('svg.icon');
+			const no = rect('.no');
+			const name = rect('.name');
+			return {
+				w: r.width,
+				h: r.height,
+				cx: r.left + r.width / 2,
+				cy: r.top + r.height / 2,
+				icon: icon !== null,
+				numberAbove: no !== null && icon !== null && no.top + no.height / 2 < icon.top,
+				nameBelow: name !== null && icon !== null && name.top + name.height / 2 > icon.top + icon.height / 2
+			};
+		});
+		let overlaps = 0;
+		for (let i = 0; i < seats.length; i++)
+			for (let j = i + 1; j < seats.length; j++)
+				if (Math.hypot(seats[i].cx - seats[j].cx, seats[i].cy - seats[j].cy) < (seats[i].w + seats[j].w) / 2) overlaps++;
+		return {
+			seats,
+			overlaps,
+			wide: document.documentElement.scrollWidth > innerWidth
+		};
+	});
+	expect(m.seats.every((s) => s.icon)).toBe(true);
+	expect(m.seats.every((s) => s.numberAbove)).toBe(true);
+	expect(m.seats.every((s) => s.nameBelow)).toBe(true);
+	expect(m.seats.filter((s) => s.w < 44 || s.h < 44)).toEqual([]);
+	expect(m.overlaps).toBe(0);
+	expect(m.wide).toBe(false);
+	await page.mouse.up();
 });
 
 test('Scenario: Release outside the button hides the grimoire', async ({ page }) => {

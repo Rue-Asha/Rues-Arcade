@@ -10,6 +10,7 @@
 	import { who, whoAll } from './label.ts';
 	import RoleCard from './RoleCard.svelte';
 	import ShowBar from './ShowBar.svelte';
+	import ShowCard, { type Card } from './ShowCard.svelte';
 	import type { ClocktowerAction, ClocktowerState, NightScreen } from './types.ts';
 
 	interface Props {
@@ -22,6 +23,25 @@
 	let { state: s, dispatch, at, peek }: Props = $props();
 
 	let choosing = $state(false);
+	let card = $state<Card | null>(null);
+	let pointed = $state<number[]>([]);
+	let bar = $state<ShowBar>();
+
+	// a text and its marks belong to one circle screen
+	$effect.pre(() => {
+		at.screen;
+		if ('step' in at) at.step;
+		card = null;
+		pointed = [];
+	});
+
+	function close() {
+		if (card) bar?.closed(card);
+		card = null;
+		pointed = [];
+	}
+
+	const point = (i: number) => (pointed = pointed.includes(i) ? pointed.filter((x) => x !== i) : [...pointed, i]);
 
 	const step = $derived(s.night!.steps[at.step]);
 	const target = $derived(s.night!.target);
@@ -83,6 +103,10 @@
 	}
 </script>
 
+{#snippet shown()}
+	{#if card}<ShowCard {card} onclose={close} />{/if}
+{/snippet}
+
 {#snippet nav()}
 	<div class="nav">
 		<Button variant="primary" onclick={() => dispatch({ type: 'next' })}>Weiter</Button>
@@ -141,15 +165,17 @@
 				<Circle
 					seats={s.seats}
 					marked={target === null ? [] : [target]}
+					{pointed}
 					label={(i) => (i === target && starpass === null ? 'Ziel' : null)}
-					disabled={(i) => (starpass !== null ? 'Der Imp hat sich selbst gewählt' : s.seats[i].alive ? null : 'bereits tot')}
-					onseat={(i) => dispatch({ type: 'target', seat: i === target ? null : i })}
+					disabled={(i) => (card ? null : starpass !== null ? 'Der Imp hat sich selbst gewählt' : s.seats[i].alive ? null : 'bereits tot')}
+					onseat={(i) => (card ? point(i) : dispatch({ type: 'target', seat: i === target ? null : i }))}
+					center={card ? shown : undefined}
 				/>
 			</div>
 		{:else}
-			<div class="fit"><Circle seats={s.seats} marked={step.seats} /></div>
+			<div class="fit"><Circle seats={s.seats} marked={step.seats} {pointed} onseat={card ? point : undefined} center={card ? shown : undefined} /></div>
 		{/if}
-		<ShowBar state={s} {dispatch} {step} />
+		<ShowBar bind:this={bar} state={s} {dispatch} {step} onshow={(c) => (card = c)} />
 		{@render peek?.()}
 		{@render nav()}
 	</section>

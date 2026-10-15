@@ -20,8 +20,8 @@ const dialog = (page: Page) => page.getByRole('dialog');
 
 const weiter = (page: Page) => live(page).getByRole('button', { name: 'Weiter', exact: true });
 
-// Dusk, a dusk question, a pair step and a group step in four screens each (15 seats), every show card, the held
-// grimoire, the Imp step and the death step.
+// Dusk, a dusk question, a pair step and a group step in four screens each (15 seats), every centre text, marked
+// seats under a text, the held grimoire, the Imp step and the death step.
 export async function walk(page: Page, check: Check) {
 	const night1 = reveal(seated(F15));
 
@@ -80,6 +80,18 @@ export async function walk(page: Page, check: Check) {
 		await bar.getByRole('button', { name: 'Zeigen', exact: true }).click();
 		await expect(page.getByTestId('show-card')).toBeVisible();
 		await check(`clocktower-show-${item.toLowerCase().replace(/[^a-zäöü]+/g, '-')}`);
+		await page.getByTestId('show-card').click();
+		await expect(page.getByTestId('show-card')).toHaveCount(0);
+	}
+
+	// a centre text with two marked seats, on the phone where fifteen seats are tightest
+	if (page.viewportSize()!.width < 600) {
+		await bar.getByRole('button', { name: 'Ja', exact: true }).click();
+		await bar.getByRole('button', { name: 'Zeigen', exact: true }).click();
+		await live(page).locator('[data-seat="3"]').click();
+		await live(page).locator('[data-seat="9"]').click();
+		await expect(live(page).locator('[data-seat][data-pointed]')).toHaveCount(2);
+		await check('clocktower-show-marked');
 		await page.getByTestId('show-card').click();
 		await expect(page.getByTestId('show-card')).toHaveCount(0);
 	}
