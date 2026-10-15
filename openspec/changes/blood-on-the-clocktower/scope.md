@@ -142,6 +142,30 @@ Verbatim feedback is in `gate2-feedback.md`. The palette stays; nothing here may
 
 - **S49** End screen: seats are grouped by Good and Evil, each with its character's icon.
 
+### Gate 2 revisions, round 2 (2026-10-15, user feedback after looking at the build)
+Verbatim feedback and Rue's explore answers are in `feedback-2026-10-15.md`; the element identification is in its answers, the Mobbin references in `mobbin-r2.md` (Rue: every UI/UX item gets Mobbin). Same legibility floor as round 1. Seat-node and centre-text layouts get a fit estimate for 15 seats on a 390×844 phone at planning time.
+
+UI/UX
+- **S50** No text cursor (I-beam) and no text selection on UI text anywhere in the app (all games, headings, info boxes, show texts, timer, counts); input fields keep their caret and selection.
+- **S51** The night grimoire shows every seat's character icon in its team colour on the seat, as setup does (S41), instead of the text tag.
+- **S52** Every seat node (setup, grimoire, night, dawn, day, vote clock) shows the player's name large and the seat number small. With an icon on the node: icon on the node, name below it, seat number small above or in a corner, wherever it reads best.
+- **S53** Vote sweep: the hand turns at a constant speed instead of jumping seat to seat (same order: from the seat after the nominee, nominee last; same total time). The circle is divided into n equal sectors, one per seat, centred on that seat; the sector the hand is in lights up in a light red. A tap on a seat or Space casts or toggles a vote only for the seat whose sector holds the hand; taps on other seats do nothing during the sweep. In the confirm step after the sweep, tapping a seat toggles its vote and the count follows the voters (replaces the ± count), then Bestätigen.
+- **S54** The decorative tick marks inside the circle are computed from n: n subtle ticks on the sector boundaries of S53, on every circle.
+- **S55** The deck's voting slide uses the same look as S53/S54 (constant hand, light red sector, n ticks, counting votes). Reduced motion shows the end state.
+- **S56** The day countdown keeps its size and look but moves to the top right of the day screen's head (next to the heading, below the app header, scrolls with the content) on every screen that shows it today.
+- **S57** Tapping a seat gives clear feedback: the node presses in and springs back with a short glow/ripple, and the device vibrates briefly where the browser supports it (Android; iOS has no vibration API). Reduced motion: no scale or spring, the state change stays visible.
+- **S58** During the day each seat shows two subtle rings outside the node: turquoise while the player can still be nominated today, orange while the player can still nominate today. Each ring disappears once that has happened and both reset at the next day. Dead players get only the turquoise ring (they cannot nominate but can be nominated).
+- **S59** The player on the chopping block gets a round badge with a fitting symbol (e.g. an axe) instead of the red outline and the ▼ badge.
+- **S60** The ghost vote becomes a round badge in the same style: light blue while the ghost vote is unused, greyed out once spent (replaces the S47 pill; accessible label unchanged).
+- **S61** The day info box about the chopping block is a decorated card in the game's look with the S59 symbol and colour, the player's name and the number of votes they received.
+- **S62** The page background has one continuous tone over the full page height on day and night screens; no cut or second shade below the first viewport.
+- **S63** When the execution is final, the executed player's seat plays a short death animation (about 1 s). Reduced motion: instant.
+- **S64** At dawn, players who died in the night play the same death animation (instead of the current mild settle). Reduced motion: instant.
+
+Functions
+- **S65** Show-bar texts appear in the centre of the circle instead of a fullscreen dialog, so the circle stays visible; the show-bar itself stays as it is. While a text is shown, tapping seats marks or unmarks them (several, up to all, with S57 feedback) so the storyteller can show who is meant; closing the text clears the marks, and seat taps go back to the step's behaviour (e.g. the Imp's target).
+- **S66** Bluffs: the bluff names are not shown under the show-bar before "Zeigen"; "Neu würfeln" stays and draws again blind; the bluffs are visible only once shown (S65). The Drunk can never be drawn as a bluff.
+
 ## Non-goals
 - Travellers, exile votes, Fabled — 5–15 players only (more than 15 needs Travellers).
 - Other scripts (Bad Moon Rising, Sects & Violets, custom scripts).
@@ -151,6 +175,7 @@ Verbatim feedback is in `gate2-feedback.md`. The palette stays; nothing here may
 - Multi-device play, player phones, remote viewers.
 - Any CI workflow change — speed-ups belong to `faster-ci`; this change only follows its e2e idioms.
 - A day/night history log or undo beyond the night guide's "Zurück" and the seat corrections.
+- Round 2: a select-all control for marking (S65) and vibration on iOS.
 
 ## Codebase touchpoints
 - `src/lib/games/registry.ts` (+ `registry.test.ts`) — new entry; `GameEntry.demo` becomes optional or an `explanation` field is added; order/range/contract tests. (explorer: game wiring)
@@ -180,7 +205,7 @@ Verbatim feedback is in `gate2-feedback.md`. The palette stays; nothing here may
 - Player count 5–15, chosen before the lobby — Rue: the deck adapts to it; Travellers are out (rulebook: > 15 only with Travellers).
 - Evil wins at 2 living players (official) — Rue chose the official rule over "evil outnumbers good"; the deck and sheet must show the official wording.
 - Ambiguous ability outcomes are resolved privately at the next dusk — Rue; nothing on the public screen hints at them.
-- Votes: tap the seat or press Space while the hand passes, then confirm with an editable count — Rue.
+- Votes: tap the seat or press Space while the hand passes, then confirm with an editable count — Rue. Superseded 2026-10-15 by S53: a vote counts only in the seat's sector, corrections by tapping seats in the confirm step.
 - Night deaths are entered privately at the end of the night, revealed at dawn — Rue.
 - UI and explanations in German, character names in English with the original ability text quoted — Rue.
 - Seating is set in Setup 1 by drag/swap — Rue.
