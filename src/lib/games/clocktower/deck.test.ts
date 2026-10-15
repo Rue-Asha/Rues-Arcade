@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { characters } from './characters.ts';
 import { slides, voteTimeline, type Slide } from './deck.ts';
 import { required } from './setup.ts';
-import { threshold } from './vote.ts';
+import { sectorOf } from './circle.ts';
+import { sweepAt, threshold } from './vote.ts';
 
 const counts = (n: number) => slides(n).find((s) => s.id === 'town')!;
 const voting = (n: number) => slides(n).find((s) => s.id === 'voting')!;
@@ -67,16 +68,28 @@ describe('clocktower deck', () => {
 				expect(t.voters[j], `${n}`).toBeGreaterThan(t.voters[j - 1]);
 				expect(t.at[j], `${n}`).toBeGreaterThan(t.at[j - 1]);
 			}
-			// the hand starts on seat 1 and reaches seat v after v-1 steps, so the count shown at time t is the voters reached by then
-			const step = t.handMs / (n - 1);
+			// the hand starts on the boundary after the nominee's sector and turns at a constant speed through n sectors
+			expect(t.start, `${n}`).toBe(0.5);
+			const per = t.handMs / n;
+			expect(per, `${n}`).toBeGreaterThan(0);
 			const count = (ms: number) => t.at.filter((a) => a <= ms).length;
+			const first = sweepAt(0, t.nominee, n, per)!;
+			expect(first.hand, `${n}`).toBeCloseTo(t.start, 9);
+			for (const ms of [0, per * 0.25, per * 1.5, t.handMs - 1]) {
+				expect(sweepAt(ms, t.nominee, n, per)!.hand, `${n} at ${ms}`).toBeCloseTo(t.start + ms / per, 9);
+			}
+			// each voter's time is the hand's entry into its sector, and the count steps there in sweep order
 			t.voters.forEach((v, j) => {
-				expect(t.at[j], `${n} voter ${v}`).toBeCloseTo((v - 1) * step, 6);
+				expect(sweepAt(t.at[j], t.nominee, n, per)!.seat, `${n} voter ${v}`).toBe(v);
+				if (t.at[j] > 0) expect(sweepAt(t.at[j] - 1, t.nominee, n, per)!.seat, `${n} before voter ${v}`).not.toBe(v);
+				expect(sectorOf(sweepAt(t.at[j], t.nominee, n, per)!.hand * (360 / n), n), `${n} voter ${v}`).toBe(v);
 				expect(count(t.at[j]), `${n} at voter ${v}`).toBe(j + 1);
 				if (j > 0) expect(count(t.at[j] - 1), `${n} before voter ${v}`).toBe(j);
 			});
-			expect(t.at[0]).toBe(0);
-			expect(t.at.at(-1)!, `${n}`).toBeLessThan(t.handMs);
+			// the nominee votes last: the hand ends in its sector
+			expect(sweepAt(t.handMs - 1, t.nominee, n, per)!.seat, `${n}`).toBe(t.nominee);
+			expect(sweepAt(t.handMs, t.nominee, n, per), `${n}`).toBeNull();
+			expect(t.at.at(-1)!, `${n}`).toBeLessThan(t.handMs - per);
 			expect(count(t.handMs + t.holdMs), `${n}`).toBe(threshold(n));
 			expect(t.holdMs).toBeGreaterThan(0);
 		}

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { byId } from './characters.ts';
 	import CharacterIcon from './CharacterIcon.svelte';
+	import { tickAngles, wedge } from './circle.ts';
 	import { triggerLabel, voteTimeline, type Slide } from './deck.ts';
 	import Sheet from './Sheet.svelte';
 
@@ -15,10 +16,23 @@
 		return { x: 50 + 40 * Math.sin(a), y: 50 - 40 * Math.cos(a) };
 	};
 
-	// The static markup is the end state; with motion allowed the loop below replays the sweep over it. Opacity steps
-	// switch a voter's red fill and the centre numeral in step with the hand, which only rotates.
+	// The static markup is the end state (the hand in the nominee's sector, the nominee's sector lit); with motion
+	// allowed the loop below replays the sweep over it. The hand only rotates; opacity steps switch a voter's red
+	// fill, the lit sector and the centre numeral in step with it.
 	const STEP = 0.004;
 	const END = 0.97;
+	const BOX = 200;
+	const polar = (r: number, deg: number) => {
+		const a = (deg * Math.PI) / 180;
+		return `${Math.round((BOX / 2 + r * Math.sin(a)) * 100) / 100} ${Math.round((BOX / 2 - r * Math.cos(a)) * 100) / 100}`;
+	};
+	const ticks = (n: number) =>
+		tickAngles(n)
+			.map((deg) => `M${polar(60, deg)}L${polar(68, deg)}`)
+			.join('');
+	// the hand stops a hair short of the boundary, inside the nominee's sector
+	const LAST = 0.02;
+	const turn = (seats: number) => ((seats + 0.5 - LAST) * 360) / seats;
 	const steps = (from: number, to: number): Keyframe[] => [
 		from > 0 ? { opacity: 0, offset: 0 } : { opacity: 1, offset: 0 },
 		...(from > 0 ? [{ opacity: 0, offset: from }, { opacity: 1, offset: from + STEP }] : []),
@@ -31,18 +45,29 @@
 		if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 		const t = voteTimeline(alive);
 		const total = t.handMs + t.holdMs;
+		const per = t.handMs / alive;
 		const at = t.at.map((ms) => ms / total);
 		const timing = { duration: total, iterations: Infinity, easing: 'linear' };
 		const run = [
 			disc.querySelector<HTMLElement>('[data-hand]')!.animate(
 				[
-					{ transform: `rotate(${360 / alive}deg)`, offset: 0 },
-					{ transform: 'rotate(360deg)', offset: t.handMs / total },
-					{ transform: 'rotate(360deg)', offset: 1 }
+					{ transform: `rotate(${(t.start * 360) / alive}deg)`, offset: 0 },
+					{ transform: `rotate(${turn(alive)}deg)`, offset: (t.handMs - LAST * per) / total },
+					{ transform: `rotate(${turn(alive)}deg)`, offset: 1 }
 				],
 				timing
 			)
 		];
+		disc.querySelectorAll<HTMLElement>('[data-sector]').forEach((el) => {
+			const seat = Number(el.dataset.sector) - 1;
+			const from = (((seat + alive - 1) % alive) * per) / total;
+			const to = seat === 0 ? 1 : (from * total + per) / total;
+			const frames: Keyframe[] =
+				seat === 0
+					? [{ opacity: 0, offset: 0 }, { opacity: 0, offset: from }, { opacity: 1, offset: from + STEP }, { opacity: 1, offset: 1 }]
+					: steps(seat === 1 ? 0 : from, to);
+			run.push(el.animate(frames, timing));
+		});
 		disc.querySelectorAll<HTMLElement>('[data-voter]').forEach((el, j) => {
 			run.push(
 				el.animate(
@@ -107,7 +132,13 @@
 					</div>
 					<figure class="ring">
 						<div class="disc" role="img" aria-label={slide.vote?.caption} use:sweep={alive}>
-							<span class="hand" data-hand aria-hidden="true"></span>
+							<svg class="plane" viewBox="0 0 {BOX} {BOX}" aria-hidden="true">
+								{#each Array.from({ length: alive }) as _, i (i)}
+									<path class="sector" data-sector={i + 1} class:lit={i === 0} d={wedge(i, alive, BOX)} />
+								{/each}
+								<path class="ticks" data-ticks={alive} d={ticks(alive)} />
+							</svg>
+							<span class="hand" data-hand style="transform: rotate({turn(alive)}deg)" aria-hidden="true"></span>
 							{#each Array.from({ length: alive }) as _, i (i)}
 								{@const p = seat(i, alive)}
 								<span class="seat" class:nominee={i === 0} style="left:{p.x}%;top:{p.y}%">
@@ -601,6 +632,31 @@
 		stroke-width: 3.5;
 		stroke-linecap: round;
 		stroke-linejoin: round;
+	}
+
+	.plane {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+	}
+
+	.sector {
+		fill: var(--clocktower);
+		fill-opacity: 0.15;
+		opacity: 0;
+	}
+
+	.sector.lit {
+		opacity: 1;
+	}
+
+	.ticks {
+		fill: none;
+		stroke: var(--text);
+		stroke-opacity: 0.5;
+		stroke-width: 1.5;
+		stroke-linecap: round;
 	}
 
 	.hand {

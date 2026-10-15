@@ -14,8 +14,9 @@ export async function walk(page: Page, check: (slug: string) => Promise<void>) {
 	for (const [i, s] of list.entries()) {
 		await expect(progress).toHaveText(`${i + 1} / ${list.length}`);
 		await settled(page);
-		// the vote loop never ends: hold it on the end of the sweep so every shot sees the same frame
+		// the vote loop never ends: seek it to the end of the sweep so every shot sees the same frame
 		if (s.id === 'voting') {
+			await expect(page.locator('[data-slide="voting"] [data-hand]')).toBeAttached();
 			await page.evaluate((ms) => {
 				const root = document.querySelector('[data-slide="voting"]')!;
 				for (const a of document.getAnimations()) {
@@ -24,6 +25,7 @@ export async function walk(page: Page, check: (slug: string) => Promise<void>) {
 					a.currentTime = ms;
 				}
 			}, voteTimeline(9).handMs);
+			await expect(page.locator('[data-slide="voting"] [data-sector="1"]')).toHaveCSS('opacity', '1');
 		}
 		await check(`clocktower-deck-${s.id}`);
 		if (i < list.length - 1) await page.keyboard.press('ArrowRight');
