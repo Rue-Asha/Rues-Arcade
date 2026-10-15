@@ -425,10 +425,13 @@ export function slides(count: number): Slide[] {
 					title: 'Plätze tauschen und verschieben',
 					text: 'Beim Aufbau tippt ihr zwei Plätze an, um sie zu tauschen, oder zieht einen Platz an eine andere Stelle.'
 				},
-				{ title: 'Tote Plätze', text: 'Gestorbene Plätze erscheinen abgedunkelt im Kreis.' },
 				{
-					title: 'Geisterstimme',
-					text: 'Eine Marke am toten Platz zeigt, dass die letzte Stimme noch nicht verbraucht ist.'
+					title: 'Runde Abzeichen',
+					text: 'Am Platzrand zeigt eine Axt, wer auf dem Block steht, und eine Hand, dass ein toter Platz seine Stimme noch hat. Ist sie verbraucht, wird die Hand grau und hohl.'
+				},
+				{
+					title: 'Nominierungsringe',
+					text: 'Ein durchgezogener Ring heißt: kann noch nominiert werden. Ein gestrichelter: darf noch nominieren.'
 				}
 			]
 		},
@@ -454,8 +457,8 @@ export function slides(count: number): Slide[] {
 			title: 'Karten zeigen',
 			lead: 'Die Zeigeleiste reicht das Gerät an die geweckte Person: Charakter, Das ist der Dämon, Deine Minions, Bluffs, Du bist, Zahl, Ja oder Nein.',
 			cards: [
-				{ title: 'Antippen und zeigen', text: 'Tippt auf den Eintrag, haltet der Person das Gerät hin und verbergt die Karte wieder.' },
-				{ title: 'Nur ein Blick', text: 'Das Grimoire bleibt verdeckt, bis ihr es gedrückt haltet.' }
+				{ title: 'Text in der Kreismitte', text: 'Tippt auf den Eintrag, haltet der Person das Gerät hin und schließt den Text wieder. Er erscheint in der Mitte des Kreises.' },
+				{ title: 'Spieler markieren', text: 'Solange ein Text offen ist, tippt ihr Spieler an, um sie zu markieren.' }
 			]
 		},
 		{
@@ -478,13 +481,17 @@ export function slides(count: number): Slide[] {
 			title: 'Nominieren und abstimmen',
 			steps: [
 				{ n: '1', title: 'Nominierte Person antippen', text: 'Dann Nominieren, danach die nominierende Person wählen.' },
-				{ n: '2', title: 'Abstimmung beginnen', text: 'Der Zeiger läuft Platz für Platz im Uhrzeigersinn.' },
+				{ n: '2', title: 'Abstimmung beginnen', text: 'Der Zeiger dreht sich gleichmäßig im Uhrzeigersinn, das Kreisstück unter ihm leuchtet hellrot.' },
 				{
 					n: '3',
 					title: 'Stimmen markieren',
-					text: 'Platz antippen oder die Leertaste drücken, solange der Zeiger darauf steht.'
+					text: 'Platz antippen oder die Leertaste drücken, solange der Zeiger in seinem Kreisstück steht.'
 				},
-				{ n: '4', title: 'Bestätigen', text: 'Die App rechnet die Schwelle und meldet Block, Gleichstand oder nichts.' }
+				{
+					n: '4',
+					title: 'Bestätigen',
+					text: 'Stimmen durch Antippen der Plätze korrigieren, dann bestätigen: die App meldet Block, Gleichstand oder nichts.'
+				}
 			]
 		},
 		{
