@@ -25,3 +25,10 @@ export function voteResult(votes: number, alive: number, high: number): 'block' 
 	if (votes > high) return 'block';
 	return votes === high ? 'tie' : 'none';
 }
+
+// The hand starts on the boundary after the nominee (nominee + 0.5, in seat units) and turns one seat per perSeat;
+// seat is the one whose sector holds it. null before the start and from the end of the sweep on.
+export function sweepAt(ms: number, nominee: number, count: number, perSeat = seatMs()): { hand: number; seat: number } | null {
+	if (ms < 0 || ms >= sweepMs(count, perSeat)) return null;
+	return { hand: nominee + 0.5 + ms / perSeat, seat: voteOrder(nominee, count)[Math.floor(ms / perSeat)] };
+}
