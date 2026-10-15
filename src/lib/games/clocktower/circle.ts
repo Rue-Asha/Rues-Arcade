@@ -7,6 +7,19 @@ export function angleOf(seat: number, count: number): number {
 	return (seat * 360) / count;
 }
 
+// the boundaries between neighbouring seats' sectors: tick k sits halfway between seats k + 1 and k + 2
+export function tickAngles(count: number): number[] {
+	return Array.from({ length: count }, (_, k) => ((k + 0.5) * 360) / count);
+}
+
+// each seat owns 360 / count degrees centred on it; a boundary belongs to the next seat clockwise
+export function sectorOf(deg: number, count: number): number {
+	const step = 360 / count;
+	const turned = (((deg + step / 2) % 360) + 360) % 360;
+	// a boundary computed as (k + 0.5) · step may land a hair short of it
+	return Math.floor(turned / step + 1e-9) % count;
+}
+
 function around(count: number, box: number, d: number): Point[] {
 	const centre = box / 2;
 	const radius = (box - d) / 2;
@@ -42,9 +55,18 @@ function polar(centre: number, r: number, deg: number): Point {
 	return { x: centre + r * Math.sin(a), y: centre - r * Math.cos(a) };
 }
 
+// the seat's sector as a slice from the centre to the outer hairline ring
+export function wedge(seat: number, count: number, box: number): string {
+	const centre = box / 2;
+	const r = box / 2 - 1;
+	const a = polar(centre, r, angleOf(seat, count) - 180 / count);
+	const b = polar(centre, r, angleOf(seat, count) + 180 / count);
+	return `M${f(centre)} ${f(centre)}L${f(a.x)} ${f(a.y)}A${f(r)} ${f(r)} 0 0 1 ${f(b.x)} ${f(b.y)}Z`;
+}
+
 // the ornament under the seats, in the plane's own pixels: one arc of the ring per pair of neighbouring seats (so a dead
-// seat can dash its two), a hairline ring hugging the seats' outer edge, one just inside them, twelve clock ticks
-// between that and the centre, and a small star for the hub
+// seat can dash its two), a hairline ring hugging the seats' outer edge, one just inside them, one tick on every sector
+// boundary between that and the centre, and a small star for the hub
 export function ornament(count: number, box: number) {
 	const d = seatSize(count, box);
 	const at = around(count, box, d);
@@ -55,12 +77,13 @@ export function ornament(count: number, box: number) {
 		const q = at[(i + 1) % count];
 		return `M${f(p.x)} ${f(p.y)}A${f(r)} ${f(r)} 0 0 1 ${f(q.x)} ${f(q.y)}`;
 	});
-	const ticks = Array.from({ length: 12 }, (_, k) => {
-		const long = k % 3 === 0;
-		const a = polar(centre, inner - 2, k * 30);
-		const b = polar(centre, inner - (long ? 14 : 8), k * 30);
-		return `M${f(a.x)} ${f(a.y)}L${f(b.x)} ${f(b.y)}`;
-	}).join('');
+	const ticks = tickAngles(count)
+		.map((deg) => {
+			const a = polar(centre, inner - 2, deg);
+			const b = polar(centre, inner - 10, deg);
+			return `M${f(a.x)} ${f(a.y)}L${f(b.x)} ${f(b.y)}`;
+		})
+		.join('');
 	const hub = Math.max(10, inner * 0.16);
 	const star = Array.from({ length: 16 }, (_, k) => polar(centre, k % 2 === 0 ? hub * 1.8 : hub, k * 22.5));
 	const rosette = `M${star.map((p) => `${f(p.x)} ${f(p.y)}`).join('L')}Z`;

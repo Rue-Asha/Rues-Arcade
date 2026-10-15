@@ -118,7 +118,7 @@
 		<svg class="ornament" data-deco data-motif="circle" viewBox="0 0 {box} {box}" width={box} height={box} aria-hidden="true" focusable="false">
 			<circle class="hair" cx={box / 2} cy={box / 2} r={deco.outer} />
 			<circle class="hair" cx={box / 2} cy={box / 2} r={deco.inner} />
-			<path class="ticks" d={deco.ticks} />
+			<path class="ticks" data-ticks={count} d={deco.ticks} />
 			<circle class="hair" cx={box / 2} cy={box / 2} r={deco.hub * 2.6} />
 			<path class="rosette" d={deco.rosette} />
 			{#each deco.links as link, i (i)}
