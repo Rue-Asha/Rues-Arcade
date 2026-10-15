@@ -103,7 +103,7 @@ describe('design tokens', () => {
 			for (const text of ['text', 'text-soft', 'muted'] as const)
 				expect(contrast(set[text], set.sky), `${name} ${text} on the sky`).toBeGreaterThanOrEqual(4.5);
 		expect(clocktowerDay.ground).toBe('#e8dfcb');
-		const body = css.slice(css.indexOf("[data-theme='clocktower'][data-variant='day'] body {"));
+		const body = css.slice(css.indexOf("[data-theme='clocktower'][data-variant='day'] body::before {"));
 		const layers = body.slice(0, body.indexOf('}')).match(/radial-gradient\(/g) ?? [];
 		expect(layers.length, 'day gradient layers over the solid ground').toBeGreaterThanOrEqual(3);
 	});

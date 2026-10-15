@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { clocktower } from '../src/lib/games/clocktower/engine.ts';
-import { F7, seated } from '../src/lib/games/clocktower/fixtures.ts';
+import { F15, F7, seated } from '../src/lib/games/clocktower/fixtures.ts';
 import type { ClocktowerAction, ClocktowerState } from '../src/lib/games/clocktower/types.ts';
 import { play, seedClocktower } from './clocktower-session.ts';
 import { decoAudit, live, seedRoster, settled } from './helpers.ts';
@@ -205,6 +205,55 @@ test.describe('reduced motion', () => {
 			await expect.poll(() => page.evaluate(() => document.getAnimations().filter((a) => a.effect?.getTiming().iterations === Infinity && a.playState === 'running').length), name).toBe(0);
 			const state = await sky(page);
 			expect(state.stars + state.moon + state.sun, `${name}: sky still drawn`).toBeGreaterThan(0);
+		}
+	});
+});
+
+// The page's colours at fixed points of the viewport's left margin, decoded from a screenshot.
+async function margin(page: Page, ys: number[]) {
+	const png = (await page.screenshot()).toString('base64');
+	return page.evaluate(
+		async ({ png, ys }) => {
+			const img = new Image();
+			img.src = `data:image/png;base64,${png}`;
+			await img.decode();
+			const canvas = document.createElement('canvas');
+			canvas.width = img.width;
+			canvas.height = img.height;
+			const ctx = canvas.getContext('2d')!;
+			ctx.drawImage(img, 0, 0);
+			const scale = img.width / innerWidth;
+			return ys.map((y) => [...ctx.getImageData(Math.round(3 * scale), Math.round(y * scale), 1, 1).data.slice(0, 3)]);
+		},
+		{ png, ys }
+	);
+}
+
+test.describe('phone', () => {
+	test.use({ viewport: { width: 390, height: 600 } });
+
+	test('Scenario: Background keeps one tone over the whole page', async ({ page }) => {
+		const boards = {
+			setup: (p: Page) =>
+				open(p, clocktower.init({ players: crew(15).map((name, i) => ({ id: `p${i}`, name })), config: {}, content: [], seed: 5 }), () =>
+					expect(heading(p, 'Sitzordnung')).toBeVisible()
+				),
+			grimoire: (p: Page) =>
+				open(p, day1(seated(F15)), () => expect(live(p).getByRole('button', { name: 'Tag beenden', exact: true })).toBeVisible())
+		};
+		const ys = [10, 100, 200, 300, 400, 500, 590];
+		for (const [name, show] of Object.entries(boards)) {
+			await show(page);
+			await page.addStyleTag({ content: '[data-deco][data-motif="sky"] { display: none !important; }' });
+			const height = await page.evaluate(() => document.documentElement.scrollHeight);
+			expect(height, `${name}: page taller than the viewport`).toBeGreaterThan(600);
+			await page.evaluate(() => scrollTo(0, 0));
+			const top = await margin(page, ys);
+			await page.evaluate(() => scrollTo(0, document.documentElement.scrollHeight));
+			const bottom = await margin(page, ys);
+			for (const [i, y] of ys.entries())
+				for (const c of [0, 1, 2])
+					expect(Math.abs(top[i][c] - bottom[i][c]), `${name} ${await page.locator('html').getAttribute('data-variant')} y=${y} channel ${c}: ${top[i]} vs ${bottom[i]}`).toBeLessThanOrEqual(3);
 		}
 	});
 });
