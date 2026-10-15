@@ -522,7 +522,13 @@ time.
 The day timer SHALL count down on the grimoire screen; at 0 it SHALL turn red and read "Zeit um" but never block; it
 SHALL keep running during nominations and votes; the day SHALL be endable at any time. The timer SHALL be emphasised on
 every day screen that shows it: in the first viewport without scrolling, set apart in its own element, and larger than
-the screen's heading.
+the screen's heading. In the last 60 seconds the timer SHALL show a warning state (a pulsing ring that animates only
+transform and opacity, and does not loop under reduced motion) that never blocks input.
+
+#### Scenario: Last minute warns without blocking
+- **WHEN** a timer with 2 minutes is started and the clock advances until under 60 s remain
+- **THEN** the timer shows the warning state, its looping animation touches only transform and opacity, there is none under reduced motion, and "Tag beenden" still works
+- **proof:** e2e
 
 #### Scenario: Timer reads Zeit um at zero and never blocks
 - **WHEN** the clock passes the deadline
@@ -793,7 +799,7 @@ When the game is won, the current phase SHALL finish (its announcement is shown)
 SHALL appear that does not name the winner (gong); "Weiter" SHALL reveal the winning team with a themed animation, then
 every seat grouped under "Gut" and "Böse" by the alignment of its character at the end of the game (the Drunk good, a
 Minion who became the Imp evil), each row with that character's icon in its team colour, the character (the Drunk as
-"Drunk (glaubte: X)"), alive and ghost vote, and the Demon history (starpass, takeover); then "Zurück zum Start". A reload on the teaser SHALL keep it hidden; the session SHALL be cleared only when
+"Drunk (glaubte: X)"), alive and ghost vote, and the Demon history (starpass, takeover); then "Zurück zum Start". The winning team's group SHALL come first. A reload on the teaser SHALL keep it hidden; the session SHALL be cleared only when
 leaving through "Zurück zum Start".
 
 #### Scenario: Teaser names no team
@@ -803,7 +809,7 @@ leaving through "Zurück zum Start".
 
 #### Scenario: Reveal shows the winning team and every seat
 - **WHEN** "Weiter" is tapped on the teaser of a game won by good after a starpass, with the Drunk believing Chef
-- **THEN** "Das Gute gewinnt" is shown with the team's colour, then a group headed "Gut" holding exactly the good seats and a group headed "Böse" holding exactly the evil seats (the new Imp among them), one row per seat with the character's icon in its team colour, the character, alive or dead and ghost vote, the Drunk's row is in "Gut" and reads "Drunk (glaubte: Chef)", the history reads the starpass from the old to the new Imp, and "Zurück zum Start" is offered
+- **THEN** "Das Gute gewinnt" is shown with the team's colour, then the winning team's group first: a group headed "Gut" holding exactly the good seats and a group headed "Böse" holding exactly the evil seats (the new Imp among them), one row per seat with the character's icon in its team colour, the character, alive or dead and ghost vote, the Drunk's row is in "Gut" and reads "Drunk (glaubte: Chef)", the history reads the starpass from the old to the new Imp, and "Zurück zum Start" is offered
 - **proof:** e2e
 
 #### Scenario: End reveal by team approved
