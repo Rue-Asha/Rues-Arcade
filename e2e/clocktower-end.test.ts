@@ -62,7 +62,26 @@ test('Scenario: Reveal shows the winning team and every seat', async ({ page }) 
 		'5 Eli Drunk (glaubte: Chef) lebt'
 	]);
 	expect(await text('Böse')).toEqual(['6 Fey Imp tot, Stimme übrig', '7 Gus Imp tot, keine Stimme']);
-	await expect(rows(page).first().locator('svg')).toBeVisible();
+	const icons = await rows(page).evaluateAll((els) => {
+		const colour = (css: string) => {
+			const probe = document.createElement('span');
+			probe.style.color = css;
+			document.body.append(probe);
+			const got = getComputedStyle(probe).color;
+			probe.remove();
+			return got;
+		};
+		const token: Record<string, string> = { townsfolk: 'var(--good)', outsider: 'var(--outsider)', minion: 'var(--evil)', demon: 'var(--demon)' };
+		return els.map((el) => {
+			const team = [...el.classList].find((c) => c in token)!;
+			const svg = el.querySelector('svg')!;
+			const box = svg.getBoundingClientRect();
+			return { team, seen: box.width > 0 && box.height > 0 && getComputedStyle(svg).visibility === 'visible', ok: getComputedStyle(svg).color === colour(token[team]) };
+		});
+	});
+	expect(icons).toHaveLength(7);
+	for (const i of icons) expect(i, i.team).toMatchObject({ seen: true, ok: true });
+	expect(new Set(icons.map((i) => i.team))).toEqual(new Set(['townsfolk', 'outsider', 'demon']));
 	await expect(live(page).getByTestId('history')).toHaveText('Nacht 2: Starpass von Gus (#7) zu Fey (#6), davor Poisoner');
 	await expect(live(page).getByRole('button', { name: 'Zurück zum Start', exact: true })).toBeVisible();
 });
