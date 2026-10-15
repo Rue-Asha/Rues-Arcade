@@ -3,7 +3,7 @@ import { F7, seated } from '../src/lib/games/clocktower/fixtures.ts';
 import type { CharacterId, ClocktowerAction, ClocktowerState } from '../src/lib/games/clocktower/types.ts';
 import { play, seedClocktower } from './clocktower-session.ts';
 import { live } from './helpers.ts';
-import { atTimer, day1, nightEnd } from './walks/clocktower-day.ts';
+import { atTimer, day1, nightEnd, T0 } from './walks/clocktower-day.ts';
 
 const F8: CharacterId[] = [...F7, 'soldier'];
 const F15C: CharacterId[] = [
@@ -91,6 +91,34 @@ test('Scenario: Day timer stands out', async ({ page }) => {
 			if (ago > 0) expect(got.evil, label).toBe(true);
 		}
 	}
+});
+
+test('Scenario: Last minute warns without blocking', async ({ page }) => {
+	const block = () => live(page).getByTestId('timer').locator('xpath=..');
+	const looping = () =>
+		block().evaluate((el) =>
+			el.getAnimations({ subtree: true }).filter((a) => a.effect!.getTiming().iterations === Infinity).map((a) => ({
+				pseudo: (a.effect as KeyframeEffect).pseudoElement,
+				props: [...new Set((a.effect as KeyframeEffect).getKeyframes().flatMap((k) => Object.keys(k)))].filter((p) => !['offset', 'easing', 'composite', 'computedOffset'].includes(p))
+			}))
+		);
+	await page.clock.install({ time: T0 });
+	await open(page, day1(seated(F7), 2));
+	await expect(live(page).getByTestId('timer')).toHaveText('2:00');
+	await expect(block()).not.toHaveClass(/late/);
+	expect(await looping()).toEqual([]);
+
+	await page.clock.runFor(61_000);
+	await expect(live(page).getByTestId('timer')).toHaveText('0:59');
+	await expect(block()).toHaveClass(/late/);
+	const got = await looping();
+	expect(got.length).toBeGreaterThan(0);
+	for (const a of got) expect(['opacity', 'transform'], a.pseudo ?? '').toEqual(expect.arrayContaining(a.props));
+	await expect(live(page).getByRole('button', { name: 'Tag beenden', exact: true })).toBeEnabled();
+
+	await page.emulateMedia({ reducedMotion: 'reduce' });
+	expect(await looping()).toEqual([]);
+	await expect(block()).toHaveClass(/late/);
 });
 
 // Bo nominated Cleo today, Dani is dead; seat 5 is being nominated

@@ -24,6 +24,7 @@
 
 <style>
 	.block {
+		position: relative;
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -47,6 +48,15 @@
 
 	.late {
 		border-color: var(--evil);
+	}
+
+	.late::after {
+		content: '';
+		position: absolute;
+		inset: -6px;
+		border: 3px solid var(--evil);
+		border-radius: calc(var(--radius-xl) + 6px);
+		pointer-events: none;
 		animation: pulse 1s ease-in-out infinite;
 	}
 
@@ -56,14 +66,21 @@
 	}
 
 	@keyframes pulse {
+		from {
+			opacity: 0;
+		}
 		50% {
-			box-shadow: 0 var(--ledge) 0 var(--shadow), 0 0 0 4px color-mix(in srgb, var(--evil) 45%, transparent);
+			opacity: 0.7;
+		}
+		to {
+			opacity: 0;
 		}
 	}
 
 	@media (prefers-reduced-motion: reduce) {
-		.late {
+		.late::after {
 			animation: none;
+			opacity: 0.7;
 		}
 	}
 </style>
