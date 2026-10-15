@@ -579,3 +579,27 @@ Fresh-context reviewer (opus) over `git diff origin/main...flow/blood-on-the-clo
 - [spec] `VoteClock.svelte:50-53`, `engine.ts:386-392`: during the sweep, tapping any markable seat toggles its vote, not only the seat under the hand. Space is limited to the hand seat. "Real short sweep marks votes" taps a seat before the hand starts. Left for the user at Gate 2: keep the convenience and say so in the spec, or restrict taps to the hand seat.
 - No weakened tests and no correctness bugs found.
 
+
+## Review
+
+Gate 2 revisions (S39–S49, U12–U16), fresh-context reviewer (opus) over `git diff 47629f3...<tip>`, three rounds. Rounds r1–r3 of the first build are under "Earlier review (r1–r3)".
+
+### r4 (fixed)
+- [spec] Timer last-minute warning pulsed `box-shadow` (theme allows ambient loops on transform/opacity only) and was unspecced. Now an `::after` ring with an opacity-only pulse, none under reduced motion; new scenario "Last minute warns without blocking".
+- [spec] End reveal orders the winning team first without spec text. Added to "Reveal shows the winning team and every seat".
+- [weak] End reveal test checked only the first row's icon. Now every row's icon and its team colour.
+- [weak] `voteTimeline` unit test built the count itself. Now tested from the returned times for N 5–15.
+- [weak] Night nav "last controls" check counted only buttons. Now every focusable control.
+
+### r5 (fixed)
+- [spec] Navigation was the last control only on the circle and death screens; the Grimoire hold button, "Spiel ist entschieden" and question buttons followed it elsewhere. Navigation is now last on every night screen (user: "das weiter soll einfach ganz unten sein"); new scenario "Night navigation is the last group of controls".
+- [weak] "Last minute warns without blocking" only checked `toBeEnabled`. Now hit-tests and clicks Tag beenden.
+- [weak, not fixed] `voteTimeline` unit test doesn't pin "the hand ends at the nominee"; the timeline has no end position, and the e2e sweep test checks the end angle.
+
+### r6 (open, round limit reached)
+- [weak] `e2e/clocktower-atmosphere.test.ts:97` contrast check ignores the day glow and sky layers behind text. Reviewer checked by hand: muted text on the strongest glow ≈ 6:1, nothing fails today.
+- [weak] `e2e/clocktower-day-layout.test.ts:145` "Day facts sit in a box" checks the text format, but the fixture gives "Nötig: 4" where the scenario names 3.
+- [weak] `e2e/clocktower-end.test.ts:120` teaser centring rejects only right/end alignment, so a left-aligned child would pass.
+- [weak, informational] "Public circles show no character icon" is vacuous on the reveal screen (no circle there); night and day are checked for real.
+- [spec, low] `Dawn.svelte:48` the dawn circle has no height cap (up to 640px); breaks "fits the viewport at one scroll position" only on viewports under ~700px tall, which no tested viewport has.
+- No weakened tests without a spec reason, no correctness bugs.
