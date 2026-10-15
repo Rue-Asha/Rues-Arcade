@@ -4,6 +4,7 @@
 	import Button from '#lib/ui/Button.svelte';
 	import Circle from './Circle.svelte';
 	import Facts from './Facts.svelte';
+	import { canBeNominated, canNominate } from './engine.ts';
 	import Timer from './Timer.svelte';
 	import type { ClocktowerAction, ClocktowerState } from './types.ts';
 	import { seatMs, threshold, voteOrder } from './vote.ts';
@@ -22,6 +23,7 @@
 	const vote = $derived(today.nominations.at(-1)!);
 	const count = $derived(s.seats.length);
 	const name = (i: number) => s.seats[i].player.name;
+	const rings = (i: number) => ({ nominee: canBeNominated(s, i), nominator: canNominate(s, i) });
 
 	// `step` counts the sectors the hand has entered; in sector k it turns on to that sector's end boundary, so over
 	// one seat time it covers exactly 360 / count degrees and never rests
@@ -80,6 +82,7 @@
 	<div class="cap"><Circle
 		seats={s.seats}
 		block={today.block}
+		{rings}
 		marked={vote.voters}
 		{hand}
 		{handMs}

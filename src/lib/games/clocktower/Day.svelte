@@ -8,6 +8,7 @@
 	import SeatActions from './SeatActions.svelte';
 	import Timer from './Timer.svelte';
 	import VoteClock from './VoteClock.svelte';
+	import { canBeNominated, canNominate } from './engine.ts';
 	import { threshold } from './vote.ts';
 	import { living } from './win.ts';
 	import type { ClocktowerAction, ClocktowerState } from './types.ts';
@@ -28,6 +29,7 @@
 		if (!s.seats[i].alive) return 'ist tot';
 		return today.nominations.some((n) => n.nominator === i) ? 'hat heute schon nominiert' : null;
 	}
+	const rings = (i: number) => ({ nominee: canBeNominated(s, i), nominator: canNominate(s, i) });
 	const barredSeats = $derived(s.seats.flatMap((_, i) => (barred(i) === null ? [] : [i])));
 
 	const last = $derived(today.nominations.at(-1)!);
@@ -50,7 +52,7 @@
 {:else if screen === 'grimoire'}
 	<section class="stack" aria-labelledby="phase">
 		{@render head(`Tag ${today.number}`)}
-		<div class="cap"><Circle seats={s.seats} block={today.block} onseat={(i) => (sheet = i)} /></div>
+		<div class="cap"><Circle seats={s.seats} block={today.block} {rings} onseat={(i) => (sheet = i)} /></div>
 		{#if today.block !== null}<Facts><p>Auf dem Block: {name(today.block)}</p></Facts>{/if}
 		<div class="row">
 			<Button variant="primary" onclick={() => (ending = true)}>Tag beenden</Button>
@@ -59,7 +61,7 @@
 {:else if screen === 'nominator'}
 	<section class="stack" aria-labelledby="phase">
 		{@render head(`Wer nominiert ${name(nominee)}?`)}
-		<div class="cap"><Circle seats={s.seats} block={today.block} disabled={barred} onseat={(i) => send({ type: 'nominate', nominator: i })} /></div>
+		<div class="cap"><Circle seats={s.seats} block={today.block} {rings} disabled={barred} onseat={(i) => send({ type: 'nominate', nominator: i })} /></div>
 		{#if barredSeats.length}
 			<Facts>
 				<ul>
@@ -76,7 +78,7 @@
 {:else if screen === 'result'}
 	<section class="stack" aria-labelledby="phase">
 		{@render head(result.title)}
-		<div class="cap"><Circle seats={s.seats} block={today.block} marked={last.voters} hand={last.nominee} /></div>
+		<div class="cap"><Circle seats={s.seats} block={today.block} {rings} marked={last.voters} hand={last.nominee} /></div>
 		<Facts><p>{result.detail}</p></Facts>
 		<div class="row">
 			<Button variant="primary" onclick={() => send({ type: 'next' })}>Weiter</Button>
