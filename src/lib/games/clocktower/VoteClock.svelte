@@ -23,19 +23,24 @@
 	const count = $derived(s.seats.length);
 	const name = (i: number) => s.seats[i].player.name;
 
-	// the hand rests on a seat for one seat time; `step` counts the seats it has visited
+	// `step` counts the sectors the hand has entered; in sector k it turns on to that sector's end boundary, so over
+	// one seat time it covers exactly 360 / count degrees and never rests
 	const per = seatMs();
-	const glide = reducedMotion() ? 0 : Math.min(250, per * 0.6);
+	const reduced = reducedMotion();
 	let step = $state(-1);
 	const order = $derived(voteOrder(vote.nominee, count));
-	const under = $derived(screen === 'sweep' && step >= 0 ? order[step] : null);
-	// an index past the last seat keeps the hand turning clockwise instead of swinging back at seat 1
-	const hand = $derived(under === null ? vote.nominee : vote.nominee + 1 + step);
+	const sweeping = $derived(screen === 'sweep');
+	const under = $derived(sweeping && step >= 0 ? order[step] : null);
+	// seat units past the last seat keep the hand turning clockwise instead of swinging back at seat 1
+	const hand = $derived(!sweeping ? vote.nominee : step < 0 ? vote.nominee + 0.5 : vote.nominee + (reduced ? 1 : 1.5) + step);
+	const handMs = $derived(sweeping && step >= 0 && !reduced ? per : 0);
 
 	$effect(() => {
 		if (screen !== 'sweep') return;
 		let id: ReturnType<typeof setTimeout>;
 		const visit = (i: number) => {
+			// commit the start boundary first, or the hand would glide to the first sector from the nominee
+			if (i === 0) void document.body.offsetHeight;
 			step = i;
 			play('tick');
 			id = setTimeout(() => (i + 1 < count ? visit(i + 1) : dispatch({ type: 'swept' })), per);
@@ -48,10 +53,12 @@
 	const casts = (i: number) => s.seats[i].alive || s.seats[i].ghostVote;
 	const mark = (i: number, on: boolean) => dispatch({ type: 'mark', seat: i, on });
 
-	function tap(i: number) {
-		if (screen === 'clock') onseat(i);
-		else mark(i, !voted(i));
-	}
+	const off = (i: number) => {
+		if (sweeping && i !== under) return 'Zeiger ist woanders';
+		return casts(i) || voted(i) ? null : 'keine Stimme';
+	};
+
+	const tap = (i: number) => (screen === 'clock' ? onseat(i) : mark(i, !voted(i)));
 
 	function key(e: KeyboardEvent) {
 		if (screen !== 'sweep' || e.key !== ' ') return;
@@ -75,8 +82,9 @@
 		block={today.block}
 		marked={vote.voters}
 		{hand}
-		handMs={glide}
-		disabled={screen === 'clock' ? undefined : (i) => (casts(i) || voted(i) ? null : 'keine Stimme')}
+		{handMs}
+		sector={under}
+		disabled={screen === 'clock' ? undefined : off}
 		onseat={tap}
 	/></div>
 	<Facts>
@@ -84,7 +92,7 @@
 			<span>Nötig: {threshold(living(s.seats))}</span>
 			<span>Höchststand: {today.high}</span>
 		</p>
-		{#if screen === 'sweep'}<p class="hint">Platz antippen oder Leertaste, solange der Zeiger darauf steht.</p>{/if}
+		{#if screen === 'sweep'}<p class="hint">Platz antippen oder Leertaste, solange der Zeiger in seinem Kreisstück steht.</p>{/if}
 	</Facts>
 	{#if screen === 'clock'}
 		<div class="row">
@@ -93,13 +101,7 @@
 		</div>
 	{:else if screen !== 'sweep'}
 		<div class="row">
-			<Button variant="secondary" square label="Stimme weniger" onclick={() => dispatch({ type: 'count', votes: Math.max(0, (vote.votes ?? 0) - 1) })}>
-				<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"></path></svg>
-			</Button>
 			<output class="votes" data-testid="count">{vote.votes}</output>
-			<Button variant="secondary" square label="Stimme mehr" onclick={() => dispatch({ type: 'count', votes: Math.min(count, (vote.votes ?? 0) + 1) })}>
-				<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M12 5v14"></path></svg>
-			</Button>
 			<Button variant="primary" onclick={() => dispatch({ type: 'confirm' })}>Bestätigen</Button>
 		</div>
 	{/if}

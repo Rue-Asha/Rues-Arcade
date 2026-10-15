@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { SEAT_MS, seatMs, sweepMs, threshold, voteOrder, voteResult } from './vote.ts';
+import { sectorOf } from './circle.ts';
+import { SEAT_MS, seatMs, sweepAt, sweepMs, threshold, voteOrder, voteResult } from './vote.ts';
 
 const g = globalThis as { clocktowerSeatMs?: number };
 
@@ -17,6 +18,30 @@ describe('clocktower vote', () => {
 		expect(SEAT_MS).toBe(2500);
 		expect(sweepMs(5)).toBe(12500);
 		expect(sweepMs(15)).toBe(37500);
+	});
+
+	it('Scenario: Hand position over the sweep', () => {
+		const deg = (hand: number) => (hand * 360) / 7;
+		const at = (ms: number) => sweepAt(ms, 3, 7, 2500)!;
+		expect(deg(at(0).hand)).toBeCloseTo(180, 9);
+		expect(at(0).seat).toBe(4);
+		expect(sectorOf(deg(at(0).hand), 7)).toBe(4);
+		expect(deg(at(1250).hand)).toBeCloseTo((4 * 360) / 7, 9);
+		expect(at(2499).seat).toBe(4);
+		expect(at(2500).seat).toBe(5);
+		expect(sectorOf(deg(at(2500).hand), 7)).toBe(5);
+		expect(at(17499).seat).toBe(3);
+		expect(sectorOf(deg(at(17499).hand), 7)).toBe(3);
+		expect(deg(at(2500).hand) - deg(at(0).hand)).toBeCloseTo(360 / 7, 9);
+		expect(deg(at(17499).hand) - deg(at(1250).hand)).toBeCloseTo((360 / 7) * (16249 / 2500), 9);
+		expect(sweepAt(17500, 3, 7, 2500)).toBeNull();
+		expect(sweepAt(-1, 3, 7, 2500)).toBeNull();
+	});
+
+	it('sweep position uses the injected seat time by default', () => {
+		g.clocktowerSeatMs = 400;
+		expect(sweepAt(400, 0, 5)!.seat).toBe(2);
+		expect(sweepAt(2000, 0, 5)).toBeNull();
 	});
 
 	it('seat time can be injected for tests', () => {

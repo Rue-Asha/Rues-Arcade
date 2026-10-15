@@ -114,6 +114,8 @@ export async function walk(page: Page, check: (slug: string) => Promise<void>) {
 		await expect(live(page).locator('[data-under]')).toBeVisible();
 		await live(page).locator('[data-seat="7"]').click();
 		await expect(live(page).locator('[data-seat="7"][data-marked]')).toBeVisible();
+		// the hand turns for the whole (long) seat time; the shot takes it at its sector's end boundary
+		await live(page).locator('[data-hand]').evaluate((el) => el.getAnimations().forEach((a) => a.finish()));
 		await settled(page);
 		await check(tag('sweep'));
 

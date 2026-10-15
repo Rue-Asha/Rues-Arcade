@@ -150,6 +150,7 @@ const handAudit = (page: Page, pointed: number) =>
 			hubAtCentre: Math.hypot(c.x - (plane.left + plane.width / 2), c.y - (plane.top + plane.height / 2)),
 			tipToSeat: Math.hypot(p.x - seatMid.x, p.y - seatMid.y),
 			radius: t.width / 2,
+			ring: Math.hypot(seatMid.x - c.x, seatMid.y - c.y),
 			length: arm.offsetHeight,
 			reach: Math.hypot(p.x - c.x, p.y - c.y),
 			width: arm.offsetWidth,
@@ -179,7 +180,10 @@ test('Scenario: Voting clock hand stands out', async ({ page }) => {
 	await expect(live(page).locator('[data-under]')).toHaveAttribute('data-under', '6');
 	const swept = await handAudit(page, 6);
 	expect(swept.hubAtCentre).toBeLessThan(2);
-	expect(swept.tipToSeat).toBeLessThan(swept.radius);
+	// the sweeping hand points at a sector boundary, so only its reach is tied to the seats' ring
+	expect(Math.abs(swept.reach - swept.ring)).toBeLessThan(swept.radius);
+	expect(swept.reach).toBeGreaterThan(swept.length * 0.8);
+	expect(swept.width).toBeGreaterThanOrEqual(4);
 	expect(swept.contrast).toBeGreaterThanOrEqual(3);
 	expect(swept.scroll).toBe(true);
 });

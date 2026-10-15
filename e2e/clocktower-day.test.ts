@@ -332,7 +332,8 @@ async function shortSweep(page: Page) {
 	await page.addInitScript((ms) => ((window as unknown as { clocktowerSeatMs: number }).clocktowerSeatMs = ms), SHORT);
 }
 const under = (page: Page) => live(page).locator('[data-under]').getAttribute('data-under');
-const handAngle = (page: Page) => live(page).locator('[data-hand]').evaluate((el) => (el as HTMLElement).style.getPropertyValue('--angle'));
+const handAngle = async (page: Page) =>
+	Number.parseFloat(await live(page).locator('[data-hand]').evaluate((el) => (el as HTMLElement).style.getPropertyValue('--angle')));
 const lit = (page: Page) =>
 	live(page).locator('[data-seat][data-marked]').evaluateAll((els) => els.map((el) => Number((el as HTMLElement).dataset.seat)));
 
@@ -356,7 +357,7 @@ test('Scenario: Clock points at the nominee', async ({ page }) => {
 	await expect(live(page).getByRole('button', { name: 'Zurück', exact: true })).toBeVisible();
 	await expect(live(page).getByText('Nötig: 3', { exact: true })).toBeVisible();
 	await expect(live(page).getByText('Höchststand: 3', { exact: true })).toBeVisible();
-	expect(Number.parseFloat(await handAngle(page))).toBeCloseTo((3 * 360) / 7, 1);
+	expect(await handAngle(page)).toBeCloseTo((3 * 360) / 7, 1);
 });
 
 test('Scenario: Real short sweep marks votes', async ({ page }) => {
@@ -366,11 +367,15 @@ test('Scenario: Real short sweep marks votes', async ({ page }) => {
 	await live(page).getByRole('button', { name: 'Abstimmung beginnen', exact: true }).click();
 	await expect(live(page).locator('[data-sweep]')).toBeVisible();
 
-	await seat(page, 5).click();
-	// the first seat after the nominee (seat 3) is seat 4; seat 6 is two steps on
+	// the first seat after the nominee (seat 3) is seat 4; seat 5 is not in the hand's sector yet
 	await page.clock.runFor(1);
 	expect(await under(page)).toBe('4');
-	await page.clock.runFor(SHORT * 2);
+	await seat(page, 5).click({ force: true });
+	await expect(seat(page, 5)).not.toHaveAttribute('data-marked');
+	await page.clock.runFor(SHORT);
+	expect(await under(page)).toBe('5');
+	await seat(page, 5).click();
+	await page.clock.runFor(SHORT);
 	expect(await under(page)).toBe('6');
 	await page.keyboard.press('Space');
 	await expect.poll(() => lit(page)).toEqual([5, 6]);
@@ -379,48 +384,11 @@ test('Scenario: Real short sweep marks votes', async ({ page }) => {
 
 	await page.clock.runFor(SHORT * 4);
 	expect(await under(page)).toBe('3');
-	expect(Number.parseFloat(await handAngle(page))).toBeGreaterThan(0);
 	await page.clock.runFor(SHORT);
 	await expect(live(page).getByTestId('count')).toHaveText('2');
 	expect(await lit(page)).toEqual([5, 6]);
-});
-
-test('Scenario: Tapping any seat during the sweep toggles its vote', async ({ page }) => {
-	await shortSweep(page);
-	await frozen(page, day1(seated(F7)));
-	await toClock(page, 4, 1);
-	await live(page).getByRole('button', { name: 'Abstimmung beginnen', exact: true }).click();
-	await page.clock.runFor(1);
-	await page.clock.runFor(SHORT);
-	expect(await under(page)).toBe('6');
-
-	await seat(page, 2).click();
-	await expect(seat(page, 2)).toHaveAttribute('data-marked', '');
-	expect(await under(page)).toBe('6');
-	await seat(page, 5).click();
-	await expect(seat(page, 5)).toHaveAttribute('data-marked', '');
-	await seat(page, 5).click();
-	await expect(seat(page, 5)).not.toHaveAttribute('data-marked');
-	expect(await under(page)).toBe('6');
-
-	await page.clock.runFor(SHORT * 6);
-	await expect(live(page).getByTestId('count')).toHaveText('1');
-	expect(await lit(page)).toEqual([2]);
-});
-
-test('Scenario: Space marks only the seat under the hand', async ({ page }) => {
-	await shortSweep(page);
-	await frozen(page, day1(seated(F7)));
-	await toClock(page, 4, 1);
-	await live(page).getByRole('button', { name: 'Abstimmung beginnen', exact: true }).click();
-	await page.clock.runFor(1);
-	await page.clock.runFor(SHORT);
-	expect(await under(page)).toBe('6');
-
-	await seat(page, 2).focus();
-	await page.keyboard.press('Space');
-	await expect(seat(page, 6)).toHaveAttribute('data-marked', '');
-	await expect(seat(page, 2)).not.toHaveAttribute('data-marked');
+	// the hand is back on the nominee's seat
+	expect(await handAngle(page)).toBeCloseTo((2 * 360) / 7, 1);
 });
 
 test('Scenario: Dead without ghost vote cannot be marked', async ({ page }) => {
@@ -430,36 +398,15 @@ test('Scenario: Dead without ghost vote cannot be marked', async ({ page }) => {
 	await live(page).getByRole('button', { name: 'Abstimmung beginnen', exact: true }).click();
 	await page.clock.runFor(1);
 	await expect(seat(page, 5)).toHaveAttribute('aria-label', 'Platz 5, Eli, tot, keine Stimme');
+	expect(await under(page)).toBe('4');
+	await seat(page, 4).click();
+	await expect(seat(page, 4)).toHaveAttribute('data-marked', '');
 	await page.clock.runFor(SHORT);
 	expect(await under(page)).toBe('5');
+	await expect(seat(page, 5)).toHaveAttribute('title', 'keine Stimme');
 	await seat(page, 5).click({ force: true });
 	await page.keyboard.press('Space');
 	await expect(seat(page, 5)).not.toHaveAttribute('data-marked');
-	await seat(page, 4).click();
-	await expect(seat(page, 4)).toHaveAttribute('data-marked', '');
-});
-
-// seats 4 and 5 voted in the sweep, count 2, on the confirm screen
-const counted = () => play(day1(seated(F7)), [
-	{ type: 'nominee', seat: 2 }, { type: 'nominate', nominator: 0 }, { type: 'vote' },
-	{ type: 'mark', seat: 3, on: true }, { type: 'mark', seat: 4, on: true }, { type: 'swept' }
-]);
-
-test('Scenario: Confirm corrects missed timing', async ({ page }) => {
-	await open(page, counted());
-	const count = live(page).getByTestId('count');
-	await expect(count).toHaveText('2');
-	await seat(page, 2).click();
-	await expect(seat(page, 2)).toHaveAttribute('data-marked', '');
-	await expect(count).toHaveText('3');
-	await live(page).getByRole('button', { name: 'Stimme mehr', exact: true }).click();
-	await expect(count).toHaveText('4');
-	await live(page).getByRole('button', { name: 'Bestätigen', exact: true }).click();
-
-	await expect(live(page).getByText('Cleo kommt auf den Block', { exact: true })).toBeVisible();
-	const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('arcade:session:clocktower')!).state.today.nominations[0]);
-	expect(saved.votes).toBe(4);
-	expect(saved.voters).toEqual([1, 3, 4]);
 });
 
 test('Scenario: Reduced motion hand jumps', async ({ page }) => {
@@ -470,11 +417,15 @@ test('Scenario: Reduced motion hand jumps', async ({ page }) => {
 	await live(page).getByRole('button', { name: 'Abstimmung beginnen', exact: true }).click();
 	const moving = () =>
 		live(page).locator('[data-hand]').evaluate((el) => el.getAnimations().filter((a) => a.playState === 'running').length);
+	const lightOn = () => live(page).locator('[data-circle] [data-sector]').getAttribute('data-sector');
 	await page.clock.runFor(1);
-	const first = await handAngle(page);
+	// seat 3 is the nominee, so seat 4 holds the first sector and the hand points at its centre
+	expect(await lightOn()).toBe('4');
+	expect(await handAngle(page)).toBeCloseTo((3 * 360) / 7, 1);
 	expect(await moving()).toBe(0);
 	await page.clock.runFor(SHORT);
-	expect(await handAngle(page)).not.toBe(first);
+	expect(await lightOn()).toBe('5');
+	expect(await handAngle(page)).toBeCloseTo((4 * 360) / 7, 1);
 	expect(await moving()).toBe(0);
 });
 
