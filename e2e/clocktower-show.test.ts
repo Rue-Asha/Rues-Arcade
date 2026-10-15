@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { F15, F5, F7, seated } from '../src/lib/games/clocktower/fixtures.ts';
+import { dead, F15, F5, F7, firstDay, seated } from '../src/lib/games/clocktower/fixtures.ts';
 import type { ClocktowerState } from '../src/lib/games/clocktower/types.ts';
 import { byId } from '../src/lib/games/clocktower/characters.ts';
 import { play, seedClocktower } from './clocktower-session.ts';
@@ -105,3 +105,108 @@ for (const [seats, list] of [[5, F5], [7, F7], [15, F15]] as const) {
 		}
 	});
 }
+
+// the circle screen of the first step of `kind`, counted from where the night starts
+function atStep(state: ClocktowerState, kind: string): ClocktowerState {
+	const { screens, steps, at } = state.night!;
+	const k = screens.findIndex((x) => x.screen === 'circle' && steps[x.step].kind === kind);
+	expect(k, kind).toBeGreaterThan(-1);
+	return play(state, next(k - at));
+}
+
+const night1 = (list: typeof F5) => reveal(seated(list));
+// the day-1 grimoire ended at once: no execution, dusk of night 2
+const night2 = (list: typeof F5, kill?: number) => {
+	const day = firstDay(night1(list));
+	return play(kill === undefined ? day : dead(day, kill), [{ type: 'endDay' }, { type: 'next' }]);
+};
+
+const seatAt = (page: Page, n: number) => live(page).locator(`[data-seat="${n}"]`);
+const pointed = (page: Page) => live(page).locator('[data-seat][data-pointed]');
+const stored = (page: Page) => page.evaluate(() => localStorage.getItem('arcade:session:clocktower'));
+
+async function show(page: Page, item: string, option?: string) {
+	await chip(page, item).click();
+	if (option) await bar(page).getByLabel(item, { exact: true }).selectOption(option);
+	await bar(page).getByRole('button', { name: 'Zeigen', exact: true }).click();
+	await expect(card(page)).toBeVisible();
+}
+
+test('Scenario: Seats are marked while a text is shown', async ({ page }) => {
+	await open(page, atStep(night1(F7), 'investigator'));
+	const before = await stored(page);
+	await show(page, 'Charakter');
+	for (const n of [2, 3, 6, 3]) await seatAt(page, n).click();
+	await expect(card(page)).toBeVisible();
+	await expect(seatAt(page, 2)).toHaveAttribute('data-pointed', '');
+	await expect(seatAt(page, 6)).toHaveAttribute('data-pointed', '');
+	await expect(seatAt(page, 3)).not.toHaveAttribute('data-pointed');
+	await expect(pointed(page)).toHaveCount(2);
+	await expect(seatAt(page, 2).locator('[data-badge="check"]')).toHaveCount(1);
+	expect(await stored(page)).toBe(before);
+});
+
+test("Scenario: Closing the text gives taps back to the Imp's target", async ({ page }) => {
+	await open(page, atStep(night2(F5), 'imp'));
+	await expect(live(page).getByText('Tippe auf den Platz des Ziels.', { exact: true })).toBeVisible();
+	await show(page, 'Ja');
+	await seatAt(page, 2).click();
+	await seatAt(page, 5).click();
+	await expect(pointed(page)).toHaveCount(2);
+	await expect(live(page).getByText('Tippe auf den Platz des Ziels.', { exact: true })).toBeVisible();
+
+	await card(page).click();
+	await expect(card(page)).toHaveCount(0);
+	await expect(pointed(page)).toHaveCount(0);
+	await seatAt(page, 4).click();
+	await expect(live(page).getByText('Ziel: Dani (#4)', { exact: true })).toBeVisible();
+	await expect(seatAt(page, 4)).not.toHaveAttribute('data-pointed');
+	await expect(seatAt(page, 4)).toHaveAttribute('data-marked', '');
+	await expect(pointed(page)).toHaveCount(0);
+});
+
+test('Scenario: Dead seats can be marked but not targeted', async ({ page }) => {
+	await open(page, atStep(night2(F7, 5), 'imp'));
+	await show(page, 'Ja');
+	await seatAt(page, 6).click();
+	await expect(seatAt(page, 6)).toHaveAttribute('data-pointed', '');
+	await card(page).click();
+	await expect(card(page)).toHaveCount(0);
+	await seatAt(page, 6).click({ force: true });
+	await expect(seatAt(page, 6)).not.toHaveAttribute('data-pointed');
+	await expect(seatAt(page, 6)).not.toHaveAttribute('data-marked');
+	await expect(live(page).getByText('Tippe auf den Platz des Ziels.', { exact: true })).toBeVisible();
+});
+
+test('Scenario: Another text keeps the marks', async ({ page }) => {
+	await open(page, atStep(night1(F7), 'investigator'));
+	await show(page, 'Zahl', '4');
+	await seatAt(page, 3).click();
+	await show(page, 'Ja');
+	await expect(card(page).getByText('Ja', { exact: true })).toBeVisible();
+	await expect(card(page).getByText('4', { exact: true })).toHaveCount(0);
+	await expect(seatAt(page, 3)).toHaveAttribute('data-pointed', '');
+});
+
+test('Scenario: Leaving the step or reloading clears text and marks', async ({ page }) => {
+	const state = atStep(night2(F5), 'imp');
+	for (const how of ['step', 'reload']) {
+		await open(page, state);
+		await seatAt(page, 4).click();
+		await expect(live(page).getByText('Ziel: Dani (#4)', { exact: true })).toBeVisible();
+		await show(page, 'Ja');
+		await seatAt(page, 3).click();
+		await expect(pointed(page)).toHaveCount(1);
+		if (how === 'step') {
+			await live(page).getByRole('button', { name: 'Weiter', exact: true }).click();
+			await expect(live(page).getByRole('heading', { name: 'Schlaf wieder ein', exact: true })).toBeVisible();
+			await live(page).getByRole('button', { name: 'Zurück', exact: true }).click();
+		} else {
+			await page.reload();
+		}
+		await expect(live(page).locator('[data-circle]')).toBeVisible();
+		await expect(card(page), how).toHaveCount(0);
+		await expect(pointed(page), how).toHaveCount(0);
+		await expect(live(page).getByText('Ziel: Dani (#4)', { exact: true }), how).toBeVisible();
+	}
+});

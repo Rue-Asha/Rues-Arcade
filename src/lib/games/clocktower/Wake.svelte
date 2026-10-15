@@ -24,6 +24,7 @@
 
 	let choosing = $state(false);
 	let card = $state<Card | null>(null);
+	let pointed = $state<number[]>([]);
 	let bar = $state<ShowBar>();
 
 	// a text and its marks belong to one circle screen
@@ -31,12 +32,16 @@
 		at.screen;
 		if ('step' in at) at.step;
 		card = null;
+		pointed = [];
 	});
 
 	function close() {
 		if (card) bar?.closed(card);
 		card = null;
+		pointed = [];
 	}
+
+	const point = (i: number) => (pointed = pointed.includes(i) ? pointed.filter((x) => x !== i) : [...pointed, i]);
 
 	const step = $derived(s.night!.steps[at.step]);
 	const target = $derived(s.night!.target);
@@ -160,14 +165,15 @@
 				<Circle
 					seats={s.seats}
 					marked={target === null ? [] : [target]}
+					{pointed}
 					label={(i) => (i === target && starpass === null ? 'Ziel' : null)}
-					disabled={(i) => (starpass !== null ? 'Der Imp hat sich selbst gewählt' : s.seats[i].alive ? null : 'bereits tot')}
-					onseat={(i) => dispatch({ type: 'target', seat: i === target ? null : i })}
+					disabled={(i) => (card ? null : starpass !== null ? 'Der Imp hat sich selbst gewählt' : s.seats[i].alive ? null : 'bereits tot')}
+					onseat={(i) => (card ? point(i) : dispatch({ type: 'target', seat: i === target ? null : i }))}
 					center={card ? shown : undefined}
 				/>
 			</div>
 		{:else}
-			<div class="fit"><Circle seats={s.seats} marked={step.seats} center={card ? shown : undefined} /></div>
+			<div class="fit"><Circle seats={s.seats} marked={step.seats} {pointed} onseat={card ? point : undefined} center={card ? shown : undefined} /></div>
 		{/if}
 		<ShowBar bind:this={bar} state={s} {dispatch} {step} onshow={(c) => (card = c)} />
 		{@render peek?.()}
