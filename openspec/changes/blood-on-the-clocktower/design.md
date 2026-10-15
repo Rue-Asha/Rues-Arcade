@@ -592,3 +592,20 @@ imported read-only and keep their signatures.
 
 None: no schema, migration, API or dependency change. Existing sessions of the six games keep their shape; BotC starts
 at `stateVersion` 1.
+
+### Circle contract as built by U17 (round 2, wave 1)
+Later units of round 2 rely on this; it records U17's report, including where it departs from the plan above.
+- `tickAngles(count)`: degrees clockwise from the top, (k + 0.5)·360/count; tick k lies between seats k+1 and k+2.
+- `sectorOf(deg, count)`: 0-based seat whose sector [angleOf(i) − 180/count, angleOf(i) + 180/count) holds deg; any real deg; a boundary belongs to the next seat clockwise.
+- `wedge(seat, count, box)`: SVG path d from the box centre (px) to the outer hairline ring (radius box/2 − 1 px), ±180/count degrees around the seat.
+- `ornament(count, box)`: `ticks` holds count ticks drawn as `<path data-ticks={count}>`; `inner` in px.
+- Circle `hand?: number | null`: seat units, fractional; angle = hand·360/count deg; k + 0.5 is the boundary after seat k; values ≥ count keep turning clockwise; `[data-hand]` with `--angle` (deg). `handMs?: number`: ms of the hand's linear transform transition (0 = jump).
+- Circle `sector?: number | null`: 0-based seat; `<path data-sector={i+1} aria-hidden>` under the seats (--clocktower at 15% opacity, no pointer events).
+- Circle `rings?: (i) => { nominee: boolean; nominator: boolean }`: `<span data-avail="nominee">` solid 2px --nominee ring at d/2 + 3px; `<span data-avail="nominator">` dashed 2px --nominator ring at d/2 + 7px; aria-hidden, no pointer events, full opacity (tokens ≥ 3:1, opacity would lower the composite).
+- Circle `pointed?: number[]`: 0-based; `data-pointed`, 3px --gold ring and a check badge. `marked?: number[]`: unchanged meaning (woken / voting / target), `data-marked`, tint plus a check badge.
+- Circle `center?: Snippet`: in `<div data-centre>`, a disc of diameter 2·(ornament().inner − 4) px, exposed as `--centre` (px); its direct children, buttons and links get pointer events.
+- Circle `dying?: number[]`: 0-based; class `dying` runs keyframes `death` (1000 ms: translateY 4px sink, fade to 0.35, return; transform/opacity only) once on mount, child `[data-pulse]` runs `death-ring` (1000 ms, scale 1 → 1.7, opacity 0.9 → 0); none under reduced motion.
+- Seat node: `.no` 12px bold pill centred on the top rim; `.name` (title = full name) clamp(15px, 0.3·d, 20px), one line, ellipsis. With `token`: icon 0.47·d in the face, name on a ribbon at centre + 0.28·d, max width min(56px, neighbour distance − 8px). Seats placed with left/top = centre − d/2 (no translate); `.circle` has padding-block 8px.
+- Badges `<span data-badge="block|ghost|check" aria-hidden>`: discs 0.4·d with a 2px ring in the face colour at radius d/2 + 2px; block 45° (axe), ghost 135° (raised hand; `data-spent` hollow --spent ring, grey glyph, `[data-strike]`), check 225°; on icon nodes all at 45°.
+- Press: enabled seat pointerdown → scale 0.93 in 90 ms with a gold glow on `[data-ripple]`; click → spring 0.93 → 1.06 → 1 in 340 ms, ripple 460 ms, `navigator.vibrate?.(10)`, then `onseat`. Disabled seat (`disabled(i)` returns a reason) does nothing; reduced motion: no animation.
+- Tokens (app.css night/day, tokens.ts): --ghost, --ghost-ink, --spent, --nominee, --nominator; `clocktowerMarks` exports the non-text pairs (≥ 3:1).

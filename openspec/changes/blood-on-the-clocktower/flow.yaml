@@ -7,6 +7,7 @@ gate1: 2026-10-14
 gate0_r2: 2026-10-15  # Gate 2 revisions round 2 (S50–S66) scope approved
 gate1_r2: 2026-10-15  # round 2 plan U17–U22 approved incl. additions 1–5 and both legibility exceptions
 learnings:
+- e2e files of one change can't run in parallel with the look baseline on the same port → a builder measuring look-walk time runs it in its own run before and after (U17 friction, 2026-10-15)
 - Rue at Gate 2 round 2 (2026-10-15): 17 more revisions after S39–S49, mostly the seat node (name vs number, icons, status badges, nomination rings), the vote sweep rule and show texts in the circle centre → explore for a circle/board game walks each screen's node content and status markers with the user before planning
 - identification step before scoping Gate 2 feedback (Explore agent on code + verifier shots) resolved "Uhr" and "Bluffs unten" in one question round; Mobbin has no circular/seat-layout references, so radial patterns are component-level only (2026-10-15)
 - builders wait on proof:full: background output file stays empty until exit and a tail/wait loop gets auto-backgrounded at 120s → read the redirected log only after the completion notice (U14 friction; strengthens the polling learning, 2026-10-15)
