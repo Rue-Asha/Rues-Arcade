@@ -72,6 +72,11 @@
 <style>
 	.pad {
 		padding: 20px;
+		text-align: center;
+	}
+
+	.pad :global(.row) {
+		justify-content: center;
 	}
 
 	.said {

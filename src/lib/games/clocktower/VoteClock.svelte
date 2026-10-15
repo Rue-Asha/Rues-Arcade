@@ -3,6 +3,7 @@
 	import { reducedMotion } from '#lib/theme.ts';
 	import Button from '#lib/ui/Button.svelte';
 	import Circle from './Circle.svelte';
+	import Facts from './Facts.svelte';
 	import Timer from './Timer.svelte';
 	import type { ClocktowerAction, ClocktowerState } from './types.ts';
 	import { seatMs, threshold, voteOrder } from './vote.ts';
@@ -69,7 +70,7 @@
 		</h2>
 		{#if today.deadline !== null}<Timer deadline={today.deadline} />{/if}
 	</div>
-	<Circle
+	<div class="cap"><Circle
 		seats={s.seats}
 		block={today.block}
 		marked={vote.voters}
@@ -77,19 +78,20 @@
 		handMs={glide}
 		disabled={screen === 'clock' ? undefined : (i) => (casts(i) || voted(i) ? null : 'keine Stimme')}
 		onseat={tap}
-	/>
-	<p class="facts">
-		<span>Nötig: {threshold(living(s.seats))}</span>
-		<span>Höchststand: {today.high}</span>
-	</p>
+	/></div>
+	<Facts>
+		<p class="pair">
+			<span>Nötig: {threshold(living(s.seats))}</span>
+			<span>Höchststand: {today.high}</span>
+		</p>
+		{#if screen === 'sweep'}<p class="hint">Platz antippen oder Leertaste, solange der Zeiger darauf steht.</p>{/if}
+	</Facts>
 	{#if screen === 'clock'}
 		<div class="row">
 			<Button variant="primary" onclick={() => dispatch({ type: 'vote' })}>Abstimmung beginnen</Button>
 			<Button variant="secondary" onclick={() => dispatch({ type: 'cancel' })}>Zurück</Button>
 		</div>
-	{:else if screen === 'sweep'}
-		<p class="muted hint">Platz antippen oder Leertaste, solange der Zeiger darauf steht.</p>
-	{:else}
+	{:else if screen !== 'sweep'}
 		<div class="row">
 			<Button variant="secondary" square label="Stimme weniger" onclick={() => dispatch({ type: 'count', votes: Math.max(0, (vote.votes ?? 0) - 1) })}>
 				<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"></path></svg>
@@ -106,25 +108,20 @@
 <style>
 	.head {
 		display: flex;
-		align-items: baseline;
-		justify-content: space-between;
-		gap: 12px;
+		flex-direction: column;
+		align-items: stretch;
+		gap: 10px;
+		text-align: center;
 	}
 
 	.head h2 {
 		font-size: 22px;
 	}
 
-	.facts {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 4px 20px;
-		margin: 0;
-		font-weight: 700;
-	}
-
-	.hint {
-		margin: 0;
+	.cap {
+		width: min(100%, calc(100svh - 380px));
+		min-width: min(100%, 320px);
+		margin-inline: auto;
 	}
 
 	.votes {
