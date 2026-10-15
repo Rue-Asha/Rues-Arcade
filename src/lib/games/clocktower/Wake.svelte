@@ -10,6 +10,7 @@
 	import { who, whoAll } from './label.ts';
 	import RoleCard from './RoleCard.svelte';
 	import ShowBar from './ShowBar.svelte';
+	import ShowCard, { type Card } from './ShowCard.svelte';
 	import type { ClocktowerAction, ClocktowerState, NightScreen } from './types.ts';
 
 	interface Props {
@@ -22,6 +23,20 @@
 	let { state: s, dispatch, at, peek }: Props = $props();
 
 	let choosing = $state(false);
+	let card = $state<Card | null>(null);
+	let bar = $state<ShowBar>();
+
+	// a text and its marks belong to one circle screen
+	$effect.pre(() => {
+		at.screen;
+		if ('step' in at) at.step;
+		card = null;
+	});
+
+	function close() {
+		if (card) bar?.closed(card);
+		card = null;
+	}
 
 	const step = $derived(s.night!.steps[at.step]);
 	const target = $derived(s.night!.target);
@@ -82,6 +97,10 @@
 		dispatch({ type: 'starpass', seat });
 	}
 </script>
+
+{#snippet shown()}
+	{#if card}<ShowCard {card} onclose={close} />{/if}
+{/snippet}
 
 {#snippet nav()}
 	<div class="nav">
@@ -144,12 +163,13 @@
 					label={(i) => (i === target && starpass === null ? 'Ziel' : null)}
 					disabled={(i) => (starpass !== null ? 'Der Imp hat sich selbst gewählt' : s.seats[i].alive ? null : 'bereits tot')}
 					onseat={(i) => dispatch({ type: 'target', seat: i === target ? null : i })}
+					center={card ? shown : undefined}
 				/>
 			</div>
 		{:else}
-			<div class="fit"><Circle seats={s.seats} marked={step.seats} /></div>
+			<div class="fit"><Circle seats={s.seats} marked={step.seats} center={card ? shown : undefined} /></div>
 		{/if}
-		<ShowBar state={s} {dispatch} {step} />
+		<ShowBar bind:this={bar} state={s} {dispatch} {step} onshow={(c) => (card = c)} />
 		{@render peek?.()}
 		{@render nav()}
 	</section>

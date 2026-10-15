@@ -158,14 +158,13 @@ const chip = (page: Page, name: string) => live(page).getByRole('button', { name
 const card = (page: Page) => page.getByTestId('show-card');
 const bar = (page: Page) => live(page).getByTestId('show-bar');
 
-test('Scenario: Show-bar opens full-screen cards', async ({ page }) => {
-	const state = play(fifteen(), next(circle(3)));
+test("Scenario: Show texts appear in the circle's centre", async ({ page }) => {
+	const state = play(reveal(seated(F7)), next(circle(0)));
 	await open(page, state);
 	await expect(bar(page)).toBeVisible();
-	const viewport = page.viewportSize()!;
 
 	const cases: { item: string; value?: { label: string; option: string }; shows: (c: ReturnType<typeof card>) => Promise<void> }[] = [
-		{ item: 'Charakter', value: { label: 'Charakter', option: 'imp' }, shows: (c) => expect(c.getByTestId('role-card')).toContainText('Imp') },
+		{ item: 'Charakter', value: { label: 'Charakter', option: 'imp' }, shows: (c) => expect(c.getByText('Imp', { exact: true })).toBeVisible() },
 		{ item: 'Das ist der Dämon', shows: (c) => expect(c.getByText('Das ist der Dämon', { exact: true })).toBeVisible() },
 		{ item: 'Deine Minions', shows: (c) => expect(c.getByText('Deine Minions', { exact: true })).toBeVisible() },
 		{
@@ -192,10 +191,38 @@ test('Scenario: Show-bar opens full-screen cards', async ({ page }) => {
 		await bar(page).getByRole('button', { name: 'Zeigen', exact: true }).click();
 		await expect(card(page), item).toBeVisible();
 		await shows(card(page));
-		expect(await card(page).boundingBox(), item).toEqual({ x: 0, y: 0, ...viewport });
+		await expect(page.locator('dialog[open]')).toHaveCount(0);
+		const m = await live(page).evaluate((stage) => {
+			const c = stage.querySelector<HTMLElement>('[data-testid="show-card"]')!;
+			const ring = stage.querySelector<HTMLElement>('[data-centre]')!.getBoundingClientRect();
+			const r = c.getBoundingClientRect();
+			const mid = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+			const radius = r.width / 2;
+			const hit = document.elementFromPoint(mid.x, mid.y);
+			const seats = [...stage.querySelectorAll<HTMLElement>('[data-seat]')].map((s) => {
+				const b = s.getBoundingClientRect();
+				// seat nodes are round
+				return { shown: b.width > 0 && b.height > 0, clear: Math.hypot(b.left + b.width / 2 - mid.x, b.top + b.height / 2 - mid.y) - b.width / 2 >= radius };
+			});
+			return {
+				hit: hit !== null && c.contains(hit),
+				inside: r.left >= ring.left - 0.5 && r.right <= ring.right + 0.5 && r.top >= ring.top - 0.5 && r.bottom <= ring.bottom + 0.5,
+				seats
+			};
+		});
+		expect(m.hit, `${item} is hit at its centre`).toBe(true);
+		expect(m.inside, `${item} inside the ring`).toBe(true);
+		expect(m.seats, item).toHaveLength(7);
+		expect(m.seats.every((x) => x.shown && x.clear), `${item} leaves every seat clear`).toBe(true);
 		await card(page).click();
 		await expect(card(page), item).toHaveCount(0);
 	}
+
+	await chip(page, 'Ja').click();
+	await bar(page).getByRole('button', { name: 'Zeigen', exact: true }).click();
+	await expect(card(page)).toBeVisible();
+	await page.keyboard.press('Escape');
+	await expect(card(page)).toHaveCount(0);
 });
 
 test('Scenario: Show-bar is compact', async ({ page }, project) => {
