@@ -38,18 +38,19 @@ for (const [name, build] of screens) {
 				if (p === 'sticky' || p === 'fixed') fixed.push(el.tagName + '.' + el.className);
 			}
 			const ring = stage.querySelector<HTMLElement>('[data-circle]')!;
-			const buttons = [...stage.querySelectorAll<HTMLElement>('button')];
-			const names = buttons.map((b) => b.textContent!.trim());
+			const focusable = [...stage.querySelectorAll<HTMLElement>('button, select, input, textarea, a[href], [tabindex]')].filter((el) => el.getAttribute('tabindex') !== '-1' && !el.hasAttribute('disabled') && el.getClientRects().length > 0);
+			const label = (el: HTMLElement) => el.textContent?.trim() || el.tagName.toLowerCase();
+			const names = focusable.map(label);
 			const tail = ['Weiter', 'Zurück', 'Überspringen'];
-			// the navigation is the last run of buttons, and nothing else lies below Weiter's top
+			// the navigation is the last run of controls, and nothing else lies below Weiter's top
 			let run = names.length;
 			while (run > 0 && tail.includes(names[run - 1])) run--;
-			const below = buttons.filter((b) => !tail.includes(b.textContent!.trim()) && b.getBoundingClientRect().bottom > w.getBoundingClientRect().top + 1);
+			const below = focusable.filter((b) => !tail.includes(label(b)) && b.getBoundingClientRect().bottom > w.getBoundingClientRect().top + 1);
 			return {
 				fixed,
 				gap: w.getBoundingClientRect().top - ring.getBoundingClientRect().bottom,
 				navigation: names.slice(run),
-				below: below.map((b) => b.textContent!.trim())
+				below: below.map(label)
 			};
 		});
 		expect(audit.fixed).toEqual([]);
