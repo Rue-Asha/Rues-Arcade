@@ -1,6 +1,6 @@
 import { required } from './setup.ts';
 import type { CharacterId, Team, Trigger } from './types.ts';
-import { threshold } from './vote.ts';
+import { sweepMs, threshold, voteOrder } from './vote.ts';
 
 export type Kind = 'hero' | 'story' | 'versus' | 'counts' | 'steps' | 'cards' | 'rows' | 'chapter' | 'vote' | 'roles' | 'credits' | 'sheet';
 export type Mood = 'night' | 'deep' | 'day' | 'blood';
@@ -69,18 +69,21 @@ function townSlide(count: number): Slide {
 
 const SEAT_MS = 750;
 
-// The vote animation as data: the hand starts on seat 1 and sweeps clockwise to the nominee (seat 0, one turn
-// later); the voters are spread over seats 1..n-1 and each turns red when the hand arrives.
+// The vote animation as data, timed like the game's sweep (vote.ts sweepAt) at the deck's own seat time: the hand
+// starts on the boundary after the nominee (seat 0, start in seat units) and turns one full turn through n sectors,
+// the nominee last; the voters are spread over seats 1..n-1 and each turns red when the hand enters its sector.
 export function voteTimeline(n: number) {
 	const needed = threshold(n);
 	const voters = Array.from({ length: needed }, (_, j) => 1 + Math.floor((j * (n - 1)) / needed));
+	const order = voteOrder(0, n);
 	return {
 		seats: n,
 		nominee: 0 as const,
 		voters,
-		at: voters.map((v) => (v - 1) * SEAT_MS),
-		handMs: (n - 1) * SEAT_MS,
-		holdMs: 3000
+		at: voters.map((v) => order.indexOf(v) * SEAT_MS),
+		handMs: sweepMs(n, SEAT_MS),
+		holdMs: 3000,
+		start: 0.5
 	};
 }
 
