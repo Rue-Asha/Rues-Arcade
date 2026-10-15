@@ -111,6 +111,7 @@
 				{#if facts.caveat}<p class="muted caveat">Gift, Drunk, Spy und Recluse können das ändern.</p>{/if}
 			</div>
 		{/if}
+		{@render peek?.()}
 		{@render nav()}
 	</section>
 {:else if at.screen === 'card'}
@@ -124,6 +125,7 @@
 				<p>{intro.de}</p>
 			</div>
 		{/if}
+		{@render peek?.()}
 		{@render nav()}
 	</section>
 {:else if at.screen === 'circle'}
@@ -155,6 +157,7 @@
 	<section class="panel stack wake" aria-labelledby="phase">
 		<h2 id="phase">Schlaf wieder ein</h2>
 		<p class="muted">Die Person schließt die Augen.</p>
+		{@render peek?.()}
 		{@render nav()}
 	</section>
 {/if}

@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { dead, F15, firstDay, seated } from '../src/lib/games/clocktower/fixtures.ts';
+import { dead, F15, firstDay, seated, voted } from '../src/lib/games/clocktower/fixtures.ts';
 import type { ClocktowerAction, ClocktowerState } from '../src/lib/games/clocktower/types.ts';
 import { play, seedClocktower } from './clocktower-session.ts';
 import { live, settled } from './helpers.ts';
@@ -88,5 +88,38 @@ for (const [name, build] of screens) {
 		expect(m.height).toBeLessThanOrEqual(m.view);
 		expect(m.min).toBeGreaterThanOrEqual(44);
 		expect(m.overlap).toBe(false);
+	});
+}
+
+// F15: Kai (seat 11) is the Saint, executed on day 1; the question follows the night-2 dusk
+const base = () => reveal(seated(F15));
+const saint = () => play(voted(firstDay(base()), 10, 0, 8), [{ type: 'endDay' }, { type: 'next' }, ...next(1)]);
+
+const flat: [string, () => ClocktowerState][] = [
+	['dusk', base],
+	['wake', () => play(base(), next(1))],
+	['info card', () => play(base(), next(2))],
+	['sleep', () => play(base(), next(4))],
+	['question', saint]
+];
+
+for (const [name, build] of flat) {
+	test(`Scenario: Night navigation is the last group of controls, ${name}`, async ({ page }) => {
+		await seedClocktower(page, build());
+		await page.goto('/spiele/clocktower/spielen');
+		await settled(page);
+		const audit = await live(page).evaluate((stage) => {
+			const focusable = [...stage.querySelectorAll<HTMLElement>('button, select, input, textarea, a[href], [tabindex]')].filter((el) => el.getAttribute('tabindex') !== '-1' && !el.hasAttribute('disabled') && el.getClientRects().length > 0);
+			const names = focusable.map((el) => el.textContent?.trim() || el.tagName.toLowerCase());
+			const tail = ['Weiter', 'Zurück', 'Überspringen', 'Ja', 'Nein'];
+			let run = names.length;
+			while (run > 0 && tail.includes(names[run - 1])) run--;
+			return { names, navigation: names.slice(run), before: names.slice(0, run) };
+		});
+		expect(audit.navigation.length, audit.names.join()).toBeGreaterThan(0);
+		expect(audit.navigation.some((n) => n === 'Weiter' || n === 'Ja'), audit.names.join()).toBe(true);
+		if (name !== 'dusk') expect(audit.before, audit.names.join()).toContain('Grimoire');
+		if (name === 'dusk' || name === 'question') expect(audit.before, audit.names.join()).toContain('Spiel ist entschieden');
+		for (const n of audit.before) expect(['Weiter', 'Zurück', 'Überspringen', 'Ja', 'Nein']).not.toContain(n);
 	});
 }

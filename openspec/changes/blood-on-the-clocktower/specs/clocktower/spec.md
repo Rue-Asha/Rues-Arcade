@@ -982,6 +982,11 @@ scroll position, with every seat still at least 44px.
 - **THEN** neither "Weiter" nor any of its ancestors is position sticky or fixed, its top lies below the circle's bottom, the navigation ("Weiter", "Zurück", "Überspringen" where offered) is the last group of controls on the screen, and each seat, scrolled into view, is the element hit at its own centre
 - **proof:** e2e
 
+#### Scenario: Night navigation is the last group of controls
+- **WHEN** the dusk, a wake screen, an info card, a sleep screen and a question screen of a 15-player night are shown at 390×844 and 1280×800
+- **THEN** the screen's last focusable controls are its navigation ("Weiter", "Zurück", "Überspringen", or "Ja" and "Nein" on a question), and the Grimoire hold button (not at dusk) and "Spiel ist entschieden" come before it
+- **proof:** e2e
+
 #### Scenario: Night circle seen in one piece
 - **WHEN** the circle screen of a night step and the death step are shown with 15 seats at 390×844 and 1280×800
 - **THEN** the circle's height is at most the viewport height, every seat is at least 44px and no two seats overlap
