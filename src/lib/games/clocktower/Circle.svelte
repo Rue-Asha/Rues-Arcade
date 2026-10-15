@@ -238,6 +238,7 @@
 				{#if avail?.nominee}<span class="avail nominee" data-avail="nominee" aria-hidden="true"></span>{/if}
 				{#if avail?.nominator}<span class="avail nominator" data-avail="nominator" aria-hidden="true"></span>{/if}
 				<span class="ripple" data-ripple aria-hidden="true"></span>
+				{#if dying.includes(i)}<span class="pulse" data-pulse aria-hidden="true"></span>{/if}
 				<span class="no">{i + 1}</span>
 				{#if icon}<CharacterIcon id={icon} size={Math.round(d * 0.47)} />{/if}
 				<span class="name" title={seat.player.name}>{seat.player.name}</span>
@@ -546,17 +547,56 @@
 		outline-offset: 3px;
 	}
 
+	/* a death, at dawn and on the execution alike: a red ring pulses out while the node sinks 4px and fades, then it
+	   rises back in the dead style */
 	.dying {
-		animation: dying 1.2s var(--ease-out) 1 both;
+		animation: death 1000ms var(--ease-out) 1;
 	}
 
-	@keyframes dying {
-		from {
-			transform: scale(1.25);
-			opacity: 0.4;
+	.pulse {
+		position: absolute;
+		inset: -4px;
+		border: 3px solid var(--clocktower);
+		border-radius: 50%;
+		opacity: 0;
+		pointer-events: none;
+		animation: death-ring 1000ms ease-out 1;
+	}
+
+	@keyframes death {
+		0% {
+			transform: none;
+			opacity: 1;
 		}
-		to {
+		25% {
+			transform: translateY(4px);
+			opacity: 1;
+		}
+		65% {
+			transform: translateY(4px);
+			opacity: 0.35;
+		}
+		100% {
+			transform: none;
+			opacity: 1;
+		}
+	}
+
+	@keyframes death-ring {
+		0% {
 			transform: scale(1);
+			opacity: 0.9;
+		}
+		100% {
+			transform: scale(1.7);
+			opacity: 0;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.dying,
+		.pulse {
+			animation: none;
 		}
 	}
 

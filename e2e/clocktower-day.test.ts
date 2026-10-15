@@ -149,30 +149,62 @@ test('Scenario: Death on the circle is animated', async ({ page }) => {
 		await live(page).getByRole('button', { name: 'Weiter', exact: true }).click();
 		await expect(seat(page, 3)).toHaveAttribute('data-dead', '');
 	};
-	// the properties each running finite animation of the seat animates
+	// the seat's own finite animations and those of its parts (the red ring), with their keyframes
 	const running = () =>
 		seat(page, 3).evaluate((el) =>
 			el
-				.getAnimations()
+				.getAnimations({ subtree: true })
 				.filter((a) => a.playState === 'running' && a.effect?.getTiming().iterations !== Infinity)
 				.map((a) => {
-					const keys = (a.effect as KeyframeEffect).getKeyframes().flatMap((k) => Object.keys(k));
-					return [...new Set(keys)].filter((k) => !['offset', 'computedOffset', 'easing', 'composite'].includes(k)).sort();
+					const effect = a.effect as KeyframeEffect;
+					const frames = effect.getKeyframes();
+					const keys = frames.flatMap((k) => Object.keys(k));
+					return {
+						seat: effect.target === el,
+						pulse: (effect.target as HTMLElement).hasAttribute('data-pulse'),
+						name: (a as CSSAnimation).animationName ?? '',
+						ms: Number(effect.getTiming().duration),
+						props: [...new Set(keys)].filter((k) => !['offset', 'computedOffset', 'easing', 'composite'].includes(k)).sort(),
+						transforms: frames.map((k) => String(k.transform ?? ''))
+					};
 				})
 		);
+	// what is left once every animation has ended
+	const rest = () =>
+		seat(page, 3).evaluate(async (el) => {
+			await Promise.all(el.getAnimations({ subtree: true }).map((a) => a.finished.catch(() => {})));
+			const style = getComputedStyle(el);
+			return {
+				dead: el.hasAttribute('data-dead'),
+				dashed: style.borderTopStyle === 'dashed',
+				opacity: Number(style.opacity),
+				transform: style.transform,
+				badge: el.querySelector('[data-badge="ghost"]')?.checkVisibility() ?? false,
+				running: el.getAnimations({ subtree: true }).length
+			};
+		});
+	const still = { dead: true, dashed: true, opacity: 1, transform: 'none', badge: true, running: 0 };
 
 	await toDeaths();
 	const motion = await running();
-	expect(motion.length).toBeGreaterThan(0);
-	for (const props of motion) {
-		expect(props.length).toBeGreaterThan(0);
-		for (const prop of props) expect(['transform', 'opacity'], prop).toContain(prop);
+	const own = motion.filter((a) => a.seat);
+	expect(own).toHaveLength(1);
+	expect(own[0].name).toMatch(/death/);
+	expect(own[0].ms).toBeGreaterThanOrEqual(800);
+	expect(own[0].ms).toBeLessThanOrEqual(1200);
+	// the node sinks 4px
+	expect(own[0].transforms.some((t) => t.includes('4px'))).toBe(true);
+	expect(motion.filter((a) => a.pulse)).toHaveLength(1);
+	for (const a of motion) {
+		expect(a.props.length).toBeGreaterThan(0);
+		for (const prop of a.props) expect(['transform', 'opacity'], prop).toContain(prop);
 	}
+	expect(await rest()).toEqual(still);
 
 	await page.emulateMedia({ reducedMotion: 'reduce' });
 	await toDeaths();
 	expect(await running()).toEqual([]);
-	await expect(seat(page, 3).locator('[data-badge="ghost"]')).toBeVisible();
+	expect(await rest()).toEqual(still);
 });
 
 test('Scenario: Day timer dialog', async ({ page }) => {
