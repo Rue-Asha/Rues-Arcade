@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { slides, voteTimeline } from '../src/lib/games/clocktower/deck.ts';
+import { sectorOf } from '../src/lib/games/clocktower/circle.ts';
 import { seedRoster, settled } from './helpers.ts';
 
 // The deck reads only localStorage (roster and count), so phone and desktop never share state.
@@ -337,7 +338,7 @@ async function seekVote(page: Page, ms: number) {
 	}, ms);
 }
 
-// seats showing red, the count shown and the hand's angle, read from computed style
+// seats showing red, the count shown, the lit sector, the tick count and the hand's sector, read from computed style
 const voteState = (page: Page) =>
 	page.evaluate(() => {
 		const root = document.querySelector('[data-slide="voting"]')!;
@@ -345,7 +346,13 @@ const voteState = (page: Page) =>
 		const m = new DOMMatrix(getComputedStyle(root.querySelector('[data-hand]')!).transform);
 		const shown = [...root.querySelectorAll('[data-n]')].filter(on).map((el) => el.textContent);
 		const angle = ((Math.atan2(m.b, m.a) * 180) / Math.PI + 360) % 360;
-		return { red: [...root.querySelectorAll('[data-voter]')].filter(on).length, shown, angle: Math.min(angle, 360 - angle) };
+		return {
+			red: [...root.querySelectorAll('[data-voter]')].filter(on).length,
+			shown,
+			lit: [...root.querySelectorAll('[data-sector]')].filter(on).map((el) => Number(el.getAttribute('data-sector')) - 1),
+			ticks: Number(root.querySelector('[data-ticks]')?.getAttribute('data-ticks')),
+			angle
+		};
 	});
 
 test('Scenario: Voting slide sweeps and counts up', async ({ page }) => {
@@ -356,12 +363,14 @@ test('Scenario: Voting slide sweeps and counts up', async ({ page }) => {
 	const second = await seekVote(page, timeline.at[1] + 50);
 	expect(second.looping).toBeGreaterThan(0);
 	for (const p of second.props) expect(['transform', 'opacity'], p).toContain(p);
-	expect(await voteState(page)).toMatchObject({ red: 2, shown: ['2'] });
+	const mid = await voteState(page);
+	expect(mid).toMatchObject({ red: 2, shown: ['2'], lit: [timeline.voters[1]], ticks: N });
+	expect(sectorOf(mid.angle, N)).toBe(timeline.voters[1]);
 
 	await seekVote(page, timeline.handMs);
 	const end = await voteState(page);
-	expect(end).toMatchObject({ red: 4, shown: ['4'] });
-	expect(end.angle).toBeLessThan(0.5);
+	expect(end).toMatchObject({ red: 4, shown: ['4'], lit: [timeline.nominee], ticks: N });
+	expect(sectorOf(end.angle, N)).toBe(timeline.nominee);
 });
 
 test('Scenario: Voting slide shows the end state under reduced motion', async ({ page }) => {
@@ -375,6 +384,6 @@ test('Scenario: Voting slide shows the end state under reduced motion', async ({
 	});
 	expect(running).toBe(0);
 	const end = await voteState(page);
-	expect(end).toMatchObject({ red: 4, shown: ['4'] });
-	expect(end.angle).toBeLessThan(0.5);
+	expect(end).toMatchObject({ red: 4, shown: ['4'], lit: [timeline.nominee], ticks: N });
+	expect(sectorOf(end.angle, N)).toBe(timeline.nominee);
 });
