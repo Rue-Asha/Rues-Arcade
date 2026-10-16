@@ -1,4 +1,4 @@
-verified-at: 6d25d06
+verified-at: a4d8584
 
 ## Layer 1: `PORT=4802 npm run proof:full` (green)
 
@@ -6,7 +6,7 @@ verified-at: 6d25d06
 Test Files  52 passed (52)
      Tests  499 passed (499)
   44 skipped
-  902 passed (6.0m)
+  902 passed (5.9m)
 exit=0
 ```
 
@@ -43,13 +43,13 @@ Gaps: none.
 
 ## Manual checklist
 
-- word-list reviewer pass (orchestrator): Duden spelling, word class, true rhymes over the 750 words in `migrations/0009_duck_wordlist.sql`
+- word-list reviewer pass (orchestrator): round 1 done, 13 replacements in round 2
 - After merge and `v0.7.1` tag push: release workflow passes `check-tag`, GitHub release v0.7.1 holds `rues-arcade-0.7.1.tgz` and `.sha256`
 - Optional: `npm run dev`, open http://localhost:5173, Duck start screen shows "750 Wörter ansehen und bearbeiten"
 
 ## Diffstat (`git diff --stat main...flow/duck-wordlist-750`)
 
-21 files changed, 1480 insertions(+), 13 deletions(-); main parts: `migrations/0009_duck_wordlist.sql` (+817), `src/lib/server/db.test.ts`, `src/lib/server/duck-seed.test.ts`, `src/lib/content/duck-rhyme.ts` and test, e2e count updates (`duck`, `home`, `start`), version bump to 0.7.1.
+22 files changed, 1546 insertions(+), 13 deletions(-); main parts: `migrations/0009_duck_wordlist.sql` (+817), `src/lib/server/db.test.ts`, `src/lib/server/duck-seed.test.ts`, `src/lib/content/duck-rhyme.ts` and test, e2e count updates (`duck`, `home`, `start`), version bump to 0.7.1.
 
 ## Screenshots
 
