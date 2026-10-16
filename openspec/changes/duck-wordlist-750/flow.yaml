@@ -1,0 +1,5 @@
+track: tweak
+triage: 'tweak — Duck seed list cleaned to the criteria and expanded to 750 words via a new migration, released as 0.7.1. Appetite: one session.'
+base: main
+gate1: 2026-10-16
+learnings:
