@@ -1202,8 +1202,8 @@ mark and give seat taps back to the step; showing another item SHALL keep the ma
 SHALL clear the text and the marks. Marks are not stored and change no game state.
 
 #### Scenario: Seats are marked while a text is shown
-- **WHEN** at the Washerwoman's circle screen of a 7-player night "Charakter" is shown, seats 2, 3 and 6 are tapped, then seat 3 again
-- **THEN** the text stays in the circle's centre, seats 2 and 6 carry the mark (gold ring and check badge) and seat 3 does not, and the stored session is unchanged
+- **WHEN** at the Investigator's circle screen of a 7-player night (seat 2 is the woken seat) "Charakter" is shown, seats 2, 3 and 6 are tapped, then seat 3 again
+- **THEN** the text stays in the circle's centre, seat 2 shows no check badge before it is tapped, then seats 2 and 6 carry the mark (gold ring and check badge) and seat 3 does not, and the stored session is unchanged
 - **proof:** e2e
 
 #### Scenario: Closing the text gives taps back to the Imp's target

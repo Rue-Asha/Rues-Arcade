@@ -537,6 +537,8 @@ handMs?: number;           // ms of the hand's linear transition (0 = jump)
 sector?: number | null;    // lit sector: <path data-sector={i + 1} aria-hidden> under the seats, fill ≈ 15% --clocktower
 rings?: (i: number) => { nominee: boolean; nominator: boolean };  // <span data-avail="nominee"> (inner, solid, --nominee) / <span data-avail="nominator"> (outer, dashed, --nominator), outside the node
 pointed?: number[];        // storyteller's marks (S65): data-pointed on the seat, gold ring + check badge
+marked?: number[];         // seats the user taps (voters, death step, setup pick): data-marked, tint + check badge
+lit?: number[];            // the night's own highlight (woken seat, the Imp's target): data-marked and the same tint, but no check badge — `marked` vs `lit` decides whether the badge shows
 center?: Snippet;          // rendered in <div data-centre>: a disc of diameter 2 · (ornament().inner − 4) px, centred; its diameter as --centre
 // node: <span class="no"> on the top rim, <span class="name"> (face, or ribbon under an icon); badges <span data-badge="block|ghost|check" aria-hidden>, ghost with data-spent when used up
 // press: enabled seat → scale/ripple ≤ 500 ms + navigator.vibrate?.(10) on click, then onseat; disabled seat → nothing; reduced motion → no animation
