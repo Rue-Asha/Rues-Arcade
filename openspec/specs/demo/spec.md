@@ -4,16 +4,19 @@
 TBD - created by archiving change party-games-rebuild. Update Purpose after archive.
 ## Requirements
 ### Requirement: Guided demo
-Each game's start screen (the Demo card in its "Mehr zu <Spiel>" box) SHALL offer "Demo"; the header during play SHALL
-NOT. Each game SHALL have exactly one demo script, played through the real engine with the game's committed
-fixture and fixed players (Alex, Bo, Cleo, Dani). The script SHALL play more than one round and reach every outcome
-branch the engine has for a normal game: each scoring outcome, each special action that changes the flow (redraw,
-pass, steal, skip, …) and the game end with its "Nochmal spielen" control where the engine has one. Mutually
-exclusive modes SHALL NOT share a run: the script plays one mode and its tips name the other. A branch the fixture
-cannot reach SHALL be reached by changing the seed or config, never by faking state. Each step SHALL show a coach
-tip with progress ("Schritt 3/12") that explains why the step happens, in neutral German without "!" or emoji; only
-the expected control is enabled; hidden information is shown openly with a [Demo] tag; "Demo beenden" is available
-at every step. The demo SHALL never touch the session, roster or database, and SHALL work with reduced motion.
+Each game with a demo script SHALL offer "Demo" on its start screen (the Demo card in its "Mehr zu <Spiel>" box); the
+header during play SHALL NOT. Every game SHALL have exactly one demo script except Blood on the Clocktower, which has
+an explanation deck instead and no demo: its demo route SHALL answer 404, and the generic demo checks (runner,
+registry, start cards) SHALL skip a game without a demo instead of failing. Each demo SHALL be played through the real
+engine with the game's committed fixture and fixed players (Alex, Bo, Cleo, Dani). The script SHALL play more than one
+round and reach every outcome branch the engine has for a normal game: each scoring outcome, each special action that
+changes the flow (redraw, pass, steal, skip, …) and the game end with its "Nochmal spielen" control where the engine has
+one. Mutually exclusive modes SHALL NOT share a run: the script plays one mode and its tips name the other. A branch
+the fixture cannot reach SHALL be reached by changing the seed or config, never by faking state. Each step SHALL show a
+coach tip with progress ("Schritt 3/12") that explains why the step happens, in neutral German without "!" or emoji;
+only the expected control is enabled; hidden information is shown openly with a [Demo] tag; "Demo beenden" is
+available at every step. The demo SHALL never touch the session, roster or database, and SHALL work with reduced
+motion.
 
 #### Scenario: Only the expected control is enabled
 - **WHEN** a demo step is shown
@@ -64,4 +67,14 @@ at every step. The demo SHALL never touch the session, roster or database, and S
 - **WHEN** a demo with more than 20 steps is tapped through
 - **THEN** every step shows "Schritt n/N" with N equal to the script's length, and the end shows "Demo beendet"
 - **proof:** e2e ("Scenario: Feud demo by tapping highlighted controls", "Scenario: Most Likely demo by tapping highlighted controls", "Scenario: Duck demo by tapping highlighted controls")
+
+#### Scenario: Generic demo checks skip a game without a demo
+- **WHEN** the demo runner tests and the registry demo checks run over every registered game
+- **THEN** they run for the six games with a demo script, skip Blood on the Clocktower, and every registered game has either a demo script or an explanation deck
+- **proof:** unit
+
+#### Scenario: Game without a demo has no demo route
+- **WHEN** `/spiele/clocktower/demo?from=/spiele/clocktower` is opened
+- **THEN** the response status is 404 and no coach tip is shown
+- **proof:** e2e ("Scenario: Clocktower demo and Inhalte are not found")
 
