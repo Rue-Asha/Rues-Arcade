@@ -164,13 +164,19 @@ test("Scenario: Show texts appear in the circle's centre", async ({ page }) => {
 	await expect(bar(page)).toBeVisible();
 
 	const cases: { item: string; value?: { label: string; option: string }; shows: (c: ReturnType<typeof card>) => Promise<void> }[] = [
-		{ item: 'Charakter', value: { label: 'Charakter', option: 'imp' }, shows: (c) => expect(c.getByText('Imp', { exact: true })).toBeVisible() },
+		{ item: 'Charakter', value: { label: 'Charakter', option: 'imp' }, shows: async (c) => {
+				await expect(c.locator('svg.icon')).toHaveCount(1);
+				await expect(c.locator('svg.icon path')).toHaveAttribute('d', byId.imp.icon);
+				await expect(c.getByText('Imp', { exact: true })).toBeVisible();
+			}
+		},
 		{ item: 'Das ist der Dämon', shows: (c) => expect(c.getByText('Das ist der Dämon', { exact: true })).toBeVisible() },
 		{ item: 'Deine Minions', shows: (c) => expect(c.getByText('Deine Minions', { exact: true })).toBeVisible() },
 		{
 			item: 'Bluffs',
 			shows: async (c) => {
 				for (const id of state.bluffs) await expect(c.getByText(byId[id].name, { exact: true })).toBeVisible();
+				await expect(c.locator('svg.icon')).toHaveCount(state.bluffs.length);
 			}
 		},
 		{
@@ -178,6 +184,7 @@ test("Scenario: Show texts appear in the circle's centre", async ({ page }) => {
 			value: { label: 'Du bist', option: 'imp' },
 			shows: async (c) => {
 				await expect(c.getByText('Du bist', { exact: true })).toBeVisible();
+				await expect(c.locator('svg.icon path')).toHaveAttribute('d', byId.imp.icon);
 				await expect(c.getByText('Imp', { exact: true })).toBeVisible();
 			}
 		},
