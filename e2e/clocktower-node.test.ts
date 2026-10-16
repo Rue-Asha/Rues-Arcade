@@ -399,6 +399,6 @@ test('Scenario: Seat press under reduced motion', async ({ page }) => {
 	expect(await motionOf(page, 2)).toEqual([]);
 	await page.mouse.up();
 	const now = await seat.evaluate((el) => ({ marked: el.hasAttribute('data-marked'), check: el.querySelector('[data-badge="check"]') !== null }));
-	expect(now).toEqual({ marked: true, check: true });
+	expect(now).toEqual({ marked: true, check: false });
 	expect(await motionOf(page, 2)).toEqual([]);
 });

@@ -136,13 +136,25 @@ test('Scenario: Seats are marked while a text is shown', async ({ page }) => {
 	await open(page, atStep(night1(F7), 'investigator'));
 	const before = await stored(page);
 	await show(page, 'Charakter');
+	await expect(seatAt(page, 2).locator('[data-badge="check"]')).toHaveCount(0);
 	for (const n of [2, 3, 6, 3]) await seatAt(page, n).click();
 	await expect(card(page)).toBeVisible();
 	await expect(seatAt(page, 2)).toHaveAttribute('data-pointed', '');
 	await expect(seatAt(page, 6)).toHaveAttribute('data-pointed', '');
 	await expect(seatAt(page, 3)).not.toHaveAttribute('data-pointed');
 	await expect(pointed(page)).toHaveCount(2);
-	await expect(seatAt(page, 2).locator('[data-badge="check"]')).toHaveCount(1);
+	for (const [n, marked] of [[2, true], [6, true], [3, false], [1, false]] as const) {
+		await expect(seatAt(page, n).locator('[data-badge="check"]'), `seat ${n} check`).toHaveCount(marked ? 1 : 0);
+		const ring = await seatAt(page, n).evaluate((el) => {
+			const probe = document.createElement('i');
+			probe.style.color = 'var(--gold)';
+			el.append(probe);
+			const gold = getComputedStyle(probe).color;
+			probe.remove();
+			return getComputedStyle(el).boxShadow.includes(gold);
+		});
+		expect(ring, `seat ${n} gold ring`).toBe(marked);
+	}
 	expect(await stored(page)).toBe(before);
 });
 
@@ -162,6 +174,7 @@ test("Scenario: Closing the text gives taps back to the Imp's target", async ({ 
 	await expect(live(page).getByText('Ziel: Dani (#4)', { exact: true })).toBeVisible();
 	await expect(seatAt(page, 4)).not.toHaveAttribute('data-pointed');
 	await expect(seatAt(page, 4)).toHaveAttribute('data-marked', '');
+	await expect(seatAt(page, 4).locator('[data-badge="check"]')).toHaveCount(0);
 	await expect(pointed(page)).toHaveCount(0);
 });
 

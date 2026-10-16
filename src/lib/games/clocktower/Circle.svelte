@@ -249,7 +249,7 @@
 						{@render glyph('hand', !seat.ghostVote)}
 					</span>
 				{/if}
-				{#if marked.includes(i) || pointed.includes(i)}<span class="badge check" data-badge="check" aria-hidden="true">{@render glyph('check')}</span>{/if}
+				{#if pointed.includes(i)}<span class="badge check" data-badge="check" aria-hidden="true">{@render glyph('check')}</span>{/if}
 			</button>
 		{/each}
 		{#if hand !== null}
