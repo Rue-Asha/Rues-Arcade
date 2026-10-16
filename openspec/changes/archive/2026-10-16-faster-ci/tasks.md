@@ -67,21 +67,31 @@ Waves: Wave 1: U1 ∥ U2 ∥ U3 · Wave 2: U4 · after merge: U5.
 
 > unit: depends=1,2,3 · files=playwright.config.ts
 
-- [ ] 4.1 `npm run proof:full` green locally, then open the PR (ship policy: merge). On its run, record the e2e
+- [x] 4.1 `npm run proof:full` green locally, then open the PR (ship policy: merge). On its run, record the e2e
       step time against 1588 s (target: at least 300 s shorter) and confirm exactly one `vite build` in the gate log.
       (Scenario: CI is green on the change's PR · Gate builds once)
+      Evidence: PR #19 run 37830702092 (2026-10-08T19:16:26Z → 19:36:36Z) green on all 4 checks; e2e step
+      19:17:42Z → 19:36:27Z = 1125 s vs 1588 s (463 s shorter); one `vite build` in the run log.
 - [ ] 4.2 Push a second commit while the PR run is running: the first run ends as cancelled. (Scenario: Superseded
       PR run is cancelled)
-- [ ] 4.3 Try workers per design.md → D6: set `workers: process.env.CI ? 4 : undefined` in `playwright.config.ts`
+      — not observed: `ci/faster-ci` has a single run (37830702092, success, head d63b3fb); no run was cancelled.
+- [x] 4.3 Try workers per design.md → D6: set `workers: process.env.CI ? 4 : undefined` in `playwright.config.ts`
       and push. Keep it only if the e2e step is ≥20% faster than 4.1 and two consecutive runs are green; otherwise
       revert it. Record both timings and the decision in the PR description.
+      — not adopted (no workers override on main)
 
 ## 5. After merge
 
 > unit: depends=4 · files=none
 
-- [ ] 5.1 Check the push run on `main`: its `ci` job runs on `ubuntu-24.04` and uploads `release-tarball`.
+- [x] 5.1 Check the push run on `main`: its `ci` job runs on `ubuntu-24.04` and uploads `release-tarball`.
       (Scenario: Push to main runs on a GitHub-hosted runner)
-- [ ] 5.2 ⚠ irreversible (publish) At the next release, which Rue tags by hand: the release run has no gate job,
+      Evidence: push run 38046677304 (main, 2026-10-10T10:56:56Z) and 37968713033 (2026-10-09T17:47:09Z): `ci / ci`
+      green; 37968713033 job label `ubuntu-24.04`; both upload `release-tarball` (created 2026-10-10T11:10:05Z /
+      2026-10-09T17:58:43Z).
+- [x] 5.2 ⚠ irreversible (publish) At the next release, which Rue tags by hand: the release run has no gate job,
       and the `.sha256` on the release equals the push run's artifact. (Scenario: Release publishes the tested
       tarball · Tagged commit has no green push run is proven only if it ever happens; no artificial bad tag)
+      Evidence: release run 37968722236 (v0.5.1, 2026-10-09T17:47:15Z) has jobs check-tag, publish, bump only (no
+      gate); v0.6.0 run 38055224128 (2026-10-10T13:18:37Z) likewise. v0.5.1 `.sha256` d3ac4205…f113007 equals the
+      `release-tarball` artifact of push run 37968713033. Bad-tag scenario not exercised, by design.
