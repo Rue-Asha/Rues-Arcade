@@ -172,12 +172,6 @@
 						</li>
 					{/each}
 				</ol>
-			{:else if slide.kind === 'rows'}
-				<ul class="rows">
-					{#each slide.rows ?? [] as [a, b] (a)}
-						<li><span>{a}</span><b>{b}</b></li>
-					{/each}
-				</ul>
 			{:else if slide.kind === 'roles'}
 				<ul class="roles">
 					{#each slide.roles ?? [] as id (id)}
@@ -292,8 +286,7 @@
 	}
 
 	.k-hero .inner,
-	.k-chapter .inner,
-	.k-story .inner {
+	.k-chapter .inner {
 		justify-content: center;
 	}
 
@@ -306,13 +299,6 @@
 		font-style: italic;
 		font-family: var(--font-data);
 		font-size: clamp(22px, 4vw, 32px);
-	}
-
-	.k-story .lead {
-		max-width: 28ch;
-		font-family: var(--font-data);
-		font-size: clamp(24px, 4.4vw, 38px);
-		line-height: 1.3;
 	}
 
 	.rule {
@@ -339,7 +325,6 @@
 	.cards,
 	.roles,
 	.steps,
-	.rows,
 	.counts {
 		margin: 0;
 		padding: 0;
@@ -471,28 +456,6 @@
 
 	.steps h3 {
 		font-size: 20px;
-	}
-
-	.rows {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
-		gap: 4px 32px;
-	}
-
-	.rows li {
-		display: flex;
-		flex-wrap: wrap;
-		justify-content: space-between;
-		gap: 4px 16px;
-		padding: 8px 0;
-		border-bottom: 1px solid var(--line);
-	}
-
-	.rows b {
-		font-family: var(--font-data);
-		font-size: 22px;
-		font-weight: 400;
-		color: var(--gold);
 	}
 
 	.counts {

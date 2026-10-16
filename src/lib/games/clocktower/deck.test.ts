@@ -17,8 +17,7 @@ function texts(slide: Slide): string[] {
 		slide.baron,
 		slide.vote?.caption,
 		...(slide.cards ?? []).flatMap((c) => [c.label, c.title, c.text, c.win]),
-		...(slide.steps ?? []).flatMap((s) => [s.n, s.title, s.text]),
-		...(slide.rows ?? []).flat()
+		...(slide.steps ?? []).flatMap((s) => [s.n, s.title, s.text])
 	].filter((t): t is string => t !== undefined);
 }
 
@@ -103,36 +102,21 @@ describe('clocktower deck', () => {
 		expect(all).not.toContain('mehr Böse als Gut');
 	});
 
-	it('has unique ids, the six app slides and ends with credits and the sheet', () => {
-		const list = slides(9);
-		expect(new Set(list.map((s) => s.id)).size).toBe(list.length);
-		const titles = list.map((s) => s.title);
-		for (const t of [
-			'Das Grimoire',
-			'Die Nacht in der App',
-			'Karten zeigen',
-			'Der Tag-Timer',
-			'Nominieren und abstimmen',
-			'Das Ende'
-		])
-			expect(titles, t).toContain(t);
-		expect(list.at(-1)!.kind).toBe('sheet');
-		expect(list.at(-2)!.kind).toBe('credits');
-		const vote = list.find((s) => s.id === 'app-vote')!;
-		expect(texts(vote).join(' ')).toMatch(/antippen/);
-		expect(texts(vote).join(' ')).toMatch(/Leertaste/);
+	it('Scenario: Deck holds 23 slides ending with the sheet', () => {
+		for (const n of [5, 9, 15]) {
+			const list = slides(n);
+			expect(list, `${n}`).toHaveLength(23);
+			expect(new Set(list.map((s) => s.id)).size, `${n}`).toBe(23);
+			expect(list.at(-1)!.kind, `${n}`).toBe('sheet');
+			const gone = ['story', 'storyteller', 'signals', 'app-grimoire', 'app-night', 'app-show', 'app-timer', 'app-vote', 'app-end', 'eyes', 'credits'];
+			expect(list.map((s) => s.id).filter((id) => gone.includes(id)), `${n}`).toEqual([]);
+		}
+		expect(slides(9).some((s) => ['story', 'rows', 'credits'].includes(s.kind))).toBe(false);
 	});
 
 	it('lists every character in a role slide exactly once', () => {
 		const ids = slides(9).flatMap((s) => s.roles ?? []);
 		expect([...ids].sort()).toEqual(characters.map((c) => c.id).sort());
-	});
-
-	it('names the icon source and the owner on the credits slide', () => {
-		const credits = texts(slides(9).find((s) => s.kind === 'credits')!).join(' ');
-		expect(credits).toContain('game-icons.net');
-		expect(credits).toContain('CC BY 3.0');
-		expect(credits).toContain('The Pandemonium Institute');
 	});
 
 	it('uses neutral copy', () => {

@@ -40,6 +40,7 @@ describe('clocktower sheet', () => {
 		expect(out).toContain('Das Böse gewinnt, wenn nur noch zwei Spieler leben.');
 		expect(out).toContain('game-icons.net');
 		expect(out).toContain('CC BY 3.0');
+		expect(out.replace(/\s+/g, ' ')).toContain('The Pandemonium Institute');
 	});
 
 	it('has the pages Gut and Böse with the good and the evil characters on them', () => {

@@ -2,7 +2,7 @@ import { required } from './setup.ts';
 import type { CharacterId, Team, Trigger } from './types.ts';
 import { sweepMs, threshold, voteOrder } from './vote.ts';
 
-export type Kind = 'hero' | 'story' | 'versus' | 'counts' | 'steps' | 'cards' | 'rows' | 'chapter' | 'vote' | 'roles' | 'credits' | 'sheet';
+export type Kind = 'hero' | 'versus' | 'counts' | 'steps' | 'cards' | 'chapter' | 'vote' | 'roles' | 'sheet';
 export type Mood = 'night' | 'deep' | 'day' | 'blood';
 export type Tone = 'good' | 'evil' | 'plain';
 
@@ -30,7 +30,6 @@ export interface Slide {
 	note?: string;
 	cards?: Card[];
 	steps?: Step[];
-	rows?: [string, string][];
 	roles?: CharacterId[];
 	counts?: { team: Team; n: number; label: string }[];
 	baron?: string;
@@ -123,14 +122,6 @@ export function slides(count: number): Slide[] {
 			lead: `Ein Spiel über Lügen, Logik und Mord, für ${count} Spieler`
 		},
 		{
-			id: 'story',
-			kind: 'story',
-			mood: 'night',
-			eyebrow: 'I · Ravenswood Bluff',
-			title: 'Ravenswood Bluff',
-			lead: 'Um Mitternacht wird die Erzählerin der Stadt tot gefunden, aufgespießt auf dem Zeiger der Turmuhr. Ein Dämon geht unter uns um. Er tötet bei Nacht und trägt bei Tag ein menschliches Gesicht.'
-		},
-		{
 			id: 'teams',
 			kind: 'versus',
 			mood: 'night',
@@ -154,19 +145,6 @@ export function slides(count: number): Slide[] {
 			]
 		},
 		townSlide(count),
-		{
-			id: 'storyteller',
-			kind: 'steps',
-			mood: 'night',
-			eyebrow: 'I · Die Grundlagen',
-			title: 'Die erzählende Person',
-			lead: 'Gehört zu keinem Team, leitet das Spiel und kennt jedes Geheimnis.',
-			steps: [
-				{ n: 'i', title: 'Leitet die Nacht', text: 'Weckt die Spieler einzeln, in fester Reihenfolge.' },
-				{ n: 'ii', title: 'Führt das Grimoire', text: 'Das geheime Verzeichnis, wer welcher Charakter ist.' },
-				{ n: 'iii', title: 'Leitet den Tag', text: 'Führt die Abstimmungen und beantwortet Fragen, öffentlich oder im Flüsterton.' }
-			]
-		},
 		{
 			id: 'flow',
 			kind: 'steps',
@@ -214,23 +192,6 @@ export function slides(count: number): Slide[] {
 				{ label: 'Wecken', title: 'Zweimal antippen', text: 'Die erzählende Person weckt die Spieler einzeln.' },
 				{ label: 'Handeln', title: 'Schweigend', text: 'Zeigen, um zu wählen; Hinweise kommen per Geste.' },
 				{ label: 'Morgen', title: 'Augen auf', text: 'Alle wachen auf, der Tag beginnt.' }
-			]
-		},
-		{
-			id: 'signals',
-			kind: 'rows',
-			mood: 'deep',
-			eyebrow: 'II · Die Nacht',
-			title: 'Nachtzeichen',
-			rows: [
-				['Zweimal auf die Schulter tippen', 'Aufwachen'],
-				['Hand über die Augen', 'Einschlafen'],
-				['Nicken oder Kopfschütteln', 'Ja oder Nein'],
-				['Daumen hoch oder runter', 'Gut oder Böse'],
-				['Finger hochhalten', 'Eine Zahl'],
-				['Finger zum „O“ formen', 'Null'],
-				['Auf jemanden zeigen', 'Diese Person'],
-				['Eine Karte zeigen', 'Dieser Charakter']
 			]
 		},
 		{
@@ -411,125 +372,6 @@ export function slides(count: number): Slide[] {
 				{ title: 'Haltet den Charakter geheim', text: 'Er existiert nur in eurem Kopf.' },
 				{ title: 'Tod ist nicht das Ende', text: 'Redet weiter und spart die letzte Stimme auf.' },
 				{ title: 'Fragt die erzählende Person', text: 'Jede Frage, jederzeit, auch privat.' }
-			]
-		},
-		{
-			id: 'app-grimoire',
-			kind: 'cards',
-			mood: 'night',
-			eyebrow: 'V · Die App',
-			title: 'Das Grimoire',
-			lead: 'Der Kreis in der App ist das Grimoire: alle Plätze in Sitzreihenfolge, so wie ihr am Tisch sitzt.',
-			cards: [
-				{
-					title: 'Plätze tauschen und verschieben',
-					text: 'Beim Aufbau tippt ihr zwei Plätze an, um sie zu tauschen, oder zieht einen Platz an eine andere Stelle.'
-				},
-				{
-					title: 'Runde Abzeichen',
-					text: 'Am Platzrand zeigt eine Axt, wer auf dem Block steht, und eine Hand, dass ein toter Platz seine Stimme noch hat. Ist sie verbraucht, wird die Hand grau und hohl.'
-				},
-				{
-					title: 'Nominierungsringe',
-					text: 'Ein durchgezogener Ring heißt: kann noch nominiert werden. Ein gestrichelter: darf noch nominieren.'
-				}
-			]
-		},
-		{
-			id: 'app-night',
-			kind: 'steps',
-			mood: 'deep',
-			eyebrow: 'V · Die App',
-			title: 'Die Nacht in der App',
-			lead: 'Der private Nachtführer geht jede Rolle in vier Bildschirmen durch.',
-			steps: [
-				{ n: '1', title: 'Wecken', text: 'Nur für euch: wen ihr weckt, wie ihr die Rolle leitet, und der Vorschlag für die Information.' },
-				{ n: '2', title: 'Karte', text: 'Die Rollenkarte mit Team und Fähigkeit zum Nachlesen.' },
-				{ n: '3', title: 'Kreis', text: 'Im Grimoire tippt ihr das Ziel an oder zeigt der Person ihre Karte.' },
-				{ n: '4', title: 'Schlafen', text: 'Die Person schließt die Augen, weiter zur nächsten Rolle.' }
-			]
-		},
-		{
-			id: 'app-show',
-			kind: 'cards',
-			mood: 'deep',
-			eyebrow: 'V · Die App',
-			title: 'Karten zeigen',
-			lead: 'Die Zeigeleiste reicht das Gerät an die geweckte Person: Charakter, Das ist der Dämon, Deine Minions, Bluffs, Du bist, Zahl, Ja oder Nein.',
-			cards: [
-				{ title: 'Text in der Kreismitte', text: 'Tippt auf den Eintrag, haltet der Person das Gerät hin und schließt den Text wieder. Er erscheint in der Mitte des Kreises.' },
-				{ title: 'Spieler markieren', text: 'Solange ein Text offen ist, tippt ihr Spieler an, um sie zu markieren.' }
-			]
-		},
-		{
-			id: 'app-timer',
-			kind: 'cards',
-			mood: 'day',
-			eyebrow: 'V · Die App',
-			title: 'Der Tag-Timer',
-			lead: 'Am Morgen wählt ihr die Diskussionszeit oder spielt ohne Timer.',
-			cards: [
-				{ title: 'Läuft weiter', text: 'Der Timer zählt auch während einer Abstimmung weiter.' },
-				{ title: 'Kein Zwang', text: 'Wenn die Zeit um ist, entscheidet die erzählende Person, wann es weitergeht.' }
-			]
-		},
-		{
-			id: 'app-vote',
-			kind: 'steps',
-			mood: 'day',
-			eyebrow: 'V · Die App',
-			title: 'Nominieren und abstimmen',
-			steps: [
-				{ n: '1', title: 'Nominierte Person antippen', text: 'Dann Nominieren, danach die nominierende Person wählen.' },
-				{ n: '2', title: 'Abstimmung beginnen', text: 'Der Zeiger dreht sich gleichmäßig im Uhrzeigersinn, das Kreisstück unter ihm leuchtet hellrot.' },
-				{
-					n: '3',
-					title: 'Stimmen markieren',
-					text: 'Platz antippen oder die Leertaste drücken, solange der Zeiger in seinem Kreisstück steht.'
-				},
-				{
-					n: '4',
-					title: 'Bestätigen',
-					text: 'Stimmen durch Antippen der Plätze korrigieren, dann bestätigen: die App meldet Block, Gleichstand oder nichts.'
-				}
-			]
-		},
-		{
-			id: 'app-end',
-			kind: 'cards',
-			mood: 'blood',
-			eyebrow: 'V · Die App',
-			title: 'Das Ende',
-			lead: 'Sobald ein Team gewonnen hat, zeigt die App zuerst nur „Das Spiel ist vorbei“.',
-			cards: [
-				{ title: 'Weiter', text: 'Enthüllt das siegreiche Team.' },
-				{ title: 'Alle Plätze', text: 'Danach seht ihr jeden Charakter, wer lebt und die Geschichte des Dämons.' }
-			]
-		},
-		{
-			id: 'eyes',
-			kind: 'chapter',
-			mood: 'deep',
-			title: 'Augen zu',
-			lead: 'Die erste Nacht beginnt.'
-		},
-		{
-			id: 'credits',
-			kind: 'credits',
-			mood: 'night',
-			eyebrow: 'Quellen',
-			title: 'Danksagung',
-			cards: [
-				{
-					label: 'Icons',
-					title: 'game-icons.net',
-					text: 'Lorc, Delapouite und weitere, Lizenz CC BY 3.0.'
-				},
-				{
-					label: 'Spiel',
-					title: 'The Pandemonium Institute',
-					text: 'Blood on the Clocktower und seine Charaktere gehören The Pandemonium Institute. Diese App ist ein privates Hilfsmittel für Spielrunden.'
-				}
 			]
 		},
 		{ id: 'sheet', kind: 'sheet', mood: 'night', title: 'Charakterblatt' }

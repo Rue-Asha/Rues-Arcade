@@ -39,27 +39,27 @@ test('Scenario: Deck navigation by tap, swipe and keys', async ({ page }) => {
 	const y = b.y + b.height / 2;
 
 	await page.keyboard.press('ArrowLeft');
-	await expect(progress(page)).toHaveText(`1 / ${M}`);
+	await expect(progress(page)).toHaveText(`1 / 23`);
 
 	await page.mouse.click(b.x + b.width * 0.75, y);
-	await expect(progress(page)).toHaveText(`2 / ${M}`);
+	await expect(progress(page)).toHaveText(`2 / 23`);
 
 	await page.keyboard.press('ArrowRight');
-	await expect(progress(page)).toHaveText(`3 / ${M}`);
+	await expect(progress(page)).toHaveText(`3 / 23`);
 
 	await page.keyboard.press('ArrowLeft');
-	await expect(progress(page)).toHaveText(`2 / ${M}`);
+	await expect(progress(page)).toHaveText(`2 / 23`);
 
 	await settled(page);
 	await page.mouse.move(b.x + b.width * 0.75, y);
 	await page.mouse.down();
 	await page.mouse.move(b.x + b.width * 0.4, y, { steps: 6 });
 	await page.mouse.up();
-	await expect(progress(page)).toHaveText(`3 / ${M}`);
+	await expect(progress(page)).toHaveText(`3 / 23`);
 
 	await settled(page);
 	await page.mouse.click(b.x + b.width * 0.25, y);
-	await expect(progress(page)).toHaveText(`2 / ${M}`);
+	await expect(progress(page)).toHaveText(`2 / 23`);
 });
 
 test('Scenario: Deck readable without horizontal scroll', async ({ page }, info) => {
@@ -184,42 +184,6 @@ async function goTo(page: Page, from: number, to: number) {
 	await settled(page);
 	return to;
 }
-
-test('Scenario: Deck explains the app', async ({ page }) => {
-	test.setTimeout(30_000);
-	await openDeck(page);
-	let now = 0;
-	for (const id of ['app-grimoire', 'app-night', 'app-show', 'app-timer', 'app-vote', 'app-end']) {
-		now = await goTo(page, now, at(id));
-		await expect(slide(page).getByRole('heading', { level: 2, name: list[now].title, exact: true })).toBeVisible();
-		const card = (name: string) => slide(page).getByRole('heading', { level: 3, name, exact: true });
-		if (id === 'app-grimoire') {
-			await expect(card('Runde Abzeichen')).toBeVisible();
-			await expect(card('Nominierungsringe')).toBeVisible();
-		}
-		if (id === 'app-show') {
-			await expect(card('Text in der Kreismitte')).toBeVisible();
-			await expect(card('Spieler markieren')).toBeVisible();
-			const mark = 'Solange ein Text offen ist, tippt ihr Spieler an, um sie zu markieren.';
-			await expect(slide(page).getByText(mark, { exact: true })).toBeVisible();
-		}
-		if (id === 'app-vote') {
-			const tap = 'Platz antippen oder die Leertaste drücken, solange der Zeiger in seinem Kreisstück steht.';
-			await expect(slide(page).getByText(tap, { exact: true })).toBeVisible();
-			const fix = 'Stimmen durch Antippen der Plätze korrigieren, dann bestätigen: die App meldet Block, Gleichstand oder nichts.';
-			await expect(slide(page).getByText(fix, { exact: true })).toBeVisible();
-		}
-	}
-});
-
-test('Scenario: Credits slide names the sources', async ({ page }) => {
-	await openDeck(page);
-	await goTo(page, 0, at('credits'));
-	const credits = page.locator('[data-slide="credits"]');
-	await expect(credits.getByText('game-icons.net', { exact: true })).toBeVisible();
-	await expect(credits.getByText(/CC BY 3\.0/)).toBeVisible();
-	await expect(credits.getByText('The Pandemonium Institute', { exact: true })).toBeVisible();
-});
 
 const sheetBox = (page: Page) => page.getByTestId('sheet');
 
