@@ -94,7 +94,17 @@ test("Scenario: Rings follow the day's nominations", async ({ page }) => {
 	const night = play(ended, [{ type: 'next' }]);
 	await open(page, night);
 	await expect(live(page).getByRole('button', { name: 'Weiter', exact: true })).toBeVisible();
-	await expect(live(page).locator('[data-avail]'), 'night').toHaveCount(0);
+	await expect(live(page).locator('[data-avail]'), 'dusk').toHaveCount(0);
+	// the night's screens up to dawn: every one that holds the circle shows no ring
+	let circles = 0;
+	for (let k = 2; k <= 9; k++) {
+		await open(page, play(ended, Array.from({ length: k }, () => ({ type: 'next' as const }))));
+		if ((await live(page).locator('[data-seat]').count()) > 0) {
+			circles++;
+			await expect(live(page).locator('[data-avail]'), `night screen ${k}`).toHaveCount(0);
+		}
+	}
+	expect(circles, 'night screens with a circle').toBeGreaterThan(0);
 	const dawn = nightEnd(night, [4]);
 	await open(page, dawn);
 	await expect(live(page).locator('[data-avail]'), 'dawn wake').toHaveCount(0);
