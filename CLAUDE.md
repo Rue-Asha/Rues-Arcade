@@ -9,6 +9,7 @@ Kit config lives in `vite.config.ts` (`sveltekit({ ... })`); Kit 3 refuses a `sv
 - run: `npm run dev` → http://localhost:5173
 - package: `npm run package` → `dist/rues-arcade-<version>.tgz` + `.sha256` (build, migrations, package.json, lockfile)
 - ship: merge
+- release: tag
 
 `proof` = svelte-check, build, vitest. `proof:full` adds Playwright (projects `phone` 390×844 touch,
 `desktop` 1280×800) against `node build` on `$PORT` (default 4173) with `DATABASE_PATH=.e2e/$PORT.db`,
