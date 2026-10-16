@@ -32,6 +32,8 @@ describe('duck rhyme heuristic', () => {
 		expect(rhymeKey('Hexe')).toBe(rhymeKey('Echse'));
 		expect(rhymeKey('Kehle')).toBe(rhymeKey('Seele'));
 		expect(rhymeKey('Mauer')).toBe(rhymeKey('sauer'));
+		expect(rhymeKey('Lakritze')).toBe(rhymeKey('Skizze'));
+		expect(rhymeKey('Brezel')).toBe(rhymeKey('Rätsel'));
 		expect(rhymeKey('Gabel')).not.toBe(rhymeKey('Nebel'));
 	});
 

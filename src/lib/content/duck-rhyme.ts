@@ -39,7 +39,7 @@ export function rhymeKey(word: string): string {
 	const v = vowels.map((u) => SAME_VOWEL[u] ?? u);
 	const g = gaps.map((c, i) => {
 		const last = i === gaps.length - 1;
-		let out = c.replace(/chs|cks|ks/g, 'x').replace(/ph/g, 'f');
+		let out = c.replace(/chs|cks|ks/g, 'x').replace(/ph/g, 'f').replace(/tz|zz|z/g, 'ts');
 		// a silent lengthening h (Gebühr, Kuh), but not the spoken one between two vowels (Ehe)
 		if (i > 0 && out.startsWith('h') && (last || out.length > 1)) out = out.slice(1);
 		if (last) {
