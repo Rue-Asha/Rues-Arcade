@@ -80,6 +80,12 @@ so a round runs out quickly and the pairs give each other away. Rue wants 750 wo
 - Keep everyday words a party group knows; avoid obscure technical terms — taste guideline for the builder,
   not a tested criterion.
 - New migration rather than editing 0003 — Rue's choice; forward-only migrations never re-run 0003.
+- Verify round 1 (Rue, 2026-10-16): impure rhymes may stay (voiced/voiceless b/p d/t g/k, ü/i ö/e eu/ei,
+  ng/nk, differing vowel length) — "es geht mir darum, dass wir nicht Wörter mit derselben Endung drinne haben".
+  Only pure rhymes (same sound ending) are excluded; spelling variants of the same sound count as the same
+  ending (tz = zz, z = ts, e.g. Lakritze/Skizze, Brezel/Rätsel).
+- Verify round 1 (Rue): words the Duden marks as regional (landschaftlich, süddeutsch, österreichisch,
+  norddeutsch …) are replaced; rare but standard words stay.
 
 ## Done when
 - A fresh DB has exactly 750 Duck words, the S4 guard is green, and the reviewer found no non-Duden word,
