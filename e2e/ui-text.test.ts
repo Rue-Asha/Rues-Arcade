@@ -21,7 +21,7 @@ async function probe(page: Page, el: Locator, what: string) {
 	});
 	expect(style.select, `${what}: user-select`).toBe('none');
 	if (style.callout !== undefined) expect(style.callout, `${what}: touch-callout`).toBe('none');
-	expect(style.cursor, `${what}: cursor`).not.toBe('text');
+	expect(['default', 'pointer'], `${what}: cursor is ${style.cursor}`).toContain(style.cursor);
 	const box = (await el.boundingBox())!;
 	const [x, y] = [box.x + box.width / 2, box.y + box.height / 2];
 	for (const clickCount of [2, 3]) {
