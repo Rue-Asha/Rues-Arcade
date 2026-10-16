@@ -1,30 +1,26 @@
-verified-at: 1389653
+verified-at: b3a9cb5
 
-# Verification r7
+# Verification r8
 
-First verify after the round-2 revisions (S50–S66, units U17–U22, last commit 1389653 "round 2 wave 3 done (U21, U22)"). Verified committed tip 1389653, working tree clean.
+Verify after the r7 fixer commits (1389653..b3a9cb5, 9 commits: check badge only for marks and a `lit` prop for the night highlight, timer gap and padding, test tightening, one wording change in the clocktower spec). Verified committed tip b3a9cb5, working tree clean.
 
 ## Layer 1: `PORT=4711 npm run proof:full` (green, run 1 of 1)
 
-Unit: vitest 50 files, 483 tests passed, exit 0. e2e: 904 passed, 44 skipped (5.5m). Full log: /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/3f77cd96-741a-434e-ad03-88b18326d9f1/scratchpad/full1.log
+Unit: vitest 50 files, 483 tests passed, exit 0. e2e: 904 passed, 44 skipped (5.8m). Full log: /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/3f77cd96-741a-434e-ad03-88b18326d9f1/scratchpad/full1.log
 
 ```
-  ✓  947 [desktop] › e2e/look.test.ts:353:2 › reduced motion › Scenario: Reduced motion makes transitions instant (217ms)
-  ✓  948 [desktop] › e2e/look.test.ts:365:1 › Scenario: Motion never blocks input (232ms)
+
   44 skipped
-  904 passed (5.5m)
+  904 passed (5.8m)
 EXIT 0
 ```
 
 ## Layer 2: spec coverage (276 scenarios: 83 unit, 171 e2e, 22 manual, 0 gaps)
 
-Prefix collisions and duplicate scenario titles: none. Test names matched by containing the exact "Scenario: <title>" (or every name in the proof line); a test counts only when it appears as passed in the proof:full output above. Evidence in parentheses: passing projects (phone+desktop = both) for e2e, number of passing tests for unit.
-e2e single-project in the run: Drag a seat to a new place (desktop), Full Clocktower game (phone), Sheet fits one desktop viewport (desktop), Sheet on phone is two pages (phone), Header wraps on a phone (phone), UI text cannot be selected (desktop), Inputs keep caret and selection (desktop), and one member of "Clocktower look rules on every screen" (No horizontal scroll on phone, phone only). The two UI-text scenarios are new in this round and run on desktop only; they are not Clocktower-specific.
-
-Changes since r6 (previous 242 scenarios, now 276): 42 scenarios added, 8 removed or renamed.
-Removed or renamed: Ghost-vote token decorated and readable, Circle and ghost token look approved (now Circle look approved), Show-bar opens full-screen cards, Bluffs can be rerolled before showing (now Bluffs stay hidden until shown), Tapping any seat during the sweep toggles its vote (now Only the seat in the hand's sector can vote), Space marks only the seat under the hand (now Space votes only for the seat in the hand's sector), Confirm corrects missed timing (now Confirm toggles votes by tapping seats), Voting animation like the presentation (now Voting slide like the game).
-Added (42): Ticks divide the circle into n sectors, Every circle draws n ticks, Circle look approved, Show texts appear in the circle's centre, Centre texts fit the circle, Bluffs stay hidden until shown, Show texts and marks approved, Held grimoire icons fit fifteen seats, Sector of an angle, Hand position over the sweep, Hand turns at a constant speed, The hand's sector lights up, Only the seat in the hand's sector can vote, Space votes only for the seat in the hand's sector, Confirm toggles votes by tapping seats, Missed tap in the sweep is corrected in the confirm step, Vote sweep approved, Voting slide like the game, Seat node shows the name large and the number small, Block badge replaces the outline, Ghost-vote badge shows whether the vote is left, Seat nodes approved, Seat press springs back with a ripple, Seat tap vibrates where supported, Seat press under reduced motion, Seat taps feel responsive, Seats are marked while a text is shown, Closing the text gives taps back to the Imp's target, Dead seats can be marked but not targeted, Another text keeps the marks, Leaving the step or reloading clears text and marks, Nomination availability per seat, Rings follow the day's nominations, Rings stay subtle and outside the nodes, Block card names the player and the votes, Execution records whom it killed, Execution plays the death animation, Executing a dead player plays no death animation, Day screens of round 2 approved, Background keeps one tone over the whole page, UI text cannot be selected, Inputs keep caret and selection.
-No proof line changed to manual for an existing scenario; manual scenarios added: 7 (Circle look approved, Show texts and marks approved, Vote sweep approved, Voting slide like the game, Seat nodes approved, Seat taps feel responsive, Day screens of round 2 approved); manual removed: 2 (Circle and ghost token look approved, Voting animation like the presentation). Downgrades: none.
+Counts unchanged against r7 (276: 83/171/22/0); no scenario added, removed, renamed or re-proofed. Prefix collisions and duplicate scenario titles: none. Test names matched by containing the exact "Scenario: <title>" (or every name in the proof line, checked against the proof:full output); unit names also located in src/ or scripts/. The table is carried over from r7 and re-checked mechanically against this run's log.
+e2e single-project set is as in r7: Drag a seat to a new place (desktop), Full Clocktower game (phone), Sheet fits one desktop viewport (desktop), Sheet on phone is two pages (phone), Header wraps on a phone (phone), UI text cannot be selected (desktop), Inputs keep caret and selection (desktop), one member of "Clocktower look rules on every screen" (phone only).
+Wording change since r7: "Centre texts fit the circle" THEN now names the lead line "Du bist" in the 16px group (commit ebeebcb); proof unchanged (e2e), test still passes. Test-only tightening since r7 (names unchanged, still passing): ui-text cursor, night icon in show texts, day-marks night circle rings, day timer ancestors, day-layout, vote, show. Source changes: Circle.svelte (check badge only for marks/pointed, new lit), Wake.svelte (passes lit), Timer.svelte (gap and padding).
+Downgrades: none.
 
 | Scenario | proof | Evidence |
 |---|---|---|
@@ -307,7 +303,7 @@ No proof line changed to manual for an existing scenario; manual scenarios added
 
 ## Manual checklist (Gate 2)
 
-Start: `npm run dev` → http://localhost:5173. Only the scenarios added or changed in S50–S66 are listed first; the older manual scenarios (Look approved on screenshots, Clocktower look approved on screenshots, Atmosphere approved, Transitions feel smooth, Clocktower sounds at the right moments, Deck carries the presentation's content, App slides read clearly, Sheet in the look of the PDF, Distribution readable at a glance, Circle and information in one piece approved, Day facts legible, Show-bar placement approved, Day clock emphasis approved, End reveal by team approved, Demo tips say why the step happens) are unchanged in proof but their screens changed with the round-2 UI, so re-glance at the screenshots.
+Start: `npm run dev` → http://localhost:5173. Items 1–7 are unchanged from r7 (no scenario's proof changed in r8). The older manual scenarios (Look approved on screenshots, Clocktower look approved on screenshots, Atmosphere approved, Transitions feel smooth, Clocktower sounds at the right moments, Deck carries the presentation's content, App slides read clearly, Sheet in the look of the PDF, Distribution readable at a glance, Circle and information in one piece approved, Day facts legible, Show-bar placement approved, Day clock emphasis approved, End reveal by team approved, Demo tips say why the step happens) are unchanged in proof but their screens changed with the round-2 UI, so re-glance at the screenshots.
 
 1. Circle look (S50, Circle look approved): setup board, a night circle and the day grimoire at 390px and 1280px: circle decorated, seats connected, ticks in line with the seats' sectors (`*-look-clocktower-setup-*`, `*-look-clocktower-night-*`, `*-look-clocktower-clock-*`).
 2. Seat nodes (Seat nodes approved): names large and numbers small, round block and ghost-vote badges, subtle nomination rings (`*-look-clocktower-*` grimoire, block and clock shots, crowded 15-seat phone grimoire).
@@ -323,22 +319,22 @@ Start: `npm run dev` → http://localhost:5173. Only the scenarios added or chan
 ```
  e2e/clocktower-atmosphere.test.ts                  |  259 ++++
  e2e/clocktower-circle.test.ts                      |  315 +++++
- e2e/clocktower-day-layout.test.ts                  |  262 ++++
- e2e/clocktower-day-marks.test.ts                   |  317 +++++
+ e2e/clocktower-day-layout.test.ts                  |  269 ++++
+ e2e/clocktower-day-marks.test.ts                   |  327 +++++
  e2e/clocktower-day.test.ts                         |  552 +++++++++
  e2e/clocktower-deck.test.ts                        |  402 ++++++
  e2e/clocktower-end.test.ts                         |  175 +++
  e2e/clocktower-game.test.ts                        |  196 +++
  e2e/clocktower-night-layout.test.ts                |  125 ++
- e2e/clocktower-night.test.ts                       |  574 +++++++++
+ e2e/clocktower-night.test.ts                       |  581 +++++++++
  e2e/clocktower-node.test.ts                        |  404 ++++++
  e2e/clocktower-session.test.ts                     |   47 +
  e2e/clocktower-session.ts                          |   26 +
  e2e/clocktower-setup.test.ts                       |  443 +++++++
- e2e/clocktower-show.test.ts                        |  212 ++++
+ e2e/clocktower-show.test.ts                        |  225 ++++
  e2e/clocktower-start.test.ts                       |  299 +++++
  e2e/clocktower-theme.test.ts                       |  304 +++++
- e2e/clocktower-vote.test.ts                        |  208 ++++
+ e2e/clocktower-vote.test.ts                        |  210 ++++
  e2e/deco.test.ts                                   |   40 +
  e2e/home.test.ts                                   |    3 +-
  e2e/look.test.ts                                   |    2 +
@@ -353,7 +349,7 @@ Start: `npm run dev` → http://localhost:5173. Only the scenarios added or chan
  .../changes/blood-on-the-clocktower/.openspec.yaml |    2 +
  openspec/changes/blood-on-the-clocktower/design.md |  611 +++++++++
  .../blood-on-the-clocktower/feedback-2026-10-15.md |   48 +
- openspec/changes/blood-on-the-clocktower/flow.yaml |   38 +
+ openspec/changes/blood-on-the-clocktower/flow.yaml |   40 +
  .../blood-on-the-clocktower/gate2-feedback.md      |   16 +
  .../changes/blood-on-the-clocktower/mobbin-r2.md   |   61 +
  openspec/changes/blood-on-the-clocktower/mobbin.md |   98 ++
@@ -370,7 +366,7 @@ Start: `npm run dev` → http://localhost:5173. Only the scenarios added or chan
  .../blood-on-the-clocktower/specs/roster/spec.md   |   44 +
  .../blood-on-the-clocktower/specs/sound/spec.md    |   22 +
  openspec/changes/blood-on-the-clocktower/tasks.md  |  314 +++++
- .../blood-on-the-clocktower/verification.md        |  605 +++++++++
+ .../blood-on-the-clocktower/verification.md        |  940 ++++++++++++++
  src/app.css                                        |  197 +++
  src/app.html                                       |    6 +-
  src/hooks.server.ts                                |   28 +-
@@ -386,7 +382,7 @@ Start: `npm run dev` → http://localhost:5173. Only the scenarios added or chan
  src/lib/games/clocktower/BlockCard.svelte          |   77 ++
  src/lib/games/clocktower/CharacterBoard.svelte     |  155 +++
  src/lib/games/clocktower/CharacterIcon.svelte      |   36 +
- src/lib/games/clocktower/Circle.svelte             |  680 +++++++++++
+ src/lib/games/clocktower/Circle.svelte             |  682 +++++++++++
  src/lib/games/clocktower/Dawn.svelte               |   99 ++
  src/lib/games/clocktower/Day.svelte                |  168 +++
  src/lib/games/clocktower/Deal.svelte               |  115 ++
@@ -462,7 +458,7 @@ Start: `npm run dev` → http://localhost:5173. Only the scenarios added or chan
  static/fonts/im-fell-english-italic-latin.woff2    |  Bin 0 -> 57808 bytes
  static/fonts/im-fell-english-latin.woff2           |  Bin 0 -> 59880 bytes
  static/fonts/im-fell-english-sc-latin.woff2        |  Bin 0 -> 56956 bytes
- 141 files changed, 20110 insertions(+), 70 deletions(-)
+ 141 files changed, 20488 insertions(+), 70 deletions(-)
 ```
 
 ## Screenshots (not committed)
@@ -485,8 +481,8 @@ Start: `npm run dev` → http://localhost:5173. Only the scenarios added or chan
 - test-results/shots/desktop-lobby-duck.png
 - test-results/shots/desktop-lobby-imposter.png
 - test-results/shots/desktop-lobby-most-likely.png
-- test-results/shots/desktop-lobby-wavelength-koop-two.png
 - test-results/shots/desktop-lobby-wavelength-koop.png
+- test-results/shots/desktop-lobby-wavelength-koop-two.png
 - test-results/shots/desktop-lobby-wavelength.png
 - test-results/shots/desktop-look-clocktower-card-group.png
 - test-results/shots/desktop-look-clocktower-card-pair.png
@@ -552,8 +548,8 @@ Start: `npm run dev` → http://localhost:5173. Only the scenarios added or chan
 - test-results/shots/desktop-look-clocktower-grimoire-late-15.png
 - test-results/shots/desktop-look-clocktower-grimoire-late-7.png
 - test-results/shots/desktop-look-clocktower-grimoire.png
-- test-results/shots/desktop-look-clocktower-imp-self.png
 - test-results/shots/desktop-look-clocktower-imp.png
+- test-results/shots/desktop-look-clocktower-imp-self.png
 - test-results/shots/desktop-look-clocktower-nominator-15.png
 - test-results/shots/desktop-look-clocktower-nominator-7.png
 - test-results/shots/desktop-look-clocktower-question.png
@@ -590,13 +586,13 @@ Start: `npm run dev` → http://localhost:5173. Only the scenarios added or chan
 - test-results/shots/desktop-look-codes-gameover.png
 - test-results/shots/desktop-look-codes-play-late.png
 - test-results/shots/desktop-look-codes-play.png
-- test-results/shots/desktop-look-codes-result-skipped.png
 - test-results/shots/desktop-look-codes-result.png
+- test-results/shots/desktop-look-codes-result-skipped.png
 - test-results/shots/desktop-look-codes-reveal-held.png
 - test-results/shots/desktop-look-codes-reveal.png
 - test-results/shots/desktop-look-duck-gameover.png
-- test-results/shots/desktop-look-duck-reveal-shown.png
 - test-results/shots/desktop-look-duck-reveal.png
+- test-results/shots/desktop-look-duck-reveal-shown.png
 - test-results/shots/desktop-look-duck-scoring-locked.png
 - test-results/shots/desktop-look-duck-scoring.png
 - test-results/shots/desktop-look-duck-skip.png
@@ -615,11 +611,11 @@ Start: `npm run dev` → http://localhost:5173. Only the scenarios added or chan
 - test-results/shots/desktop-look-feud-steal.png
 - test-results/shots/desktop-look-feud-winner.png
 - test-results/shots/desktop-look-home.png
-- test-results/shots/desktop-look-imposter-crew-shown.png
 - test-results/shots/desktop-look-imposter-crew.png
+- test-results/shots/desktop-look-imposter-crew-shown.png
 - test-results/shots/desktop-look-imposter-handover.png
-- test-results/shots/desktop-look-imposter-unmask-shown.png
 - test-results/shots/desktop-look-imposter-unmask.png
+- test-results/shots/desktop-look-imposter-unmask-shown.png
 - test-results/shots/desktop-look-imposter-view-held.png
 - test-results/shots/desktop-look-imposter-view.png
 - test-results/shots/desktop-look-inhalte-imposter.png
@@ -634,8 +630,8 @@ Start: `npm run dev` → http://localhost:5173. Only the scenarios added or chan
 - test-results/shots/desktop-look-lobby-most-likely.png
 - test-results/shots/desktop-look-lobby-pick.png
 - test-results/shots/desktop-look-lobby-wavelength-koop.png
-- test-results/shots/desktop-look-lobby-wavelength-short.png
 - test-results/shots/desktop-look-lobby-wavelength.png
+- test-results/shots/desktop-look-lobby-wavelength-short.png
 - test-results/shots/desktop-look-most-likely-count.png
 - test-results/shots/desktop-look-most-likely-gameover.png
 - test-results/shots/desktop-look-most-likely-prompt.png
@@ -694,8 +690,8 @@ Start: `npm run dev` → http://localhost:5173. Only the scenarios added or chan
 - test-results/shots/phone-lobby-duck.png
 - test-results/shots/phone-lobby-imposter.png
 - test-results/shots/phone-lobby-most-likely.png
-- test-results/shots/phone-lobby-wavelength-koop-two.png
 - test-results/shots/phone-lobby-wavelength-koop.png
+- test-results/shots/phone-lobby-wavelength-koop-two.png
 - test-results/shots/phone-lobby-wavelength.png
 - test-results/shots/phone-look-clocktower-card-group.png
 - test-results/shots/phone-look-clocktower-card-pair.png
@@ -764,8 +760,8 @@ Start: `npm run dev` → http://localhost:5173. Only the scenarios added or chan
 - test-results/shots/phone-look-clocktower-grimoire-late-15.png
 - test-results/shots/phone-look-clocktower-grimoire-late-7.png
 - test-results/shots/phone-look-clocktower-grimoire.png
-- test-results/shots/phone-look-clocktower-imp-self.png
 - test-results/shots/phone-look-clocktower-imp.png
+- test-results/shots/phone-look-clocktower-imp-self.png
 - test-results/shots/phone-look-clocktower-nominator-15.png
 - test-results/shots/phone-look-clocktower-nominator-7.png
 - test-results/shots/phone-look-clocktower-question.png
@@ -803,13 +799,13 @@ Start: `npm run dev` → http://localhost:5173. Only the scenarios added or chan
 - test-results/shots/phone-look-codes-gameover.png
 - test-results/shots/phone-look-codes-play-late.png
 - test-results/shots/phone-look-codes-play.png
-- test-results/shots/phone-look-codes-result-skipped.png
 - test-results/shots/phone-look-codes-result.png
+- test-results/shots/phone-look-codes-result-skipped.png
 - test-results/shots/phone-look-codes-reveal-held.png
 - test-results/shots/phone-look-codes-reveal.png
 - test-results/shots/phone-look-duck-gameover.png
-- test-results/shots/phone-look-duck-reveal-shown.png
 - test-results/shots/phone-look-duck-reveal.png
+- test-results/shots/phone-look-duck-reveal-shown.png
 - test-results/shots/phone-look-duck-scoring-locked.png
 - test-results/shots/phone-look-duck-scoring.png
 - test-results/shots/phone-look-duck-skip.png
@@ -828,11 +824,11 @@ Start: `npm run dev` → http://localhost:5173. Only the scenarios added or chan
 - test-results/shots/phone-look-feud-steal.png
 - test-results/shots/phone-look-feud-winner.png
 - test-results/shots/phone-look-home.png
-- test-results/shots/phone-look-imposter-crew-shown.png
 - test-results/shots/phone-look-imposter-crew.png
+- test-results/shots/phone-look-imposter-crew-shown.png
 - test-results/shots/phone-look-imposter-handover.png
-- test-results/shots/phone-look-imposter-unmask-shown.png
 - test-results/shots/phone-look-imposter-unmask.png
+- test-results/shots/phone-look-imposter-unmask-shown.png
 - test-results/shots/phone-look-imposter-view-held.png
 - test-results/shots/phone-look-imposter-view.png
 - test-results/shots/phone-look-inhalte-imposter.png
@@ -847,8 +843,8 @@ Start: `npm run dev` → http://localhost:5173. Only the scenarios added or chan
 - test-results/shots/phone-look-lobby-most-likely.png
 - test-results/shots/phone-look-lobby-pick.png
 - test-results/shots/phone-look-lobby-wavelength-koop.png
-- test-results/shots/phone-look-lobby-wavelength-short.png
 - test-results/shots/phone-look-lobby-wavelength.png
+- test-results/shots/phone-look-lobby-wavelength-short.png
 - test-results/shots/phone-look-most-likely-count.png
 - test-results/shots/phone-look-most-likely-gameover.png
 - test-results/shots/phone-look-most-likely-prompt.png
