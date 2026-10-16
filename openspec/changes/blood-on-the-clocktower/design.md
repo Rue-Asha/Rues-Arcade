@@ -59,9 +59,9 @@ a BotC demo, multi-device, CI changes, history/undo).
   eligible when she is alive and ≥ 5 players were alive just before the Demon died; questions only for the true Mayor
   and Saint.
 - **Time is never read inside the reducer.** `timer` carries `now`; the deadline is stored; screens compute the rest.
-  The vote sweep runs in the UI (`VoteClock`) at `seatMs()` per seat — 2500 by default, overridden in e2e through
-  `window.clocktowerSeatMs` (set by `page.addInitScript`) — and dispatches `mark` and `swept`. Reduced motion jumps the
-  hand. Tests never wait 37.5 s.
+  The vote sweep runs in the UI (`VoteClock`) at `seatMs()` per seat — 2000 by default (2500 until round 3, S67), overridden in e2e
+  through `window.clocktowerSeatMs` (set by `page.addInitScript`) — and dispatches `mark` and `swept`. Reduced motion
+  jumps the hand. Tests never wait 30 s.
 - **Theme = shared tokens redefined under `html[data-theme='clocktower']`**, plus `[data-variant='day']` for parchment
   and a few BotC tokens (`--good`, `--good-tint`, `--outsider`, `--evil`, `--evil-tint`, `--demon`, `--font-display`,
   `--font-num`). Shared components (Button, Modal, PlayHeader, Stage) follow without edits. `hooks.server.ts` `handle`
@@ -184,6 +184,7 @@ a BotC demo, multi-device, CI changes, history/undo).
   (`--nominee`) at d/2 + 3px, outer dashed orange (`--nominator`) at d/2 + 7px, partial opacity but ≥ 3:1 against the
   day ground; badges sit on top of them. Solid vs dashed and inner vs outer keep them apart without colour. Availability
   comes from two engine helpers that the reducer's nomination guards also use, so rings and rules cannot disagree.
+  Round 3 (S68) narrows only the turquoise ring to living seats; the guard still lets the dead be nominated.
 - **Press feedback (S57; mobbin-r2 §1).** pointerdown: scale 0.93 plus a short gold glow; release: spring to 1.06 then 1
   and a one-shot ripple ring from the node centre; ≤ 500 ms, on the `scale`/`transform`/`opacity` properties only (the
   seat's `translate(-50%, -50%)` placement stays untouched by using the individual `scale` property or a child layer).
@@ -241,7 +242,7 @@ a BotC demo, multi-device, CI changes, history/undo).
 - **Deck voting slide (S55).** `voteTimeline` uses `sweepAt` with the deck's own 750 ms seat time: the hand starts on
   the boundary after the nominee (0.5 seat units), turns N sectors at constant speed, voters turn red on sector entry;
   the lit wedge steps sector by sector (opacity/transform steps); N ticks at `tickAngles(N)`. The app mechanics slides
-  are reworded for the round-2 mechanics (badges and rings, sector rule, confirm by tapping, centre texts and marks).
+  were reworded for the round-2 mechanics; round 3 (S69) removed them.
 - **Fit estimates (repo learning: measure before layouting; flow learning: dense screens get a fit estimate).**
   Phone 390×844: the content column is 358px (16px gutters), and every circle's box is 358px (setup cap 360, night
   `min(100%, 100svh − 120px)`, day/vote `min(100%, 100svh − 380px)` = 464 → 358). Desktop 1280×800: setup 360, day and
@@ -291,6 +292,33 @@ a BotC demo, multi-device, CI changes, history/undo).
   phone; held grimoire with icons), U19 none (the sweep shot shows the sector), U20 none, U21 at most one (15-seat
   grimoire with rings, block card and badges), U22 none (seeks the voting slide to its end). Expected growth ≤ 15 s per
   project; each unit reports the look test's duration before and after.
+
+### Gate 2 revisions, round 3 (S67–S69, 2026-10-16)
+
+Round 3 removed the six app mechanics slides, "Ravenswood Bluff", "Die erzählende Person", "Nachtzeichen", "Augen zu"
+and the credits slide ("Danksagung") from the deck.
+
+- **2 s per seat (S67).** `SEAT_MS` drops to 2000 in `vote.ts`; `seatMs()`, `sweepAt` and `VoteClock` read it, so
+  nothing else changes (5 seats 10 s, 15 seats 30 s). The deck keeps its own `SEAT_MS = 750` in `deck.ts`; the
+  `clocktowerSeatMs` override and reduced motion are unchanged.
+- **No rings for the dead (S68).** New `ringsOf(s, seat)` in `engine.ts`: `{ nominee: alive && canBeNominated,
+  nominator: canNominate }`. `Day.svelte` and `VoteClock.svelte` pass `(i) => ringsOf(s, i)` instead of their own
+  lambdas. `canBeNominated` and the `nominee` guard stay as they are, so a dead player is still nominable (S27). Rings
+  are derived from the state on every render, so "Ist gestorben" removes them and "Lebt doch" brings them back without
+  extra code. Smaller alternative: `s.seats[i].alive &&` inline in both lambdas; the helper keeps the two callers from
+  drifting and makes the rule unit-testable.
+- **Shorter deck (S69).** `slides()` drops the ids `story`, `storyteller`, `signals`, `app-grimoire`, `app-night`,
+  `app-show`, `app-timer`, `app-vote`, `app-end`, `eyes` and `credits`; 23 remain, `sheet` last. The kinds `story`,
+  `rows` and `credits` lose their last slide, so `Kind`, `Slide.rows` and their branches and styles in `Slide.svelte` go
+  too. The sheet's attribution line already names game-icons.net (CC BY 3.0) and The Pandemonium Institute, so the IP
+  note survives the credits slide; its scenario now checks the TPI name. `walks/clocktower-deck.ts` iterates
+  `slides(9)`, so it shoots 11 slides fewer without an edit.
+- **Scenario map (round 3).** Renamed: "Sweep lasts 2.5 seconds per seat" → "Sweep lasts 2 seconds per seat". Modified
+  THEN: Hand position over the sweep; Rings follow the day's nominations; Deck navigation by tap, swipe and keys (n /
+  23); Sheet lists all characters (names TPI); manual Deck carries the presentation's content. Added: Dead seats show no
+  rings but stay nominable (unit); Rings follow deaths and Lebt doch by day (e2e); Deck holds 23 slides ending with the
+  sheet (unit). Removed with their requirement or sentence: Deck explains the app; App slides read clearly; Credits
+  slide names the sources. Unchanged: Nomination availability per seat (the guard is not the ring).
 
 ## Contracts
 
@@ -438,7 +466,7 @@ export function nightSteps(state: ClocktowerState, night: number): NightStep[];
 // info.ts
 export function info(state: ClocktowerState, step: NightStep): Info;
 // vote.ts
-export const SEAT_MS = 2500;
+export const SEAT_MS = 2000;                                               // 2500 until round 3 (S67)
 export function seatMs(): number;                                          // globalThis.clocktowerSeatMs ?? SEAT_MS
 export function threshold(alive: number): number;                          // ⌈alive / 2⌉
 export function voteOrder(nominee: number, count: number): number[];       // after the nominee, clockwise, nominee last
@@ -552,6 +580,8 @@ export function sweepAt(ms: number, nominee: number, count: number, perSeat?: nu
 // engine.ts [U21]
 export function canBeNominated(s: ClocktowerState, seat: number): boolean; // a day with nominations open and the seat not yet nominated today (a pending nominee still counts as not nominated)
 export function canNominate(s: ClocktowerState, seat: number): boolean;    // a day with nominations open, the seat alive and not yet nominated anyone today
+// engine.ts [U23]
+export function ringsOf(s: ClocktowerState, seat: number): { nominee: boolean; nominator: boolean }; // nominee: alive && canBeNominated; nominator: canNominate
 // types.ts [U21]: DayState gains killed: number | null — the seat today's execution killed (null: nobody, or already dead)
 // BlockCard.svelte [U21]: { name: string; votes: number } → <section data-testid="block-card">
 // deck.ts [U22]: voteTimeline(n) → { seats, nominee: 0, voters, at, handMs: n · SEAT_MS, holdMs, start: 0.5 }  // at[j]: entry into voter j's sector
@@ -577,8 +607,8 @@ imported read-only and keep their signatures.
   tests in one project; walks seed their own state instead of tapping through.
 - [15 seats + header on 390×844 (R6)] → circle geometry unit-tested for 5–15; each phase's primary action measured in
   e2e on phone before layouting (repo learning).
-- [IP and licence (R7)] → attribution on the sheet and a credits slide; no TPI artwork; icons as data with CC BY 3.0
-  credit.
+- [IP and licence (R7)] → attribution on the sheet (icons under CC BY 3.0, ability texts from The Pandemonium
+  Institute); the credits slide was removed in round 3 (S69); no TPI artwork; icons as data.
 - [Placeholders in wave 1–2 make a half-working game on the feature branch] → nothing ships before Verify; each
   placeholder has a named owner unit.
 - [Wave-3 units each need state that later screens produce] → every phase e2e seeds its own state from `play(…)`;

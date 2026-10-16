@@ -6,7 +6,7 @@ by hand, and players have no shared view of who is alive and who still has a gho
 
 Appetite: one change, multi-session (≈ 10–12 units in 4–5 waves), the explanation deck and character sheet in the last
 wave. Exceeding it means renegotiating scope. Gate 2 revisions round 2 (S50–S66, 2026-10-15): about 5–6 units in 3
-waves (U17–U22), then Verify and Gate 2 again.
+waves (U17–U22), then Verify and Gate 2 again. Round 3 (S67–S69, 2026-10-16): one unit (U23).
 
 ## What Changes
 
@@ -35,8 +35,8 @@ waves (U17–U22), then Verify and Gate 2 again.
   with the execution (S25–S31).
 - Automatic win detection by the official rules, private resolution of ambiguous cases at the next dusk, and a
   two-step end reveal (S32–S34).
-- An "Erklärung" deck rebuilt from Rue's presentation, adapted to N, plus slides on the app's mechanics and a character
-  sheet in the look of her PDF, reused on the setup board (S35–S38).
+- An "Erklärung" deck rebuilt from Rue's presentation, adapted to N, ending with a character sheet in the look of her
+  PDF, reused on the setup board (S35–S38; the app mechanics and credits slides were dropped in round 3, S69).
 - Gate 2 revisions, round 2 (S50–S66): no text selection or I-beam on UI text in the whole app (S50); the held night
   grimoire shows character icons (S51); every seat node shows the name large and the number small (S52); the vote hand
   turns at a constant speed, the hand's sector lights up and a vote counts only in that sector, confirmed by tapping
@@ -45,6 +45,8 @@ waves (U17–U22), then Verify and Gate 2 again.
   nomination rings (S58); round block and ghost-vote badges (S59, S60); a block card with the votes (S61); one
   background tone over the whole page (S62); death animations at the execution and at dawn (S63, S64); show texts in
   the circle's centre with seats marked by tapping (S65); bluffs hidden until shown and never the Drunk (S66).
+- Gate 2 revisions, round 3 (S67–S69): the vote sweep gives each seat 2 s instead of 2.5 s (S67); dead seats show no
+  nomination rings but stay nominable (S68); the deck drops 11 slides to 23, the sheet still last (S69).
 
 ## Non-Goals
 
@@ -109,4 +111,4 @@ waves (U17–U22), then Verify and Gate 2 again.
 - No schema, migration, API or dependency change. BotC stores nothing in the database; its session and player count
   live in localStorage like every game's session.
 - IP: character names and ability texts belong to The Pandemonium Institute; icons are game-icons.net glyphs (CC BY
-  3.0) with attribution on the sheet and a credits slide; no TPI artwork or logos.
+  3.0) with attribution on the sheet (icons and The Pandemonium Institute); no TPI artwork or logos.

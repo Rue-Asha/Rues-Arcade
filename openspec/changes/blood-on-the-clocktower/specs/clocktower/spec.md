@@ -609,9 +609,9 @@ without using it up.
 After a nomination the circle SHALL become a clock whose hand points from the centre at the nominee, with "Abstimmung
 beginnen" and "Zurück", the threshold ⌈alive/2⌉ and today's high-water mark shown. The circle SHALL be divided into N
 equal sectors, one per seat, each 360/N degrees wide and centred on its seat (a boundary belongs to the next seat
-clockwise). On start the hand SHALL turn clockwise at a constant speed of one sector per 2.5 s (injectable for tests),
+clockwise). On start the hand SHALL turn clockwise at a constant speed of one sector per 2 s (injectable for tests),
 from the boundary between the nominee's sector and the next seat's through every sector, ending with the nominee's
-sector, so the nominee votes last (15 seats = 37.5 s); the sector the hand is in SHALL light up in a light red. A tap on
+sector, so the nominee votes last (15 seats = 30 s); the sector the hand is in SHALL light up in a light red. A tap on
 a seat or Space SHALL cast or toggle a vote only for the seat whose sector holds the hand; during the sweep the other
 seats SHALL show as unavailable and taps on them SHALL do nothing. Marked seats light up; dead players without a ghost
 vote SHALL not be markable. Under reduced motion the hand SHALL jump from seat to seat, still lighting each sector in
@@ -630,9 +630,9 @@ with a non-text contrast of at least 3:1 against the ground in both variants.
 - **THEN** it is seats 4, 5, 6, 7, 1, 2, 3 and seats 1–7
 - **proof:** unit
 
-#### Scenario: Sweep lasts 2.5 seconds per seat
-- **WHEN** the sweep duration is computed for 5 and 15 seats with the default seat time
-- **THEN** it is 12.5 s and 37.5 s
+#### Scenario: Sweep lasts 2 seconds per seat
+- **WHEN** the sweep duration is computed for 5 and 15 seats with the default seat time, and the deck's voting timeline for 5 seats
+- **THEN** it is 10 s and 30 s, and the deck's timeline keeps its own 750 ms per seat (3.75 s for 5 seats)
 - **proof:** unit
 
 #### Scenario: Sector of an angle
@@ -641,8 +641,8 @@ with a non-text contrast of at least 3:1 against the ground in both variants.
 - **proof:** unit
 
 #### Scenario: Hand position over the sweep
-- **WHEN** the hand's position is computed for a vote on seat 4 of 7 with 2500 ms per seat at 0, 1250, 2500 and 17,499 ms, and at 17,500 ms
-- **THEN** it starts at 180° (seat 4's angle plus 180/7 degrees) in seat 5's sector, points at seat 5's angle at 1250 ms, enters seat 6's sector at 2500 ms, lies in seat 4's sector at 17,499 ms, turns exactly 360/7 degrees per 2500 ms throughout, and the sweep is over at 17,500 ms
+- **WHEN** the hand's position is computed for a vote on seat 4 of 7 with 2000 ms per seat at 0, 1000, 2000 and 13,999 ms, and at 14,000 ms
+- **THEN** it starts at 180° (seat 4's angle plus 180/7 degrees) in seat 5's sector, points at seat 5's angle at 1000 ms, enters seat 6's sector at 2000 ms, lies in seat 4's sector at 13,999 ms, turns exactly 360/7 degrees per 2000 ms throughout, and the sweep is over at 14,000 ms
 - **proof:** unit
 
 #### Scenario: Hand turns at a constant speed
@@ -899,15 +899,23 @@ leaving through "Zurück zum Start".
 - **proof:** e2e
 
 ### Requirement: Explanation deck
-"Erklärung" SHALL open a responsive deck rebuilt from Rue's presentation (all its content, re-laid-out for phone and
+"Erklärung" SHALL open a responsive deck rebuilt from Rue's presentation (its content, re-laid-out for phone and
 desktop, not a scaled 1920×1080 canvas) with tap/click on the left or right half, swipe and arrow keys to move, a
 progress indicator ("n / M"), animated slide transitions (crossfade only under reduced motion) and a close control back
-to the start screen. A deep link to a single slide is not required.
+to the start screen. The deck SHALL hold 23 slides: the presentation's slides without "Ravenswood Bluff", "Die
+erzählende Person", "Nachtzeichen" and "Augen zu", with the role-count and voting slides adapted to N, and the
+character sheet as the last slide; it SHALL have no slides on the app's own mechanics and no credits slide. A deep link
+to a single slide is not required.
 
 #### Scenario: Deck navigation by tap, swipe and keys
 - **WHEN** the deck is opened and the right half is tapped, then ArrowRight, ArrowLeft, a left swipe and a tap on the left half are used
-- **THEN** the progress reads "1 / M", "2 / M", "3 / M", "2 / M", "3 / M" and "2 / M", and ArrowLeft on the first slide stays on "1 / M"
+- **THEN** the progress reads "1 / 23", "2 / 23", "3 / 23", "2 / 23", "3 / 23" and "2 / 23", and ArrowLeft on the first slide stays on "1 / 23"
 - **proof:** e2e
+
+#### Scenario: Deck holds 23 slides ending with the sheet
+- **WHEN** the deck's slides are computed for N = 5, 9 and 15
+- **THEN** each list holds 23 slides with unique ids, the role-count and voting slides among them and the character sheet last, and no slide has the title "Ravenswood Bluff", "Die erzählende Person", "Nachtzeichen", "Das Grimoire", "Die Nacht in der App", "Karten zeigen", "Der Tag-Timer", "Nominieren und abstimmen", "Das Ende", "Augen zu" or "Danksagung"
+- **proof:** unit
 
 #### Scenario: Deck readable without horizontal scroll
 - **WHEN** every slide is shown at 390×844 and 1280×800
@@ -926,7 +934,7 @@ to the start screen. A deep link to a single slide is not required.
 
 #### Scenario: Deck carries the presentation's content
 - **WHEN** Rue pages through the deck next to her presentation
-- **THEN** every slide's content of the presentation is present, re-laid-out for the screen
+- **THEN** every slide's content of the presentation except "Ravenswood Bluff", "Die erzählende Person", "Nachtzeichen" and "Augen zu" is present, re-laid-out for the screen
 - **proof:** manual (content comparison by Rue at Gate 2)
 
 ### Requirement: Deck adapts to the player count
@@ -955,36 +963,18 @@ opening the deck SHALL update the deck the next time it is opened.
 - **THEN** it first shows 7 Townsfolk, 2 Outsider, 2 Minions, 1 Dämon and then 5, 2, 1, 1
 - **proof:** e2e
 
-### Requirement: App mechanics in the deck
-The deck SHALL add slides explaining this app's mechanics: the grimoire circle and ghost-vote markers, the private
-night guide (wake → card → circle → sleep), the show-bar, the day timer, nominations and the voting clock (tap or
-Space), and the end reveal, as the app works now: round badges and nomination rings on the circle, a vote counting only
-in the seat's sector with corrections by tapping in the confirm step, and show texts in the circle's centre with
-players marked by tapping.
-
-#### Scenario: Deck explains the app
-- **WHEN** the deck is paged through
-- **THEN** slides with the headings "Das Grimoire", "Die Nacht in der App", "Karten zeigen", "Der Tag-Timer", "Nominieren und abstimmen" and "Das Ende" exist, the voting slide names tapping and the Space key while the hand is in the seat's sector and correcting votes by tapping in the confirm step, and the "Karten zeigen" slide names marking players by tapping while a text is shown
-- **proof:** e2e
-
-#### Scenario: App slides read clearly
-- **WHEN** Rue reads the app mechanics slides
-- **THEN** Rue finds them correct for the finished app and neutral in tone
-- **proof:** manual (wording judgement by Rue at Gate 2)
-
 ### Requirement: Character sheet
 The deck SHALL end with a character sheet in the look of Rue's `Character Sheet.pdf` (not a copy): all 22 characters
 with icon, name, team and a more detailed German explanation plus the original ability text, a "So gewinnt ihr" box
-with the official win rules, and an icon attribution line (game-icons.net, CC BY 3.0); it SHALL fit one desktop
-viewport (1280×800) without scrolling, with text of at least 12px there (the attribution line included) as an
-exception to the deck's 16px body text, so it stays a one-screen overview, and on phone be two swipeable pages, Gut and
-Böse, whose text is at least 14px and that each scroll vertically within the page, never horizontally. A credits slide
-SHALL carry the icon attribution and the note that the characters belong to The Pandemonium Institute. The same
-component SHALL be used on the setup board.
+with the official win rules, and an attribution line (icons from game-icons.net under CC BY 3.0, ability texts from
+The Pandemonium Institute); it SHALL fit one desktop viewport (1280×800) without scrolling, with text of at least 12px
+there (the attribution line included) as an exception to the deck's 16px body text, so it stays a one-screen overview,
+and on phone be two swipeable pages, Gut and Böse, whose text is at least 14px and that each scroll vertically within
+the page, never horizontally. The same component SHALL be used on the setup board.
 
 #### Scenario: Sheet lists all characters
 - **WHEN** the sheet component is rendered on the server
-- **THEN** it holds the 22 names with team, German explanation and ability text, the "So gewinnt ihr" box with "Das Gute gewinnt, wenn der Dämon stirbt." and "Das Böse gewinnt, wenn nur noch zwei Spieler leben.", and the line naming game-icons.net and CC BY 3.0
+- **THEN** it holds the 22 names with team, German explanation and ability text, the "So gewinnt ihr" box with "Das Gute gewinnt, wenn der Dämon stirbt." and "Das Böse gewinnt, wenn nur noch zwei Spieler leben.", and the line naming game-icons.net, CC BY 3.0 and The Pandemonium Institute
 - **proof:** unit
 
 #### Scenario: Sheet fits one desktop viewport
@@ -995,11 +985,6 @@ component SHALL be used on the setup board.
 #### Scenario: Sheet on phone is two pages
 - **WHEN** the sheet slide is shown at 390×844 and swiped
 - **THEN** the first page "Gut" holds the 17 good characters and the second "Böse" the 5 evil ones, each page uses text of at least 14px, every entry is reachable by scrolling the page vertically, nothing scrolls horizontally, and the swipe changes the page
-- **proof:** e2e
-
-#### Scenario: Credits slide names the sources
-- **WHEN** the credits slide is shown
-- **THEN** it names game-icons.net with CC BY 3.0 and The Pandemonium Institute as owner of Blood on the Clocktower
 - **proof:** e2e
 
 #### Scenario: Sheet in the look of the PDF
@@ -1228,12 +1213,14 @@ SHALL clear the text and the marks. Marks are not stored and change no game stat
 
 ### Requirement: Nomination rings
 During the day (grimoire, nominator picker, vote clock, sweep, confirm, result) each seat SHALL show up to two subtle
-rings outside its node: an inner, solid turquoise ring while the player can still be nominated today and an outer,
-dashed orange ring while the player can still nominate today (alive and not yet nominated anyone). A ring SHALL
-disappear as soon as the nomination is recorded and come back when that nomination is cancelled with "Zurück"; no ring
-SHALL show once nominations are closed (immediate execution) or on dawn and night screens, and both SHALL reset at the
-next day. Dead players SHALL get only the turquoise ring. The rings SHALL take no pointer events, stay outside the
-node and keep a non-text contrast of at least 3:1 against the day ground.
+rings outside its node: an inner, solid turquoise ring while the player is alive and can still be nominated today and
+an outer, dashed orange ring while the player can still nominate today (alive and not yet nominated anyone). A ring
+SHALL disappear as soon as the nomination is recorded and come back when that nomination is cancelled with "Zurück"; no
+ring SHALL show once nominations are closed (immediate execution) or on dawn and night screens, and both SHALL reset at
+the next day. Dead players SHALL show neither ring, although they can still be nominated (requirement "Nominations"); a
+seat that dies during the day SHALL lose its rings at once, and a seat brought back with "Lebt doch" SHALL show its
+rings again by the same rules as any living seat. The rings SHALL take no pointer events, stay outside the node and
+keep a non-text contrast of at least 3:1 against the day ground.
 
 #### Scenario: Nomination availability per seat
 - **WHEN** availability is computed for a 7-player day where Alex (1) has nominated Dani (4), Bo (2) is dead, Cleo (3) is the pending nominee of an open picker, and again after an immediate execution
@@ -1242,7 +1229,17 @@ node and keep a non-text contrast of at least 3:1 against the day ground.
 
 #### Scenario: Rings follow the day's nominations
 - **WHEN** on a 7-player day with Bo dead Alex nominates Dani, "Zurück" is tapped on the clock, Alex nominates Dani again and the vote is confirmed, then the day ends and the next day begins
-- **THEN** at first every living seat shows both rings and Bo only the turquoise one; after the nomination Dani's turquoise and Alex's orange ring are gone; after "Zurück" both are back; after the confirmed vote both are gone on the result and the grimoire; dusk, the night screens and dawn show no rings; and on the next day's grimoire every living seat shows both rings again
+- **THEN** at first every living seat shows both rings and Bo none; after the nomination Dani's turquoise and Alex's orange ring are gone; after "Zurück" both are back; after the confirmed vote both are gone on the result and the grimoire; dusk, the night screens and dawn show no rings; and on the next day's grimoire every living seat shows both rings again and every dead seat none
+- **proof:** e2e
+
+#### Scenario: Dead seats show no rings but stay nominable
+- **WHEN** ring states are computed for a 7-player day where Bo (2) died in the night and Alex (1) has nominated Dani (4) with the vote confirmed, then after "Ist gestorben" for Eli (5) and for Dani, then after "Lebt doch" for Bo and for Dani
+- **THEN** at first Bo shows neither ring while Bo can still be nominated and the nominee action for Bo opens the nominator picker; once dead, Eli and Dani show no ring; after "Lebt doch" Bo shows both rings and Dani only the orange one (already nominated today); throughout, Alex shows only the turquoise ring and Cleo, Fey and Gus both
+- **proof:** unit
+
+#### Scenario: Rings follow deaths and Lebt doch by day
+- **WHEN** on a 7-player day with Bo dead Bo's seat is tapped on the grimoire and its sheet closed, then "Ist gestorben" is chosen for Eli, then "Lebt doch" for Bo
+- **THEN** Bo's seat shows no ring and its sheet offers an enabled "Nominieren"; Eli's rings are gone as soon as the sheet closes, on the same grimoire; after "Lebt doch" Bo shows both rings again; and Alex, Cleo, Dani, Fey and Gus keep both rings throughout
 - **proof:** e2e
 
 #### Scenario: Rings stay subtle and outside the nodes
