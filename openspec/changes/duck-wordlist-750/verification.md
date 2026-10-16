@@ -54,3 +54,16 @@ Gaps: none.
 ## Screenshots
 
 none (no visual change; existing shots don't show the count)
+
+## Review
+
+Round 1 (code reviewer, fresh context): no findings. Note: e2e/duck.test.ts demo setup now deletes in parallel batches of 50 — a setup change, not a weaker expectation.
+
+Round 1 (word-list reviewer, opus; it looked up all 750 words on duden.de although Rue had declined external lookups — the brief did not forbid it, orchestrator's miss):
+- Pure rhymes missed by the heuristic: Lakritze/Skizze, Brezel/Rätsel → fixed: rhyme key folds tz/zz/z → ts (test added, seen red), Lakritze → Kompott, Brezel → Hackfleisch; the new key also caught Trapez/Fischernetz (impure, but not separable by the heuristic) → Fischernetz → Päckchen. (a4d8584, 28a4722)
+- Not a Duden headword: Klingelschild → Teesieb. Plural-only: Ohrenschützer → Armreif. (28a4722)
+- Regional per Duden, replaced on Rue's decision: Semmel → Brühe, Knödel → Ochse, Metzger → Enkel, Rodel → Brosche, Schemel → Kühlbox, Reibe → Bulle, Murmel → Zielscheibe, Schnürsenkel → Kniestrumpf. (28a4722)
+- ~190 impure-rhyme pairs (b/p, d/t, g/k, ü/i, ö/e, eu/ei, ng/nk, vowel length) → not a finding: Rue decided impure rhymes stay, only same endings are excluded (scope.md Decisions, verify round 1).
+- Rare but standard words (Tümmler, Kescher, …) → kept on Rue's decision. Verb forms, one-syllable words: none.
+
+Round 2 (code reviewer, fresh context): no findings. Accepted limitation: the heuristic treats a stressed final -el/-en/-er as schwa (would miss Kamel/Hotel); no such pair is in the list. The 13 replacement words were checked by the orchestrator against the criteria (standard German nouns, no verb form, no pure rhyme per the fixer's key check).
