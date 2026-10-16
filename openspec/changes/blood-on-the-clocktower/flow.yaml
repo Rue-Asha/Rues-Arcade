@@ -6,6 +6,8 @@ gate0: 2026-10-14
 gate1: 2026-10-14
 gate0_r2: 2026-10-15  # Gate 2 revisions round 2 (S50–S66) scope approved
 gate1_r2: 2026-10-15  # round 2 plan U17–U22 approved incl. additions 1–5 and both legibility exceptions
+gate0_r3: 2026-10-16  # Gate 2 revisions round 3 (S67–S69) scope approved
+gate1_r3: 2026-10-16  # round 3 plan U23 approved incl. additions (TPI attribution, dead slide kinds, ringsOf); sheet credit line suffices without the credits slide
 learnings:
 - 'reviewer r7 (2026-10-16): design.md gave woken and target seats the check badge the spec reserves for marks; Rue chose marks only → planner checks each design decision against every scenario THEN that names the same visual (badge, ring, tint) before Gate 1'
 - 'fixer r7 (2026-10-16): a Circle fix aimed at the night screen also stripped the check from vote, death and setup seats; Rue wanted it kept there → a fixer changing a shared component lists every screen it reaches under deviations, and the orchestrator asks before re-verifying'
