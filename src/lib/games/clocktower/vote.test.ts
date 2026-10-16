@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { sectorOf } from './circle.ts';
+import { voteTimeline } from './deck.ts';
 import { SEAT_MS, seatMs, sweepAt, sweepMs, threshold, voteOrder, voteResult } from './vote.ts';
 
 const g = globalThis as { clocktowerSeatMs?: number };
@@ -18,6 +19,8 @@ describe('clocktower vote', () => {
 		expect(SEAT_MS).toBe(2000);
 		expect(sweepMs(5)).toBe(10000);
 		expect(sweepMs(15)).toBe(30000);
+		expect(voteTimeline(5).handMs).toBe(3750);
+		expect(voteTimeline(15).handMs).toBe(11250);
 	});
 
 	it('Scenario: Hand position over the sweep', () => {
