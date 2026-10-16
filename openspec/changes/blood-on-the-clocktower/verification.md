@@ -1,26 +1,25 @@
-verified-at: b3a9cb5
+verified-at: e354131
 
-# Verification r8
+# Verification r9
 
-Verify after the r7 fixer commits (1389653..b3a9cb5, 9 commits: check badge only for marks and a `lit` prop for the night highlight, timer gap and padding, test tightening, one wording change in the clocktower spec). Verified committed tip b3a9cb5, working tree clean.
+Verify round 3 of the revisions (S67-S69, unit U23, 80739ac..e354131: 2 s per seat in the vote sweep, no rings on dead seats, 23-slide deck). Verified committed tip e354131, working tree clean.
 
 ## Layer 1: `PORT=4711 npm run proof:full` (green, run 1 of 1)
 
-Unit: vitest 50 files, 483 tests passed, exit 0. e2e: 904 passed, 44 skipped (5.8m). Full log: /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/3f77cd96-741a-434e-ad03-88b18326d9f1/scratchpad/full1.log
+Unit: vitest 50 files, 483 tests passed, exit 0. e2e: 902 passed, 44 skipped (5.6m). Full log: /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/3f77cd96-741a-434e-ad03-88b18326d9f1/scratchpad/r9a.log
 
 ```
+  ✓  945 [desktop] › e2e/look.test.ts:353:2 › reduced motion › Scenario: Reduced motion makes transitions instant (222ms)
+  ✓  946 [desktop] › e2e/look.test.ts:365:1 › Scenario: Motion never blocks input (261ms)
 
   44 skipped
-  904 passed (5.8m)
-EXIT 0
+  902 passed (5.6m)
 ```
 
-## Layer 2: spec coverage (276 scenarios: 83 unit, 171 e2e, 22 manual, 0 gaps)
+## Layer 2: spec coverage (276 scenarios: 85 unit, 170 e2e, 21 manual, 0 gaps)
 
-Counts unchanged against r7 (276: 83/171/22/0); no scenario added, removed, renamed or re-proofed. Prefix collisions and duplicate scenario titles: none. Test names matched by containing the exact "Scenario: <title>" (or every name in the proof line, checked against the proof:full output); unit names also located in src/ or scripts/. The table is carried over from r7 and re-checked mechanically against this run's log.
-e2e single-project set is as in r7: Drag a seat to a new place (desktop), Full Clocktower game (phone), Sheet fits one desktop viewport (desktop), Sheet on phone is two pages (phone), Header wraps on a phone (phone), UI text cannot be selected (desktop), Inputs keep caret and selection (desktop), one member of "Clocktower look rules on every screen" (phone only).
-Wording change since r7: "Centre texts fit the circle" THEN now names the lead line "Du bist" in the 16px group (commit ebeebcb); proof unchanged (e2e), test still passes. Test-only tightening since r7 (names unchanged, still passing): ui-text cursor, night icon in show texts, day-marks night circle rings, day timer ancestors, day-layout, vote, show. Source changes: Circle.svelte (check badge only for marks/pointed, new lit), Wake.svelte (passes lit), Timer.svelte (gap and padding).
-Downgrades: none.
+Against r8 (276: 83/171/22/0): total unchanged, 3 scenarios removed and 3 added. Removed: "Deck explains the app" (e2e), "Credits slide names the sources" (e2e), "App slides read clearly" (manual); the requirement "App mechanics in the deck" is gone. Added: "Deck holds 23 slides ending with the sheet" (unit), "Dead seats show no rings but stay nominable" (unit), "Rings follow deaths and Lebt doch by day" (e2e). Renamed with new numbers: "Sweep lasts 2.5 seconds per seat" is now "Sweep lasts 2 seconds per seat" (unit, 2000 ms). Reworded, proof unchanged: "Deck navigation by tap, swipe and keys" (n / 23), "Hand position over the sweep" (2000 ms), "Rings follow the day's nominations" (dead seats show none), "Sheet lists all characters" (attribution names The Pandemonium Institute), "Deck carries the presentation's content" (minus the four dropped slides, still manual). All 255 unit/e2e scenarios were matched mechanically by name (or every name in the proof line) against this run's log: 0 missing. Prefix collisions and duplicate titles: none. e2e single-project set unchanged from r8 (the new e2e scenario ran in phone and desktop).
+Test changes in the range: deck.test.ts, vote.test.ts, engine.test.ts, sheet.test.ts, e2e/clocktower-day-marks.test.ts, e2e/clocktower-deck.test.ts. Downgrades: none.
 
 | Scenario | proof | Evidence |
 |---|---|---|
@@ -136,7 +135,7 @@ Downgrades: none.
 | Zurück cancels the nomination unused | e2e | "Scenario: Zurück cancels the nomination unused" passed (phone+desktop) |
 | Clock points at the nominee | e2e | "Scenario: Clock points at the nominee" passed (phone+desktop) |
 | Sweep order ends at the nominee | unit | "Scenario: Sweep order ends at the nominee" passed (1) |
-| Sweep lasts 2.5 seconds per seat | unit | "Scenario: Sweep lasts 2.5 seconds per seat" passed (1) |
+| Sweep lasts 2 seconds per seat | unit | "Scenario: Sweep lasts 2 seconds per seat" passed (1) |
 | Sector of an angle | unit | "Scenario: Sector of an angle" passed (1) |
 | Hand position over the sweep | unit | "Scenario: Hand position over the sweep" passed (1) |
 | Hand turns at a constant speed | e2e | "Scenario: Hand turns at a constant speed" passed (phone+desktop) |
@@ -182,6 +181,7 @@ Downgrades: none.
 | Winner for every ending | unit | "Scenario: Winner for every ending" passed (1) |
 | Full Clocktower game | e2e | "Scenario: Full Clocktower game" passed (phone only) |
 | Deck navigation by tap, swipe and keys | e2e | "Scenario: Deck navigation by tap, swipe and keys" passed (phone+desktop) |
+| Deck holds 23 slides ending with the sheet | unit | "Scenario: Deck holds 23 slides ending with the sheet" passed (1) |
 | Deck readable without horizontal scroll | e2e | "Scenario: Deck readable without horizontal scroll" passed (phone+desktop) |
 | Deck closes to the start screen | e2e | "Scenario: Deck closes to the start screen" passed (phone+desktop) |
 | Slide change animated, crossfade under reduced motion | e2e | "Scenario: Slide change animated, crossfade under reduced motion" passed (phone+desktop) |
@@ -190,12 +190,9 @@ Downgrades: none.
 | Voting slide uses half the players | unit | "Scenario: Voting slide uses half the players" passed (1) |
 | Official win wording in the deck | unit | "Scenario: Official win wording in the deck" passed (1) |
 | Deck follows the chosen count | e2e | "Scenario: Deck follows the chosen count" passed (phone+desktop) |
-| Deck explains the app | e2e | "Scenario: Deck explains the app" passed (phone+desktop) |
-| App slides read clearly | manual (wording judgement by Rue at Gate 2) | shots/ and Gate 2 checklist |
 | Sheet lists all characters | unit | "Scenario: Sheet lists all characters" passed (1) |
 | Sheet fits one desktop viewport | e2e | "Scenario: Sheet fits one desktop viewport" passed (desktop only) |
 | Sheet on phone is two pages | e2e | "Scenario: Sheet on phone is two pages" passed (phone only) |
-| Credits slide names the sources | e2e | "Scenario: Credits slide names the sources" passed (phone+desktop) |
 | Sheet in the look of the PDF | manual (visual judgement at Gate 2) | shots/ and Gate 2 checklist |
 | Setup circle shows each seat's character | e2e | "Scenario: Setup circle shows each seat's character" passed (phone+desktop) |
 | Character icons fit fifteen seats | e2e | "Scenario: Character icons fit fifteen seats" passed (phone+desktop) |
@@ -230,6 +227,8 @@ Downgrades: none.
 | Leaving the step or reloading clears text and marks | e2e | "Scenario: Leaving the step or reloading clears text and marks" passed (phone+desktop) |
 | Nomination availability per seat | unit | "Scenario: Nomination availability per seat" passed (1) |
 | Rings follow the day's nominations | e2e | "Scenario: Rings follow the day's nominations" passed (phone+desktop) |
+| Dead seats show no rings but stay nominable | unit | "Scenario: Dead seats show no rings but stay nominable" passed (1) |
+| Rings follow deaths and Lebt doch by day | e2e | "Scenario: Rings follow deaths and Lebt doch by day" passed (phone+desktop) |
 | Rings stay subtle and outside the nodes | e2e | "Scenario: Rings stay subtle and outside the nodes" passed (phone+desktop) |
 | Block card names the player and the votes | e2e | "Scenario: Block card names the player and the votes" passed (phone+desktop) |
 | Execution records whom it killed | unit | "Scenario: Execution records whom it killed" passed (1) |
@@ -303,7 +302,7 @@ Downgrades: none.
 
 ## Manual checklist (Gate 2)
 
-Start: `npm run dev` → http://localhost:5173. Items 1–7 are unchanged from r7 (no scenario's proof changed in r8). The older manual scenarios (Look approved on screenshots, Clocktower look approved on screenshots, Atmosphere approved, Transitions feel smooth, Clocktower sounds at the right moments, Deck carries the presentation's content, App slides read clearly, Sheet in the look of the PDF, Distribution readable at a glance, Circle and information in one piece approved, Day facts legible, Show-bar placement approved, Day clock emphasis approved, End reveal by team approved, Demo tips say why the step happens) are unchanged in proof but their screens changed with the round-2 UI, so re-glance at the screenshots.
+Start: `npm run dev` → http://localhost:5173. Items 1–8 are unchanged from r8 (proofs unchanged). Round 3 adds items 9–11. "Deck carries the presentation's content" stays manual. "App slides read clearly" is gone with the app-mechanics slides.
 
 1. Circle look (S50, Circle look approved): setup board, a night circle and the day grimoire at 390px and 1280px: circle decorated, seats connected, ticks in line with the seats' sectors (`*-look-clocktower-setup-*`, `*-look-clocktower-night-*`, `*-look-clocktower-clock-*`).
 2. Seat nodes (Seat nodes approved): names large and numbers small, round block and ghost-vote badges, subtle nomination rings (`*-look-clocktower-*` grimoire, block and clock shots, crowded 15-seat phone grimoire).
@@ -313,6 +312,10 @@ Start: `npm run dev` → http://localhost:5173. Items 1–7 are unchanged from r
 6. Seat taps (Seat taps feel responsive): on Android and iPhone tap seats in setup, night and day: press spring-back with ripple, short vibration on Android, nothing breaks on iPhone.
 7. Day screens round 2 (Day screens of round 2 approved): timer top right, nomination rings readable, block card fits, execution announcement and dawn death animations short and clear.
 8. Earlier manual items unchanged (sound, deck content, sheet, demo tips): see r6 steps; run `npm run dev`, pick Blood on the Clocktower, play a night and a day with sound on.
+
+9. Vote sweep 2 s (S67, Sweep lasts 2 seconds per seat): run a vote with 7 and 15 seats: the hand takes 2 s per seat (15 seats = 30 s), still evenly, nominee last; the deck's voting slide keeps its own faster pace.
+10. No rings on dead seats (S68, incl. Lebt doch): on a day with a dead player no turquoise or orange ring on the dead seat, but tapping it still offers "Nominieren"; mark a seat "Ist gestorben" and its rings vanish at once; "Lebt doch" brings both rings back.
+11. 23-slide deck (S69): open Erklärung: progress reads "n / 23", no Ravenswood Bluff, Die erzählende Person, Nachtzeichen, Augen zu, no app-mechanics or credits slides, character sheet last with the attribution line (game-icons.net, CC BY 3.0, The Pandemonium Institute). Page through next to the presentation (Deck carries the presentation's content, manual).
 
 ## Diffstat (`git diff --stat origin/main...flow/blood-on-the-clocktower`)
 
@@ -458,12 +461,12 @@ Start: `npm run dev` → http://localhost:5173. Items 1–7 are unchanged from r
  static/fonts/im-fell-english-italic-latin.woff2    |  Bin 0 -> 57808 bytes
  static/fonts/im-fell-english-latin.woff2           |  Bin 0 -> 59880 bytes
  static/fonts/im-fell-english-sc-latin.woff2        |  Bin 0 -> 56956 bytes
- 141 files changed, 20488 insertions(+), 70 deletions(-)
+ 141 files changed, 20359 insertions(+), 70 deletions(-)
 ```
 
 ## Screenshots (not committed)
 
-422 files in `test-results/shots/` of the working tree /home/Rue/.cache/flow/Rues-Arcade/blood-on-the-clocktower (not copied or committed, user decision):
+400 files in `test-results/shots/` of the working tree /home/Rue/.cache/flow/Rues-Arcade/blood-on-the-clocktower (not copied or committed, user decision):
 
 - test-results/shots/desktop-duck-demo-scoring.png
 - test-results/shots/desktop-home.png
@@ -935,7 +938,7 @@ Fresh-context reviewer over `git diff origin/main...flow/blood-on-the-clocktower
 - No weakened tests without a spec reason, no correctness bugs.
 
 
-## Review
+## Earlier review (r7–r8)
 
 Round-2 revisions (S50–S66, U17–U22), fresh-context reviewer (opus). r7 over `git diff 867a1fc...1389653`, r8 over the r7 fixes `git diff 1389653...a877bb0`. Earlier rounds are under "Earlier review (r1–r6)".
 
