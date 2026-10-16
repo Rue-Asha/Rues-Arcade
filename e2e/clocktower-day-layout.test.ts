@@ -79,7 +79,13 @@ test('Scenario: Day timer stands out', async ({ page }) => {
 				const range = document.createRange();
 				range.selectNodeContents(heading);
 				const text = [...range.getClientRects()];
+				const pinned: string[] = [];
+				for (let n: Element | null = el; n; n = n.parentElement) {
+					const position = getComputedStyle(n).position;
+					if (position === 'sticky' || position === 'fixed') pinned.push(position);
+				}
 				return {
+					pinned,
 					right: head.right - r.right,
 					top: r.top - head.top,
 					overlap: text.some((t) => t.left < r.right && t.right > r.left && t.top < r.bottom && t.bottom > r.top),
@@ -93,6 +99,7 @@ test('Scenario: Day timer stands out', async ({ page }) => {
 			});
 			const label = `${name} ${ago > 0 ? 'late' : 'running'}`;
 			expect(got.inHeading, label).toBe(false);
+			expect(got.pinned, `${label}: sticky or fixed`).toEqual([]);
 			expect(got.size, label).toBeGreaterThan(got.head);
 			expect(got.contrast, label).toBeGreaterThanOrEqual(4.5);
 			expect(got.first, label).toBe(true);
