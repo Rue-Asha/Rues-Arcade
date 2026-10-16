@@ -14,28 +14,28 @@ describe('clocktower vote', () => {
 		expect(voteOrder(6, 7).map((i) => i + 1)).toEqual([1, 2, 3, 4, 5, 6, 7]);
 	});
 
-	it('Scenario: Sweep lasts 2.5 seconds per seat', () => {
-		expect(SEAT_MS).toBe(2500);
-		expect(sweepMs(5)).toBe(12500);
-		expect(sweepMs(15)).toBe(37500);
+	it('Scenario: Sweep lasts 2 seconds per seat', () => {
+		expect(SEAT_MS).toBe(2000);
+		expect(sweepMs(5)).toBe(10000);
+		expect(sweepMs(15)).toBe(30000);
 	});
 
 	it('Scenario: Hand position over the sweep', () => {
 		const deg = (hand: number) => (hand * 360) / 7;
-		const at = (ms: number) => sweepAt(ms, 3, 7, 2500)!;
+		const at = (ms: number) => sweepAt(ms, 3, 7, 2000)!;
 		expect(deg(at(0).hand)).toBeCloseTo(180, 9);
 		expect(at(0).seat).toBe(4);
 		expect(sectorOf(deg(at(0).hand), 7)).toBe(4);
-		expect(deg(at(1250).hand)).toBeCloseTo((4 * 360) / 7, 9);
-		expect(at(2499).seat).toBe(4);
-		expect(at(2500).seat).toBe(5);
-		expect(sectorOf(deg(at(2500).hand), 7)).toBe(5);
-		expect(at(17499).seat).toBe(3);
-		expect(sectorOf(deg(at(17499).hand), 7)).toBe(3);
-		expect(deg(at(2500).hand) - deg(at(0).hand)).toBeCloseTo(360 / 7, 9);
-		expect(deg(at(17499).hand) - deg(at(1250).hand)).toBeCloseTo((360 / 7) * (16249 / 2500), 9);
-		expect(sweepAt(17500, 3, 7, 2500)).toBeNull();
-		expect(sweepAt(-1, 3, 7, 2500)).toBeNull();
+		expect(deg(at(1000).hand)).toBeCloseTo((4 * 360) / 7, 9);
+		expect(at(1999).seat).toBe(4);
+		expect(at(2000).seat).toBe(5);
+		expect(sectorOf(deg(at(2000).hand), 7)).toBe(5);
+		expect(at(13999).seat).toBe(3);
+		expect(sectorOf(deg(at(13999).hand), 7)).toBe(3);
+		expect(deg(at(2000).hand) - deg(at(0).hand)).toBeCloseTo(360 / 7, 9);
+		expect(deg(at(13999).hand) - deg(at(1000).hand)).toBeCloseTo((360 / 7) * (12999 / 2000), 9);
+		expect(sweepAt(14000, 3, 7, 2000)).toBeNull();
+		expect(sweepAt(-1, 3, 7, 2000)).toBeNull();
 	});
 
 	it('sweep position uses the injected seat time by default', () => {
@@ -45,7 +45,7 @@ describe('clocktower vote', () => {
 	});
 
 	it('seat time can be injected for tests', () => {
-		expect(seatMs()).toBe(2500);
+		expect(seatMs()).toBe(2000);
 		g.clocktowerSeatMs = 300;
 		expect(seatMs()).toBe(300);
 		expect(sweepMs(7)).toBe(2100);

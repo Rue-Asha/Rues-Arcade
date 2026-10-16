@@ -1,6 +1,6 @@
-export const SEAT_MS = 2500;
+export const SEAT_MS = 2000;
 
-// e2e sets window.clocktowerSeatMs through page.addInitScript so a sweep doesn't take 37.5 s
+// e2e sets window.clocktowerSeatMs through page.addInitScript so a sweep doesn't take 30 s
 export function seatMs(): number {
 	return (globalThis as { clocktowerSeatMs?: number }).clocktowerSeatMs ?? SEAT_MS;
 }
