@@ -934,3 +934,22 @@ Fresh-context reviewer over `git diff origin/main...flow/blood-on-the-clocktower
 - [spec, low] `Dawn.svelte:48` the dawn circle has no height cap (up to 640px); breaks "fits the viewport at one scroll position" only on viewports under ~700px tall, which no tested viewport has.
 - No weakened tests without a spec reason, no correctness bugs.
 
+
+## Review
+
+Round-2 revisions (S50–S66, U17–U22), fresh-context reviewer (opus). r7 over `git diff 867a1fc...1389653`, r8 over the r7 fixes `git diff 1389653...a877bb0`. Earlier rounds are under "Earlier review (r1–r6)".
+
+### r7 (fixed)
+- [spec] Circle drew the check badge for the woken seat and the Imp's target too, so the woken player's seat looked marked. User decision: badge only for seats the user taps. New Circle prop `lit` (tint, no badge) for Wake's woken seat and target; `marked` (voters, death step, setup pick, show-text marks) and `pointed` keep the badge. A first fix stripped the badge from vote/death/setup seats too; the user asked for it back there (6302ea7, 6b07bd4).
+- [spec, minor] Timer gap and padding had shrunk against "size and look unchanged"; restored to 14px / 6px 22px (d530840).
+- [weak] "Seats are marked while a text is shown" now checks gold ring and badge on seats 2, 6, 3 and 1, and that the woken seat has none before a tap (red first).
+- [weak] "Day timer stands out" now checks no sticky/fixed position on the timer or an ancestor (not red: code was right).
+- [weak] UI text cursor must be `default` or `pointer`, not just not `text` (not red: code was right).
+- [weak] Day-marks "no rings" now walks the night circle screens, not only dusk (not red: code was right).
+- [weak] "Show texts appear in the circle's centre" now checks the character icon, not only the name (not red: code was right).
+- [weak, ambiguous] "Du bist" at 16px: user decision, it is a lead line; the spec's 16px exception now names it (spec text only).
+
+### r8 (fixed)
+- No weakened tests, weak tests, spec mismatches or correctness findings in the r7 fixes.
+- [doc, low] `design.md` `## Contracts` Circle block now lists `marked` and `lit` and which one carries the badge (bfcdcb3).
+- [spec wording] "Seats are marked while a text is shown" named the Washerwoman; its test walks the Investigator (F7 has no Washerwoman). Scenario WHEN/THEN now name the Investigator and the woken seat's empty badge; title unchanged (bfcdcb3).
