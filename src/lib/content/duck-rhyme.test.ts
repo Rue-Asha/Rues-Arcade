@@ -34,4 +34,9 @@ describe('duck rhyme heuristic', () => {
 		expect(rhymeKey('Mauer')).toBe(rhymeKey('sauer'));
 		expect(rhymeKey('Gabel')).not.toBe(rhymeKey('Nebel'));
 	});
+
+	it('treats only a plain e as a schwa', () => {
+		expect(rhymeKey('Gummibär')).toBe(rhymeKey('Meer'));
+		expect(rhymeKey('Gummibär')).not.toBe(rhymeKey('Biber'));
+	});
 });

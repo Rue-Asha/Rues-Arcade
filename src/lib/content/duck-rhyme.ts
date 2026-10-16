@@ -49,7 +49,7 @@ export function rhymeKey(word: string): string {
 		return out;
 	});
 	let from = v.length - 1;
-	if (from > 0 && v[from] === 'e' && SCHWA_TAIL.includes(g[g.length - 1])) from--;
+	if (from > 0 && vowels[from] === 'e' && SCHWA_TAIL.includes(g[g.length - 1])) from--;
 	let key = '';
 	for (let i = from; i < v.length; i++) key += v[i] + g[i + 1];
 	return key;
