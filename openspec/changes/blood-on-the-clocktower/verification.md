@@ -955,3 +955,17 @@ Round-2 revisions (S50–S66, U17–U22), fresh-context reviewer (opus). r7 over
 - No weakened tests, weak tests, spec mismatches or correctness findings in the r7 fixes.
 - [doc, low] `design.md` `## Contracts` Circle block now lists `marked` and `lit` and which one carries the badge (bfcdcb3).
 - [spec wording] "Seats are marked while a text is shown" named the Washerwoman; its test walks the Investigator (F7 has no Washerwoman). Scenario WHEN/THEN now name the Investigator and the woken seat's empty badge; title unchanged (bfcdcb3).
+
+## Review
+
+Revision round 3 (S67–S69, U23), fresh-context reviewer (opus). r9 over `git diff 80739ac...e354131`, r10 over the r9 fixes `git diff c078a9b...7d1a051`. Earlier rounds are under "Earlier review (r1–r6)" and "Earlier review (r7–r8)".
+
+### r9 (fixed)
+- No weakened tests: every changed or deleted test follows a round-3 spec change (2 s numbers, dead-seat ring cases, app/credits slide scenarios removed per S69). "Deck navigation" (`n / 23`) and "Sheet lists all characters" (The Pandemonium Institute) got stricter.
+- [weak] "Sweep lasts 2 seconds per seat" didn't pin the deck's own 750 ms; now asserts `voteTimeline(5/15).handMs` 3750/11250, red with deck SEAT_MS 2000 (d069161).
+- [weak] "Deck holds 23 slides ending with the sheet" checked ids, not titles, and not the role-count/voting slides; now both, red under a renamed voting id and a slide retitled "Augen zu" (ccdad2f).
+- [weak, minor] "Dead seats show no rings but stay nominable" checked only some seats after deaths; now all 7 seats after deaths and revives, red when a death clears other seats' rings (7d1a051).
+- No spec mismatches, no correctness findings.
+
+### r10
+- No findings: the three commits only add assertions.
