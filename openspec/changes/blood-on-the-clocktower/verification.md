@@ -1,46 +1,30 @@
-verified-at: 77b6f56
+verified-at: 1389653
 
-# Verification r6
+# Verification r7
 
-Revision round r6 (last round) after the fixer commits d3dab79 (night navigation last on every night screen, new scenario "Night navigation is the last group of controls") and 77b6f56 (Tag beenden pinned in the last-minute warning). Verified committed tip 77b6f56, working tree clean.
+First verify after the round-2 revisions (S50–S66, units U17–U22, last commit 1389653 "round 2 wave 3 done (U21, U22)"). Verified committed tip 1389653, working tree clean.
 
 ## Layer 1: `PORT=4711 npm run proof:full` (green, run 1 of 1)
 
-Unit: `npx vitest run --reporter=verbose` 473 passed lines, exit 0 (run 1 of 1, green). Full log: /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/proof-r6.log (unit: /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/unit-r6.log)
+Unit: vitest 50 files, 483 tests passed, exit 0. e2e: 904 passed, 44 skipped (5.5m). Full log: /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/3f77cd96-741a-434e-ad03-88b18326d9f1/scratchpad/full1.log
 
 ```
-  ✓  885 [desktop] › e2e/feud.test.ts:586:1 › Scenario: Feud motion never blocks input (3.1s)
-Error: attempt to write a readonly database
-    at addPlayed (src/lib/server/played.ts:22:43)
-    at POST (src/routes/api/feud/played/+server.ts:13:2)
-  ✓  886 [desktop] › e2e/feud.test.ts:617:1 › Scenario: Feud reduced motion is instant (1.9s)
-  ✓  887 [desktop] › e2e/feud.test.ts:667:1 › Scenario: Feud peek does not block a tile flip (3.6s)
-  ✓  888 [desktop] › e2e/feud.test.ts:697:1 › Scenario: Feud peek instant under reduced motion (1.3s)
-  ✓  747 [desktop] › e2e/look.test.ts:211:2 › look walk › Scenario: Touch targets are at least 44px (1ms)
-  ✓  889 [desktop] › e2e/look.test.ts:215:2 › look walk › Scenario: Text contrast meets 4.5:1 (0ms)
-  ✓  890 [desktop] › e2e/look.test.ts:219:2 › look walk › Scenario: Press Start 2P stays limited to logo and scores (0ms)
-  ✓  891 [desktop] › e2e/look.test.ts:224:2 › look walk › Scenario: Decoration loads no external assets (0ms)
-  ✓  892 [desktop] › e2e/look.test.ts:229:2 › look walk › Scenario: New copy has no exclamation marks (0ms)
-  -  893 [desktop] › e2e/look.test.ts:234:2 › look walk › Scenario: No horizontal scroll on phone
-  ✓  894 [desktop] › e2e/look.test.ts:239:2 › look walk › Scenario: Desktop uses the width (0ms)
-  ✓  895 [desktop] › e2e/look.test.ts:353:2 › reduced motion › Scenario: Reduced motion makes transitions instant (219ms)
-  ✓  896 [desktop] › e2e/look.test.ts:365:1 › Scenario: Motion never blocks input (268ms)
-
-  42 skipped
-  854 passed (5.6m)
-exit 0
+  ✓  947 [desktop] › e2e/look.test.ts:353:2 › reduced motion › Scenario: Reduced motion makes transitions instant (217ms)
+  ✓  948 [desktop] › e2e/look.test.ts:365:1 › Scenario: Motion never blocks input (232ms)
+  44 skipped
+  904 passed (5.5m)
+EXIT 0
 ```
 
-## Layer 2: spec coverage (242 scenarios: 78 unit, 147 e2e, 17 manual, 0 gaps)
+## Layer 2: spec coverage (276 scenarios: 83 unit, 171 e2e, 22 manual, 0 gaps)
 
-Prefix collisions between scenario titles: none. Test names matched by containing the exact "Scenario: <title>" (or every name in the proof line); parametrized and nested tests count when the title appears in the name. Evidence in parentheses: passing projects (phone+desktop = both) for e2e, number of passing tests for unit.
-e2e single-project by design: Drag a seat to a new place (desktop), Full Clocktower game (phone), Sheet fits one desktop viewport (desktop), Sheet on phone is two pages (phone), Header wraps on a phone (phone). Unchanged from r3 (r6 run: same five single-project tests).
+Prefix collisions and duplicate scenario titles: none. Test names matched by containing the exact "Scenario: <title>" (or every name in the proof line); a test counts only when it appears as passed in the proof:full output above. Evidence in parentheses: passing projects (phone+desktop = both) for e2e, number of passing tests for unit.
+e2e single-project in the run: Drag a seat to a new place (desktop), Full Clocktower game (phone), Sheet fits one desktop viewport (desktop), Sheet on phone is two pages (phone), Header wraps on a phone (phone), UI text cannot be selected (desktop), Inputs keep caret and selection (desktop), and one member of "Clocktower look rules on every screen" (No horizontal scroll on phone, phone only). The two UI-text scenarios are new in this round and run on desktop only; they are not Clocktower-specific.
 
-Changed since r5: new row "Night navigation is the last group of controls" (e2e, `e2e/clocktower-night-layout.test.ts:107`, passed phone+desktop, new in d3dab79). Re-ran green with changed tests: "Night screens keep Weiter after the circle" (night-layout, tightened in d3dab79) and "Last minute warns without blocking" (day-layout, Tag beenden now hit-tested, clicked, dialog opened and dismissed, 77b6f56). No proof line changed type, no downgrades, no gaps.
-
-Downgraded to manual since r3: none (no proof line changed from unit/e2e to manual in the delta specs).
-Manual scenarios added by the revisions (S39–S49), 9: Circle and ghost token look approved, Show-bar placement approved, Day clock emphasis approved, End reveal by team approved, Distribution readable at a glance, Circle and information in one piece approved, Day facts legible, Voting animation like the presentation, Atmosphere approved. The other 8 manual scenarios are the r3 ones.
-New e2e/unit scenarios from the revisions (25): Circle ornament connects the seats, Ghost-vote token decorated and readable, Show-bar is compact, Day timer stands out, Tapping any seat during the sweep toggles its vote, Space marks only the seat under the hand, Voting clock hand stands out, Setup circle shows each seat's character, Character icons fit fifteen seats, Public circles show no character icon, Night screens keep Weiter after the circle, Night navigation is the last group of controls, Night circle seen in one piece, Day screens keep the action after the circle, Night and reveal panels centre their text, Dawn panels centre their text, End screens have no right-aligned text, Day facts sit in a box, Voting slide timeline follows the count (unit), Voting slide sweeps and counts up, Voting slide shows the end state under reduced motion, Night sky in the lobby and at night, Sun on the day screens, Atmosphere keeps every screen legible, Sky motion only on transform and opacity. All passed.
+Changes since r6 (previous 242 scenarios, now 276): 42 scenarios added, 8 removed or renamed.
+Removed or renamed: Ghost-vote token decorated and readable, Circle and ghost token look approved (now Circle look approved), Show-bar opens full-screen cards, Bluffs can be rerolled before showing (now Bluffs stay hidden until shown), Tapping any seat during the sweep toggles its vote (now Only the seat in the hand's sector can vote), Space marks only the seat under the hand (now Space votes only for the seat in the hand's sector), Confirm corrects missed timing (now Confirm toggles votes by tapping seats), Voting animation like the presentation (now Voting slide like the game).
+Added (42): Ticks divide the circle into n sectors, Every circle draws n ticks, Circle look approved, Show texts appear in the circle's centre, Centre texts fit the circle, Bluffs stay hidden until shown, Show texts and marks approved, Held grimoire icons fit fifteen seats, Sector of an angle, Hand position over the sweep, Hand turns at a constant speed, The hand's sector lights up, Only the seat in the hand's sector can vote, Space votes only for the seat in the hand's sector, Confirm toggles votes by tapping seats, Missed tap in the sweep is corrected in the confirm step, Vote sweep approved, Voting slide like the game, Seat node shows the name large and the number small, Block badge replaces the outline, Ghost-vote badge shows whether the vote is left, Seat nodes approved, Seat press springs back with a ripple, Seat tap vibrates where supported, Seat press under reduced motion, Seat taps feel responsive, Seats are marked while a text is shown, Closing the text gives taps back to the Imp's target, Dead seats can be marked but not targeted, Another text keeps the marks, Leaving the step or reloading clears text and marks, Nomination availability per seat, Rings follow the day's nominations, Rings stay subtle and outside the nodes, Block card names the player and the votes, Execution records whom it killed, Execution plays the death animation, Executing a dead player plays no death animation, Day screens of round 2 approved, Background keeps one tone over the whole page, UI text cannot be selected, Inputs keep caret and selection.
+No proof line changed to manual for an existing scenario; manual scenarios added: 7 (Circle look approved, Show texts and marks approved, Vote sweep approved, Voting slide like the game, Seat nodes approved, Seat taps feel responsive, Day screens of round 2 approved); manual removed: 2 (Circle and ghost token look approved, Voting animation like the presentation). Downgrades: none.
 
 | Scenario | proof | Evidence |
 |---|---|---|
@@ -49,7 +33,7 @@ New e2e/unit scenarios from the revisions (25): Circle ornament connects the sea
 | Registry lists Blood on the Clocktower last | unit | "Scenario: Registry lists Blood on the Clocktower last" passed (1) |
 | Start banner carries title, badge and player range | e2e | "Scenario: Start banner carries title, badge and player range" passed (phone+desktop) |
 | Start panel first on phone, right column on desktop | e2e | "Scenario: Start panel first on phone, right column on desktop" passed (phone+desktop) |
-| Same start layout for both games | e2e ("Scenario: Start panel first on phone, right column on desktop") | each named test in the proof line passed (phone+desktop) |
+| Same start layout for both games | e2e ("Scenario: Start panel first on phone, right column on desktop") | each named test in the proof line passed (Start panel first on phone, right column on desktop: phone+desktop) |
 | Mehr-zu cards keep their targets | e2e | "Scenario: Mehr-zu cards keep their targets" passed (phone+desktop) |
 | Old Erklärung link is not found | e2e | "Scenario: Old Erklärung link is not found" passed (phone+desktop) |
 | Inhalte card shows the real content count | e2e | "Scenario: Inhalte card shows the real content count" passed (phone+desktop) |
@@ -100,8 +84,9 @@ New e2e/unit scenarios from the revisions (25): Circle ornament connects the sea
 | Header shows the night or day and the alive count | e2e | "Scenario: Header shows the night or day and the alive count" passed (phone+desktop) |
 | Death on the circle is animated | e2e | "Scenario: Death on the circle is animated" passed (phone+desktop) |
 | Circle ornament connects the seats | e2e | "Scenario: Circle ornament connects the seats" passed (phone+desktop) |
-| Ghost-vote token decorated and readable | e2e | "Scenario: Ghost-vote token decorated and readable" passed (phone+desktop) |
-| Circle and ghost token look approved | manual (visual judgement at Gate 2, on the verifier's screenshots) | shots/ and Gate 2 checklist |
+| Ticks divide the circle into n sectors | unit | "Scenario: Ticks divide the circle into n sectors" passed (1) |
+| Every circle draws n ticks | e2e | "Scenario: Every circle draws n ticks" passed (phone+desktop) |
+| Circle look approved | manual (visual judgement at Gate 2, on the verifier's screenshots) | shots/ and Gate 2 checklist |
 | Every phase survives a reload | unit | "Scenario: Every phase survives a reload" passed (1) |
 | Stale Clocktower session discarded | e2e | "Scenario: Stale Clocktower session discarded" passed (phone+desktop) |
 | Spiel beenden clears the Clocktower session | e2e | "Scenario: Spiel beenden clears the Clocktower session" passed (phone+desktop) |
@@ -120,13 +105,16 @@ New e2e/unit scenarios from the revisions (25): Circle ornament connects the sea
 | Fortune Teller and Undertaker info | unit | "Scenario: Fortune Teller and Undertaker info" passed (1) |
 | Roles without info | unit | "Scenario: Roles without info" passed (1) |
 | Suggestion labelled with its caveat | e2e | "Scenario: Suggestion labelled with its caveat" passed (phone+desktop) |
-| Show-bar opens full-screen cards | e2e | "Scenario: Show-bar opens full-screen cards" passed (phone+desktop) |
+| Show texts appear in the circle's centre | e2e | "Scenario: Show texts appear in the circle's centre" passed (phone+desktop) |
+| Centre texts fit the circle | e2e | "Scenario: Centre texts fit the circle" passed (phone+desktop) |
 | Role preselects its cards | e2e | "Scenario: Role preselects its cards" passed (phone+desktop) |
 | Bluffs are good characters not in play | unit | "Scenario: Bluffs are good characters not in play" passed (1) |
-| Bluffs can be rerolled before showing | e2e | "Scenario: Bluffs can be rerolled before showing" passed (phone+desktop) |
+| Bluffs stay hidden until shown | e2e | "Scenario: Bluffs stay hidden until shown" passed (phone+desktop) |
 | Show-bar is compact | e2e | "Scenario: Show-bar is compact" passed (phone+desktop) |
 | Show-bar placement approved | manual (visual judgement at Gate 2, on the verifier's screenshots) | shots/ and Gate 2 checklist |
+| Show texts and marks approved | manual (visual and handling judgement at Gate 2) | shots/ and Gate 2 checklist |
 | Grimoire visible only while held | e2e | "Scenario: Grimoire visible only while held" passed (phone+desktop) |
+| Held grimoire icons fit fifteen seats | e2e | "Scenario: Held grimoire icons fit fifteen seats" passed (phone+desktop) |
 | Release outside the button hides the grimoire | e2e | "Scenario: Release outside the button hides the grimoire" passed (phone+desktop) |
 | Grimoire by keyboard | e2e | "Scenario: Grimoire by keyboard" passed (phone+desktop) |
 | No grimoire by day | e2e | "Scenario: No grimoire by day" passed (phone+desktop) |
@@ -141,11 +129,11 @@ New e2e/unit scenarios from the revisions (25): Circle ornament connects the sea
 | Dawn shows the night's deaths | e2e | "Scenario: Dawn shows the night's deaths" passed (phone+desktop) |
 | Day timer dialog | e2e | "Scenario: Day timer dialog" passed (phone+desktop) |
 | Reload keeps the remaining time | e2e | "Scenario: Reload keeps the remaining time" passed (phone+desktop) |
+| Last minute warns without blocking | e2e | "Scenario: Last minute warns without blocking" passed (phone+desktop) |
 | Timer reads Zeit um at zero and never blocks | e2e | "Scenario: Timer reads Zeit um at zero and never blocks" passed (phone+desktop) |
 | Timer keeps running during a vote | e2e | "Scenario: Timer keeps running during a vote" passed (phone+desktop) |
 | Remaining time from the deadline | unit | "Scenario: Remaining time from the deadline" passed (1) |
 | Day timer stands out | e2e | "Scenario: Day timer stands out" passed (phone+desktop) |
-| Last minute warns without blocking | e2e | "Scenario: Last minute warns without blocking" passed (phone+desktop; test pins Tag beenden hit-tested, clickable and opening its dialog, 77b6f56) |
 | Day clock emphasis approved | manual (visual judgement at Gate 2, on the verifier's screenshots) | shots/ and Gate 2 checklist |
 | Nomination rules enforced | unit | "Scenario: Nomination rules enforced" passed (1) |
 | Unavailable choices show a reason | e2e | "Scenario: Unavailable choices show a reason" passed (phone+desktop) |
@@ -153,14 +141,20 @@ New e2e/unit scenarios from the revisions (25): Circle ornament connects the sea
 | Clock points at the nominee | e2e | "Scenario: Clock points at the nominee" passed (phone+desktop) |
 | Sweep order ends at the nominee | unit | "Scenario: Sweep order ends at the nominee" passed (1) |
 | Sweep lasts 2.5 seconds per seat | unit | "Scenario: Sweep lasts 2.5 seconds per seat" passed (1) |
+| Sector of an angle | unit | "Scenario: Sector of an angle" passed (1) |
+| Hand position over the sweep | unit | "Scenario: Hand position over the sweep" passed (1) |
+| Hand turns at a constant speed | e2e | "Scenario: Hand turns at a constant speed" passed (phone+desktop) |
+| The hand's sector lights up | e2e | "Scenario: The hand's sector lights up" passed (phone+desktop) |
 | Real short sweep marks votes | e2e | "Scenario: Real short sweep marks votes" passed (phone+desktop) |
-| Tapping any seat during the sweep toggles its vote | e2e | "Scenario: Tapping any seat during the sweep toggles its vote" passed (phone+desktop) |
-| Space marks only the seat under the hand | e2e | "Scenario: Space marks only the seat under the hand" passed (phone+desktop) |
+| Only the seat in the hand's sector can vote | e2e | "Scenario: Only the seat in the hand's sector can vote" passed (phone+desktop) |
+| Space votes only for the seat in the hand's sector | e2e | "Scenario: Space votes only for the seat in the hand's sector" passed (phone+desktop) |
 | Dead without ghost vote cannot be marked | e2e | "Scenario: Dead without ghost vote cannot be marked" passed (phone+desktop) |
-| Confirm corrects missed timing | e2e | "Scenario: Confirm corrects missed timing" passed (phone+desktop) |
+| Confirm toggles votes by tapping seats | e2e | "Scenario: Confirm toggles votes by tapping seats" passed (phone+desktop) |
+| Missed tap in the sweep is corrected in the confirm step | e2e | "Scenario: Missed tap in the sweep is corrected in the confirm step" passed (phone+desktop) |
 | Dead voters spend their ghost vote | unit | "Scenario: Dead voters spend their ghost vote" passed (1) |
 | Reduced motion hand jumps | e2e | "Scenario: Reduced motion hand jumps" passed (phone+desktop) |
 | Voting clock hand stands out | e2e | "Scenario: Voting clock hand stands out" passed (phone+desktop) |
+| Vote sweep approved | manual (motion judgement at Gate 2) | shots/ and Gate 2 checklist |
 | Vote result by threshold and high-water mark | unit | "Scenario: Vote result by threshold and high-water mark" passed (1) |
 | Threshold uses living players at vote time | unit | "Scenario: Threshold uses living players at vote time" passed (1) |
 | Block holder marked on the circle | e2e | "Scenario: Block holder marked on the circle" passed (phone+desktop) |
@@ -211,8 +205,8 @@ New e2e/unit scenarios from the revisions (25): Circle ornament connects the sea
 | Character icons fit fifteen seats | e2e | "Scenario: Character icons fit fifteen seats" passed (phone+desktop) |
 | Public circles show no character icon | e2e | "Scenario: Public circles show no character icon" passed (phone+desktop) |
 | Distribution readable at a glance | manual (visual judgement at Gate 2, on the verifier's screenshots) | shots/ and Gate 2 checklist |
-| Night screens keep Weiter after the circle | e2e | "Scenario: Night screens keep Weiter after the circle" passed (phone+desktop; test tightened in d3dab79) |
-| Night navigation is the last group of controls | e2e | "Scenario: Night navigation is the last group of controls" passed (phone+desktop; `e2e/clocktower-night-layout.test.ts:107`) |
+| Night screens keep Weiter after the circle | e2e | "Scenario: Night screens keep Weiter after the circle" passed (phone+desktop) |
+| Night navigation is the last group of controls | e2e | "Scenario: Night navigation is the last group of controls" passed (phone+desktop) |
 | Night circle seen in one piece | e2e | "Scenario: Night circle seen in one piece" passed (phone+desktop) |
 | Day screens keep the action after the circle | e2e | "Scenario: Day screens keep the action after the circle" passed (phone+desktop) |
 | Circle and information in one piece approved | manual (layout judgement at Gate 2) | shots/ and Gate 2 checklist |
@@ -224,19 +218,40 @@ New e2e/unit scenarios from the revisions (25): Circle ornament connects the sea
 | Voting slide timeline follows the count | unit | "Scenario: Voting slide timeline follows the count" passed (1) |
 | Voting slide sweeps and counts up | e2e | "Scenario: Voting slide sweeps and counts up" passed (phone+desktop) |
 | Voting slide shows the end state under reduced motion | e2e | "Scenario: Voting slide shows the end state under reduced motion" passed (phone+desktop) |
-| Voting animation like the presentation | manual (motion judgement at Gate 2) | shots/ and Gate 2 checklist |
+| Voting slide like the game | manual (motion judgement at Gate 2) | shots/ and Gate 2 checklist |
+| Seat node shows the name large and the number small | e2e | "Scenario: Seat node shows the name large and the number small" passed (phone+desktop) |
+| Block badge replaces the outline | e2e | "Scenario: Block badge replaces the outline" passed (phone+desktop) |
+| Ghost-vote badge shows whether the vote is left | e2e | "Scenario: Ghost-vote badge shows whether the vote is left" passed (phone+desktop) |
+| Seat nodes approved | manual (visual judgement at Gate 2, on the verifier's screenshots) | shots/ and Gate 2 checklist |
+| Seat press springs back with a ripple | e2e | "Scenario: Seat press springs back with a ripple" passed (phone+desktop) |
+| Seat tap vibrates where supported | e2e | "Scenario: Seat tap vibrates where supported" passed (phone+desktop) |
+| Seat press under reduced motion | e2e | "Scenario: Seat press under reduced motion" passed (phone+desktop) |
+| Seat taps feel responsive | manual (touch and vibration need real hardware) | shots/ and Gate 2 checklist |
+| Seats are marked while a text is shown | e2e | "Scenario: Seats are marked while a text is shown" passed (phone+desktop) |
+| Closing the text gives taps back to the Imp's target | e2e | "Scenario: Closing the text gives taps back to the Imp's target" passed (phone+desktop) |
+| Dead seats can be marked but not targeted | e2e | "Scenario: Dead seats can be marked but not targeted" passed (phone+desktop) |
+| Another text keeps the marks | e2e | "Scenario: Another text keeps the marks" passed (phone+desktop) |
+| Leaving the step or reloading clears text and marks | e2e | "Scenario: Leaving the step or reloading clears text and marks" passed (phone+desktop) |
+| Nomination availability per seat | unit | "Scenario: Nomination availability per seat" passed (1) |
+| Rings follow the day's nominations | e2e | "Scenario: Rings follow the day's nominations" passed (phone+desktop) |
+| Rings stay subtle and outside the nodes | e2e | "Scenario: Rings stay subtle and outside the nodes" passed (phone+desktop) |
+| Block card names the player and the votes | e2e | "Scenario: Block card names the player and the votes" passed (phone+desktop) |
+| Execution records whom it killed | unit | "Scenario: Execution records whom it killed" passed (1) |
+| Execution plays the death animation | e2e | "Scenario: Execution plays the death animation" passed (phone+desktop) |
+| Executing a dead player plays no death animation | e2e | "Scenario: Executing a dead player plays no death animation" passed (phone+desktop) |
+| Day screens of round 2 approved | manual (visual and motion judgement at Gate 2) | shots/ and Gate 2 checklist |
 | Only the expected control is enabled | e2e | "Scenario: Only the expected control is enabled" passed (phone+desktop) |
 | Hidden information shown with Demo tag | e2e | "Scenario: Hidden information shown with Demo tag" passed (phone+desktop) |
 | Demo leaves real data untouched | e2e | "Scenario: Demo leaves real data untouched" passed (phone+desktop) |
 | Exiting returns to the starting screen | e2e | "Scenario: Exiting returns to the starting screen" passed (phone+desktop) |
 | Reload during demo returns to start screen | e2e | "Scenario: Reload during demo returns to start screen" passed (phone+desktop) |
 | Demo steppable with reduced motion | e2e | "Scenario: Demo steppable with reduced motion" passed (phone+desktop) |
-| Every demo covers its outcome branches over several rounds | unit ("Scenario: Imposter demo covers every outcome branch", "Scenario: Wavelength demo covers every outcome branch", "Scenario: Feud demo covers every outcome branch", "Scenario: Codes demo covers every outcome branch", "Scenario: Duck demo covers every outcome branch", "Scenario: Most Likely demo covers every outcome branch") | each named test in the proof line passed (17) |
-| Demo tips read neutral | unit ("Scenario: Imposter demo covers every outcome branch", "Scenario: Wavelength demo tips read neutral", "Scenario: Feud demo covers every outcome branch", "Scenario: Codes demo covers every outcome branch", "Scenario: Duck demo covers every outcome branch", "Scenario: Most Likely demo covers every outcome branch") | each named test in the proof line passed (17) |
+| Every demo covers its outcome branches over several rounds | unit ("Scenario: Imposter demo covers every outcome branch", "Scenario: Wavelength demo covers every outcome branch", "Scenario: Feud demo covers every outcome branch", "Scenario: Codes demo covers every outcome branch", "Scenario: Duck demo covers every outcome branch", "Scenario: Most Likely demo covers every outcome branch") | each named test in the proof line passed (Imposter demo covers every outcome branch: 5, Wavelength demo covers every outcome branch: 1, Feud demo covers every outcome branch: 1, Codes demo covers every outcome branch: 1, Duck demo covers every outcome branch: 1, Most Likely demo covers every outcome branch: 8) |
+| Demo tips read neutral | unit ("Scenario: Imposter demo covers every outcome branch", "Scenario: Wavelength demo tips read neutral", "Scenario: Feud demo covers every outcome branch", "Scenario: Codes demo covers every outcome branch", "Scenario: Duck demo covers every outcome branch", "Scenario: Most Likely demo covers every outcome branch") | each named test in the proof line passed (Imposter demo covers every outcome branch: 5, Wavelength demo tips read neutral: 1, Feud demo covers every outcome branch: 1, Codes demo covers every outcome branch: 1, Duck demo covers every outcome branch: 1, Most Likely demo covers every outcome branch: 8) |
 | Demo tips say why the step happens | manual (wording judgement by Rue at Gate 2) | shots/ and Gate 2 checklist |
-| Long demo progress reads correctly | e2e ("Scenario: Feud demo by tapping highlighted controls", "Scenario: Most Likely demo by tapping highlighted controls", "Scenario: Duck demo by tapping highlighted controls") | each named test in the proof line passed (phone+desktop) |
+| Long demo progress reads correctly | e2e ("Scenario: Feud demo by tapping highlighted controls", "Scenario: Most Likely demo by tapping highlighted controls", "Scenario: Duck demo by tapping highlighted controls") | each named test in the proof line passed (Feud demo by tapping highlighted controls: phone+desktop, Most Likely demo by tapping highlighted controls: phone+desktop, Duck demo by tapping highlighted controls: phone+desktop) |
 | Generic demo checks skip a game without a demo | unit | "Scenario: Generic demo checks skip a game without a demo" passed (1) |
-| Game without a demo has no demo route | e2e ("Scenario: Clocktower demo and Inhalte are not found") | each named test in the proof line passed (phone+desktop) |
+| Game without a demo has no demo route | e2e ("Scenario: Clocktower demo and Inhalte are not found") | each named test in the proof line passed (Clocktower demo and Inhalte are not found: phone+desktop) |
 | Text contrast meets 4.5:1 | e2e | "Scenario: Text contrast meets 4.5:1" passed (phone+desktop) |
 | Look approved on screenshots | manual (visual judgement at Gate 2) | shots/ and Gate 2 checklist |
 | Clocktower colour meets contrast | unit | "Scenario: Clocktower colour meets contrast" passed (1) |
@@ -244,8 +259,9 @@ New e2e/unit scenarios from the revisions (25): Circle ornament connects the sea
 | Clocktower tokens meet contrast in both variants | unit | "Scenario: Clocktower tokens meet contrast in both variants" passed (1) |
 | Theme only on Clocktower routes | e2e | "Scenario: Theme only on Clocktower routes" passed (phone+desktop) |
 | No theme flash on reload | e2e | "Scenario: No theme flash on reload" passed (phone+desktop) |
+| Background keeps one tone over the whole page | e2e | "Scenario: Background keeps one tone over the whole page" passed (phone+desktop) |
 | Clocktower fonts are self-hosted | e2e | "Scenario: Clocktower fonts are self-hosted" passed (phone+desktop) |
-| Clocktower look rules on every screen | e2e ("Scenario: Text contrast meets 4.5:1", "Scenario: Touch targets are at least 44px", "Scenario: No horizontal scroll on phone", "Scenario: Press Start 2P stays limited to logo and scores", "Scenario: Decoration loads no external assets") | each named test in the proof line passed (phone+desktop) |
+| Clocktower look rules on every screen | e2e ("Scenario: Text contrast meets 4.5:1", "Scenario: Touch targets are at least 44px", "Scenario: No horizontal scroll on phone", "Scenario: Press Start 2P stays limited to logo and scores", "Scenario: Decoration loads no external assets") | each named test in the proof line passed (Text contrast meets 4.5:1: phone+desktop, Touch targets are at least 44px: phone+desktop, No horizontal scroll on phone: phone only, Press Start 2P stays limited to logo and scores: phone+desktop, Decoration loads no external assets: phone+desktop) |
 | Day and night variants switch with an animation | e2e | "Scenario: Day and night variants switch with an animation" passed (phone+desktop) |
 | Clocktower ambient motion off under reduced motion | e2e | "Scenario: Clocktower ambient motion off under reduced motion" passed (phone+desktop) |
 | Clocktower gets its own motif | unit | "Scenario: Clocktower gets its own motif" passed (1) |
@@ -261,6 +277,8 @@ New e2e/unit scenarios from the revisions (25): Circle ornament connects the sea
 | Reduced motion skips the view transition | e2e | "Scenario: Reduced motion skips the view transition" passed (phone+desktop) |
 | Back button leaves Clocktower | e2e | "Scenario: Back button leaves Clocktower" passed (phone+desktop) |
 | Transitions feel smooth | manual (motion feel is a visual judgement, at Gate 2) | shots/ and Gate 2 checklist |
+| UI text cannot be selected | e2e | "Scenario: UI text cannot be selected" passed (desktop only) |
+| Inputs keep caret and selection | e2e | "Scenario: Inputs keep caret and selection" passed (desktop only) |
 | Reload mid-game resumes the same phase | e2e | "Scenario: Reload mid-game resumes the same phase" passed (phone+desktop) |
 | Spiel beenden clears the session | e2e | "Scenario: Spiel beenden clears the session" passed (phone+desktop) |
 | Old or corrupt saved state discarded | e2e | "Scenario: Old or corrupt saved state discarded" passed (phone+desktop) |
@@ -268,14 +286,14 @@ New e2e/unit scenarios from the revisions (25): Circle ornament connects the sea
 | Roster edit mid-game keeps the session snapshot | unit | "Scenario: Roster edit mid-game keeps the session snapshot" passed (1) |
 | Game without a demo checks its explicit template | unit | "Scenario: Game without a demo checks its explicit template" passed (1) |
 | Round status per game | unit | "Scenario: Round status per game" passed (1) |
-| Last round fills the progress line | unit ("Scenario: Round status per game") | each named test in the proof line passed (1) |
+| Last round fills the progress line | unit ("Scenario: Round status per game") | each named test in the proof line passed (Round status per game: 1) |
 | Duck progress follows the leading score | unit | "Scenario: Duck progress follows the leading score" passed (1) |
 | Status and progress in the header | e2e | "Scenario: Status and progress in the header" passed (phone+desktop) |
 | Status without a total has no progress line | e2e | "Scenario: Status without a total has no progress line" passed (phone+desktop) |
 | Header wraps on a phone | e2e | "Scenario: Header wraps on a phone" passed (phone only) |
 | Clocktower status per phase | unit | "Scenario: Clocktower status per phase" passed (1) |
 | Game without content starts without a content fetch | e2e | "Scenario: Game without content starts without a content fetch" passed (phone+desktop) |
-| Games with content keep their content gate | e2e ("Scenario: Empty pool blocks start") | each named test in the proof line passed (phone+desktop) |
+| Games with content keep their content gate | e2e ("Scenario: Empty pool blocks start") | each named test in the proof line passed (Empty pool blocks start: phone+desktop) |
 | Below minimum disables start | e2e | "Scenario: Below minimum disables start" passed (phone+desktop) |
 | Above maximum asks who plays | e2e | "Scenario: Above maximum asks who plays" passed (phone+desktop) |
 | Fewer than N offers adding players | e2e | "Scenario: Fewer than N offers adding players" passed (phone+desktop) |
@@ -289,275 +307,594 @@ New e2e/unit scenarios from the revisions (25): Circle ornament connects the sea
 
 ## Manual checklist (Gate 2)
 
-Start: `npm run dev` → http://localhost:5173
+Start: `npm run dev` → http://localhost:5173. Only the scenarios added or changed in S50–S66 are listed first; the older manual scenarios (Look approved on screenshots, Clocktower look approved on screenshots, Atmosphere approved, Transitions feel smooth, Clocktower sounds at the right moments, Deck carries the presentation's content, App slides read clearly, Sheet in the look of the PDF, Distribution readable at a glance, Circle and information in one piece approved, Day facts legible, Show-bar placement approved, Day clock emphasis approved, End reveal by team approved, Demo tips say why the step happens) are unchanged in proof but their screens changed with the round-2 UI, so re-glance at the screenshots.
 
-1. `npm run dev` then open http://localhost:5173 and pick Blood on the Clocktower from the home tiles.
-2. Look: check the gothic theme, day/night switch and tile art against `shots/phone-look-*` (Look approved, Clocktower look approved, Transitions feel smooth).
-3. Atmosphere (S39, new): open the lobby and a night: stars and a moon behind content; open a day: a subtle sun, brighter and livelier; text stays legible (Atmosphere approved, `*-look-lobby-clocktower*`, `*-look-clocktower-clock-*`, `*-look-clocktower-dawn-*`).
-4. Circle and ghost token (S43, S47, new): in setup, night and day look at the ornament ring linking the seats and at a dead player's ghost-vote token (Circle and ghost token look approved).
-5. Setup at a glance (S41, new): in setup every seat shows its character icon in team colour (Distribution readable at a glance, `*-look-clocktower-setup-*`).
-6. One piece (S44, new): on night and day screens that scroll, Weiter sits after the circle and info, not in a sticky bar, and on every night screen the navigation is the last group of controls (Circle and information in one piece approved).
-7. Show-bar and day facts (S45, S48, new): show-bar is compact and well placed; the day facts box bottom left is legible (Show-bar placement approved, Day facts legible).
-8. Day clock (S46, new): the day timer is clearly emphasised; under a minute it pulses a warning ring but "Tag beenden" stays reachable and still works (Day clock emphasis approved, `*-look-clocktower-clock-*`).
-9. Voting animation (S40, new): in the deck's voting slide the hand sweeps, nodes turn red, the count counts up; matches the presentation (Voting animation like the presentation, `*-look-clocktower-deck-voting.png`).
-10. End screen (S49, new): seats grouped by Good and Evil with character icons (End reveal by team approved, `*-look-clocktower-end-reveal-*`).
-11. Sound: on a real device unmuted, play a night and a day and listen for the Clocktower sounds (Clocktower sounds at the right moments).
-12. Deck: open the Erklärung deck, read the slides against the presentation (Deck carries the presentation's content) and the app slides (App slides read clearly).
-13. Sheet: open the deck sheet slide and compare with the PDF look (Sheet in the look of the PDF).
-14. Demo: run another game's demo and read the tips for the why (Demo tips say why the step happens).
+1. Circle look (S50, Circle look approved): setup board, a night circle and the day grimoire at 390px and 1280px: circle decorated, seats connected, ticks in line with the seats' sectors (`*-look-clocktower-setup-*`, `*-look-clocktower-night-*`, `*-look-clocktower-clock-*`).
+2. Seat nodes (Seat nodes approved): names large and numbers small, round block and ghost-vote badges, subtle nomination rings (`*-look-clocktower-*` grimoire, block and clock shots, crowded 15-seat phone grimoire).
+3. Show texts and marks (Show texts and marks approved): on a night step show a text; it sits in the circle centre; tap seats to mark them, the marks stay visible around the text, closing the text gives taps back.
+4. Vote sweep (Vote sweep approved): run a vote with 7 and with 15 seats on phone and desktop: hand turns evenly, light red sector shows whose vote counts, ticks line up with the sectors; only the seat in the sector can vote.
+5. Voting slide (Voting slide like the game): open the deck voting slide next to a game vote: same sweep, seats turn red, count goes up.
+6. Seat taps (Seat taps feel responsive): on Android and iPhone tap seats in setup, night and day: press spring-back with ripple, short vibration on Android, nothing breaks on iPhone.
+7. Day screens round 2 (Day screens of round 2 approved): timer top right, nomination rings readable, block card fits, execution announcement and dawn death animations short and clear.
+8. Earlier manual items unchanged (sound, deck content, sheet, demo tips): see r6 steps; run `npm run dev`, pick Blood on the Clocktower, play a night and a day with sound on.
 
 ## Diffstat (`git diff --stat origin/main...flow/blood-on-the-clocktower`)
 
 ```
- e2e/clocktower-atmosphere.test.ts                                    |  210 +++++++++
- e2e/clocktower-circle.test.ts                                        |  354 ++++++++++++++
- e2e/clocktower-day-layout.test.ts                                    |  247 ++++++++++
- e2e/clocktower-day.test.ts                                           |  552 ++++++++++++++++++++++
- e2e/clocktower-deck.test.ts                                          |  380 +++++++++++++++
- e2e/clocktower-end.test.ts                                           |  175 +++++++
- e2e/clocktower-game.test.ts                                          |  196 ++++++++
- e2e/clocktower-night-layout.test.ts                                  |  125 +++++
- e2e/clocktower-night.test.ts                                         |  471 +++++++++++++++++++
- e2e/clocktower-session.test.ts                                       |   47 ++
- e2e/clocktower-session.ts                                            |   26 +
- e2e/clocktower-setup.test.ts                                         |  443 ++++++++++++++++++
- e2e/clocktower-start.test.ts                                         |  299 ++++++++++++
- e2e/clocktower-theme.test.ts                                         |  304 ++++++++++++
- e2e/deco.test.ts                                                     |   40 ++
- e2e/home.test.ts                                                     |    3 +-
- e2e/look.test.ts                                                     |    2 +
- e2e/start.test.ts                                                    |    3 +-
- e2e/walks/clocktower-day.ts                                          |  134 ++++++
- e2e/walks/clocktower-deck.ts                                         |   38 ++
- e2e/walks/clocktower-end.ts                                          |   59 +++
- e2e/walks/clocktower-night.ts                                        |  115 +++++
- e2e/walks/clocktower-setup.ts                                        |   70 +++
- e2e/walks/clocktower.ts                                              |   44 ++
- openspec/changes/blood-on-the-clocktower/.openspec.yaml              |    2 +
- openspec/changes/blood-on-the-clocktower/design.md                   |  410 ++++++++++++++++
- openspec/changes/blood-on-the-clocktower/flow.yaml                   |   27 ++
- openspec/changes/blood-on-the-clocktower/gate2-feedback.md           |   16 +
- openspec/changes/blood-on-the-clocktower/mobbin.md                   |   98 ++++
- openspec/changes/blood-on-the-clocktower/proposal.md                 |   97 ++++
- openspec/changes/blood-on-the-clocktower/research/design-sources.md  |  135 ++++++
- openspec/changes/blood-on-the-clocktower/research/mobbin.md          |  152 ++++++
- openspec/changes/blood-on-the-clocktower/research/rules.md           |  379 +++++++++++++++
- openspec/changes/blood-on-the-clocktower/scope.md                    |  204 ++++++++
- openspec/changes/blood-on-the-clocktower/specs/catalogue/spec.md     |  135 ++++++
- openspec/changes/blood-on-the-clocktower/specs/clocktower/spec.md    | 1068 ++++++++++++++++++++++++++++++++++++++++++
- openspec/changes/blood-on-the-clocktower/specs/demo/spec.md          |   76 +++
- openspec/changes/blood-on-the-clocktower/specs/design-system/spec.md |  168 +++++++
- openspec/changes/blood-on-the-clocktower/specs/game-engine/spec.md   |  105 +++++
- openspec/changes/blood-on-the-clocktower/specs/roster/spec.md        |   44 ++
- openspec/changes/blood-on-the-clocktower/specs/sound/spec.md         |   22 +
- openspec/changes/blood-on-the-clocktower/tasks.md                    |  229 +++++++++
- openspec/changes/blood-on-the-clocktower/verification.md             |  584 +++++++++++++++++++++++
- src/app.css                                                          |  164 +++++++
- src/app.html                                                         |    6 +-
- src/hooks.server.ts                                                  |   28 +-
- src/lib/count.test.ts                                                |   41 ++
- src/lib/count.ts                                                     |   17 +
- src/lib/deco/Art.svelte                                              |   12 +-
- src/lib/deco/Clocktower.svelte                                       |  125 +++++
- src/lib/deco/Sky.svelte                                              |  240 ++++++++++
- src/lib/deco/motifs.test.ts                                          |   41 +-
- src/lib/deco/motifs.ts                                               |    8 +-
- src/lib/demo/runner.test.ts                                          |   12 +-
- src/lib/engine/types.ts                                              |    3 +-
- src/lib/games/clocktower/CharacterBoard.svelte                       |  155 ++++++
- src/lib/games/clocktower/CharacterIcon.svelte                        |   36 ++
- src/lib/games/clocktower/Circle.svelte                               |  507 ++++++++++++++++++++
- src/lib/games/clocktower/Dawn.svelte                                 |   99 ++++
- src/lib/games/clocktower/Day.svelte                                  |  151 ++++++
- src/lib/games/clocktower/Deal.svelte                                 |  115 +++++
- src/lib/games/clocktower/DeathStep.svelte                            |  104 ++++
- src/lib/games/clocktower/Deck.svelte                                 |  150 ++++++
- src/lib/games/clocktower/End.svelte                                  |  262 +++++++++++
- src/lib/games/clocktower/Facts.svelte                                |   48 ++
- src/lib/games/clocktower/HoldGrimoire.svelte                         |   42 ++
- src/lib/games/clocktower/Night.svelte                                |   40 ++
- src/lib/games/clocktower/Questions.svelte                            |   87 ++++
- src/lib/games/clocktower/RoleCard.svelte                             |   74 +++
- src/lib/games/clocktower/Screen.svelte                               |   25 +
- src/lib/games/clocktower/SeatActions.svelte                          |   52 ++
- src/lib/games/clocktower/Setup.svelte                                |   47 ++
- src/lib/games/clocktower/SetupBoard.svelte                           |  188 ++++++++
- src/lib/games/clocktower/Sheet.svelte                                |  307 ++++++++++++
- src/lib/games/clocktower/ShowBar.svelte                              |  212 +++++++++
- src/lib/games/clocktower/ShowCard.svelte                             |  151 ++++++
- src/lib/games/clocktower/Slide.svelte                                |  677 ++++++++++++++++++++++++++
- src/lib/games/clocktower/Timer.svelte                                |   86 ++++
- src/lib/games/clocktower/VoteClock.svelte                            |  133 ++++++
- src/lib/games/clocktower/Wake.svelte                                 |  273 +++++++++++
- src/lib/games/clocktower/characters.test.ts                          |   68 +++
- src/lib/games/clocktower/characters.ts                               |  279 +++++++++++
- src/lib/games/clocktower/circle.test.ts                              |   71 +++
- src/lib/games/clocktower/circle.ts                                   |   68 +++
- src/lib/games/clocktower/deck.test.ts                                |  129 +++++
- src/lib/games/clocktower/deck.ts                                     |  527 +++++++++++++++++++++
- src/lib/games/clocktower/engine.test.ts                              |  690 +++++++++++++++++++++++++++
- src/lib/games/clocktower/engine.ts                                   |  402 ++++++++++++++++
- src/lib/games/clocktower/fixtures.ts                                 |   74 +++
- src/lib/games/clocktower/index.ts                                    |   37 ++
- src/lib/games/clocktower/info.test.ts                                |   95 ++++
- src/lib/games/clocktower/info.ts                                     |   52 ++
- src/lib/games/clocktower/label.ts                                    |   10 +
- src/lib/games/clocktower/night.test.ts                               |  122 +++++
- src/lib/games/clocktower/night.ts                                    |   53 +++
- src/lib/games/clocktower/setup.test.ts                               |  201 ++++++++
- src/lib/games/clocktower/setup.ts                                    |  141 ++++++
- src/lib/games/clocktower/sheet.test.ts                               |   63 +++
- src/lib/games/clocktower/timer.test.ts                               |   24 +
- src/lib/games/clocktower/timer.ts                                    |    8 +
- src/lib/games/clocktower/types.ts                                    |  105 +++++
- src/lib/games/clocktower/vote.test.ts                                |   47 ++
- src/lib/games/clocktower/vote.ts                                     |   27 ++
- src/lib/games/clocktower/win.test.ts                                 |  224 +++++++++
- src/lib/games/clocktower/win.ts                                      |   45 ++
- src/lib/games/registry.test.ts                                       |   46 +-
- src/lib/games/registry.ts                                            |   21 +-
- src/lib/games/status.test.ts                                         |   28 ++
- src/lib/sound.test.ts                                                |   37 +-
- src/lib/sound.ts                                                     |   18 +-
- src/lib/theme.ts                                                     |   24 +
- src/lib/ui/GameTile.svelte                                           |    4 +
- src/lib/ui/tokens.test.ts                                            |   69 ++-
- src/lib/ui/tokens.ts                                                 |  130 ++++-
- src/routes/+layout.svelte                                            |   17 +
- src/routes/spiele/[slug]/+page.server.ts                             |    3 +-
- src/routes/spiele/[slug]/+page.svelte                                |  146 +++++-
- src/routes/spiele/[slug]/demo/+page.server.ts                        |   10 +
- src/routes/spiele/[slug]/demo/+page.svelte                           |    8 +-
- src/routes/spiele/[slug]/erklaerung/+page.server.ts                  |   10 +
- src/routes/spiele/[slug]/erklaerung/+page.svelte                     |   30 ++
- src/routes/spiele/[slug]/inhalte/+page.server.ts                     |    2 +
- src/routes/spiele/[slug]/inhalte/+page.svelte                        |    8 +-
- src/routes/spiele/[slug]/lobby/+page.svelte                          |   58 ++-
- src/routes/spiele/[slug]/spielen/+page.svelte                        |    7 +
- static/fonts/AlegreyaSans-OFL.txt                                    |   93 ++++
- static/fonts/IMFellEnglish-OFL.txt                                   |   93 ++++
- static/fonts/alegreya-sans-latin-400.woff2                           |  Bin 0 -> 23708 bytes
- static/fonts/alegreya-sans-latin-500.woff2                           |  Bin 0 -> 23928 bytes
- static/fonts/alegreya-sans-latin-700.woff2                           |  Bin 0 -> 23976 bytes
- static/fonts/im-fell-english-italic-latin.woff2                      |  Bin 0 -> 57808 bytes
- static/fonts/im-fell-english-latin.woff2                             |  Bin 0 -> 59880 bytes
- static/fonts/im-fell-english-sc-latin.woff2                          |  Bin 0 -> 56956 bytes
- 133 files changed, 17360 insertions(+), 70 deletions(-)
+ e2e/clocktower-atmosphere.test.ts                  |  259 ++++
+ e2e/clocktower-circle.test.ts                      |  315 +++++
+ e2e/clocktower-day-layout.test.ts                  |  262 ++++
+ e2e/clocktower-day-marks.test.ts                   |  317 +++++
+ e2e/clocktower-day.test.ts                         |  552 +++++++++
+ e2e/clocktower-deck.test.ts                        |  402 ++++++
+ e2e/clocktower-end.test.ts                         |  175 +++
+ e2e/clocktower-game.test.ts                        |  196 +++
+ e2e/clocktower-night-layout.test.ts                |  125 ++
+ e2e/clocktower-night.test.ts                       |  574 +++++++++
+ e2e/clocktower-node.test.ts                        |  404 ++++++
+ e2e/clocktower-session.test.ts                     |   47 +
+ e2e/clocktower-session.ts                          |   26 +
+ e2e/clocktower-setup.test.ts                       |  443 +++++++
+ e2e/clocktower-show.test.ts                        |  212 ++++
+ e2e/clocktower-start.test.ts                       |  299 +++++
+ e2e/clocktower-theme.test.ts                       |  304 +++++
+ e2e/clocktower-vote.test.ts                        |  208 ++++
+ e2e/deco.test.ts                                   |   40 +
+ e2e/home.test.ts                                   |    3 +-
+ e2e/look.test.ts                                   |    2 +
+ e2e/start.test.ts                                  |    3 +-
+ e2e/ui-text.test.ts                                |   76 ++
+ e2e/walks/clocktower-day.ts                        |  142 +++
+ e2e/walks/clocktower-deck.ts                       |   40 +
+ e2e/walks/clocktower-end.ts                        |   59 +
+ e2e/walks/clocktower-night.ts                      |  127 ++
+ e2e/walks/clocktower-setup.ts                      |   70 ++
+ e2e/walks/clocktower.ts                            |   44 +
+ .../changes/blood-on-the-clocktower/.openspec.yaml |    2 +
+ openspec/changes/blood-on-the-clocktower/design.md |  611 +++++++++
+ .../blood-on-the-clocktower/feedback-2026-10-15.md |   48 +
+ openspec/changes/blood-on-the-clocktower/flow.yaml |   38 +
+ .../blood-on-the-clocktower/gate2-feedback.md      |   16 +
+ .../changes/blood-on-the-clocktower/mobbin-r2.md   |   61 +
+ openspec/changes/blood-on-the-clocktower/mobbin.md |   98 ++
+ .../changes/blood-on-the-clocktower/proposal.md    |  112 ++
+ .../research/design-sources.md                     |  135 ++
+ .../blood-on-the-clocktower/research/mobbin.md     |  152 +++
+ .../blood-on-the-clocktower/research/rules.md      |  379 ++++++
+ openspec/changes/blood-on-the-clocktower/scope.md  |  238 ++++
+ .../specs/catalogue/spec.md                        |  135 ++
+ .../specs/clocktower/spec.md                       | 1290 ++++++++++++++++++++
+ .../blood-on-the-clocktower/specs/demo/spec.md     |   76 ++
+ .../specs/design-system/spec.md                    |  191 +++
+ .../specs/game-engine/spec.md                      |  105 ++
+ .../blood-on-the-clocktower/specs/roster/spec.md   |   44 +
+ .../blood-on-the-clocktower/specs/sound/spec.md    |   22 +
+ openspec/changes/blood-on-the-clocktower/tasks.md  |  314 +++++
+ .../blood-on-the-clocktower/verification.md        |  605 +++++++++
+ src/app.css                                        |  197 +++
+ src/app.html                                       |    6 +-
+ src/hooks.server.ts                                |   28 +-
+ src/lib/count.test.ts                              |   41 +
+ src/lib/count.ts                                   |   17 +
+ src/lib/deco/Art.svelte                            |   12 +-
+ src/lib/deco/Clocktower.svelte                     |  125 ++
+ src/lib/deco/Sky.svelte                            |  240 ++++
+ src/lib/deco/motifs.test.ts                        |   41 +-
+ src/lib/deco/motifs.ts                             |    8 +-
+ src/lib/demo/runner.test.ts                        |   12 +-
+ src/lib/engine/types.ts                            |    3 +-
+ src/lib/games/clocktower/BlockCard.svelte          |   77 ++
+ src/lib/games/clocktower/CharacterBoard.svelte     |  155 +++
+ src/lib/games/clocktower/CharacterIcon.svelte      |   36 +
+ src/lib/games/clocktower/Circle.svelte             |  680 +++++++++++
+ src/lib/games/clocktower/Dawn.svelte               |   99 ++
+ src/lib/games/clocktower/Day.svelte                |  168 +++
+ src/lib/games/clocktower/Deal.svelte               |  115 ++
+ src/lib/games/clocktower/DeathStep.svelte          |  104 ++
+ src/lib/games/clocktower/Deck.svelte               |  150 +++
+ src/lib/games/clocktower/End.svelte                |  262 ++++
+ src/lib/games/clocktower/Facts.svelte              |   48 +
+ src/lib/games/clocktower/HoldGrimoire.svelte       |   59 +
+ src/lib/games/clocktower/Night.svelte              |   40 +
+ src/lib/games/clocktower/Questions.svelte          |   87 ++
+ src/lib/games/clocktower/RoleCard.svelte           |   74 ++
+ src/lib/games/clocktower/Screen.svelte             |   25 +
+ src/lib/games/clocktower/SeatActions.svelte        |   52 +
+ src/lib/games/clocktower/Setup.svelte              |   47 +
+ src/lib/games/clocktower/SetupBoard.svelte         |  188 +++
+ src/lib/games/clocktower/Sheet.svelte              |  307 +++++
+ src/lib/games/clocktower/ShowBar.svelte            |  200 +++
+ src/lib/games/clocktower/ShowCard.svelte           |  106 ++
+ src/lib/games/clocktower/Slide.svelte              |  733 +++++++++++
+ src/lib/games/clocktower/Timer.svelte              |   86 ++
+ src/lib/games/clocktower/VoteClock.svelte          |  148 +++
+ src/lib/games/clocktower/Wake.svelte               |  299 +++++
+ src/lib/games/clocktower/characters.test.ts        |   68 ++
+ src/lib/games/clocktower/characters.ts             |  279 +++++
+ src/lib/games/clocktower/circle.test.ts            |  171 +++
+ src/lib/games/clocktower/circle.ts                 |   91 ++
+ src/lib/games/clocktower/deck.test.ts              |  142 +++
+ src/lib/games/clocktower/deck.ts                   |  537 ++++++++
+ src/lib/games/clocktower/engine.test.ts            |  726 +++++++++++
+ src/lib/games/clocktower/engine.ts                 |  409 +++++++
+ src/lib/games/clocktower/fixtures.ts               |   74 ++
+ src/lib/games/clocktower/index.ts                  |   37 +
+ src/lib/games/clocktower/info.test.ts              |   95 ++
+ src/lib/games/clocktower/info.ts                   |   52 +
+ src/lib/games/clocktower/label.ts                  |   10 +
+ src/lib/games/clocktower/night.test.ts             |  122 ++
+ src/lib/games/clocktower/night.ts                  |   53 +
+ src/lib/games/clocktower/setup.test.ts             |  222 ++++
+ src/lib/games/clocktower/setup.ts                  |  141 +++
+ src/lib/games/clocktower/sheet.test.ts             |   63 +
+ src/lib/games/clocktower/timer.test.ts             |   24 +
+ src/lib/games/clocktower/timer.ts                  |    8 +
+ src/lib/games/clocktower/types.ts                  |  105 ++
+ src/lib/games/clocktower/vote.test.ts              |   72 ++
+ src/lib/games/clocktower/vote.ts                   |   34 +
+ src/lib/games/clocktower/win.test.ts               |  224 ++++
+ src/lib/games/clocktower/win.ts                    |   45 +
+ src/lib/games/registry.test.ts                     |   46 +-
+ src/lib/games/registry.ts                          |   21 +-
+ src/lib/games/status.test.ts                       |   28 +
+ src/lib/sound.test.ts                              |   37 +-
+ src/lib/sound.ts                                   |   18 +-
+ src/lib/theme.ts                                   |   24 +
+ src/lib/ui/GameTile.svelte                         |    4 +
+ src/lib/ui/tokens.test.ts                          |   87 +-
+ src/lib/ui/tokens.ts                               |  153 ++-
+ src/routes/+layout.svelte                          |   17 +
+ src/routes/spiele/[slug]/+page.server.ts           |    3 +-
+ src/routes/spiele/[slug]/+page.svelte              |  146 ++-
+ src/routes/spiele/[slug]/demo/+page.server.ts      |   10 +
+ src/routes/spiele/[slug]/demo/+page.svelte         |    8 +-
+ .../spiele/[slug]/erklaerung/+page.server.ts       |   10 +
+ src/routes/spiele/[slug]/erklaerung/+page.svelte   |   30 +
+ src/routes/spiele/[slug]/inhalte/+page.server.ts   |    2 +
+ src/routes/spiele/[slug]/inhalte/+page.svelte      |    8 +-
+ src/routes/spiele/[slug]/lobby/+page.svelte        |   58 +-
+ src/routes/spiele/[slug]/spielen/+page.svelte      |    7 +
+ static/fonts/AlegreyaSans-OFL.txt                  |   93 ++
+ static/fonts/IMFellEnglish-OFL.txt                 |   93 ++
+ static/fonts/alegreya-sans-latin-400.woff2         |  Bin 0 -> 23708 bytes
+ static/fonts/alegreya-sans-latin-500.woff2         |  Bin 0 -> 23928 bytes
+ static/fonts/alegreya-sans-latin-700.woff2         |  Bin 0 -> 23976 bytes
+ static/fonts/im-fell-english-italic-latin.woff2    |  Bin 0 -> 57808 bytes
+ static/fonts/im-fell-english-latin.woff2           |  Bin 0 -> 59880 bytes
+ static/fonts/im-fell-english-sc-latin.woff2        |  Bin 0 -> 56956 bytes
+ 141 files changed, 20110 insertions(+), 70 deletions(-)
 ```
 
 ## Screenshots (not committed)
 
-All 208 clocktower shots from this run (105 phone, 103 desktop; lobby, start, setup, reveal, night, day, end, deck) copied to /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/ with phone- and desktop- prefixes (`*-look-clocktower-*`, `*-look-lobby-clocktower*`, `*-look-start-clocktower*`). Files for the revisions:
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/desktop-look-clocktower-clock-15.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/desktop-look-clocktower-clock-7.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/desktop-look-clocktower-dawn-15.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/desktop-look-clocktower-dawn-7.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/desktop-look-clocktower-dawn-deaths-15.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/desktop-look-clocktower-dawn-deaths-7.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/desktop-look-clocktower-dawn-none-7.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/desktop-look-clocktower-dawn-timer-15.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/desktop-look-clocktower-dawn-timer-7.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/desktop-look-clocktower-deck-app-grimoire.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/desktop-look-clocktower-dusk.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/desktop-look-clocktower-end-reveal-15.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/desktop-look-clocktower-end-reveal-evil.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/desktop-look-clocktower-end-reveal-good.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/desktop-look-clocktower-end-teaser-15.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/desktop-look-clocktower-end-teaser-evil.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/desktop-look-clocktower-end-teaser-good.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/desktop-look-clocktower-grimoire-15.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/desktop-look-clocktower-grimoire-7.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/desktop-look-clocktower-grimoire-late-15.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/desktop-look-clocktower-grimoire-late-7.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/desktop-look-clocktower-grimoire.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/desktop-look-clocktower-imp-self.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/desktop-look-clocktower-imp.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/desktop-look-clocktower-nominator-15.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/desktop-look-clocktower-nominator-7.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/desktop-look-clocktower-question.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/desktop-look-clocktower-setup-15-complete.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/desktop-look-clocktower-setup-15-confirm.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/desktop-look-clocktower-setup-15-distribution.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/desktop-look-clocktower-setup-15-empty.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/desktop-look-clocktower-setup-15-error.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/desktop-look-clocktower-setup-7-complete.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/desktop-look-clocktower-setup-7-confirm.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/desktop-look-clocktower-setup-7-empty.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/desktop-look-clocktower-setup-7-error.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/desktop-look-clocktower-show-bluffs.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/desktop-look-clocktower-show-charakter.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/desktop-look-clocktower-show-das-ist-der-dämon.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/desktop-look-clocktower-show-deine-minions.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/desktop-look-clocktower-show-du-bist.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/desktop-look-clocktower-show-ja.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/desktop-look-clocktower-show-nein.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/desktop-look-clocktower-show-zahl.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/desktop-look-clocktower-sleep-group.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/desktop-look-clocktower-sweep-15.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/desktop-look-clocktower-sweep-7.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/desktop-look-clocktower-wake-group.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/desktop-look-clocktower-wake-pair.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/desktop-look-lobby-clocktower-few.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/desktop-look-lobby-clocktower-pick.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/desktop-look-lobby-clocktower.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/desktop-look-start-clocktower.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/phone-look-clocktower-clock-15.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/phone-look-clocktower-clock-7.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/phone-look-clocktower-dawn-15.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/phone-look-clocktower-dawn-7.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/phone-look-clocktower-dawn-deaths-15.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/phone-look-clocktower-dawn-deaths-7.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/phone-look-clocktower-dawn-none-7.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/phone-look-clocktower-dawn-timer-15.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/phone-look-clocktower-dawn-timer-7.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/phone-look-clocktower-deck-app-grimoire.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/phone-look-clocktower-dusk.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/phone-look-clocktower-end-reveal-15.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/phone-look-clocktower-end-reveal-evil.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/phone-look-clocktower-end-reveal-good.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/phone-look-clocktower-end-teaser-15.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/phone-look-clocktower-end-teaser-evil.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/phone-look-clocktower-end-teaser-good.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/phone-look-clocktower-grimoire-15.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/phone-look-clocktower-grimoire-7.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/phone-look-clocktower-grimoire-late-15.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/phone-look-clocktower-grimoire-late-7.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/phone-look-clocktower-grimoire.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/phone-look-clocktower-imp-self.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/phone-look-clocktower-imp.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/phone-look-clocktower-nominator-15.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/phone-look-clocktower-nominator-7.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/phone-look-clocktower-question.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/phone-look-clocktower-setup-15-complete.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/phone-look-clocktower-setup-15-confirm.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/phone-look-clocktower-setup-15-distribution.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/phone-look-clocktower-setup-15-empty.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/phone-look-clocktower-setup-15-error.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/phone-look-clocktower-setup-7-complete.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/phone-look-clocktower-setup-7-confirm.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/phone-look-clocktower-setup-7-empty.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/phone-look-clocktower-setup-7-error.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/phone-look-clocktower-show-bluffs.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/phone-look-clocktower-show-charakter.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/phone-look-clocktower-show-das-ist-der-dämon.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/phone-look-clocktower-show-deine-minions.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/phone-look-clocktower-show-du-bist.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/phone-look-clocktower-show-ja.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/phone-look-clocktower-show-nein.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/phone-look-clocktower-show-zahl.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/phone-look-clocktower-sleep-group.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/phone-look-clocktower-sweep-15.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/phone-look-clocktower-sweep-7.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/phone-look-clocktower-wake-group.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/phone-look-clocktower-wake-pair.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/phone-look-lobby-clocktower-few.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/phone-look-lobby-clocktower-pick.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/phone-look-lobby-clocktower.png
-- /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/23e0535d-3f30-41cf-8506-aa3eee9cc56a/scratchpad/shots-r6/phone-look-start-clocktower.png
+422 files in `test-results/shots/` of the working tree /home/Rue/.cache/flow/Rues-Arcade/blood-on-the-clocktower (not copied or committed, user decision):
 
-## Earlier review (r1–r3)
+- test-results/shots/desktop-duck-demo-scoring.png
+- test-results/shots/desktop-home.png
+- test-results/shots/desktop-imposter-crew.png
+- test-results/shots/desktop-imposter-handover.png
+- test-results/shots/desktop-imposter-known.png
+- test-results/shots/desktop-imposter-unmask.png
+- test-results/shots/desktop-imposter-view.png
+- test-results/shots/desktop-inhalte-codes.png
+- test-results/shots/desktop-inhalte-family-feud.png
+- test-results/shots/desktop-inhalte-imposter-flag.png
+- test-results/shots/desktop-inhalte-loeschen-wavelength.png
+- test-results/shots/desktop-inhalte-wavelength.png
+- test-results/shots/desktop-lobby-codes-seven.png
+- test-results/shots/desktop-lobby-duck.png
+- test-results/shots/desktop-lobby-imposter.png
+- test-results/shots/desktop-lobby-most-likely.png
+- test-results/shots/desktop-lobby-wavelength-koop-two.png
+- test-results/shots/desktop-lobby-wavelength-koop.png
+- test-results/shots/desktop-lobby-wavelength.png
+- test-results/shots/desktop-look-clocktower-card-group.png
+- test-results/shots/desktop-look-clocktower-card-pair.png
+- test-results/shots/desktop-look-clocktower-circle-group.png
+- test-results/shots/desktop-look-clocktower-circle-pair.png
+- test-results/shots/desktop-look-clocktower-clock-15.png
+- test-results/shots/desktop-look-clocktower-clock-7.png
+- test-results/shots/desktop-look-clocktower-confirm-15.png
+- test-results/shots/desktop-look-clocktower-confirm-7.png
+- test-results/shots/desktop-look-clocktower-dawn-15.png
+- test-results/shots/desktop-look-clocktower-dawn-7.png
+- test-results/shots/desktop-look-clocktower-dawn-deaths-15.png
+- test-results/shots/desktop-look-clocktower-dawn-deaths-7.png
+- test-results/shots/desktop-look-clocktower-dawn-none-7.png
+- test-results/shots/desktop-look-clocktower-dawn-timer-15.png
+- test-results/shots/desktop-look-clocktower-dawn-timer-7.png
+- test-results/shots/desktop-look-clocktower-deaths.png
+- test-results/shots/desktop-look-clocktower-deck-app-end.png
+- test-results/shots/desktop-look-clocktower-deck-app-grimoire.png
+- test-results/shots/desktop-look-clocktower-deck-app-night.png
+- test-results/shots/desktop-look-clocktower-deck-app-show.png
+- test-results/shots/desktop-look-clocktower-deck-app-timer.png
+- test-results/shots/desktop-look-clocktower-deck-app-vote.png
+- test-results/shots/desktop-look-clocktower-deck-chars-chapter.png
+- test-results/shots/desktop-look-clocktower-deck-credits.png
+- test-results/shots/desktop-look-clocktower-deck-day-chapter.png
+- test-results/shots/desktop-look-clocktower-deck-discussion.png
+- test-results/shots/desktop-look-clocktower-deck-execution.png
+- test-results/shots/desktop-look-clocktower-deck-eyes.png
+- test-results/shots/desktop-look-clocktower-deck-first-night.png
+- test-results/shots/desktop-look-clocktower-deck-flow.png
+- test-results/shots/desktop-look-clocktower-deck-golden.png
+- test-results/shots/desktop-look-clocktower-deck-night-chapter.png
+- test-results/shots/desktop-look-clocktower-deck-night-works.png
+- test-results/shots/desktop-look-clocktower-deck-nominations.png
+- test-results/shots/desktop-look-clocktower-deck-roles-demon.png
+- test-results/shots/desktop-look-clocktower-deck-roles-info.png
+- test-results/shots/desktop-look-clocktower-deck-roles-minions.png
+- test-results/shots/desktop-look-clocktower-deck-roles-outsiders.png
+- test-results/shots/desktop-look-clocktower-deck-roles-power.png
+- test-results/shots/desktop-look-clocktower-deck-setup.png
+- test-results/shots/desktop-look-clocktower-deck-sheet.png
+- test-results/shots/desktop-look-clocktower-deck-signals.png
+- test-results/shots/desktop-look-clocktower-deck-story.png
+- test-results/shots/desktop-look-clocktower-deck-storyteller.png
+- test-results/shots/desktop-look-clocktower-deck-teams.png
+- test-results/shots/desktop-look-clocktower-deck-title.png
+- test-results/shots/desktop-look-clocktower-deck-town.png
+- test-results/shots/desktop-look-clocktower-deck-unreliable.png
+- test-results/shots/desktop-look-clocktower-deck-voting.png
+- test-results/shots/desktop-look-clocktower-deck-win.png
+- test-results/shots/desktop-look-clocktower-dusk.png
+- test-results/shots/desktop-look-clocktower-end-reveal-15.png
+- test-results/shots/desktop-look-clocktower-end-reveal-evil.png
+- test-results/shots/desktop-look-clocktower-end-reveal-good.png
+- test-results/shots/desktop-look-clocktower-end-teaser-15.png
+- test-results/shots/desktop-look-clocktower-end-teaser-evil.png
+- test-results/shots/desktop-look-clocktower-end-teaser-good.png
+- test-results/shots/desktop-look-clocktower-execution-15.png
+- test-results/shots/desktop-look-clocktower-execution-7.png
+- test-results/shots/desktop-look-clocktower-grimoire-15.png
+- test-results/shots/desktop-look-clocktower-grimoire-7.png
+- test-results/shots/desktop-look-clocktower-grimoire-late-15.png
+- test-results/shots/desktop-look-clocktower-grimoire-late-7.png
+- test-results/shots/desktop-look-clocktower-grimoire.png
+- test-results/shots/desktop-look-clocktower-imp-self.png
+- test-results/shots/desktop-look-clocktower-imp.png
+- test-results/shots/desktop-look-clocktower-nominator-15.png
+- test-results/shots/desktop-look-clocktower-nominator-7.png
+- test-results/shots/desktop-look-clocktower-question.png
+- test-results/shots/desktop-look-clocktower-result-15.png
+- test-results/shots/desktop-look-clocktower-result-7.png
+- test-results/shots/desktop-look-clocktower-reveal-15-card.png
+- test-results/shots/desktop-look-clocktower-reveal-15-name.png
+- test-results/shots/desktop-look-clocktower-reveal-7-card.png
+- test-results/shots/desktop-look-clocktower-reveal-7-name.png
+- test-results/shots/desktop-look-clocktower-seat-actions-15.png
+- test-results/shots/desktop-look-clocktower-seat-actions-7.png
+- test-results/shots/desktop-look-clocktower-setup-15-complete.png
+- test-results/shots/desktop-look-clocktower-setup-15-confirm.png
+- test-results/shots/desktop-look-clocktower-setup-15-distribution.png
+- test-results/shots/desktop-look-clocktower-setup-15-empty.png
+- test-results/shots/desktop-look-clocktower-setup-15-error.png
+- test-results/shots/desktop-look-clocktower-setup-7-complete.png
+- test-results/shots/desktop-look-clocktower-setup-7-confirm.png
+- test-results/shots/desktop-look-clocktower-setup-7-empty.png
+- test-results/shots/desktop-look-clocktower-setup-7-error.png
+- test-results/shots/desktop-look-clocktower-show-bluffs.png
+- test-results/shots/desktop-look-clocktower-show-charakter.png
+- test-results/shots/desktop-look-clocktower-show-das-ist-der-dämon.png
+- test-results/shots/desktop-look-clocktower-show-deine-minions.png
+- test-results/shots/desktop-look-clocktower-show-du-bist.png
+- test-results/shots/desktop-look-clocktower-show-ja.png
+- test-results/shots/desktop-look-clocktower-show-nein.png
+- test-results/shots/desktop-look-clocktower-show-zahl.png
+- test-results/shots/desktop-look-clocktower-sleep-group.png
+- test-results/shots/desktop-look-clocktower-sweep-15.png
+- test-results/shots/desktop-look-clocktower-sweep-7.png
+- test-results/shots/desktop-look-clocktower-wake-group.png
+- test-results/shots/desktop-look-clocktower-wake-pair.png
+- test-results/shots/desktop-look-codes-gameover.png
+- test-results/shots/desktop-look-codes-play-late.png
+- test-results/shots/desktop-look-codes-play.png
+- test-results/shots/desktop-look-codes-result-skipped.png
+- test-results/shots/desktop-look-codes-result.png
+- test-results/shots/desktop-look-codes-reveal-held.png
+- test-results/shots/desktop-look-codes-reveal.png
+- test-results/shots/desktop-look-duck-gameover.png
+- test-results/shots/desktop-look-duck-reveal-shown.png
+- test-results/shots/desktop-look-duck-reveal.png
+- test-results/shots/desktop-look-duck-scoring-locked.png
+- test-results/shots/desktop-look-duck-scoring.png
+- test-results/shots/desktop-look-duck-skip.png
+- test-results/shots/desktop-look-duck-standings.png
+- test-results/shots/desktop-look-feud-board.png
+- test-results/shots/desktop-look-feud-buzz.png
+- test-results/shots/desktop-look-feud-faceoff-double.png
+- test-results/shots/desktop-look-feud-faceoff.png
+- test-results/shots/desktop-look-feud-handoff.png
+- test-results/shots/desktop-look-feud-peek-held.png
+- test-results/shots/desktop-look-feud-prep.png
+- test-results/shots/desktop-look-feud-question.png
+- test-results/shots/desktop-look-feud-result-double.png
+- test-results/shots/desktop-look-feud-result.png
+- test-results/shots/desktop-look-feud-steal-handoff.png
+- test-results/shots/desktop-look-feud-steal.png
+- test-results/shots/desktop-look-feud-winner.png
+- test-results/shots/desktop-look-home.png
+- test-results/shots/desktop-look-imposter-crew-shown.png
+- test-results/shots/desktop-look-imposter-crew.png
+- test-results/shots/desktop-look-imposter-handover.png
+- test-results/shots/desktop-look-imposter-unmask-shown.png
+- test-results/shots/desktop-look-imposter-unmask.png
+- test-results/shots/desktop-look-imposter-view-held.png
+- test-results/shots/desktop-look-imposter-view.png
+- test-results/shots/desktop-look-inhalte-imposter.png
+- test-results/shots/desktop-look-inhalte-wavelength.png
+- test-results/shots/desktop-look-lobby-clocktower-few.png
+- test-results/shots/desktop-look-lobby-clocktower-pick.png
+- test-results/shots/desktop-look-lobby-clocktower.png
+- test-results/shots/desktop-look-lobby-codes.png
+- test-results/shots/desktop-look-lobby-duck.png
+- test-results/shots/desktop-look-lobby-family-feud.png
+- test-results/shots/desktop-look-lobby-imposter.png
+- test-results/shots/desktop-look-lobby-most-likely.png
+- test-results/shots/desktop-look-lobby-pick.png
+- test-results/shots/desktop-look-lobby-wavelength-koop.png
+- test-results/shots/desktop-look-lobby-wavelength-short.png
+- test-results/shots/desktop-look-lobby-wavelength.png
+- test-results/shots/desktop-look-most-likely-count.png
+- test-results/shots/desktop-look-most-likely-gameover.png
+- test-results/shots/desktop-look-most-likely-prompt.png
+- test-results/shots/desktop-look-most-likely-result-none.png
+- test-results/shots/desktop-look-most-likely-result.png
+- test-results/shots/desktop-look-spieler.png
+- test-results/shots/desktop-look-start-clocktower.png
+- test-results/shots/desktop-look-start-codes.png
+- test-results/shots/desktop-look-start-duck.png
+- test-results/shots/desktop-look-start-family-feud.png
+- test-results/shots/desktop-look-start-imposter.png
+- test-results/shots/desktop-look-start-most-likely.png
+- test-results/shots/desktop-look-start-wavelength.png
+- test-results/shots/desktop-look-wavelength-gameover.png
+- test-results/shots/desktop-look-wavelength-guess.png
+- test-results/shots/desktop-look-wavelength-koop-gameover.png
+- test-results/shots/desktop-look-wavelength-koop-prep.png
+- test-results/shots/desktop-look-wavelength-koop-result.png
+- test-results/shots/desktop-look-wavelength-prep.png
+- test-results/shots/desktop-look-wavelength-result.png
+- test-results/shots/desktop-look-wavelength-reveal-held.png
+- test-results/shots/desktop-look-wavelength-reveal.png
+- test-results/shots/desktop-most-likely-count.png
+- test-results/shots/desktop-most-likely-endstand.png
+- test-results/shots/desktop-most-likely-gameover.png
+- test-results/shots/desktop-most-likely-prompt.png
+- test-results/shots/desktop-most-likely-result.png
+- test-results/shots/desktop-most-likely-tie.png
+- test-results/shots/desktop-spieler-gast.png
+- test-results/shots/desktop-spieler-gespeichert-leer.png
+- test-results/shots/desktop-spieler-gespeichert.png
+- test-results/shots/desktop-spieler-leer.png
+- test-results/shots/desktop-spieler.png
+- test-results/shots/desktop-start-imposter.png
+- test-results/shots/desktop-wavelength-gameover.png
+- test-results/shots/desktop-wavelength-guess.png
+- test-results/shots/desktop-wavelength-koop-gameover.png
+- test-results/shots/desktop-wavelength-koop-prep.png
+- test-results/shots/desktop-wavelength-koop-result.png
+- test-results/shots/desktop-wavelength-prep.png
+- test-results/shots/desktop-wavelength-result.png
+- test-results/shots/desktop-wavelength-tie.png
+- test-results/shots/phone-duck-demo-scoring.png
+- test-results/shots/phone-home.png
+- test-results/shots/phone-imposter-crew.png
+- test-results/shots/phone-imposter-handover.png
+- test-results/shots/phone-imposter-known.png
+- test-results/shots/phone-imposter-unmask.png
+- test-results/shots/phone-imposter-view.png
+- test-results/shots/phone-inhalte-codes.png
+- test-results/shots/phone-inhalte-family-feud.png
+- test-results/shots/phone-inhalte-imposter-flag.png
+- test-results/shots/phone-inhalte-imposter.png
+- test-results/shots/phone-inhalte-loeschen-imposter.png
+- test-results/shots/phone-lobby-codes-seven.png
+- test-results/shots/phone-lobby-duck.png
+- test-results/shots/phone-lobby-imposter.png
+- test-results/shots/phone-lobby-most-likely.png
+- test-results/shots/phone-lobby-wavelength-koop-two.png
+- test-results/shots/phone-lobby-wavelength-koop.png
+- test-results/shots/phone-lobby-wavelength.png
+- test-results/shots/phone-look-clocktower-card-group.png
+- test-results/shots/phone-look-clocktower-card-pair.png
+- test-results/shots/phone-look-clocktower-circle-group.png
+- test-results/shots/phone-look-clocktower-circle-navigation.png
+- test-results/shots/phone-look-clocktower-circle-pair.png
+- test-results/shots/phone-look-clocktower-clock-15.png
+- test-results/shots/phone-look-clocktower-clock-7.png
+- test-results/shots/phone-look-clocktower-confirm-15.png
+- test-results/shots/phone-look-clocktower-confirm-7.png
+- test-results/shots/phone-look-clocktower-dawn-15.png
+- test-results/shots/phone-look-clocktower-dawn-7.png
+- test-results/shots/phone-look-clocktower-dawn-deaths-15.png
+- test-results/shots/phone-look-clocktower-dawn-deaths-7.png
+- test-results/shots/phone-look-clocktower-dawn-none-7.png
+- test-results/shots/phone-look-clocktower-dawn-timer-15.png
+- test-results/shots/phone-look-clocktower-dawn-timer-7.png
+- test-results/shots/phone-look-clocktower-deaths.png
+- test-results/shots/phone-look-clocktower-deck-app-end.png
+- test-results/shots/phone-look-clocktower-deck-app-grimoire.png
+- test-results/shots/phone-look-clocktower-deck-app-night.png
+- test-results/shots/phone-look-clocktower-deck-app-show.png
+- test-results/shots/phone-look-clocktower-deck-app-timer.png
+- test-results/shots/phone-look-clocktower-deck-app-vote.png
+- test-results/shots/phone-look-clocktower-deck-chars-chapter.png
+- test-results/shots/phone-look-clocktower-deck-credits.png
+- test-results/shots/phone-look-clocktower-deck-day-chapter.png
+- test-results/shots/phone-look-clocktower-deck-discussion.png
+- test-results/shots/phone-look-clocktower-deck-execution.png
+- test-results/shots/phone-look-clocktower-deck-eyes.png
+- test-results/shots/phone-look-clocktower-deck-first-night.png
+- test-results/shots/phone-look-clocktower-deck-flow.png
+- test-results/shots/phone-look-clocktower-deck-golden.png
+- test-results/shots/phone-look-clocktower-deck-night-chapter.png
+- test-results/shots/phone-look-clocktower-deck-night-works.png
+- test-results/shots/phone-look-clocktower-deck-nominations.png
+- test-results/shots/phone-look-clocktower-deck-roles-demon.png
+- test-results/shots/phone-look-clocktower-deck-roles-info.png
+- test-results/shots/phone-look-clocktower-deck-roles-minions.png
+- test-results/shots/phone-look-clocktower-deck-roles-outsiders.png
+- test-results/shots/phone-look-clocktower-deck-roles-power.png
+- test-results/shots/phone-look-clocktower-deck-setup.png
+- test-results/shots/phone-look-clocktower-deck-sheet-boese.png
+- test-results/shots/phone-look-clocktower-deck-sheet.png
+- test-results/shots/phone-look-clocktower-deck-signals.png
+- test-results/shots/phone-look-clocktower-deck-story.png
+- test-results/shots/phone-look-clocktower-deck-storyteller.png
+- test-results/shots/phone-look-clocktower-deck-teams.png
+- test-results/shots/phone-look-clocktower-deck-title.png
+- test-results/shots/phone-look-clocktower-deck-town.png
+- test-results/shots/phone-look-clocktower-deck-unreliable.png
+- test-results/shots/phone-look-clocktower-deck-voting.png
+- test-results/shots/phone-look-clocktower-deck-win.png
+- test-results/shots/phone-look-clocktower-dusk.png
+- test-results/shots/phone-look-clocktower-end-reveal-15.png
+- test-results/shots/phone-look-clocktower-end-reveal-evil.png
+- test-results/shots/phone-look-clocktower-end-reveal-good.png
+- test-results/shots/phone-look-clocktower-end-teaser-15.png
+- test-results/shots/phone-look-clocktower-end-teaser-evil.png
+- test-results/shots/phone-look-clocktower-end-teaser-good.png
+- test-results/shots/phone-look-clocktower-execution-15.png
+- test-results/shots/phone-look-clocktower-execution-7.png
+- test-results/shots/phone-look-clocktower-grimoire-15.png
+- test-results/shots/phone-look-clocktower-grimoire-7.png
+- test-results/shots/phone-look-clocktower-grimoire-ghosts-15.png
+- test-results/shots/phone-look-clocktower-grimoire-late-15.png
+- test-results/shots/phone-look-clocktower-grimoire-late-7.png
+- test-results/shots/phone-look-clocktower-grimoire.png
+- test-results/shots/phone-look-clocktower-imp-self.png
+- test-results/shots/phone-look-clocktower-imp.png
+- test-results/shots/phone-look-clocktower-nominator-15.png
+- test-results/shots/phone-look-clocktower-nominator-7.png
+- test-results/shots/phone-look-clocktower-question.png
+- test-results/shots/phone-look-clocktower-result-15.png
+- test-results/shots/phone-look-clocktower-result-7.png
+- test-results/shots/phone-look-clocktower-reveal-15-card.png
+- test-results/shots/phone-look-clocktower-reveal-15-name.png
+- test-results/shots/phone-look-clocktower-reveal-7-card.png
+- test-results/shots/phone-look-clocktower-reveal-7-name.png
+- test-results/shots/phone-look-clocktower-seat-actions-15.png
+- test-results/shots/phone-look-clocktower-seat-actions-7.png
+- test-results/shots/phone-look-clocktower-setup-15-complete.png
+- test-results/shots/phone-look-clocktower-setup-15-confirm.png
+- test-results/shots/phone-look-clocktower-setup-15-distribution.png
+- test-results/shots/phone-look-clocktower-setup-15-empty.png
+- test-results/shots/phone-look-clocktower-setup-15-error.png
+- test-results/shots/phone-look-clocktower-setup-7-complete.png
+- test-results/shots/phone-look-clocktower-setup-7-confirm.png
+- test-results/shots/phone-look-clocktower-setup-7-empty.png
+- test-results/shots/phone-look-clocktower-setup-7-error.png
+- test-results/shots/phone-look-clocktower-show-bluffs.png
+- test-results/shots/phone-look-clocktower-show-charakter.png
+- test-results/shots/phone-look-clocktower-show-das-ist-der-dämon.png
+- test-results/shots/phone-look-clocktower-show-deine-minions.png
+- test-results/shots/phone-look-clocktower-show-du-bist.png
+- test-results/shots/phone-look-clocktower-show-ja.png
+- test-results/shots/phone-look-clocktower-show-marked.png
+- test-results/shots/phone-look-clocktower-show-nein.png
+- test-results/shots/phone-look-clocktower-show-zahl.png
+- test-results/shots/phone-look-clocktower-sleep-group.png
+- test-results/shots/phone-look-clocktower-sweep-15.png
+- test-results/shots/phone-look-clocktower-sweep-7.png
+- test-results/shots/phone-look-clocktower-wake-group.png
+- test-results/shots/phone-look-clocktower-wake-pair.png
+- test-results/shots/phone-look-codes-gameover.png
+- test-results/shots/phone-look-codes-play-late.png
+- test-results/shots/phone-look-codes-play.png
+- test-results/shots/phone-look-codes-result-skipped.png
+- test-results/shots/phone-look-codes-result.png
+- test-results/shots/phone-look-codes-reveal-held.png
+- test-results/shots/phone-look-codes-reveal.png
+- test-results/shots/phone-look-duck-gameover.png
+- test-results/shots/phone-look-duck-reveal-shown.png
+- test-results/shots/phone-look-duck-reveal.png
+- test-results/shots/phone-look-duck-scoring-locked.png
+- test-results/shots/phone-look-duck-scoring.png
+- test-results/shots/phone-look-duck-skip.png
+- test-results/shots/phone-look-duck-standings.png
+- test-results/shots/phone-look-feud-board.png
+- test-results/shots/phone-look-feud-buzz.png
+- test-results/shots/phone-look-feud-faceoff-double.png
+- test-results/shots/phone-look-feud-faceoff.png
+- test-results/shots/phone-look-feud-handoff.png
+- test-results/shots/phone-look-feud-peek-held.png
+- test-results/shots/phone-look-feud-prep.png
+- test-results/shots/phone-look-feud-question.png
+- test-results/shots/phone-look-feud-result-double.png
+- test-results/shots/phone-look-feud-result.png
+- test-results/shots/phone-look-feud-steal-handoff.png
+- test-results/shots/phone-look-feud-steal.png
+- test-results/shots/phone-look-feud-winner.png
+- test-results/shots/phone-look-home.png
+- test-results/shots/phone-look-imposter-crew-shown.png
+- test-results/shots/phone-look-imposter-crew.png
+- test-results/shots/phone-look-imposter-handover.png
+- test-results/shots/phone-look-imposter-unmask-shown.png
+- test-results/shots/phone-look-imposter-unmask.png
+- test-results/shots/phone-look-imposter-view-held.png
+- test-results/shots/phone-look-imposter-view.png
+- test-results/shots/phone-look-inhalte-imposter.png
+- test-results/shots/phone-look-inhalte-wavelength.png
+- test-results/shots/phone-look-lobby-clocktower-few.png
+- test-results/shots/phone-look-lobby-clocktower-pick.png
+- test-results/shots/phone-look-lobby-clocktower.png
+- test-results/shots/phone-look-lobby-codes.png
+- test-results/shots/phone-look-lobby-duck.png
+- test-results/shots/phone-look-lobby-family-feud.png
+- test-results/shots/phone-look-lobby-imposter.png
+- test-results/shots/phone-look-lobby-most-likely.png
+- test-results/shots/phone-look-lobby-pick.png
+- test-results/shots/phone-look-lobby-wavelength-koop.png
+- test-results/shots/phone-look-lobby-wavelength-short.png
+- test-results/shots/phone-look-lobby-wavelength.png
+- test-results/shots/phone-look-most-likely-count.png
+- test-results/shots/phone-look-most-likely-gameover.png
+- test-results/shots/phone-look-most-likely-prompt.png
+- test-results/shots/phone-look-most-likely-result-none.png
+- test-results/shots/phone-look-most-likely-result.png
+- test-results/shots/phone-look-spieler.png
+- test-results/shots/phone-look-start-clocktower.png
+- test-results/shots/phone-look-start-codes.png
+- test-results/shots/phone-look-start-duck.png
+- test-results/shots/phone-look-start-family-feud.png
+- test-results/shots/phone-look-start-imposter.png
+- test-results/shots/phone-look-start-most-likely.png
+- test-results/shots/phone-look-start-wavelength.png
+- test-results/shots/phone-look-wavelength-gameover.png
+- test-results/shots/phone-look-wavelength-guess.png
+- test-results/shots/phone-look-wavelength-koop-gameover.png
+- test-results/shots/phone-look-wavelength-koop-prep.png
+- test-results/shots/phone-look-wavelength-koop-result.png
+- test-results/shots/phone-look-wavelength-prep.png
+- test-results/shots/phone-look-wavelength-result.png
+- test-results/shots/phone-look-wavelength-reveal-held.png
+- test-results/shots/phone-look-wavelength-reveal.png
+- test-results/shots/phone-most-likely-count.png
+- test-results/shots/phone-most-likely-endstand.png
+- test-results/shots/phone-most-likely-gameover.png
+- test-results/shots/phone-most-likely-prompt.png
+- test-results/shots/phone-most-likely-result.png
+- test-results/shots/phone-most-likely-tie.png
+- test-results/shots/phone-spieler-gast.png
+- test-results/shots/phone-spieler-gespeichert-leer.png
+- test-results/shots/phone-spieler-gespeichert.png
+- test-results/shots/phone-spieler-leer.png
+- test-results/shots/phone-spieler.png
+- test-results/shots/phone-start-imposter.png
+- test-results/shots/phone-wavelength-gameover.png
+- test-results/shots/phone-wavelength-guess.png
+- test-results/shots/phone-wavelength-koop-gameover.png
+- test-results/shots/phone-wavelength-koop-prep.png
+- test-results/shots/phone-wavelength-koop-result.png
+- test-results/shots/phone-wavelength-prep.png
+- test-results/shots/phone-wavelength-result.png
+- test-results/shots/phone-wavelength-tie.png
 
-Fresh-context reviewer (opus) over `git diff origin/main...flow/blood-on-the-clocktower`, three rounds.
+## Earlier review (r1–r6)
+
+Fresh-context reviewer over `git diff origin/main...flow/blood-on-the-clocktower` (r1–r3, first build) and `git diff 47629f3...<tip>` (r4–r6, Gate 2 revisions S39–S49, U12–U16).
 
 ### Round 1 (fixed, each with a regression test)
 - End history keyed by night: duplicate key crashed the end screen. Keyed per entry.
@@ -580,9 +917,6 @@ Fresh-context reviewer (opus) over `git diff origin/main...flow/blood-on-the-clo
 - No weakened tests and no correctness bugs found.
 
 
-## Review
-
-Gate 2 revisions (S39–S49, U12–U16), fresh-context reviewer (opus) over `git diff 47629f3...<tip>`, three rounds. Rounds r1–r3 of the first build are under "Earlier review (r1–r3)".
 
 ### r4 (fixed)
 - [spec] Timer last-minute warning pulsed `box-shadow` (theme allows ambient loops on transform/opacity only) and was unspecced. Now an `::after` ring with an opacity-only pulse, none under reduced motion; new scenario "Last minute warns without blocking".
@@ -603,3 +937,4 @@ Gate 2 revisions (S39–S49, U12–U16), fresh-context reviewer (opus) over `git
 - [weak, informational] "Public circles show no character icon" is vacuous on the reveal screen (no circle there); night and day are checked for real.
 - [spec, low] `Dawn.svelte:48` the dawn circle has no height cap (up to 640px); breaks "fits the viewport at one scroll position" only on viewports under ~700px tall, which no tested viewport has.
 - No weakened tests without a spec reason, no correctness bugs.
+
