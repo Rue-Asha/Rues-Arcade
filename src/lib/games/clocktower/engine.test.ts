@@ -592,12 +592,9 @@ describe('clocktower day', () => {
 		expect(step(day, { type: 'nominee', seat: 1 }).phase).toEqual({ kind: 'day', screen: 'nominator' });
 		expect(rings(day)).toEqual([only({ nominee: true }), none, both, only({ nominator: true }), both, both, both]);
 		const killed = step(day, { type: 'died', seat: 4 }, { type: 'died', seat: 3 });
-		expect(rings(killed)[4]).toEqual(none);
-		expect(rings(killed)[3]).toEqual(none);
+		expect(rings(killed)).toEqual([only({ nominee: true }), none, both, none, none, both, both]);
 		const back = step(killed, { type: 'revive', seat: 1 }, { type: 'revive', seat: 3 });
-		expect(rings(back)[1]).toEqual(both);
-		expect(rings(back)[3]).toEqual(only({ nominator: true }));
-		expect(rings(back)[0]).toEqual(only({ nominee: true }));
+		expect(rings(back)).toEqual([only({ nominee: true }), both, both, only({ nominator: true }), none, both, both]);
 	});
 
 	it('Scenario: Nomination availability per seat', () => {
