@@ -171,7 +171,7 @@ a BotC demo, multi-device, CI changes, history/undo).
   held grimoire) the icon sits in the face's upper part (≈ 0.47·d) and the name on a ribbon over the lower rim (own
   surface, same size, max width `min(56px, neighbour distance − 8px)`). Badge slots on the rim, each a disc of ≈ 0.4·d
   with a 2px ring in the node's background colour to cut it off (Clubhouse, Discord in §3): block at 45° (top right),
-  ghost vote at 135° (bottom right; on icon nodes at 45°, where no block ever shows), mark check (`pointed` only) at 225° (bottom
+  ghost vote at 135° (bottom right; on icon nodes at 45°, where no block ever shows), check at 225° for seats the user taps (`marked`, `pointed`; never `lit`) (bottom
   left). Glyphs are inline SVG paths: an axe for the block (§3 "axe/guillotine"), a raised hand for the ghost vote (§3
   "hand/ballot"), a check for marks.
 - **Ghost-vote badge (S60; mobbin-r2 §3 Clubhouse muted badge).** Unused: light-blue disc (`--ghost`) with the hand
@@ -602,7 +602,7 @@ Later units of round 2 rely on this; it records U17's report, including where it
 - Circle `hand?: number | null`: seat units, fractional; angle = hand·360/count deg; k + 0.5 is the boundary after seat k; values ≥ count keep turning clockwise; `[data-hand]` with `--angle` (deg). `handMs?: number`: ms of the hand's linear transform transition (0 = jump).
 - Circle `sector?: number | null`: 0-based seat; `<path data-sector={i+1} aria-hidden>` under the seats (--clocktower at 15% opacity, no pointer events).
 - Circle `rings?: (i) => { nominee: boolean; nominator: boolean }`: `<span data-avail="nominee">` solid 2px --nominee ring at d/2 + 3px; `<span data-avail="nominator">` dashed 2px --nominator ring at d/2 + 7px; aria-hidden, no pointer events, full opacity (tokens ≥ 3:1, opacity would lower the composite).
-- Circle `pointed?: number[]`: 0-based; `data-pointed`, 3px --gold ring and a check badge. `marked?: number[]`: unchanged meaning (woken / voting / target), `data-marked`, tint only; the check badge belongs to `pointed` alone (decision D1, verify r7).
+- Circle `pointed?: number[]`: 0-based; `data-pointed`, 3px --gold ring and a check badge. `marked?: number[]`: seats the user taps (voters, death step, setup pick), `data-marked`, tint plus a check badge. `lit?: number[]`: the night's own highlight (woken seat, the Imp's target; Wake passes these), `data-marked` and the same tint but no check badge (decisions D1, verify r7, and its follow-up).
 - Circle `center?: Snippet`: in `<div data-centre>`, a disc of diameter 2·(ornament().inner − 4) px, exposed as `--centre` (px); its direct children, buttons and links get pointer events.
 - Circle `dying?: number[]`: 0-based; class `dying` runs keyframes `death` (1000 ms: translateY 4px sink, fade to 0.35, return; transform/opacity only) once on mount, child `[data-pulse]` runs `death-ring` (1000 ms, scale 1 → 1.7, opacity 0.9 → 0); none under reduced motion.
 - Seat node: `.no` 12px bold pill centred on the top rim; `.name` (title = full name) clamp(15px, 0.3·d, 20px), one line, ellipsis. With `token`: icon 0.47·d in the face, name on a ribbon at centre + 0.28·d, max width min(56px, neighbour distance − 8px). Seats placed with left/top = centre − d/2 (no translate); `.circle` has padding-block 8px.

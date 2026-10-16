@@ -12,6 +12,7 @@
 		label?: (i: number) => string | null;
 		token?: (i: number) => CharacterId | null;
 		marked?: number[];
+		lit?: number[];
 		pointed?: number[];
 		block?: number | null;
 		// seat units, fractional while it turns; values past the last seat keep turning clockwise
@@ -33,6 +34,7 @@
 		label,
 		token,
 		marked = [],
+		lit = [],
 		pointed = [],
 		block = null,
 		hand = null,
@@ -214,7 +216,7 @@
 				data-seat={i + 1}
 				data-dead={seat.alive ? undefined : ''}
 				data-ghost={!seat.alive && seat.ghostVote ? '' : undefined}
-				data-marked={marked.includes(i) ? '' : undefined}
+				data-marked={marked.includes(i) || lit.includes(i) ? '' : undefined}
 				data-pointed={pointed.includes(i) ? '' : undefined}
 				data-block={block === i ? '' : undefined}
 				aria-label={spoken(i)}
@@ -249,7 +251,7 @@
 						{@render glyph('hand', !seat.ghostVote)}
 					</span>
 				{/if}
-				{#if pointed.includes(i)}<span class="badge check" data-badge="check" aria-hidden="true">{@render glyph('check')}</span>{/if}
+				{#if marked.includes(i) || pointed.includes(i)}<span class="badge check" data-badge="check" aria-hidden="true">{@render glyph('check')}</span>{/if}
 			</button>
 		{/each}
 		{#if hand !== null}

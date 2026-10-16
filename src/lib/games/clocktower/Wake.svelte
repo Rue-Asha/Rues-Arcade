@@ -164,7 +164,7 @@
 			<div class="fit">
 				<Circle
 					seats={s.seats}
-					marked={target === null ? [] : [target]}
+					lit={target === null ? [] : [target]}
 					{pointed}
 					label={(i) => (i === target && starpass === null ? 'Ziel' : null)}
 					disabled={(i) => (card ? null : starpass !== null ? 'Der Imp hat sich selbst gewählt' : s.seats[i].alive ? null : 'bereits tot')}
@@ -173,7 +173,7 @@
 				/>
 			</div>
 		{:else}
-			<div class="fit"><Circle seats={s.seats} marked={step.seats} {pointed} onseat={card ? point : undefined} center={card ? shown : undefined} /></div>
+			<div class="fit"><Circle seats={s.seats} lit={step.seats} {pointed} onseat={card ? point : undefined} center={card ? shown : undefined} /></div>
 		{/if}
 		<ShowBar bind:this={bar} state={s} {dispatch} {step} onshow={(c) => (card = c)} />
 		{@render peek?.()}

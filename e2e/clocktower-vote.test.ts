@@ -131,8 +131,10 @@ test("Scenario: Only the seat in the hand's sector can vote", async ({ page }) =
 	await expect(seat(page, 6)).toHaveAttribute('aria-disabled', 'false');
 	await seat(page, 6).click();
 	await expect(seat(page, 6)).toHaveAttribute('data-marked', '');
+	await expect(seat(page, 6).locator('[data-badge="check"]')).toHaveCount(1);
 	await seat(page, 6).click();
 	await expect(seat(page, 6)).not.toHaveAttribute('data-marked');
+	await expect(seat(page, 6).locator('[data-badge="check"]')).toHaveCount(0);
 	await seat(page, 6).click();
 	await expect(seat(page, 6)).toHaveAttribute('data-marked', '');
 	expect(await lit(page)).toEqual([6]);
