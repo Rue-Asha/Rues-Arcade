@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { loadCount, saveCount } from '#lib/count.ts';
 	import Banner from '#lib/deco/Banner.svelte';
 	import { games, loadGameSession, playerRange } from '#lib/games/registry.ts';
 	import { roster } from '#lib/roster.svelte.ts';
@@ -39,6 +40,11 @@
 			'Zwei Teams, eine Umfrage: gesucht sind die häufigsten Antworten.',
 			'Im Duell nennen zwei Personen je eine Antwort. Wer höher liegt, wählt Spielen oder Passen.',
 			'Das Team deckt Antworten auf. Nach drei Fehlern darf das andere Team die Punkte klauen. Die letzte Runde zählt doppelt.'
+		],
+		clocktower: [
+			'Eine Person erzählt und führt das Grimoire, alle anderen bekommen geheim eine Rolle.',
+			'Nachts wecken die Erzählenden einzelne Rollen und geben ihnen Hinweise. Tagsüber wird diskutiert, nominiert und abgestimmt.',
+			'Das Gute gewinnt, wenn der Dämon stirbt. Das Böse gewinnt, wenn nur noch zwei Spieler leben.'
 		]
 	};
 
@@ -58,22 +64,37 @@
 	let ready = $state(false);
 	let saved = $state(false);
 	let discarded = $state(false);
+	// count-first games only: the chosen player count
+	let n = $state(0);
 
 	onMount(() => {
 		const session = loadGameSession(entry);
 		saved = session !== null && 'state' in session;
 		discarded = session !== null && 'discarded' in session;
+		if (entry.countFirst) n = loadCount(def.slug, { min: def.minPlayers, max: def.maxPlayers }, roster.players.length);
 		ready = true;
 	});
 
+	function setCount(next: number) {
+		n = next;
+		saveCount(def.slug, n);
+	}
+
 	const count = $derived(ready ? roster.players.length : 0);
-	const fewPlayers = $derived(count < def.minPlayers);
+	// a count-first lobby fills or trims the roster to N itself
+	const fewPlayers = $derived(!entry.countFirst && count < def.minPlayers);
+	const pooled = $derived(def.contentType !== 'none');
 	const noContent = $derived(data.count < def.minContent);
 	const noun = $derived((nouns[def.slug] ?? ['Eintrag', 'Einträge'])[data.count === 1 ? 0 : 1]);
 
 	const cards = $derived([
-		{ id: 'demo', title: 'Demo', line: 'Spiel per Demo lernen, mehrere Runden zum Mittippen', href: `${base}/demo?from=${base}` },
-		{ id: 'inhalte', title: 'Inhalte', line: `${data.count} ${noun} ansehen und bearbeiten`, href: `${base}/inhalte` }
+		...(entry.demo
+			? [{ id: 'demo', title: 'Demo', line: 'Spiel per Demo lernen, mehrere Runden zum Mittippen', href: `${base}/demo?from=${base}` }]
+			: []),
+		...(pooled ? [{ id: 'inhalte', title: 'Inhalte', line: `${data.count} ${noun} ansehen und bearbeiten`, href: `${base}/inhalte` }] : []),
+		...(entry.Explanation
+			? [{ id: 'erklaerung', title: 'Erklärung', line: 'Spiel per Folien lernen, passend zur Spielerzahl', href: `${base}/erklaerung` }]
+			: [])
 	]);
 </script>
 
@@ -104,6 +125,16 @@
 		{#if saved}
 			<Button variant="primary" onclick={() => goto(`${base}/spielen`)}>Weiterspielen</Button>
 		{/if}
+		{#if entry.countFirst && ready}
+			<div class="count" role="group" aria-labelledby="count-label">
+				<span id="count-label" class="label">Spielerzahl</span>
+				<div class="stepper">
+					<button type="button" class="step" aria-label="Weniger" disabled={n <= def.minPlayers} onclick={() => setCount(n - 1)}>−</button>
+					<span class="n" data-testid="count" aria-live="polite">{n}</span>
+					<button type="button" class="step" aria-label="Mehr" disabled={n >= def.maxPlayers} onclick={() => setCount(n + 1)}>+</button>
+				</div>
+			</div>
+		{/if}
 		<Button
 			variant={saved ? 'secondary' : 'primary'}
 			disabled={fewPlayers || noContent}
@@ -113,28 +144,39 @@
 		</Button>
 
 		<ul class="checks">
-			<li class:bad={fewPlayers}>
-				<span class="num">{count}</span>
-				<span>
-					{#if fewPlayers}
-						Zu wenige Spieler: mind. {def.minPlayers} Spieler
-					{:else}
-						Spieler im Kader
-					{/if}
-					<a href="/spieler?from={base}">Spieler verwalten</a>
-				</span>
-			</li>
-			<li class:bad={noContent}>
-				<span class="num">{data.count}</span>
-				<span>
-					{#if noContent}
-						Für {def.name} gibt es noch keine Inhalte.
-						<a href="{base}/inhalte">Inhalte hinzufügen</a>
-					{:else}
-						Einträge im Inhaltspool
-					{/if}
-				</span>
-			</li>
+			{#if entry.countFirst}
+				<li>
+					<span>
+						<span>{n} Spieler · {count} im Kader</span>
+						<a href="/spieler?from={base}">Spieler verwalten</a>
+					</span>
+				</li>
+			{:else}
+				<li class:bad={fewPlayers}>
+					<span class="num">{count}</span>
+					<span>
+						{#if fewPlayers}
+							Zu wenige Spieler: mind. {def.minPlayers} Spieler
+						{:else}
+							Spieler im Kader
+						{/if}
+						<a href="/spieler?from={base}">Spieler verwalten</a>
+					</span>
+				</li>
+			{/if}
+			{#if pooled}
+				<li class:bad={noContent}>
+					<span class="num">{data.count}</span>
+					<span>
+						{#if noContent}
+							Für {def.name} gibt es noch keine Inhalte.
+							<a href="{base}/inhalte">Inhalte hinzufügen</a>
+						{:else}
+							Einträge im Inhaltspool
+						{/if}
+					</span>
+				</li>
+			{/if}
 		</ul>
 	</aside>
 
@@ -157,6 +199,9 @@
 							{#if card.id === 'demo'}
 								<circle cx="12" cy="12" r="8.5"></circle>
 								<path d="M10 8.8v6.4l5.2-3.2z"></path>
+							{:else if card.id === 'erklaerung'}
+								<rect x="3.5" y="4.5" width="17" height="11" rx="2"></rect>
+								<path d="M12 15.5V20M8.5 20h7M8 10h8"></path>
 							{:else}
 								<rect x="4.5" y="4" width="15" height="16" rx="2.5"></rect>
 								<path d="M8.5 9h7M8.5 12.5h7M8.5 16h4"></path>
@@ -329,6 +374,57 @@
 		background: var(--gold-tint);
 		color: var(--gold);
 		font-weight: 600;
+	}
+
+	.count {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 12px;
+	}
+
+	.stepper {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+	}
+
+	.step {
+		display: grid;
+		place-items: center;
+		min-width: 48px;
+		min-height: 48px;
+		border: 1px solid var(--line);
+		border-radius: var(--radius);
+		background: var(--raised);
+		box-shadow: 0 4px 0 var(--shadow);
+		font-weight: 700;
+		font-size: 20px;
+		cursor: pointer;
+		user-select: none;
+		touch-action: manipulation;
+		transition:
+			transform 0.07s ease-out,
+			box-shadow 0.07s ease-out;
+	}
+
+	.step:active:not(:disabled) {
+		transform: translateY(4px);
+		box-shadow: 0 0 0 transparent;
+	}
+
+	.step:disabled {
+		opacity: 0.45;
+		cursor: not-allowed;
+	}
+
+	.n {
+		min-width: 32px;
+		color: var(--c);
+		font-weight: 800;
+		font-size: 22px;
+		font-variant-numeric: tabular-nums;
+		text-align: center;
 	}
 
 	.checks {

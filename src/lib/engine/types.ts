@@ -15,7 +15,8 @@ export interface GameDef<S, A extends { type: string }, C> {
 	minPlayers: number;
 	maxPlayers: number;
 	minContent: number;
-	contentType: ContentType;
+	// 'none': no pool, no Inhalte, no content fetch; minContent 0
+	contentType: ContentType | 'none';
 	stateVersion: number;
 	init(input: { players: Player[]; config: C; content: ContentItem[]; seed: number }): S;
 	reduce(state: S, action: A): S;

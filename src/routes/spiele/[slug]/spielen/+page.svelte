@@ -4,6 +4,7 @@
 	import Art from '#lib/deco/Art.svelte';
 	import { games, loadGameSession } from '#lib/games/registry.ts';
 	import { clearSession, saveSession } from '#lib/session.ts';
+	import { applyTheme, morph } from '#lib/theme.ts';
 	import Button from '#lib/ui/Button.svelte';
 	import Modal from '#lib/ui/Modal.svelte';
 	import PlayHeader from '#lib/ui/PlayHeader.svelte';
@@ -26,6 +27,12 @@
 		if (session === null) goto(base, { replace: true });
 		else if ('discarded' in session) discarded = true;
 		else game = session.state;
+	});
+
+	// the Clocktower play route switches between the night and day look as the game moves
+	$effect(() => {
+		const variant = game === null ? undefined : entry.variant?.(game);
+		if (variant && document.documentElement.dataset.variant !== variant) morph(() => applyTheme(true, variant));
 	});
 
 	function dispatch(action: { type: string }) {

@@ -10,7 +10,9 @@ export type Motif =
 	| 'codes'
 	| 'duck'
 	| 'most-likely'
-	| 'feud';
+	| 'feud'
+	| 'clocktower'
+	| 'sky';
 
 const own: Record<string, Motif> = {
 	imposter: 'masks',
@@ -18,11 +20,13 @@ const own: Record<string, Motif> = {
 	codes: 'codes',
 	duck: 'duck',
 	'most-likely': 'most-likely',
-	'family-feud': 'feud'
+	'family-feud': 'feud',
+	clocktower: 'clocktower'
 };
 
 export function motifFor(slug: string | undefined, place: Place): Motif {
 	if (place === 'home') return 'home';
+	if (slug === 'clocktower' && (place === 'lobby' || place === 'play')) return 'sky';
 	if (place === 'lobby') return 'crew';
 	if (place === 'tile' && slug === undefined) return 'corner';
 	const motif = slug === undefined ? undefined : Object.hasOwn(own, slug) ? own[slug] : undefined;

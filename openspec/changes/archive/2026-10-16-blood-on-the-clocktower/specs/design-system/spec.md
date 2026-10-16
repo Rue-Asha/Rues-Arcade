@@ -1,0 +1,191 @@
+## MODIFIED Requirements
+
+### Requirement: Arcade-Abend tokens
+The app SHALL style every screen outside Blood on the Clocktower's routes (`/spiele/clocktower` and everything below it)
+from one set of CSS tokens taken from the A1 · Arcade-Abend artboard
+(`design/look-A1-P2-arcade-abend.dc.html`): ground #111234, primary #6bd672, Imposter #eb616d,
+leader-gold #f4c34a, Wavelength #38ccc8, Sora for UI, Press Start 2P for the logo letter and scores only. Each
+further game SHALL get its own colour token with `-ledge` and `-tint` companions: Codes (violet, about #9d8cff),
+Duck (orange, about #ff9f43), Most Likely To (pink, about #f27bc4) and Blood on the Clocktower (`clocktower`, blood
+red distinct from `--imposter`, about #e0645a, used for its Home tile and badge).
+The UI SHALL be German. Every screen outside Blood on the Clocktower's routes SHALL be dark only; Blood on the
+Clocktower's own theme (requirement "Look of Blood on the Clocktower") is the only place with a light (parchment)
+variant. WCAG's inactive-control contrast exemption applies to disabled buttons and form controls only, not to locked
+tiles or other greyed-out content.
+
+#### Scenario: Text contrast meets 4.5:1
+- **WHEN** every text/background token pair used by the components is evaluated
+- **THEN** each pair has a contrast ratio of at least 4.5:1
+- **proof:** e2e
+
+#### Scenario: Look approved on screenshots
+- **WHEN** Rue reviews the e2e screenshots of Home, Spieler, a game start screen, a reveal and a scoreboard at 390px and 1280px
+- **THEN** Rue approves the look as Arcade-Abend
+- **proof:** manual (visual judgement at Gate 2)
+
+#### Scenario: Clocktower colour meets contrast
+- **WHEN** the token contrast pairs are evaluated with `clocktower` and `clocktower-tint`
+- **THEN** ink on `clocktower`, `clocktower` on surface, and every text token on `clocktower-tint` reach at least 4.5:1
+- **proof:** unit
+
+#### Scenario: Other games keep the Arcade-Abend look
+- **WHEN** Home, Spieler and the Imposter start, lobby and play screens are opened after visiting a Blood on the Clocktower screen
+- **THEN** `<html>` carries no `data-theme`, the body background is #111234 and body text renders in Sora
+- **proof:** e2e
+
+## ADDED Requirements
+
+### Requirement: Look of Blood on the Clocktower
+Every Blood on the Clocktower route (start, lobby, explanation deck, play) SHALL use a dark old-world theme taken from
+Rue's presentation, applied as tokens on `<html data-theme="clocktower" data-variant="night|day">`: the night variant
+(ground about #100e14, text about #ece4d4, gold about oklch(0.78 0.11 75), blood red about oklch(0.62 0.16 25), good
+blue about oklch(0.62 0.12 245)) and the day variant on parchment (about #e8dfcb with ink about #1c1714). The theme SHALL
+redefine the shared tokens (`--ground`, `--surface`, `--raised`, `--text`, `--muted`, `--gold`, `--font-ui`,
+`--font-data`, …) so shared components follow it, and add its own (`--good`, `--evil`, `--font-display`). Titles SHALL
+use IM Fell English SC, body text Alegreya Sans, numerals IM Fell English, all self-hosted as latin woff2 files with
+their OFL licence texts in `static/fonts/`; Press Start 2P SHALL NOT be used on any Blood on the Clocktower screen.
+The start, lobby, deck, setup, reveal, night and end screens SHALL use the night variant, dawn and day screens the day
+variant, and the change between them SHALL be animated (view transition or a finite opacity animation), instant under
+reduced motion. Textures SHALL be CSS layers over a solid background colour, and every Blood on the Clocktower page SHALL
+keep one continuous background tone over its full height in both variants: the decorative gradient layers stay fixed to
+the viewport, so that no cut and no second shade appears below the first viewport. The theme SHALL be set before the first
+paint so a reload shows no other theme first: the server renders `data-theme` and the night variant into `<html>`, and
+on the play route a script in the page head sets the variant from the saved session before the first paint. All look rules SHALL hold in both variants: text contrast at least
+4.5:1, touch targets at least 44px, no horizontal scroll at 390px, no request to another origin, ambient loops only on
+transform/opacity and none under reduced motion. The Home tile SHALL carry its own inline-SVG badge and tile art, and
+the start banner its own art (motif `clocktower`, a clock face), under the decoration rules; the lobby and the play
+screens use the theme's own sky (motif `sky`, requirement "Clocktower atmosphere").
+
+#### Scenario: Clocktower tokens meet contrast in both variants
+- **WHEN** every text/background pair of the Clocktower night and day token sets in `tokens.ts` is evaluated
+- **THEN** each pair reaches at least 4.5:1, and `app.css` defines the same values under `[data-theme='clocktower']` and `[data-theme='clocktower'][data-variant='day']`
+- **proof:** unit
+
+#### Scenario: Theme only on Clocktower routes
+- **WHEN** `/spiele/clocktower`, its lobby, its `erklaerung` route and its play route are opened, and then Home and `/spiele/imposter`
+- **THEN** the four Clocktower routes have `data-theme="clocktower"` on `<html>` with headings in IM Fell English SC and body text in Alegreya Sans, and Home and Imposter have no `data-theme`
+- **proof:** e2e
+
+#### Scenario: No theme flash on reload
+- **WHEN** the raw HTML of `/spiele/clocktower` is fetched from the server and the page is reloaded, and then `/spiele/clocktower/spielen` is reloaded with a saved day-phase session
+- **THEN** the served `<html>` tag already carries `data-theme="clocktower"` and `data-variant="night"`, the first painted body background on the start screen is the night ground, and on the play route the first painted frame already has `data-variant="day"` and the day ground
+- **proof:** e2e
+
+#### Scenario: Background keeps one tone over the whole page
+- **WHEN** the setup board (night) and the day grimoire are shown with 15 seats at 390×600, so that each page is taller than the viewport, with the sky layer hidden, and scrolled from the top to the bottom
+- **THEN** the background painted at the same viewport points in the side margins differs by at most 3 per colour channel between the top and the bottom scroll position, in both variants
+- **proof:** e2e
+
+#### Scenario: Clocktower fonts are self-hosted
+- **WHEN** the Clocktower start screen is loaded
+- **THEN** every font request goes to the app's own origin under `/fonts/`, IM Fell English SC and Alegreya Sans are loaded, each font file has an OFL text next to it, and no text renders in Press Start 2P
+- **proof:** e2e
+
+#### Scenario: Clocktower look rules on every screen
+- **WHEN** the look walk renders every Blood on the Clocktower screen (start, lobby states, deck slides, setup board, reveal, night screens, dawn, day, vote clock, confirm, end) at 390×844 and 1280×800
+- **THEN** text contrast is at least 4.5:1 in both variants, touch targets are at least 44px, no screen scrolls horizontally at 390px, no text renders in Press Start 2P and every request goes to the app's own origin
+- **proof:** e2e ("Scenario: Text contrast meets 4.5:1", "Scenario: Touch targets are at least 44px", "Scenario: No horizontal scroll on phone", "Scenario: Press Start 2P stays limited to logo and scores", "Scenario: Decoration loads no external assets")
+
+#### Scenario: Day and night variants switch with an animation
+- **WHEN** the last night screen of night 1 is left for dawn with motion allowed, and again with `prefers-reduced-motion: reduce`
+- **THEN** `data-variant` changes from "night" to "day" and the body background becomes parchment, with motion a view transition or finite opacity animation runs, and under reduced motion none runs
+- **proof:** e2e
+
+#### Scenario: Clocktower ambient motion off under reduced motion
+- **WHEN** `prefers-reduced-motion: reduce` is set and the Clocktower start screen and lobby are opened
+- **THEN** no infinite animation is running
+- **proof:** e2e
+
+#### Scenario: Clocktower gets its own motif
+- **WHEN** the motif is looked up for `clocktower` at tile, start, lobby and play
+- **THEN** tile and start return `clocktower`, and lobby and play return `sky`; every other game still gets `crew` in the lobby and `rings` in play
+- **proof:** unit
+
+#### Scenario: Clocktower tile and start art
+- **WHEN** Home and the Clocktower start screen are opened
+- **THEN** the Clocktower tile shows an SVG badge that differs from the fallback and every other game's badge, and the tile and start banner each hold `data-motif="clocktower"` art with at least one drawn shape, aria-hidden and without pointer events
+- **proof:** e2e
+
+#### Scenario: Clocktower look approved on screenshots
+- **WHEN** Rue reviews the look-walk screenshots of every Blood on the Clocktower screen at 390px and 1280px
+- **THEN** Rue approves the theme as taken from her presentation, the parchment day screens and the use of desktop width
+- **proof:** manual (visual judgement at Gate 2, on the verifier's screenshots)
+
+### Requirement: Clocktower atmosphere
+The Blood on the Clocktower lobby and every night-variant play screen SHALL show a night sky with stars and a moon, and
+the dawn and day screens SHALL show a sun on a brighter, livelier parchment; the palette stays. The sky SHALL be inline
+decoration (no external assets, no text) behind the content: aria-hidden, without pointer events, never on top of a
+text or control, with ambient motion only on transform and opacity and none under reduced motion. It SHALL never lower
+legibility: text contrast stays at least 4.5:1 and the existing text-size floors hold.
+
+#### Scenario: Night sky in the lobby and at night
+- **WHEN** the lobby, the setup board, the reveal name screen and a night wake screen are shown at 390×844 and 1280×800
+- **THEN** each holds one `[data-deco][data-motif="sky"]` layer with at least five visible stars and one visible moon inside the viewport, aria-hidden and without pointer events, and no sun is visible
+- **proof:** e2e
+
+#### Scenario: Sun on the day screens
+- **WHEN** dawn and the day grimoire are shown at 390×844 and 1280×800
+- **THEN** the sky layer shows a visible sun inside the viewport and neither the moon nor the stars are visible
+- **proof:** e2e
+
+#### Scenario: Atmosphere keeps every screen legible
+- **WHEN** the lobby, the setup board, a night circle screen, dawn and the day grimoire are shown with the sky at 390×844 and 1280×800
+- **THEN** every text pair reaches a contrast of at least 4.5:1, every visible control is the element hit at its own centre, the sky holds no text, every request goes to the app's own origin and the page does not scroll horizontally at 390px
+- **proof:** e2e
+
+#### Scenario: Sky motion only on transform and opacity
+- **WHEN** the lobby, a night screen and the day grimoire are opened with motion allowed, and again with `prefers-reduced-motion: reduce`
+- **THEN** with motion every infinite animation inside the sky touches only transform and opacity, and under reduced motion no infinite animation runs
+- **proof:** e2e
+
+#### Scenario: Atmosphere approved
+- **WHEN** Rue reviews the look-walk screenshots of the lobby, a night screen, dawn and the day grimoire at 390px and 1280px
+- **THEN** Rue finds the lobby and nights visibly night-themed with stars and a moon, and the day subtly sunny and livelier, with nothing harder to read
+- **proof:** manual (visual judgement at Gate 2, on the verifier's screenshots)
+
+### Requirement: Clocktower transitions
+Navigating from Home into a Blood on the Clocktower route and back out SHALL run a view transition that morphs colour
+and background instead of a hard cut, and navigation between Blood on the Clocktower routes (start, lobby, deck, play)
+SHALL be animated the same way. Where the browser has no View Transitions API the navigation SHALL happen plainly
+without an error; under reduced motion no transition SHALL run. The browser's back button SHALL work as usual.
+
+#### Scenario: Home to Clocktower runs a view transition
+- **WHEN** the Clocktower tile on Home is clicked, then "Los geht's" is tapped, then the brand link back to Home is followed, with motion allowed
+- **THEN** `document.startViewTransition` is called for each of the three navigations, the theme attribute changes inside the transition, and the target page is shown
+- **proof:** e2e
+
+#### Scenario: Navigation without View Transitions
+- **WHEN** `document.startViewTransition` does not exist and Home → Clocktower start → lobby is navigated
+- **THEN** each page is shown, the theme attribute is set, and no page error is logged
+- **proof:** e2e
+
+#### Scenario: Reduced motion skips the view transition
+- **WHEN** `prefers-reduced-motion: reduce` is set and Home → Clocktower start is navigated
+- **THEN** `document.startViewTransition` is not called and the start screen is shown with the theme
+- **proof:** e2e
+
+#### Scenario: Back button leaves Clocktower
+- **WHEN** Home → Clocktower start is navigated and the browser goes back
+- **THEN** Home is shown without `data-theme`
+- **proof:** e2e
+
+#### Scenario: Transitions feel smooth
+- **WHEN** Rue navigates Home → Clocktower → lobby → deck → back on a phone and a desktop browser
+- **THEN** Rue finds the morph smooth and not in the way
+- **proof:** manual (motion feel is a visual judgement, at Gate 2)
+
+### Requirement: UI text is not selectable
+The app SHALL not let UI text be selected or show a text cursor on it anywhere (every game, Home, Spieler, headings,
+info boxes, show texts, timers, counts, seat names): UI text SHALL have `user-select: none` (with the `-webkit-` prefix),
+`-webkit-touch-callout: none`, and a default or pointer cursor instead of the I-beam. Text inputs, text areas and other
+editable fields SHALL keep their caret, the text cursor and selection.
+
+#### Scenario: UI text cannot be selected
+- **WHEN** Home, the Spieler page, the Imposter start screen, a Clocktower night circle screen with a shown text and the Clocktower day grimoire with a running timer are opened, and a heading, a paragraph, a seat name, the shown text and the timer are each double-clicked and triple-clicked
+- **THEN** the page's selection stays empty after every click, those elements compute `user-select: none` and `-webkit-touch-callout: none` where the browser supports it, and none of them shows the text cursor
+- **proof:** e2e
+
+#### Scenario: Inputs keep caret and selection
+- **WHEN** a name is typed into the Spieler page's name input and the input is triple-clicked
+- **THEN** the typed name is selected, the input does not compute `user-select: none`, and its cursor is the text cursor
+- **proof:** e2e

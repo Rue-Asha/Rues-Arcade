@@ -37,7 +37,10 @@ export const tokens = {
 	'most-likely-tint': '#2c1f45',
 	feud: '#5b9dff',
 	'feud-ledge': '#1d4a8f',
-	'feud-tint': '#1d2a55'
+	'feud-tint': '#1d2a55',
+	clocktower: '#e0645a',
+	'clocktower-ledge': '#6b1f19',
+	'clocktower-tint': '#261c3a'
 } as const;
 
 export const motion = {
@@ -61,7 +64,8 @@ const grounds: Token[] = [
 	'codes-tint',
 	'duck-tint',
 	'most-likely-tint',
-	'feud-tint'
+	'feud-tint',
+	'clocktower-tint'
 ];
 
 export const textPairs: [Token, Token][] = [
@@ -81,6 +85,7 @@ export const textPairs: [Token, Token][] = [
 	['ink', 'duck'],
 	['ink', 'most-likely'],
 	['ink', 'feud'],
+	['ink', 'clocktower'],
 	['on-reveal', 'reveal'],
 	['primary', 'on-primary'],
 	['primary', 'surface'],
@@ -89,7 +94,149 @@ export const textPairs: [Token, Token][] = [
 	['codes', 'surface'],
 	['duck', 'surface'],
 	['most-likely', 'surface'],
-	['feud', 'surface']
+	['feud', 'surface'],
+	['clocktower', 'surface']
+];
+
+export const clocktowerNight = {
+	ground: '#100e14',
+	'ground-dot': '#100e14',
+	surface: '#1a1721',
+	raised: '#26222d',
+	line: '#3d3744',
+	shadow: '#070509',
+	text: '#ece4d4',
+	'text-soft': '#cfc4ae',
+	muted: '#b9ad97',
+	off: '#6e6659',
+	ink: '#100e14',
+	primary: '#e1ad63',
+	'primary-press': '#d19f58',
+	'primary-ledge': '#7a5a22',
+	'on-primary': '#17100a',
+	gold: '#e1ad63',
+	'gold-ledge': '#7a5a22',
+	'gold-tint': '#2b2318',
+	reveal: '#e1ad63',
+	'on-reveal': '#17100a',
+	imposter: '#d55753',
+	'imposter-text': '#f07f77',
+	'imposter-ledge': '#6b1f1d',
+	'imposter-tint': '#2a1618',
+	clocktower: '#e0645a',
+	'clocktower-ledge': '#6b1f19',
+	'clocktower-tint': '#261c3a',
+	good: '#519fdd',
+	'good-tint': '#14202c',
+	outsider: '#99cedf',
+	evil: '#e66e68',
+	'evil-tint': '#2a1618',
+	demon: '#f05653',
+	sky: '#221d3a',
+	sun: '#e1ad63',
+	ghost: '#9cc8ec',
+	'ghost-ink': '#10202e',
+	spent: '#8f887c',
+	nominee: '#4fc4bb',
+	nominator: '#f0954a'
+} as const;
+
+// on parchment the fills are dark, so ink (text on a fill) turns light
+export const clocktowerDay: Record<keyof typeof clocktowerNight, string> = {
+	ground: '#e8dfcb',
+	'ground-dot': '#e8dfcb',
+	surface: '#efe6d3',
+	raised: '#f5eedf',
+	line: '#c4b697',
+	shadow: '#a99b7b',
+	text: '#1c1714',
+	'text-soft': '#3b332c',
+	muted: '#4a4038',
+	off: '#8a7d69',
+	ink: '#f6f0e2',
+	primary: '#724d0b',
+	'primary-press': '#664409',
+	'primary-ledge': '#3d2705',
+	'on-primary': '#f6f0e2',
+	gold: '#724d0b',
+	'gold-ledge': '#3d2705',
+	'gold-tint': '#ddd0b0',
+	reveal: '#724d0b',
+	'on-reveal': '#f6f0e2',
+	imposter: '#a12f2f',
+	'imposter-text': '#8f2828',
+	'imposter-ledge': '#561515',
+	'imposter-tint': '#e4cdc0',
+	clocktower: '#a12f2f',
+	'clocktower-ledge': '#561515',
+	'clocktower-tint': '#e6d4c6',
+	good: '#2a5888',
+	'good-tint': '#d3d9dd',
+	outsider: '#1f5c70',
+	evil: '#a12f2f',
+	'evil-tint': '#e6cfc2',
+	demon: '#8a1f22',
+	sky: '#fbf1d6',
+	sun: '#d4912a',
+	ghost: '#86b8e2',
+	'ghost-ink': '#14304a',
+	spent: '#6f675c',
+	nominee: '#1d7f7a',
+	nominator: '#b4560f'
+};
+
+export type ClocktowerToken = keyof typeof clocktowerNight;
+
+const clocktowerGrounds: ClocktowerToken[] = [
+	'ground',
+	'surface',
+	'raised',
+	'gold-tint',
+	'clocktower-tint',
+	'good-tint',
+	'evil-tint'
+];
+
+// the same pairs hold for both variants
+export const clocktowerPairs: [ClocktowerToken, ClocktowerToken][] = [
+	...clocktowerGrounds.flatMap((bg): [ClocktowerToken, ClocktowerToken][] => [
+		['text', bg],
+		['text-soft', bg],
+		['muted', bg],
+		['gold', bg],
+		['imposter-text', bg]
+	]),
+	...(['ground', 'surface', 'raised'] as const).flatMap((bg): [ClocktowerToken, ClocktowerToken][] => [
+		['good', bg],
+		['outsider', bg],
+		['evil', bg],
+		['demon', bg]
+	]),
+	['good', 'good-tint'],
+	['outsider', 'good-tint'],
+	['evil', 'evil-tint'],
+	['demon', 'evil-tint'],
+	['on-primary', 'primary'],
+	['on-primary', 'primary-press'],
+	['ink', 'gold'],
+	['ink', 'imposter'],
+	['ink', 'clocktower'],
+	['on-reveal', 'reveal'],
+	['primary', 'on-primary'],
+	['clocktower', 'surface']
+];
+
+// non-text pairs (badge glyphs on their discs, rings on the ground) need 3:1
+export const clocktowerMarks: [ClocktowerToken, ClocktowerToken][] = [
+	['ghost-ink', 'ghost'],
+	['spent', 'surface'],
+	['spent', 'raised'],
+	['nominee', 'ground'],
+	['nominator', 'ground'],
+	['nominee', 'surface'],
+	['nominator', 'surface'],
+	['ink', 'clocktower'],
+	['ink', 'gold']
 ];
 
 function luminance(hex: string): number {

@@ -21,6 +21,10 @@ const draws: [string | undefined, Place][] = [
 	['duck', 'start'],
 	['most-likely', 'start'],
 	['family-feud', 'start'],
+	['clocktower', 'tile'],
+	['clocktower', 'start'],
+	['clocktower', 'lobby'],
+	['clocktower', 'play'],
 	['charade', 'start'],
 	['wavelength', 'lobby'],
 	['imposter', 'play'],
@@ -61,6 +65,16 @@ describe('motifFor', () => {
 		for (const place of ['tile', 'start', 'play'] as const) expect(motifFor('charade', place)).toBe('neutral');
 	});
 
+	it('Scenario: Clocktower gets its own motif', () => {
+		expect(motifFor('clocktower', 'tile')).toBe('clocktower');
+		expect(motifFor('clocktower', 'start')).toBe('clocktower');
+		expect(motifFor('clocktower', 'lobby')).toBe('sky');
+		expect(motifFor('clocktower', 'play')).toBe('sky');
+		expect(motifFor('imposter', 'lobby')).toBe('crew');
+		expect(motifFor('imposter', 'play')).toBe('rings');
+		expect(motifFor('charade', 'play')).toBe('neutral');
+	});
+
 	it('home, lobby and the locked tile have their own motifs', () => {
 		expect(motifFor(undefined, 'home')).toBe('home');
 		expect(motifFor(undefined, 'tile')).toBe('corner');
@@ -95,6 +109,27 @@ describe('Art', () => {
 			const body = html('family-feud', place);
 			expect(body.match(/<rect/g)?.length, place).toBeGreaterThanOrEqual(1);
 			expect(body, place).toContain('var(--c)');
+		}
+	});
+
+	it('the Clocktower art draws a clock face: ring, twelve ticks, hands, no text', () => {
+		for (const place of ['tile', 'start'] as const) {
+			const body = html('clocktower', place);
+			expect(body.match(/class="tick/g)?.length, place).toBe(12);
+			expect(body, place).toContain('class="ring');
+			expect(body, place).toContain('class="minute');
+			expect(body, place).toContain('class="hour');
+			expect(body, place).not.toContain('<text');
+		}
+	});
+
+	it('the Clocktower sky draws stars, a moon and a sun as inline SVG without text', () => {
+		for (const place of ['lobby', 'play'] as const) {
+			const body = html('clocktower', place);
+			expect(body.match(/data-star/g)?.length, place).toBeGreaterThanOrEqual(5);
+			expect(body.match(/data-moon/g), place).toHaveLength(1);
+			expect(body.match(/data-sun/g), place).toHaveLength(1);
+			expect(body, place).not.toContain('<text');
 		}
 	});
 
@@ -147,7 +182,9 @@ describe('Banner', () => {
 			[{ slug: 'wavelength', place: 'start', colour: 'wavelength' }, 'dial'],
 			[{ slug: 'charade', place: 'start' }, 'neutral'],
 			[{ slug: 'duck', place: 'start', colour: 'duck' }, 'duck'],
-			[{ slug: 'wavelength', place: 'lobby', colour: 'wavelength' }, 'crew']
+			[{ slug: 'clocktower', place: 'start', colour: 'clocktower' }, 'clocktower'],
+			[{ slug: 'wavelength', place: 'lobby', colour: 'wavelength' }, 'crew'],
+			[{ slug: 'clocktower', place: 'lobby', colour: 'clocktower' }, 'sky']
 		] as const;
 		for (const [props, motif] of cases) {
 			const body = banner(props);
@@ -195,6 +232,8 @@ describe('ambient motion', () => {
 		expect(all['Gauge.svelte'].inside).toMatch(/\.needle\s*\{[^}]*animation:[^;]*\b7s\b[^;]*\binfinite\b/);
 		expect(all['Mask.svelte'].inside).toMatch(/\.odd\s*\{[^}]*animation:[^;]*\binfinite\b/);
 		expect(all['Rings.svelte'].inside).toMatch(/animation:[^;]*\binfinite\b/);
+		expect(all['Clocktower.svelte'].inside).toMatch(/\.minute\s*\{[^}]*animation:[^;]*\binfinite\b/);
+		expect(all['Sky.svelte'].inside).toMatch(/animation:[^;]*\binfinite\b/);
 	});
 
 	it('keyframes animate transform or opacity only', () => {

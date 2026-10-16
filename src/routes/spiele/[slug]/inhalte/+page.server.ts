@@ -11,6 +11,8 @@ export const load: PageServerLoad = ({ params }) => {
 	const entry = games.find((g) => g.def.slug === params.slug);
 	if (!entry) error(404, 'Dieses Spiel gibt es nicht.');
 	const type = entry.def.contentType;
+	// a game without a content pool answers like any unknown route
+	if (type === 'none') error(404, 'Not Found');
 	const db = getDb();
 	return isSurvey(type)
 		? { items: [], surveys: listSurveys(db), played: [] }

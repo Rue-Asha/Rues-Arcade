@@ -116,11 +116,46 @@ describe('sound', () => {
 		expect(contexts).toBe(0);
 	});
 
+	it('Scenario: Clocktower effects obey mute and first interaction', async () => {
+		const win = browser(true);
+		const sound = await load();
+		const clock = ['bell', 'tick', 'chime', 'gong'] as const;
+
+		for (const s of clock) sound.play(s);
+		expect(contexts).toBe(0);
+		expect(tones).toBe(0);
+
+		interact(win);
+		sound.setMuted(true);
+		for (const s of clock) sound.play(s);
+		expect(tones).toBe(0);
+
+		sound.setMuted(false);
+		for (const s of clock) {
+			const before = tones;
+			sound.play(s);
+			expect(tones, s).toBeGreaterThan(before);
+		}
+		expect(contexts).toBe(1);
+	});
+
+	it('Scenario: Clocktower effects without WebAudio', async () => {
+		const win = browser(false);
+		const sound = await load();
+		interact(win);
+
+		for (const s of ['bell', 'tick', 'chime', 'gong'] as const) {
+			expect(() => sound.play(s)).not.toThrow();
+		}
+		expect(contexts).toBe(0);
+		expect(tones).toBe(0);
+	});
+
 	it('every effect plays when unmuted', async () => {
 		const win = browser(true);
 		const sound = await load();
 		interact(win);
-		for (const s of ['press', 'reveal', 'correct', 'wrong', 'win'] as const) {
+		for (const s of ['press', 'reveal', 'correct', 'wrong', 'win', 'bell', 'tick', 'chime', 'gong'] as const) {
 			const before = tones;
 			sound.play(s);
 			expect(tones, s).toBeGreaterThan(before);
