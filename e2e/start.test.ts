@@ -170,7 +170,7 @@ test('Scenario: Inhalte card counts the seeded content', async ({ page }, info) 
 	try {
 		for (const [slug, line] of [
 			['codes', '91 Wörter ansehen und bearbeiten'],
-			['duck', '60 Wörter ansehen und bearbeiten'],
+			['duck', '750 Wörter ansehen und bearbeiten'],
 			['most-likely', '60 Sprüche ansehen und bearbeiten']
 		]) {
 			await page.goto(`${server.origin}/spiele/${slug}`);
