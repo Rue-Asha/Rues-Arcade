@@ -408,7 +408,7 @@ circle and the step's navigation stay readable in one piece around it.
 
 #### Scenario: Centre texts fit the circle
 - **WHEN** each text is shown on the circle screen with 5, 7 and 15 seats at 390×844 and 1280×800
-- **THEN** every text lies inside the circle's inner ring and overlaps no seat, has a contrast of at least 4.5:1 on its own surface, and renders at 16px or more for bluff names, 20px or more for character names and phrases, 40px or more for "Ja" and "Nein" and 96px or more for the digit
+- **THEN** every text lies inside the circle's inner ring and overlaps no seat, has a contrast of at least 4.5:1 on its own surface, and renders at 16px or more for the bluff names and the lead line "Du bist", 20px or more for character names and phrases, 40px or more for "Ja" and "Nein" and 96px or more for the digit
 - **proof:** e2e
 
 #### Scenario: Role preselects its cards
