@@ -1,25 +1,24 @@
-verified-at: e354131
+verified-at: 7d1a051
 
-# Verification r9
+# Verification r10
 
-Verify round 3 of the revisions (S67-S69, unit U23, 80739ac..e354131: 2 s per seat in the vote sweep, no rings on dead seats, 23-slide deck). Verified committed tip e354131, working tree clean.
+Verify round after the r9 fixer commits d069161 (pin deck handMs in sweep scenario), ccdad2f (pin slide titles and town/voting presence), 7d1a051 (pin rings of all seats through death and revive); unit tests only, no source or spec change. Verified committed tip 7d1a051, working tree clean.
 
 ## Layer 1: `PORT=4711 npm run proof:full` (green, run 1 of 1)
 
-Unit: vitest 50 files, 483 tests passed, exit 0. e2e: 902 passed, 44 skipped (5.6m). Full log: /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/3f77cd96-741a-434e-ad03-88b18326d9f1/scratchpad/r9a.log
+Unit: vitest 50 files, 483 tests passed, exit 0. e2e: 902 passed, 44 skipped (5.3m). Full log: /tmp/claude-1001/-home-Rue-Repos-Rues-Arcade/3f77cd96-741a-434e-ad03-88b18326d9f1/scratchpad/r10.log
 
 ```
-  ✓  945 [desktop] › e2e/look.test.ts:353:2 › reduced motion › Scenario: Reduced motion makes transitions instant (222ms)
-  ✓  946 [desktop] › e2e/look.test.ts:365:1 › Scenario: Motion never blocks input (261ms)
+  ✓  945 [desktop] › e2e/look.test.ts:353:2 › reduced motion › Scenario: Reduced motion makes transitions instant (188ms)
+  ✓  946 [desktop] › e2e/look.test.ts:365:1 › Scenario: Motion never blocks input (234ms)
 
   44 skipped
-  902 passed (5.6m)
+  902 passed (5.3m)
 ```
 
 ## Layer 2: spec coverage (276 scenarios: 85 unit, 170 e2e, 21 manual, 0 gaps)
 
-Against r8 (276: 83/171/22/0): total unchanged, 3 scenarios removed and 3 added. Removed: "Deck explains the app" (e2e), "Credits slide names the sources" (e2e), "App slides read clearly" (manual); the requirement "App mechanics in the deck" is gone. Added: "Deck holds 23 slides ending with the sheet" (unit), "Dead seats show no rings but stay nominable" (unit), "Rings follow deaths and Lebt doch by day" (e2e). Renamed with new numbers: "Sweep lasts 2.5 seconds per seat" is now "Sweep lasts 2 seconds per seat" (unit, 2000 ms). Reworded, proof unchanged: "Deck navigation by tap, swipe and keys" (n / 23), "Hand position over the sweep" (2000 ms), "Rings follow the day's nominations" (dead seats show none), "Sheet lists all characters" (attribution names The Pandemonium Institute), "Deck carries the presentation's content" (minus the four dropped slides, still manual). All 255 unit/e2e scenarios were matched mechanically by name (or every name in the proof line) against this run's log: 0 missing. Prefix collisions and duplicate titles: none. e2e single-project set unchanged from r8 (the new e2e scenario ran in phone and desktop).
-Test changes in the range: deck.test.ts, vote.test.ts, engine.test.ts, sheet.test.ts, e2e/clocktower-day-marks.test.ts, e2e/clocktower-deck.test.ts. Downgrades: none.
+Against r9 (276: 85/170/21/0): unchanged. Delta specs untouched since r9 (git diff c078a9b..HEAD -- openspec is empty); the three fixer commits only add assertions to deck.test.ts, engine.test.ts and vote.test.ts, no test renamed, removed or skipped. All 255 unit/e2e scenarios were matched mechanically by name (or every name in the proof line) against this run's log: 0 missing; the 21 manual scenarios are the checklist items below. Prefix collisions and duplicate titles: none. e2e single-project set unchanged from r9. Downgrades: none.
 
 | Scenario | proof | Evidence |
 |---|---|---|
@@ -317,15 +316,15 @@ Start: `npm run dev` → http://localhost:5173. Items 1–8 are unchanged from r
 10. No rings on dead seats (S68, incl. Lebt doch): on a day with a dead player no turquoise or orange ring on the dead seat, but tapping it still offers "Nominieren"; mark a seat "Ist gestorben" and its rings vanish at once; "Lebt doch" brings both rings back.
 11. 23-slide deck (S69): open Erklärung: progress reads "n / 23", no Ravenswood Bluff, Die erzählende Person, Nachtzeichen, Augen zu, no app-mechanics or credits slides, character sheet last with the attribution line (game-icons.net, CC BY 3.0, The Pandemonium Institute). Page through next to the presentation (Deck carries the presentation's content, manual).
 
-## Diffstat (`git diff --stat origin/main...flow/blood-on-the-clocktower`)
+## Diffstat (`git diff --stat origin/main...flow/blood-on-the-clocktower`, before this commit)
 
 ```
  e2e/clocktower-atmosphere.test.ts                  |  259 ++++
  e2e/clocktower-circle.test.ts                      |  315 +++++
  e2e/clocktower-day-layout.test.ts                  |  269 ++++
- e2e/clocktower-day-marks.test.ts                   |  327 +++++
+ e2e/clocktower-day-marks.test.ts                   |  352 ++++++
  e2e/clocktower-day.test.ts                         |  552 +++++++++
- e2e/clocktower-deck.test.ts                        |  402 ++++++
+ e2e/clocktower-deck.test.ts                        |  366 ++++++
  e2e/clocktower-end.test.ts                         |  175 +++
  e2e/clocktower-game.test.ts                        |  196 +++
  e2e/clocktower-night-layout.test.ts                |  125 ++
@@ -350,26 +349,26 @@ Start: `npm run dev` → http://localhost:5173. Items 1–8 are unchanged from r
  e2e/walks/clocktower-setup.ts                      |   70 ++
  e2e/walks/clocktower.ts                            |   44 +
  .../changes/blood-on-the-clocktower/.openspec.yaml |    2 +
- openspec/changes/blood-on-the-clocktower/design.md |  611 +++++++++
+ openspec/changes/blood-on-the-clocktower/design.md |  643 ++++++++++
  .../blood-on-the-clocktower/feedback-2026-10-15.md |   48 +
- openspec/changes/blood-on-the-clocktower/flow.yaml |   40 +
+ openspec/changes/blood-on-the-clocktower/flow.yaml |   42 +
  .../blood-on-the-clocktower/gate2-feedback.md      |   16 +
  .../changes/blood-on-the-clocktower/mobbin-r2.md   |   61 +
  openspec/changes/blood-on-the-clocktower/mobbin.md |   98 ++
- .../changes/blood-on-the-clocktower/proposal.md    |  112 ++
+ .../changes/blood-on-the-clocktower/proposal.md    |  114 ++
  .../research/design-sources.md                     |  135 ++
  .../blood-on-the-clocktower/research/mobbin.md     |  152 +++
  .../blood-on-the-clocktower/research/rules.md      |  379 ++++++
- openspec/changes/blood-on-the-clocktower/scope.md  |  238 ++++
+ openspec/changes/blood-on-the-clocktower/scope.md  |  247 ++++
  .../specs/catalogue/spec.md                        |  135 ++
- .../specs/clocktower/spec.md                       | 1290 ++++++++++++++++++++
+ .../specs/clocktower/spec.md                       | 1287 ++++++++++++++++++++
  .../blood-on-the-clocktower/specs/demo/spec.md     |   76 ++
  .../specs/design-system/spec.md                    |  191 +++
  .../specs/game-engine/spec.md                      |  105 ++
  .../blood-on-the-clocktower/specs/roster/spec.md   |   44 +
  .../blood-on-the-clocktower/specs/sound/spec.md    |   22 +
- openspec/changes/blood-on-the-clocktower/tasks.md  |  314 +++++
- .../blood-on-the-clocktower/verification.md        |  940 ++++++++++++++
+ openspec/changes/blood-on-the-clocktower/tasks.md  |  324 +++++
+ .../blood-on-the-clocktower/verification.md        |  958 +++++++++++++++
  src/app.css                                        |  197 +++
  src/app.html                                       |    6 +-
  src/hooks.server.ts                                |   28 +-
@@ -404,7 +403,7 @@ Start: `npm run dev` → http://localhost:5173. Items 1–8 are unchanged from r
  src/lib/games/clocktower/Sheet.svelte              |  307 +++++
  src/lib/games/clocktower/ShowBar.svelte            |  200 +++
  src/lib/games/clocktower/ShowCard.svelte           |  106 ++
- src/lib/games/clocktower/Slide.svelte              |  733 +++++++++++
+ src/lib/games/clocktower/Slide.svelte              |  696 +++++++++++
  src/lib/games/clocktower/Timer.svelte              |   86 ++
  src/lib/games/clocktower/VoteClock.svelte          |  148 +++
  src/lib/games/clocktower/Wake.svelte               |  299 +++++
@@ -412,10 +411,10 @@ Start: `npm run dev` → http://localhost:5173. Items 1–8 are unchanged from r
  src/lib/games/clocktower/characters.ts             |  279 +++++
  src/lib/games/clocktower/circle.test.ts            |  171 +++
  src/lib/games/clocktower/circle.ts                 |   91 ++
- src/lib/games/clocktower/deck.test.ts              |  142 +++
- src/lib/games/clocktower/deck.ts                   |  537 ++++++++
- src/lib/games/clocktower/engine.test.ts            |  726 +++++++++++
- src/lib/games/clocktower/engine.ts                 |  409 +++++++
+ src/lib/games/clocktower/deck.test.ts              |  130 ++
+ src/lib/games/clocktower/deck.ts                   |  379 ++++++
+ src/lib/games/clocktower/engine.test.ts            |  742 +++++++++++
+ src/lib/games/clocktower/engine.ts                 |  415 +++++++
  src/lib/games/clocktower/fixtures.ts               |   74 ++
  src/lib/games/clocktower/index.ts                  |   37 +
  src/lib/games/clocktower/info.test.ts              |   95 ++
@@ -425,11 +424,11 @@ Start: `npm run dev` → http://localhost:5173. Items 1–8 are unchanged from r
  src/lib/games/clocktower/night.ts                  |   53 +
  src/lib/games/clocktower/setup.test.ts             |  222 ++++
  src/lib/games/clocktower/setup.ts                  |  141 +++
- src/lib/games/clocktower/sheet.test.ts             |   63 +
+ src/lib/games/clocktower/sheet.test.ts             |   64 +
  src/lib/games/clocktower/timer.test.ts             |   24 +
  src/lib/games/clocktower/timer.ts                  |    8 +
  src/lib/games/clocktower/types.ts                  |  105 ++
- src/lib/games/clocktower/vote.test.ts              |   72 ++
+ src/lib/games/clocktower/vote.test.ts              |   75 ++
  src/lib/games/clocktower/vote.ts                   |   34 +
  src/lib/games/clocktower/win.test.ts               |  224 ++++
  src/lib/games/clocktower/win.ts                    |   45 +
@@ -461,7 +460,7 @@ Start: `npm run dev` → http://localhost:5173. Items 1–8 are unchanged from r
  static/fonts/im-fell-english-italic-latin.woff2    |  Bin 0 -> 57808 bytes
  static/fonts/im-fell-english-latin.woff2           |  Bin 0 -> 59880 bytes
  static/fonts/im-fell-english-sc-latin.woff2        |  Bin 0 -> 56956 bytes
- 141 files changed, 20359 insertions(+), 70 deletions(-)
+ 141 files changed, 20366 insertions(+), 70 deletions(-)
 ```
 
 ## Screenshots (not committed)
