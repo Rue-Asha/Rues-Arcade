@@ -110,6 +110,10 @@ describe('clocktower deck', () => {
 			expect(list.at(-1)!.kind, `${n}`).toBe('sheet');
 			const gone = ['story', 'storyteller', 'signals', 'app-grimoire', 'app-night', 'app-show', 'app-timer', 'app-vote', 'app-end', 'eyes', 'credits'];
 			expect(list.map((s) => s.id).filter((id) => gone.includes(id)), `${n}`).toEqual([]);
+			expect(list.find((s) => s.id === 'town')?.kind, `${n}`).toBe('counts');
+			expect(list.find((s) => s.id === 'voting')?.kind, `${n}`).toBe('vote');
+			const removed = ['Ravenswood Bluff', 'Die erzählende Person', 'Nachtzeichen', 'Das Grimoire', 'Die Nacht in der App', 'Karten zeigen', 'Der Tag-Timer', 'Nominieren und abstimmen', 'Das Ende', 'Augen zu', 'Danksagung'];
+			expect(list.map((s) => s.title).filter((t) => removed.includes(t)), `${n}`).toEqual([]);
 		}
 		expect(slides(9).some((s) => ['story', 'rows', 'credits'].includes(s.kind))).toBe(false);
 	});
