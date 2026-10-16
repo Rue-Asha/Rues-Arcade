@@ -1,0 +1,10 @@
+track: tweak
+triage: 'tweak — Duck seed list cleaned to the criteria and expanded to 750 words via a new migration, released as 0.7.1. Appetite: one session.'
+base: main
+gate1: 2026-10-16
+gate2: 2026-10-16
+learnings:
+  - 'Building a seed list against a uniqueness heuristic (rhyme keys) → generate candidates with a greedy script against the keys already taken, and grep e2e/unit tests for seed-word use before choosing words. (weil: ~60% of candidates collided with taken keys; Kiste/Kerze clashed with the content.test.ts bulk-import "0 doppelt" expectation)'
+  - 'Planner cutting tasks whose tests only turn green together (guard test + the migration it guards) → make them one task with the red lines recorded per scenario. (weil: the builder bundled 1.2–1.4 into one commit to avoid committing on red)'
+  - 'Briefing a reviewer or checker after Rue declined an external source (duden.de lookups, web APIs) → state the ban in that brief ("no web requests"). (weil: Rue chose "reviewer pass only" over duden.de lookups, the word-list reviewer brief did not say so and it fetched 750 duden.de pages)'
+  - 'Word-list criteria "no rhymes" → Rue means no pure rhymes / same ending; impure rhymes (b/p, ü/i, ng/nk, vowel length) are fine; ask before treating near-rhymes as rhymes. (weil: verify round 1 flagged ~190 near-rhyme pairs, Rue kept them all)'

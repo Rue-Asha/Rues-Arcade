@@ -108,7 +108,7 @@ three, points for the largest group that pointed at the same person, the team wi
 
 #### Scenario: Inhalte card counts the seeded content
 - **WHEN** on a fresh database the Codes, Duck and Most Likely To start screens are opened
-- **THEN** the Inhalte cards read "91 Wörter ansehen und bearbeiten", "60 Wörter ansehen und bearbeiten" and "60 Sprüche ansehen und bearbeiten"
+- **THEN** the Inhalte cards read "91 Wörter ansehen und bearbeiten", "750 Wörter ansehen und bearbeiten" and "60 Sprüche ansehen und bearbeiten"
 - **proof:** e2e
 
 #### Scenario: New start banners carry title, badge and range

@@ -41,6 +41,19 @@ function seedCounts(db: DatabaseSync): Record<string, number> {
 	);
 }
 
+function duckWords(db: DatabaseSync): string[] {
+	return db
+		.prepare('SELECT word FROM duck_words')
+		.all()
+		.map((r) => String(r.word));
+}
+
+function before0009(path: string): DatabaseSync {
+	const db = openDb(path);
+	migrate(db, loadMigrations().slice(0, 8));
+	return db;
+}
+
 function brokenDb(): string {
 	const path = join(dir, 'broken.db');
 	const pre = new DatabaseSync(path);
@@ -143,7 +156,7 @@ describe('db', () => {
 		expect(db.prepare('SELECT crew, imposter FROM imposter_pairs').all()).toEqual([
 			{ crew: 'Hund', imposter: 'Katze' }
 		]);
-		expect(after).toEqual({ codes_words: 91, duck_words: 60, most_likely_prompts: 60 });
+		expect(after).toEqual({ codes_words: 91, duck_words: 750, most_likely_prompts: 60 });
 		expect(seedCounts(db)).toEqual(after);
 		db.close();
 	});
@@ -185,6 +198,82 @@ describe('db', () => {
 		db.close();
 	});
 
+	it('Scenario: Migration 0009 upgrades an existing Duck list', () => {
+		const db = before0009(join(dir, 'upgrade.db'));
+		db.exec("INSERT INTO duck_words (word) VALUES ('Anker')");
+
+		migrate(db);
+
+		const list = duckWords(db);
+		for (const gone of ['Haus', 'Maus', 'Tatze', 'Bette', 'Rente']) expect(list).not.toContain(gone);
+		expect(list).toEqual(
+			expect.arrayContaining([
+				'Katze',
+				'Gedicht',
+				'Sonne',
+				'Regen',
+				'Blume',
+				'Mauer',
+				'Feder',
+				'Kette',
+				'Ente',
+				'Anker'
+			])
+		);
+		expect(list.length).toBe(751);
+		db.close();
+	});
+
+	it('Scenario: Migration 0009 keeps a deleted kept word deleted', () => {
+		const db = before0009(join(dir, 'kept.db'));
+		db.exec("DELETE FROM duck_words WHERE word = 'Katze'");
+
+		migrate(db);
+
+		expect(duckWords(db)).not.toContain('Katze');
+		expect(seedCounts(db).duck_words).toBe(749);
+		db.close();
+	});
+
+	it('Scenario: Migration 0009 does not duplicate a word the user already added', () => {
+		const db = before0009(join(dir, 'own.db'));
+		const fresh = openDb(join(dir, 'reference.db'));
+		migrate(fresh);
+		const old = duckWords(db);
+		const added = duckWords(fresh).find((w) => !old.includes(w));
+		fresh.close();
+		db.prepare('INSERT INTO duck_words (word) VALUES (?)').run(String(added));
+
+		migrate(db);
+
+		expect(duckWords(db).filter((w) => w === added)).toEqual([added]);
+		expect(seedCounts(db).duck_words).toBe(750);
+		db.close();
+	});
+
+	it('Scenario: Migration 0009 removes a dropped seed word the user re-added', () => {
+		const db = before0009(join(dir, 'readded.db'));
+		db.exec("DELETE FROM duck_words WHERE word = 'Haus'");
+		db.exec("INSERT INTO duck_words (word) VALUES ('Haus')");
+
+		migrate(db);
+
+		expect(duckWords(db)).not.toContain('Haus');
+		db.close();
+	});
+
+	it('Scenario: Fresh database yields exactly the 750 seed words', () => {
+		const db = openDb(join(dir, 'fresh750.db'));
+		migrate(db);
+		const first = duckWords(db).toSorted();
+
+		migrate(db);
+
+		expect(first.length).toBe(750);
+		expect(duckWords(db).toSorted()).toEqual(first);
+		db.close();
+	});
+
 	it('Scenario: Players table arrives once on an existing database', () => {
 		const path = join(dir, 'before-players.db');
 		const db = openDb(path);
@@ -201,7 +290,7 @@ describe('db', () => {
 		expect(db.prepare('SELECT crew, imposter FROM imposter_pairs').all()).toEqual([
 			{ crew: 'Hund', imposter: 'Katze' }
 		]);
-		expect(seedCounts(db)).toEqual(content);
+		expect(seedCounts(db)).toEqual({ ...content, duck_words: 750 });
 		expect(applied(db).filter((n) => n === '0004_players.sql')).toEqual(['0004_players.sql']);
 		db.close();
 	});

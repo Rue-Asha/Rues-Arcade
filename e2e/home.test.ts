@@ -70,7 +70,7 @@ test('Scenario: Fresh database runs with empty tables', async ({ page }, info) =
 			['imposter_pairs', 0],
 			['wavelength_spectra', 0],
 			['codes_words', 91],
-			['duck_words', 60],
+			['duck_words', 750],
 			['most_likely_prompts', 60]
 		] as const)
 			expect(db.prepare(`SELECT count(*) AS n FROM ${table}`).get()?.n).toBe(n);

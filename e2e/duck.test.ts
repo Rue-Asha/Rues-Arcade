@@ -425,11 +425,16 @@ test('Scenario: Duck demo by tapping highlighted controls', async ({ page }, inf
 	test.setTimeout(90_000);
 	const server = await emptyServer(info, 'duck-demo');
 	try {
-		// a fresh database holds the seeded words, the demo must not need any of them; Kit's CSRF check wants
-		// the Origin on a DELETE to another host
+		// a fresh database holds the 750 seeded words, the demo must not need any of them; one DELETE per word,
+		// sent in batches so the setup stays short; Kit's CSRF check wants the Origin on a DELETE to another host
 		const api = `${server.origin}/api/content/duck_words`;
-		for (const { id } of await (await page.request.get(api)).json())
-			expect((await page.request.delete(`${api}/${id}`, { headers: { origin: server.origin } })).ok()).toBe(true);
+		const ids: number[] = (await (await page.request.get(api)).json()).map((w: { id: number }) => w.id);
+		for (let i = 0; i < ids.length; i += 50) {
+			const done = await Promise.all(
+				ids.slice(i, i + 50).map((id) => page.request.delete(`${api}/${id}`, { headers: { origin: server.origin } }))
+			);
+			expect(done.every((r) => r.ok())).toBe(true);
+		}
 		expect(await (await page.request.get(api)).json()).toEqual([]);
 		await page.goto(`${server.origin}/spiele/duck`);
 		await page.getByRole('link', { name: 'Demo', exact: true }).click();
