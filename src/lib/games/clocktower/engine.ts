@@ -250,6 +250,12 @@ const nominating = (s: ClocktowerState) => s.phase.kind === 'day' && !s.today!.c
 export const canBeNominated = (s: ClocktowerState, seat: number) => nominating(s) && !nominated(s, 'nominee', seat);
 export const canNominate = (s: ClocktowerState, seat: number) => nominating(s) && s.seats[seat].alive && !nominated(s, 'nominator', seat);
 
+// the dead can still be nominated, they just don't carry the ring
+export const ringsOf = (s: ClocktowerState, seat: number) => ({
+	nominee: s.seats[seat].alive && canBeNominated(s, seat),
+	nominator: canNominate(s, seat)
+});
+
 type DayScreen = Extract<ClocktowerState['phase'], { kind: 'day' }>['screen'];
 
 function day(s: ClocktowerState, action: ClocktowerAction): ClocktowerState {

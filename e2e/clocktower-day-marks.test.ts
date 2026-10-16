@@ -28,13 +28,13 @@ const rings = (page: Page) =>
 		)
 	);
 
-// the rings of an n-seat day: `all` seats have both, `dead` seats the turquoise one, the others only what they are listed for
-function expected(n: number, spec: { all?: number[]; dead?: number[]; nominee?: number[]; nominator?: number[] }) {
+// the rings of an n-seat day: `all` seats have both, the others only what they are listed for; dead seats are in neither list
+function expected(n: number, spec: { all?: number[]; nominee?: number[]; nominator?: number[] }) {
 	return Object.fromEntries(
 		Array.from({ length: n }, (_, i) => {
 			const seat = i + 1;
 			const kinds = [
-				...(spec.all?.includes(seat) || spec.dead?.includes(seat) || spec.nominee?.includes(seat) ? ['nominee'] : []),
+				...(spec.all?.includes(seat) || spec.nominee?.includes(seat) ? ['nominee'] : []),
 				...(spec.all?.includes(seat) || spec.nominator?.includes(seat) ? ['nominator'] : [])
 			];
 			return [String(seat), kinds];
@@ -50,20 +50,20 @@ test("Scenario: Rings follow the day's nominations", async ({ page }) => {
 	// Bo (seat 2) is dead
 	await open(page, ghost(day1(seated(F7)), 1));
 	await expect(seat(page, 7)).toBeVisible();
-	expect(await rings(page), 'grimoire').toEqual(expected(7, { all: LIVING, dead: [2] }));
+	expect(await rings(page), 'grimoire').toEqual(expected(7, { all: LIVING }));
 
 	await seat(page, 4).click();
 	await dialog(page).getByRole('button', { name: 'Nominieren', exact: true }).click();
 	await expect(live(page).getByRole('heading', { name: 'Wer nominiert Dani?', exact: true })).toBeVisible();
-	expect(await rings(page), 'picker: a pending nominee is not nominated yet').toEqual(expected(7, { all: LIVING, dead: [2] }));
+	expect(await rings(page), 'picker: a pending nominee is not nominated yet').toEqual(expected(7, { all: LIVING }));
 	await seat(page, 1).click();
 	await expect(live(page).getByRole('button', { name: 'Abstimmung beginnen', exact: true })).toBeVisible();
-	const clock = { all: [3, 5, 6, 7], dead: [2], nominee: [1], nominator: [4] };
+	const clock = { all: [3, 5, 6, 7], nominee: [1], nominator: [4] };
 	expect(await rings(page), 'clock: Dani has no turquoise ring, Alex no orange one').toEqual(expected(7, clock));
 
 	await press(page, 'Zurück');
 	await expect(live(page).getByRole('button', { name: 'Tag beenden', exact: true })).toBeVisible();
-	expect(await rings(page), 'after Zurück both are back').toEqual(expected(7, { all: LIVING, dead: [2] }));
+	expect(await rings(page), 'after Zurück both are back').toEqual(expected(7, { all: LIVING }));
 
 	await seat(page, 4).click();
 	await dialog(page).getByRole('button', { name: 'Nominieren', exact: true }).click();
@@ -114,8 +114,8 @@ test("Scenario: Rings follow the day's nominations", async ({ page }) => {
 	const next = play(dawn, [{ type: 'next' }, { type: 'next' }, { type: 'timer', minutes: null, now: Date.now() }]);
 	await open(page, next);
 	await expect(live(page).getByRole('button', { name: 'Tag beenden', exact: true })).toBeVisible();
-	expect(await rings(page), 'next day: both rings are back, the dead keep the turquoise one').toEqual(
-		expected(7, { all: [1, 3, 6, 7], dead: [2, 4, 5] })
+	expect(await rings(page), 'next day: both rings are back, the dead show none').toEqual(
+		expected(7, { all: [1, 3, 6, 7] })
 	);
 });
 
@@ -125,6 +125,31 @@ const crowded = () =>
 		{ type: 'nominee', seat: 3 }, { type: 'nominate', nominator: 0 }, { type: 'vote' }, { type: 'swept' },
 		{ type: 'count', votes: 8 }, { type: 'confirm' }, { type: 'next' }
 	]);
+
+test('Scenario: Rings follow deaths and Lebt doch by day', async ({ page }) => {
+	await open(page, ghost(day1(seated(F7)), 1));
+	await expect(seat(page, 7)).toBeVisible();
+	const keep = [1, 3, 4, 6, 7];
+	expect(await rings(page), 'start').toEqual(expected(7, { all: [1, 3, 4, 5, 6, 7] }));
+
+	await seat(page, 2).click();
+	await expect(dialog(page).getByRole('button', { name: 'Nominieren', exact: true })).toBeEnabled();
+	await dialog(page).getByRole('button', { name: 'Schließen', exact: true }).click();
+	await expect(dialog(page)).toHaveCount(0);
+	expect(await rings(page), 'Bo, dead and nominable, shows none').toEqual(expected(7, { all: [1, 3, 4, 5, 6, 7] }));
+
+	await seat(page, 5).click();
+	await dialog(page).getByRole('button', { name: 'Ist gestorben', exact: true }).click();
+	await expect(dialog(page)).toHaveCount(0);
+	await expect(seat(page, 5)).toHaveAttribute('data-dead', '');
+	expect(await rings(page), 'Eli died: rings gone at once').toEqual(expected(7, { all: keep }));
+
+	await seat(page, 2).click();
+	await dialog(page).getByRole('button', { name: 'Lebt doch', exact: true }).click();
+	await expect(dialog(page)).toHaveCount(0);
+	await expect(seat(page, 2)).not.toHaveAttribute('data-dead');
+	expect(await rings(page), 'Bo is back with both rings').toEqual(expected(7, { all: [1, 2, 3, 4, 6, 7] }));
+});
 
 test('Scenario: Rings stay subtle and outside the nodes', async ({ page }) => {
 	await open(page, crowded());

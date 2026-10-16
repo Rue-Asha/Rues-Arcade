@@ -3,7 +3,7 @@ import { start as runDemo } from '#lib/demo/runner.ts';
 import { loadGameSession } from '#lib/games/registry.ts';
 import { saveSession } from '#lib/session.ts';
 import { alignment, byId } from './characters.ts';
-import { canBeNominated, canNominate, clocktower, dusk, heirs, shape } from './engine.ts';
+import { canBeNominated, canNominate, clocktower, dusk, heirs, ringsOf, shape } from './engine.ts';
 import { dead, F15, F5, F7, firstDay, seated, step, voted } from './fixtures.ts';
 import { entry } from './index.ts';
 import { info } from './info.ts';
@@ -579,6 +579,25 @@ describe('clocktower day', () => {
 		expect(n2.lastExecution).toBe(3);
 		const undertaker = n2.night!.steps.find((x) => x.kind === 'undertaker')!;
 		expect(info(n2, undertaker)).toEqual({ kind: 'character', character: 'chef' });
+	});
+
+	it('Scenario: Dead seats show no rings but stay nominable', () => {
+		// Bo 1 died in the night, Alex 0 nominated Dani 3 and the vote is confirmed
+		const day = voted(firstDay(dead(seated(F7), 1)), 3, 0, 4);
+		const rings = (s: ClocktowerState) => s.seats.map((_, i) => ringsOf(s, i));
+		const both = { nominee: true, nominator: true };
+		const none = { nominee: false, nominator: false };
+		const only = (r: Partial<typeof both>) => ({ ...none, ...r });
+		expect(canBeNominated(day, 1)).toBe(true);
+		expect(step(day, { type: 'nominee', seat: 1 }).phase).toEqual({ kind: 'day', screen: 'nominator' });
+		expect(rings(day)).toEqual([only({ nominee: true }), none, both, only({ nominator: true }), both, both, both]);
+		const killed = step(day, { type: 'died', seat: 4 }, { type: 'died', seat: 3 });
+		expect(rings(killed)[4]).toEqual(none);
+		expect(rings(killed)[3]).toEqual(none);
+		const back = step(killed, { type: 'revive', seat: 1 }, { type: 'revive', seat: 3 });
+		expect(rings(back)[1]).toEqual(both);
+		expect(rings(back)[3]).toEqual(only({ nominator: true }));
+		expect(rings(back)[0]).toEqual(only({ nominee: true }));
 	});
 
 	it('Scenario: Nomination availability per seat', () => {

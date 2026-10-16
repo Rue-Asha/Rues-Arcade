@@ -10,7 +10,7 @@
 	import SeatActions from './SeatActions.svelte';
 	import Timer from './Timer.svelte';
 	import VoteClock from './VoteClock.svelte';
-	import { canBeNominated, canNominate } from './engine.ts';
+	import { ringsOf } from './engine.ts';
 	import { threshold } from './vote.ts';
 	import { living } from './win.ts';
 	import type { ClocktowerAction, ClocktowerState } from './types.ts';
@@ -31,7 +31,7 @@
 		if (!s.seats[i].alive) return 'ist tot';
 		return today.nominations.some((n) => n.nominator === i) ? 'hat heute schon nominiert' : null;
 	}
-	const rings = (i: number) => ({ nominee: canBeNominated(s, i), nominator: canNominate(s, i) });
+	const rings = (i: number) => ringsOf(s, i);
 	const barredSeats = $derived(s.seats.flatMap((_, i) => (barred(i) === null ? [] : [i])));
 
 	const last = $derived(today.nominations.at(-1)!);
