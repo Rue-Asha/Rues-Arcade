@@ -175,6 +175,15 @@ Accepted at Gate 1 of round 2 (2026-10-15), planner additions and legibility exc
 - Exception: names longer than about 5 characters (6 on a ribbon) end in an ellipsis on the seat node; the full name is in the accessible name and title (S52).
 - Exception: a character shown in the circle's centre shows icon and name only, no ability text; bluffs drop their lead line; no "N markiert" line (S65).
 
+### Gate 2 revisions, round 3 (2026-10-16, user feedback after looking at the build)
+
+- **S67** The vote sweep gives each seat 2 s instead of 2.5 s (the time a seat can vote and its pin is lit): 5 seats take 10 s, 15 seats 30 s. The deck's voting slide keeps its own faster tempo (0.75 s per seat).
+  - Edges: the test override (`clocktowerSeatMs`) stays; reduced motion unchanged.
+- **S68** Dead seats show neither nomination ring (the orange "can nominate" ring and the turquoise "can be nominated" ring). Only the rings go: a dead player can still be nominated (S27 unchanged) and still cannot nominate.
+  - Edges: a seat brought back with "Lebt doch" shows its rings again by the same rules as any living seat (already nominated today → no ring); a seat that dies during the day loses its rings at once.
+- **S69** The explanation deck drops 11 slides: Ravenswood Bluff, Die erzählende Person, Nachtzeichen, the six app slides (Das Grimoire, Die Nacht in der App, Karten zeigen, Der Tag-Timer, Nominieren und abstimmen, Das Ende), Augen zu and Danksagung. The deck then has 23 slides and still ends with the character sheet.
+  - Edges: the counter reads n / 23; the voting slide and the sheet keep working; requirements and scenarios for the app slides and the credits slide are removed, not downgraded.
+
 ## Non-goals
 - Travellers, exile votes, Fabled — 5–15 players only (more than 15 needs Travellers).
 - Other scripts (Bad Moon Rising, Sects & Violets, custom scripts).
