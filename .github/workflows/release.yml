@@ -90,6 +90,13 @@ jobs:
 
       # After the release so a registry hiccup cannot hold back the tarball the homelab deploys.
       # The image is built from the verified tarball, never from source.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: Dockerfile
+          sparse-checkout-cone-mode: false
+          clean: false
+
       - name: Unpack tarball
         run: |
           mkdir image
