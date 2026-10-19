@@ -54,5 +54,29 @@ tag. The `release` workflow checks that the tag matches the version and that the
 `main` is green, then publishes the tarball that run built and e2e-tested, with its `.sha256`, as a GitHub release.
 Tagging is manual; tag soon after the merge, since the run's artifact expires after 90 days.
 
+## Container image
+
+Each release tag also publishes `ghcr.io/rue-asha/rues-arcade:<version>` (plus `<major>.<minor>` and `latest`). The
+`release` workflow builds it from the same verified tarball it attaches to the release, never from source, and
+only on a `v*` tag; pushes to `main` and PRs build no image. The image runs `node build` as the non-root `node`
+user, binds `0.0.0.0:3000` and keeps the SQLite database in the `/data` volume.
+
+```yaml
+services:
+  rues-arcade:
+    image: ghcr.io/rue-asha/rues-arcade:0.7.1
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      PROTOCOL_HEADER: x-forwarded-proto   # behind a TLS proxy; for plain http set ORIGIN: http://host:3000 instead
+    volumes:
+      - arcade-data:/data
+volumes:
+  arcade-data:
+```
+
+Without `PROTOCOL_HEADER` or `ORIGIN`, Kit's origin check rejects form posts with a 403.
+
 Deploying a release is not part of this repo: the Homelab change in Homelab-Managment will install it on the
 host and bump its version from then on.
