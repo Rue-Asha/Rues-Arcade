@@ -94,10 +94,10 @@ directory. `package.json` SHALL declare
 - **proof:** unit
 
 ### Requirement: Harness declaration
-`CLAUDE.md` SHALL contain `## Harness` declaring proof, proof-full, run, package and `ship: merge`.
+`AGENTS.md` SHALL contain `## Harness` declaring proof, proof-full, run, package and `ship: merge`.
 
 #### Scenario: Harness declared with merge policy
-- **WHEN** `CLAUDE.md` is read
+- **WHEN** `AGENTS.md` is read
 - **THEN** its `## Harness` section lists `proof`, `proof-full`, `run`, `package` and `ship: merge`
 - **proof:** manual (documentation; checked by reading the file at Gate 1/2)
 
