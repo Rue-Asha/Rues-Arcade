@@ -1,0 +1,11 @@
+{
+	"version": "2.0.0",
+	"files": {
+		"static/apple-touch-icon.png": "1812b91546051bf198347c22409eeab44f8ab1f5ac4b340905d80da792cc7273",
+		"static/favicon.ico": "c132cb14c562de065bffdec69c7ef31a3a5b30fd5593f3da747a38778b48a16a",
+		"static/favicon.svg": "fe93d43f029c3c80c1b772c8b47feeb96dba03456caba37c2880be50f077d25a",
+		"static/icon-192.png": "617aa4775e178950aae9b2aa584b5641245ffc9124c7b384e66f233b0d5129fe",
+		"static/icon-512.png": "0318ce7f12f012bb3a523d109ec016bdece3380c63779aada601817db52e8960",
+		"static/icon-maskable-512.png": "c3faade2e6ffc74191cfb129e080901df9c3dac29521841d9d9ccf434c8d01f1"
+	}
+}
